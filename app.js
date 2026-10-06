@@ -71,18 +71,18 @@ async function loadActiveQuestion(){
   if(error||!data){$("questionPrompt").textContent="Ожидаем следующий вопрос.";return}
   state.question=data; state.studentStartedAt=performance.now();
   $("questionCounter").textContent="Вопрос "+data.order_index;
-  startSharedTimer(data.time_limit_sec,state.session.question_started_at,$("questionTimer"),()=>document.querySelectorAll(".answer").forEach(b=>b.disabled=true));
+  $("questionTypeBadge").textContent=questionTypeLabel(data.question_type);
+  startSharedTimer(data.time_limit_sec,state.session.question_started_at,$("questionTimer"),()=>lockQuestionUI());
   $("questionPrompt").textContent=data.prompt;
   $("answerFeedback").textContent="";
-  $("answerOptions").innerHTML=data.options.map((o,i)=>`<button class="answer" data-i="${i}"><strong>${String.fromCharCode(65+i)}.</strong> ${escapeHtml(o)}</button>`).join("");
-  document.querySelectorAll(".answer").forEach(b=>b.onclick=()=>submitAnswer(Number(b.dataset.i)));
+  await renderQuestionInteraction(data);
 }
-async function submitAnswer(selected){
+async function submitPayload(payload){
   if(!state.question)return;
-  document.querySelectorAll(".answer").forEach(b=>b.disabled=true);
+  lockQuestionUI();
   const ms=Math.round(performance.now()-state.studentStartedAt);
-  const {data,error}=await sb.rpc("org_quiz_submit_answer",{
-    p_session_id:state.session.id,p_question_id:state.question.id,p_selected_option:selected,p_response_ms:ms
+  const {data,error}=await sb.rpc("org_quiz_submit_payload",{
+    p_session_id:state.session.id,p_question_id:state.question.id,p_answer:payload,p_response_ms:ms
   });
   if(error){msg($("answerFeedback"),humanError(error.message));return}
   const r=data?.[0];
@@ -199,14 +199,14 @@ $("randomizeTeams").onclick=async()=>{
   const {error}=await sb.rpc("org_quiz_randomize_teams",{p_session_id:state.teacherSession.id});
   if(error)msg($("teacherActionMessage"),error.message);else{msg($("teacherActionMessage"),"Команды распределены.");await refreshTeacher()}
 };
-$("startGame").onclick=()=>setSession({status:"live",current_question_index:1,started_at:new Date().toISOString(),question_started_at:new Date().toISOString()});
+$("startGame").onclick=()=>setSession({status:"live",current_question_index:1,interaction_phase:"answer",started_at:new Date().toISOString(),question_started_at:new Date().toISOString()});
 $("nextQuestion").onclick=async()=>{
   if(!state.teacherSession)return;
   const {count}=await sb.from("org_quiz_questions").select("*",{count:"exact",head:true}).eq("quiz_id",state.teacherSession.quiz_id);
   const next=Math.min((state.teacherSession.current_question_index||0)+1,count||1);
-  await setSession({status:"live",current_question_index:next,question_started_at:new Date().toISOString()});
+  await setSession({status:"live",current_question_index:next,interaction_phase:"answer",question_started_at:new Date().toISOString()});
 };
-$("prevQuestion").onclick=()=>setSession({current_question_index:Math.max(1,(state.teacherSession?.current_question_index||1)-1),question_started_at:new Date().toISOString()});
+$("prevQuestion").onclick=()=>setSession({current_question_index:Math.max(1,(state.teacherSession?.current_question_index||1)-1),interaction_phase:"answer",question_started_at:new Date().toISOString()});
 $("finishGame").onclick=()=>setSession({status:"finished",ended_at:new Date().toISOString(),question_started_at:null});
 async function setSession(patch){
   if(!state.teacherSession)return;
@@ -273,21 +273,28 @@ $("createQuizForm").addEventListener("submit",async e=>{
 
 $("createQuestionForm").addEventListener("submit",async e=>{
   e.preventDefault();
+  const type=$("questionType").value;
   const options=[$("optionA").value,$("optionB").value,$("optionC").value,$("optionD").value].map(x=>x.trim()).filter(Boolean);
-  const correct=Number($("correctOption").value);
-  if(correct>=options.length){msg($("editorMessage"),"Правильный вариант должен существовать.");return}
-  const {error}=await sb.rpc("org_quiz_create_question",{
+  let correctPayload=[];
+  if(type==="single"||type==="true_false") correctPayload=[Number($("correctOption").value)];
+  else if(type==="multiple") correctPayload=[Number($("correctOption").value)];
+  else if(type==="ordering") correctPayload=options.map((_,i)=>i);
+  else if(type==="short") correctPayload=[$("optionA").value.trim()];
+  const config=(type==="duel"||type==="split")?{mode:"audience_vote",anonymous:true}:{};
+  const {error}=await sb.rpc("org_quiz_create_question_v2",{
     p_quiz_id:$("editorQuizSelect").value,
+    p_question_type:type,
     p_prompt:$("newQuestionPrompt").value,
     p_options:options,
-    p_correct_option:correct,
+    p_correct_payload:correctPayload,
+    p_config:config,
     p_explanation:$("newQuestionExplanation").value||null,
     p_points:100,
     p_time_limit_sec:Number($("questionTime").value||30)
   });
   if(error){msg($("editorMessage"),error.message);return}
   const quiz=$("editorQuizSelect").value;
-  e.target.reset();$("editorQuizSelect").value=quiz;$("questionTime").value=30;
+  e.target.reset();$("editorQuizSelect").value=quiz;$("questionTime").value=30;$("questionType").value="single";updateQuestionTypeHint();
   await loadQuestionBank();
   msg($("editorMessage"),"Вопрос добавлен.");
 });
@@ -296,13 +303,13 @@ async function loadQuestionBank(){
   const id=$("editorQuizSelect")?.value||state.editorQuizId;
   if(!id)return;
   state.editorQuizId=id;
-  const {data,error}=await sb.from("org_quiz_questions").select("id,order_index,prompt,options,explanation,time_limit_sec,points").eq("quiz_id",id).order("order_index");
+  const {data,error}=await sb.from("org_quiz_questions").select("id,order_index,question_type,prompt,options,config,explanation,time_limit_sec,points").eq("quiz_id",id).order("order_index");
   if(error){if($("editorMessage"))msg($("editorMessage"),error.message);return}
   $("questionBankCount").textContent=`${data.length} вопросов`;
   $("questionBank").innerHTML=data.map(q=>`
     <div class="bank-row">
       <div class="bank-index">${q.order_index}</div>
-      <div><strong>${escapeHtml(q.prompt)}</strong><p>${q.options.map((o,i)=>String.fromCharCode(65+i)+". "+escapeHtml(o)).join(" · ")}</p></div>
+      <div><strong>${escapeHtml(q.prompt)}</strong><p>${questionTypeLabel(q.question_type)} · ${q.options.map((o,i)=>String.fromCharCode(65+i)+". "+escapeHtml(o)).join(" · ")}</p></div>
       <button class="danger" data-delete-question="${q.id}">Удалить</button>
     </div>`).join("")||"<p class='message'>В этом квизе пока нет вопросов.</p>";
   document.querySelectorAll("[data-delete-question]").forEach(b=>b.onclick=async()=>{
@@ -435,3 +442,103 @@ $("exportXlsx").onclick=async()=>{
 
 function safeFileName(s){return String(s).replace(/[\\/:*?"<>|]+/g,"_").trim()||"org-quiz"}
 function downloadBlob(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+
+
+const typeHints={
+  single:"Один правильный вариант. Быстрый классический раунд.",
+  multiple:"Можно выбрать несколько вариантов и подтвердить ответ.",
+  true_false:"Короткий бинарный раунд: верно или неверно.",
+  short:"Студент вводит короткий текстовый ответ.",
+  ordering:"Элементы нужно перетащить в правильную последовательность.",
+  duel:"Свободный ответ → анонимное голосование аудитории за лучший.",
+  split:"Открытый кейс → предложения участников → голосование за сильнейшее решение."
+};
+function questionTypeLabel(t){return ({single:"Один ответ",multiple:"Несколько ответов",true_false:"Верно / неверно",short:"Короткий ответ",ordering:"Порядок",matching:"Сопоставление",duel:"Баттл ответов",split:"Кейс + голосование"})[t]||"Задание"}
+function updateQuestionTypeHint(){
+  if(!$("questionType"))return;
+  const t=$("questionType").value;
+  $("questionTypeHint").textContent=typeHints[t]||"Интерактивное задание.";
+  const optionWrap=$("optionA").closest(".two-col");
+  optionWrap.classList.toggle("hidden",t==="duel"||t==="split");
+  $("correctOption").closest("label").classList.toggle("hidden",t==="duel"||t==="split"||t==="short"||t==="ordering");
+}
+$("questionType").addEventListener("change",updateQuestionTypeHint);
+updateQuestionTypeHint();
+
+function lockQuestionUI(){
+  document.querySelectorAll(".answer,.vote-card,[data-submit-question],.open-response button").forEach(b=>b.disabled=true);
+}
+async function renderQuestionInteraction(q){
+  const host=$("answerOptions");
+  host.className="answer-grid";
+  const phase=state.session?.interaction_phase||"answer";
+
+  if((q.question_type==="duel"||q.question_type==="split") && phase==="answer"){
+    host.className="open-response";
+    host.innerHTML=`<textarea id="openAnswerText" maxlength="800" placeholder="${q.question_type==="duel"?"Сформулируйте сильный, точный ответ…":"Предложите краткое решение кейса…"}"></textarea><button class="primary" data-submit-question>Отправить ответ</button>`;
+    host.querySelector("[data-submit-question]").onclick=submitOpenAnswer;
+    return;
+  }
+  if((q.question_type==="duel"||q.question_type==="split") && phase==="vote"){
+    await renderVoteCandidates(q);return;
+  }
+  if((q.question_type==="duel"||q.question_type==="split") && phase==="result"){
+    await renderOpenResults(q);return;
+  }
+  if(q.question_type==="short"){
+    host.className="open-response";
+    host.innerHTML='<input id="shortAnswer" placeholder="Введите ответ"><button class="primary" data-submit-question>Ответить</button>';
+    host.querySelector("[data-submit-question]").onclick=()=>submitPayload([$("shortAnswer").value.trim().toLowerCase()]);
+    return;
+  }
+  if(q.question_type==="ordering"){
+    host.className="order-list";
+    host.innerHTML=q.options.map((o,i)=>`<div class="order-item" draggable="true" data-order="${i}"><span class="order-handle">↕</span><span>${escapeHtml(o)}</span></div>`).join("")+'<button class="primary" data-submit-question>Подтвердить порядок</button>';
+    enableOrdering();
+    host.querySelector("[data-submit-question]").onclick=()=>submitPayload([...host.querySelectorAll(".order-item")].map(x=>Number(x.dataset.order)));
+    return;
+  }
+  if(q.question_type==="multiple"){
+    host.innerHTML=q.options.map((o,i)=>`<button class="answer" type="button" data-i="${i}"><strong>${String.fromCharCode(65+i)}.</strong> ${escapeHtml(o)}</button>`).join("")+'<button class="primary" data-submit-question>Подтвердить выбор</button>';
+    host.querySelectorAll(".answer").forEach(b=>b.onclick=()=>b.classList.toggle("selected"));
+    host.querySelector("[data-submit-question]").onclick=()=>submitPayload([...host.querySelectorAll(".answer.selected")].map(x=>Number(x.dataset.i)).sort((a,b)=>a-b));
+    return;
+  }
+  const opts=q.question_type==="true_false" && !q.options.length?["Верно","Неверно"]:q.options;
+  host.innerHTML=opts.map((o,i)=>`<button class="answer" data-i="${i}"><strong>${String.fromCharCode(65+i)}.</strong> ${escapeHtml(o)}</button>`).join("");
+  host.querySelectorAll(".answer").forEach(b=>b.onclick=()=>submitPayload([Number(b.dataset.i)]));
+}
+function enableOrdering(){
+  let drag=null;
+  document.querySelectorAll(".order-item").forEach(item=>{
+    item.ondragstart=()=>{drag=item;item.classList.add("dragging")};
+    item.ondragend=()=>{item.classList.remove("dragging");drag=null};
+    item.ondragover=e=>{e.preventDefault();if(!drag||drag===item)return;const r=item.getBoundingClientRect();item.parentNode.insertBefore(drag,e.clientY<r.top+r.height/2?item:item.nextSibling)};
+  });
+}
+async function submitOpenAnswer(){
+  const text=$("openAnswerText").value.trim();
+  if(!text)return;
+  const {error}=await sb.rpc("org_quiz_submit_open",{p_session_id:state.session.id,p_question_id:state.question.id,p_answer_text:text});
+  if(error){msg($("answerFeedback"),humanError(error.message));return}
+  lockQuestionUI();msg($("answerFeedback"),"Ответ отправлен. Ждите голосование аудитории.");
+}
+async function renderVoteCandidates(q){
+  const {data,error}=await sb.rpc("org_quiz_vote_candidates",{p_session_id:state.session.id,p_question_id:q.id});
+  const host=$("answerOptions");host.className="vote-grid";
+  if(error){host.innerHTML='<p class="message">'+escapeHtml(humanError(error.message))+"</p>";return}
+  host.innerHTML=(data||[]).map(a=>`<button class="vote-card" data-vote="${a.answer_id}">${escapeHtml(a.answer_text)}</button>`).join("")||"<p class='message'>Пока нет ответов для голосования.</p>";
+  host.querySelectorAll("[data-vote]").forEach(b=>b.onclick=async()=>{
+    const {error}=await sb.rpc("org_quiz_vote_open",{p_session_id:state.session.id,p_question_id:q.id,p_answer_id:b.dataset.vote});
+    if(error)msg($("answerFeedback"),humanError(error.message));else{lockQuestionUI();msg($("answerFeedback"),"Голос принят.");}
+  });
+}
+async function renderOpenResults(q){
+  const {data,error}=await sb.rpc("org_quiz_open_public_results",{p_session_id:state.session.id,p_question_id:q.id});
+  const host=$("answerOptions");host.className="vote-grid";
+  if(error){host.innerHTML='<p class="message">'+escapeHtml(humanError(error.message))+"</p>";return}
+  const max=Math.max(1,...(data||[]).map(x=>Number(x.votes||0)));
+  host.innerHTML=(data||[]).map((a,i)=>`<div class="vote-card"><strong>#${i+1}</strong><p>${escapeHtml(a.answer_text)}</p><div class="dist-bar"><span style="width:${Math.round(Number(a.votes||0)*100/max)}%"></span></div><small>${a.votes} голосов</small></div>`).join("");
+}
+$("openVoting").onclick=()=>setSession({interaction_phase:"vote",status:"live"});
+$("showResults").onclick=()=>setSession({interaction_phase:"result",status:"paused"});
