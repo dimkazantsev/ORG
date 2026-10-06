@@ -204,7 +204,8 @@
                   <label>Вариант D<input id="optionD"></label>
                 </div>
                 <div class="two-col">
-                  <label>Правильный ответ<select id="correctOption"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label>
+                  <label id="correctOptionLabel">Правильный ответ<select id="correctOption"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label>
+                  <label id="correctMultiLabel" class="hidden">Правильные варианты<input id="correctMulti" placeholder="Например: A, B, D"></label>
                   <label>Время, сек.<input id="questionTime" type="number" min="5" max="300" value="30"></label>
                 </div>
                 <label>Пояснение<textarea id="newQuestionExplanation" rows="2"></textarea></label>
