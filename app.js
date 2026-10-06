@@ -277,7 +277,11 @@ $("createQuestionForm").addEventListener("submit",async e=>{
   const options=[$("optionA").value,$("optionB").value,$("optionC").value,$("optionD").value].map(x=>x.trim()).filter(Boolean);
   let correctPayload=[];
   if(type==="single"||type==="true_false") correctPayload=[Number($("correctOption").value)];
-  else if(type==="multiple") correctPayload=[Number($("correctOption").value)];
+  else if(type==="multiple"){
+    const map={A:0,B:1,C:2,D:3};
+    correctPayload=String($("correctMulti").value||"").toUpperCase().split(/[,s]+/).filter(Boolean).map(x=>map[x]).filter(Number.isInteger).sort((a,b)=>a-b);
+    if(!correctPayload.length){msg($("editorMessage"),"Укажите правильные варианты, например A, B.");return}
+  }
   else if(type==="ordering") correctPayload=options.map((_,i)=>i);
   else if(type==="short") correctPayload=[$("optionA").value.trim()];
   const config=(type==="duel"||type==="split")?{mode:"audience_vote",anonymous:true}:{};
@@ -374,17 +378,35 @@ async function renderLiveTeacherQuestion(){
   }
   const {data:q}=await sb.from("org_quiz_questions").select("*").eq("quiz_id",state.teacherSession.quiz_id).eq("order_index",state.teacherSession.current_question_index).maybeSingle();
   if(!q)return;
+  const openMode=q.question_type==="duel"||q.question_type==="split";
+  $("openVoting").classList.toggle("hidden",!openMode);
+  $("showResults").classList.toggle("hidden",!openMode);
   $("presenterCounter").textContent="Вопрос "+q.order_index;
   $("presenterPrompt").textContent=q.prompt;
-  $("presenterOptions").innerHTML=q.options.map((o,i)=>`<div class="presenter-option"><strong>${String.fromCharCode(65+i)}.</strong> ${escapeHtml(o)}</div>`).join("");
   startSharedTimer(q.time_limit_sec,state.teacherSession.question_started_at,$("presenterTimer"));
-  const {data:stats}=await sb.from("org_quiz_question_stats").select("*").eq("session_id",state.teacherSession.id).eq("question_id",q.id).maybeSingle();
-  const counts=[stats?.option_a||0,stats?.option_b||0,stats?.option_c||0,stats?.option_d||0].slice(0,q.options.length);
-  const total=counts.reduce((a,b)=>a+Number(b),0);
-  $("optionDistribution").innerHTML=counts.map((n,i)=>{
-    const pct=total?Math.round(Number(n)*100/total):0;
-    return `<div class="dist-row"><strong>${String.fromCharCode(65+i)}</strong><div class="dist-bar"><span style="width:${pct}%"></span></div><span>${n}</span></div>`;
-  }).join("");
+  if(openMode){
+    if(state.teacherSession.interaction_phase==="answer"){
+      $("presenterOptions").innerHTML='<div class="presenter-option">Участники формулируют свои ответы…</div>';
+      $("optionDistribution").innerHTML="";
+    }else if(state.teacherSession.interaction_phase==="vote"){
+      const {data:answers}=await sb.from("org_quiz_open_answers").select("id,answer_text").eq("session_id",state.teacherSession.id).eq("question_id",q.id);
+      $("presenterOptions").innerHTML=(answers||[]).map(a=>`<div class="presenter-option">${escapeHtml(a.answer_text)}</div>`).join("")||'<div class="presenter-option">Ответов пока нет.</div>';
+      $("optionDistribution").innerHTML="";
+    }else{
+      const {data:res}=await sb.rpc("org_quiz_open_public_results",{p_session_id:state.teacherSession.id,p_question_id:q.id});
+      $("presenterOptions").innerHTML=(res||[]).map((a,i)=>`<div class="presenter-option"><strong>#${i+1}</strong> ${escapeHtml(a.answer_text)} <span style="opacity:.6">· ${a.votes} голосов</span></div>`).join("");
+      $("optionDistribution").innerHTML="";
+    }
+  }else{
+    $("presenterOptions").innerHTML=q.options.map((o,i)=>`<div class="presenter-option"><strong>${String.fromCharCode(65+i)}.</strong> ${escapeHtml(o)}</div>`).join("");
+    const {data:stats}=await sb.from("org_quiz_question_stats").select("*").eq("session_id",state.teacherSession.id).eq("question_id",q.id).maybeSingle();
+    const counts=[stats?.option_a||0,stats?.option_b||0,stats?.option_c||0,stats?.option_d||0].slice(0,q.options.length);
+    const total=counts.reduce((a,b)=>a+Number(b),0);
+    $("optionDistribution").innerHTML=counts.map((n,i)=>{
+      const pct=total?Math.round(Number(n)*100/total):0;
+      return `<div class="dist-row"><strong>${String.fromCharCode(65+i)}</strong><div class="dist-bar"><span style="width:${pct}%"></span></div><span>${n}</span></div>`;
+    }).join("");
+  }
 }
 
 async function loadLiveStudentRanking(){
@@ -460,7 +482,8 @@ function updateQuestionTypeHint(){
   $("questionTypeHint").textContent=typeHints[t]||"Интерактивное задание.";
   const optionWrap=$("optionA").closest(".two-col");
   optionWrap.classList.toggle("hidden",t==="duel"||t==="split");
-  $("correctOption").closest("label").classList.toggle("hidden",t==="duel"||t==="split"||t==="short"||t==="ordering");
+  $("correctOptionLabel").classList.toggle("hidden",t==="duel"||t==="split"||t==="short"||t==="ordering"||t==="multiple");
+  $("correctMultiLabel").classList.toggle("hidden",t!=="multiple");
 }
 $("questionType").addEventListener("change",updateQuestionTypeHint);
 updateQuestionTypeHint();
