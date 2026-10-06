@@ -4,7 +4,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const $ = (id)=>document.getElementById(id);
 const views = {home:$("homeView"),student:$("studentView"),teacher:$("teacherView")};
-const state = {session:null,participant:null,teams:[],participants:[],question:null,studentStartedAt:null,teacherSession:null,teacherUser:null,subs:[],quizSets:[],editorQuizId:null};
+const state = {session:null,participant:null,teams:[],participants:[],question:null,studentStartedAt:null,teacherSession:null,teacherUser:null,subs:[],quizSets:[],editorQuizId:null,timerHandle:null,analyticsRows:[],selectedAnalyticsSession:null};
 
 function showView(name){
   Object.entries(views).forEach(([k,v])=>v.classList.toggle("hidden",k!==name));
@@ -71,7 +71,7 @@ async function loadActiveQuestion(){
   if(error||!data){$("questionPrompt").textContent="Ожидаем следующий вопрос.";return}
   state.question=data; state.studentStartedAt=performance.now();
   $("questionCounter").textContent="Вопрос "+data.order_index;
-  $("questionTimer").textContent=data.time_limit_sec+" сек.";
+  startSharedTimer(data.time_limit_sec,state.session.question_started_at,$("questionTimer"),()=>document.querySelectorAll(".answer").forEach(b=>b.disabled=true));
   $("questionPrompt").textContent=data.prompt;
   $("answerFeedback").textContent="";
   $("answerOptions").innerHTML=data.options.map((o,i)=>`<button class="answer" data-i="${i}"><strong>${String.fromCharCode(65+i)}.</strong> ${escapeHtml(o)}</button>`).join("");
@@ -152,7 +152,7 @@ async function refreshTeacher(){
   state.participants=participants||[];state.teams=teams||[];
   $("metricCode").textContent=s.code;$("metricParticipants").textContent=state.participants.length;
   $("metricTeams").textContent=state.teams.length;$("metricStatus").textContent=statusLabel(s.status);
-  renderParticipants();renderTeacherLeaderboard();
+  renderParticipants();renderTeacherLeaderboard();await renderLiveTeacherQuestion();await loadLiveStudentRanking();
 }
 function renderParticipants(){
   if(!state.teams.length){
@@ -199,15 +199,15 @@ $("randomizeTeams").onclick=async()=>{
   const {error}=await sb.rpc("org_quiz_randomize_teams",{p_session_id:state.teacherSession.id});
   if(error)msg($("teacherActionMessage"),error.message);else{msg($("teacherActionMessage"),"Команды распределены.");await refreshTeacher()}
 };
-$("startGame").onclick=()=>setSession({status:"live",current_question_index:1,started_at:new Date().toISOString()});
+$("startGame").onclick=()=>setSession({status:"live",current_question_index:1,started_at:new Date().toISOString(),question_started_at:new Date().toISOString()});
 $("nextQuestion").onclick=async()=>{
   if(!state.teacherSession)return;
   const {count}=await sb.from("org_quiz_questions").select("*",{count:"exact",head:true}).eq("quiz_id",state.teacherSession.quiz_id);
   const next=Math.min((state.teacherSession.current_question_index||0)+1,count||1);
-  await setSession({status:"live",current_question_index:next});
+  await setSession({status:"live",current_question_index:next,question_started_at:new Date().toISOString()});
 };
-$("prevQuestion").onclick=()=>setSession({current_question_index:Math.max(1,(state.teacherSession?.current_question_index||1)-1)});
-$("finishGame").onclick=()=>setSession({status:"finished",ended_at:new Date().toISOString()});
+$("prevQuestion").onclick=()=>setSession({current_question_index:Math.max(1,(state.teacherSession?.current_question_index||1)-1),question_started_at:new Date().toISOString()});
+$("finishGame").onclick=()=>setSession({status:"finished",ended_at:new Date().toISOString(),question_started_at:null});
 async function setSession(patch){
   if(!state.teacherSession)return;
   const {data,error}=await sb.from("org_quiz_sessions").update(patch).eq("id",state.teacherSession.id).select().single();
@@ -322,12 +322,116 @@ async function loadAnalytics(){
   const acc=rows.map(r=>Number(r.accuracy_percent)).filter(Number.isFinite);
   $("analyticsAccuracy").textContent=acc.length?(acc.reduce((a,b)=>a+b,0)/acc.length).toFixed(1)+"%":"—";
   $("analyticsAnswers").textContent=rows.reduce((a,r)=>a+Number(r.answers_count||0),0);
+  state.analyticsRows=rows;
+  if(!state.selectedAnalyticsSession && rows[0]) state.selectedAnalyticsSession=rows[0].session_id;
   $("sessionHistory").innerHTML=rows.map(r=>`
-    <div class="history-row">
+    <button class="history-row history-button ${state.selectedAnalyticsSession===r.session_id?"selected":""}" data-analytics-session="${r.session_id}">
       <div><strong>${escapeHtml(r.session_title||r.quiz_title)}</strong><small>${escapeHtml(r.quiz_title)} · ${new Date(r.created_at).toLocaleString("ru-RU")}</small></div>
       <div><strong>${escapeHtml(r.topic)}</strong><small>Код ${escapeHtml(r.code)}</small></div>
       <div><strong>${r.participants_count}</strong><small>участников</small></div>
       <div><strong>${r.accuracy_percent??"—"}${r.accuracy_percent==null?"":"%"}</strong><small>${r.answers_count} ответов</small></div>
-    </div>`).join("")||"<p class='message'>Проведённых занятий пока нет.</p>";
+    </button>`).join("")||"<p class='message'>Проведённых занятий пока нет.</p>";
+  document.querySelectorAll("[data-analytics-session]").forEach(b=>b.onclick=async()=>{
+    state.selectedAnalyticsSession=b.dataset.analyticsSession;
+    await loadAnalytics();
+    await loadDetailedAnalytics();
+  });
+  await loadDetailedAnalytics();
 }
 $("refreshAnalytics").onclick=loadAnalytics;
+
+
+function startSharedTimer(limitSec,startedAt,el,onEnd){
+  if(state.timerHandle){clearInterval(state.timerHandle);state.timerHandle=null}
+  if(!el){return}
+  if(!startedAt){el.textContent=limitSec+" сек.";return}
+  const tick=()=>{
+    const elapsed=Math.floor((Date.now()-new Date(startedAt).getTime())/1000);
+    const left=Math.max(0,limitSec-elapsed);
+    el.textContent=left+" сек.";
+    el.classList.toggle("timer-danger",left<=5);
+    if(left<=0){clearInterval(state.timerHandle);state.timerHandle=null;onEnd?.()}
+  };
+  tick();state.timerHandle=setInterval(tick,250);
+}
+
+async function renderLiveTeacherQuestion(){
+  if(!state.teacherSession)return;
+  if(state.teacherSession.status==="lobby"){
+    $("presenterCounter").textContent="Лобби";
+    $("presenterPrompt").textContent="Ожидаем запуска.";
+    $("presenterOptions").innerHTML="";$("optionDistribution").innerHTML="";$("presenterTimer").textContent="—";return;
+  }
+  if(state.teacherSession.status==="finished"){
+    $("presenterCounter").textContent="Финиш";$("presenterPrompt").textContent="Квиз завершён."; $("presenterOptions").innerHTML="";$("optionDistribution").innerHTML="";$("presenterTimer").textContent="—";return;
+  }
+  const {data:q}=await sb.from("org_quiz_questions").select("*").eq("quiz_id",state.teacherSession.quiz_id).eq("order_index",state.teacherSession.current_question_index).maybeSingle();
+  if(!q)return;
+  $("presenterCounter").textContent="Вопрос "+q.order_index;
+  $("presenterPrompt").textContent=q.prompt;
+  $("presenterOptions").innerHTML=q.options.map((o,i)=>`<div class="presenter-option"><strong>${String.fromCharCode(65+i)}.</strong> ${escapeHtml(o)}</div>`).join("");
+  startSharedTimer(q.time_limit_sec,state.teacherSession.question_started_at,$("presenterTimer"));
+  const {data:stats}=await sb.from("org_quiz_question_stats").select("*").eq("session_id",state.teacherSession.id).eq("question_id",q.id).maybeSingle();
+  const counts=[stats?.option_a||0,stats?.option_b||0,stats?.option_c||0,stats?.option_d||0].slice(0,q.options.length);
+  const total=counts.reduce((a,b)=>a+Number(b),0);
+  $("optionDistribution").innerHTML=counts.map((n,i)=>{
+    const pct=total?Math.round(Number(n)*100/total):0;
+    return `<div class="dist-row"><strong>${String.fromCharCode(65+i)}</strong><div class="dist-bar"><span style="width:${pct}%"></span></div><span>${n}</span></div>`;
+  }).join("");
+}
+
+async function loadLiveStudentRanking(){
+  if(!state.teacherSession)return;
+  const {data}=await sb.from("org_quiz_student_stats").select("*").eq("session_id",state.teacherSession.id).order("score",{ascending:false});
+  $("studentRanking").innerHTML=(data||[]).map((r,i)=>`<div class="leader-row"><div class="rank">${i+1}</div><div><strong>${escapeHtml(r.full_name)}</strong><small>${escapeHtml(r.academic_group)} · ${r.accuracy_percent??0}%</small></div><div class="score">${r.score}</div></div>`).join("")||"<p class='message'>Ответов пока нет.</p>";
+}
+
+$("fullscreenQuestion").onclick=()=>{
+  const el=$("teacherQuestionStage");
+  if(document.fullscreenElement) document.exitFullscreen(); else el.requestFullscreen?.();
+};
+
+async function loadDetailedAnalytics(){
+  const id=state.selectedAnalyticsSession;
+  if(!id)return;
+  const [{data:students},{data:questions}]=await Promise.all([
+    sb.from("org_quiz_student_stats").select("*").eq("session_id",id).order("score",{ascending:false}),
+    sb.from("org_quiz_question_stats").select("*").eq("session_id",id).order("order_index")
+  ]);
+  $("analyticsStudentRanking").innerHTML=(students||[]).map((r,i)=>`<div class="leader-row"><div class="rank">${i+1}</div><div><strong>${escapeHtml(r.full_name)}</strong><small>${escapeHtml(r.academic_group)} · ${r.correct_count}/${r.answers_count}</small></div><div class="score">${r.score}</div></div>`).join("")||"<p class='message'>Нет данных.</p>";
+  $("analyticsQuestionStats").innerHTML=(questions||[]).map(r=>`<div class="qa-row"><div class="rank">${r.order_index}</div><div><strong>${escapeHtml(r.prompt)}</strong><div class="qa-meta">${r.answers_count} ответов · среднее время ${r.avg_response_ms?Math.round(r.avg_response_ms/1000)+" сек.":"—"}</div></div><div class="score">${r.accuracy_percent??0}%</div></div>`).join("")||"<p class='message'>Нет данных.</p>";
+}
+
+async function getExportRows(){
+  const id=state.selectedAnalyticsSession;
+  if(!id)return {students:[],questions:[],session:null};
+  const session=state.analyticsRows.find(r=>r.session_id===id)||null;
+  const [{data:students},{data:questions}]=await Promise.all([
+    sb.from("org_quiz_student_stats").select("*").eq("session_id",id).order("score",{ascending:false}),
+    sb.from("org_quiz_question_stats").select("*").eq("session_id",id).order("order_index")
+  ]);
+  return {students:students||[],questions:questions||[],session};
+}
+
+$("exportCsv").onclick=async()=>{
+  const {students,session}=await getExportRows();
+  if(!students.length)return;
+  const header=["ФИО","Группа","Команда","Ответов","Верных","Точность, %","Баллы","Среднее время, мс"];
+  const lines=[header,...students.map(r=>[r.full_name,r.academic_group,r.team_name||"",r.answers_count,r.correct_count,r.accuracy_percent??"",r.score,r.avg_response_ms??""])];
+  const csv="\ufeff"+lines.map(row=>row.map(v=>'"'+String(v??"").replaceAll('"','""')+'"').join(";")).join("\n");
+  downloadBlob(new Blob([csv],{type:"text/csv;charset=utf-8"}),safeFileName(session?.session_title||session?.quiz_title||"org-quiz")+".csv");
+};
+
+$("exportXlsx").onclick=async()=>{
+  const {students,questions,session}=await getExportRows();
+  if(!window.XLSX||(!students.length&&!questions.length))return;
+  const wb=XLSX.utils.book_new();
+  const s1=students.map(r=>({"ФИО":r.full_name,"Группа":r.academic_group,"Команда":r.team_name||"","Ответов":r.answers_count,"Верных":r.correct_count,"Точность, %":r.accuracy_percent??0,"Баллы":r.score,"Среднее время, мс":r.avg_response_ms??""}));
+  const s2=questions.map(r=>({"№":r.order_index,"Вопрос":r.prompt,"Ответов":r.answers_count,"Верных":r.correct_count,"Точность, %":r.accuracy_percent??0,"Среднее время, мс":r.avg_response_ms??"","A":r.option_a,"B":r.option_b,"C":r.option_c,"D":r.option_d}));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(s1),"Студенты");
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(s2),"Вопросы");
+  XLSX.writeFile(wb,safeFileName(session?.session_title||session?.quiz_title||"org-quiz")+".xlsx");
+};
+
+function safeFileName(s){return String(s).replace(/[\\/:*?"<>|]+/g,"_").trim()||"org-quiz"}
+function downloadBlob(blob,name){const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
