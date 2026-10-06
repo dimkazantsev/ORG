@@ -379,7 +379,7 @@ async function renderLiveTeacherQuestion(){
   }
   const {data:q}=await sb.from("org_quiz_questions").select("*").eq("quiz_id",state.teacherSession.quiz_id).eq("order_index",state.teacherSession.current_question_index).maybeSingle();
   if(!q)return;
-  const openMode=q.question_type==="duel"||q.question_type==="split";
+  const openMode=["duel","split","wordcloud","team_pitch"].includes(q.question_type);
   $("openVoting").classList.toggle("hidden",!openMode);
   $("showResults").classList.toggle("hidden",!openMode);
   $("presenterCounter").textContent="Вопрос "+q.order_index;
