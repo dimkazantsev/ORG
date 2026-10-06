@@ -49,3 +49,8 @@ textarea:focus{border-color:#8bb0ff;box-shadow:0 0 0 4px rgba(36,107,253,.09)}
 .qa-meta{font-size:12px;color:var(--muted);margin-top:3px}
 .timer-danger{color:#ffb3ba!important}
 @media(max-width:820px){.presenter-options{grid-template-columns:1fr}.inline-actions{width:100%}.inline-actions button{flex:1}}
+
+.history-button{width:100%;text-align:left;background:transparent;color:var(--ink);border-radius:12px;padding-left:10px;padding-right:10px}
+.history-button:hover{background:var(--soft)}
+.history-button.selected{background:#eef4ff;box-shadow:inset 3px 0 0 var(--blue)}
+.leader-row small{display:block;color:var(--muted);margin-top:3px;font-weight:500}
