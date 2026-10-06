@@ -282,9 +282,10 @@ $("createQuestionForm").addEventListener("submit",async e=>{
     correctPayload=String($("correctMulti").value||"").toUpperCase().split(/[,s]+/).filter(Boolean).map(x=>map[x]).filter(Number.isInteger).sort((a,b)=>a-b);
     if(!correctPayload.length){msg($("editorMessage"),"Укажите правильные варианты, например A, B.");return}
   }
-  else if(type==="ordering") correctPayload=options.map((_,i)=>i);
+  else if(type==="ordering"||type==="ranking") correctPayload=options.map((_,i)=>i);
+  else if(type==="odd_one_out") correctPayload=[Number($("correctOption").value)];
   else if(type==="short") correctPayload=[$("optionA").value.trim()];
-  const config=(type==="duel"||type==="split")?{mode:"audience_vote",anonymous:true}:{};
+  const config=(type==="duel"||type==="split")?{mode:"audience_vote",anonymous:true}:type==="scale"?{min:1,max:10,left:"Совсем не согласен",right:"Полностью согласен"}:type==="wordcloud"?{max_words:3}:type==="team_pitch"?{mode:"team_pitch",anonymous:false}:{};
   const {error}=await sb.rpc("org_quiz_create_question_v2",{
     p_quiz_id:$("editorQuizSelect").value,
     p_question_type:type,
@@ -473,16 +474,21 @@ const typeHints={
   short:"Студент вводит короткий текстовый ответ.",
   ordering:"Элементы нужно перетащить в правильную последовательность.",
   duel:"Свободный ответ → анонимное голосование аудитории за лучший.",
-  split:"Открытый кейс → предложения участников → голосование за сильнейшее решение."
+  split:"Открытый кейс → предложения участников → голосование за сильнейшее решение.",
+  odd_one_out:"Выберите лишний элемент из набора и объясните логику.",
+  scale:"Шкала позиции 1–10. Используется для фиксации мнений и обсуждения.",
+  wordcloud:"Короткие ответы собираются в живое облако мнений.",
+  ranking:"Перетащите элементы и выстройте их по приоритету.",
+  team_pitch:"Команда формулирует позицию, затем аудитория оценивает предложения."
 };
-function questionTypeLabel(t){return ({single:"Один ответ",multiple:"Несколько ответов",true_false:"Верно / неверно",short:"Короткий ответ",ordering:"Порядок",matching:"Сопоставление",duel:"Баттл ответов",split:"Кейс + голосование"})[t]||"Задание"}
+function questionTypeLabel(t){return ({single:"Один ответ",multiple:"Несколько ответов",true_false:"Верно / неверно",short:"Короткий ответ",ordering:"Порядок",matching:"Сопоставление",duel:"Баттл ответов",split:"Кейс + голосование",odd_one_out:"Кто лишний",scale:"Шкала позиции",wordcloud:"Облако мнений",ranking:"Ранжирование",team_pitch:"Защита позиции"})[t]||"Задание"}
 function updateQuestionTypeHint(){
   if(!$("questionType"))return;
   const t=$("questionType").value;
   $("questionTypeHint").textContent=typeHints[t]||"Интерактивное задание.";
   const optionWrap=$("optionA").closest(".two-col");
-  optionWrap.classList.toggle("hidden",t==="duel"||t==="split");
-  $("correctOptionLabel").classList.toggle("hidden",t==="duel"||t==="split"||t==="short"||t==="ordering"||t==="multiple");
+  optionWrap.classList.toggle("hidden",["duel","split","scale","wordcloud","team_pitch"].includes(t));
+  $("correctOptionLabel").classList.toggle("hidden",["duel","split","short","ordering","multiple","scale","wordcloud","ranking","team_pitch"].includes(t));
   $("correctMultiLabel").classList.toggle("hidden",t!=="multiple");
 }
 $("questionType").addEventListener("change",updateQuestionTypeHint);
