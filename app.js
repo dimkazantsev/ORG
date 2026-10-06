@@ -4,7 +4,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const $ = (id)=>document.getElementById(id);
 const views = {home:$("homeView"),student:$("studentView"),teacher:$("teacherView")};
-const state = {session:null,participant:null,teams:[],participants:[],question:null,studentStartedAt:null,teacherSession:null,teacherUser:null,subs:[]};
+const state = {session:null,participant:null,teams:[],participants:[],question:null,studentStartedAt:null,teacherSession:null,teacherUser:null,subs:[],quizSets:[],editorQuizId:null};
 
 function showView(name){
   Object.entries(views).forEach(([k,v])=>v.classList.toggle("hidden",k!==name));
@@ -113,12 +113,20 @@ async function enterTeacher(){
   $("teacherLoginCard").classList.add("hidden");
   $("teacherDashboard").classList.remove("hidden");
   $("teacherLogout").classList.remove("hidden");
+  bindTeacherTabs();
   await loadQuizSets();
+  await loadAnalytics();
 }
 async function loadQuizSets(){
   const {data,error}=await sb.from("org_quiz_sets").select("id,title,topic").order("created_at");
   if(error){msg($("teacherActionMessage"),error.message);return}
-  $("quizSelect").innerHTML=(data||[]).map(q=>`<option value="${q.id}">${escapeHtml(q.title)} — ${escapeHtml(q.topic)}</option>`).join("");
+  state.quizSets=data||[];
+  const opts=state.quizSets.map(q=>`<option value="${q.id}">${escapeHtml(q.title)} — ${escapeHtml(q.topic)}</option>`).join("");
+  $("quizSelect").innerHTML=opts;
+  $("editorQuizSelect").innerHTML=opts;
+  if(!state.editorQuizId && state.quizSets[0]) state.editorQuizId=state.quizSets[0].id;
+  if(state.editorQuizId) $("editorQuizSelect").value=state.editorQuizId;
+  await loadQuestionBank();
 }
 
 $("createSessionForm").addEventListener("submit",async e=>{
@@ -147,15 +155,35 @@ async function refreshTeacher(){
   renderParticipants();renderTeacherLeaderboard();
 }
 function renderParticipants(){
-  const options='<option value="">Без команды</option>'+state.teams.map(t=>`<option value="${t.id}">${escapeHtml(t.name)}</option>`).join("");
-  $("participantsBoard").innerHTML=state.participants.map(p=>`
-    <div class="participant">
-      <div><strong>${escapeHtml(p.full_name)}</strong><small>${escapeHtml(p.academic_group)}</small></div>
-      <select data-person="${p.id}">${options}</select>
-    </div>`).join("")||"<p class='message'>Участники ещё не подключились.</p>";
-  document.querySelectorAll("[data-person]").forEach(sel=>{
-    const p=state.participants.find(x=>x.id===sel.dataset.person);sel.value=p?.team_id||"";
-    sel.onchange=()=>moveParticipant(sel.dataset.person,sel.value||null);
+  if(!state.teams.length){
+    $("participantsBoard").innerHTML=state.participants.map(p=>`
+      <div class="participant"><div><strong>${escapeHtml(p.full_name)}</strong><small>${escapeHtml(p.academic_group)}</small></div><span class="message">Без команды</span></div>`).join("")||"<p class='message'>Участники ещё не подключились.</p>";
+    return;
+  }
+  const unassigned=state.participants.filter(p=>!p.team_id);
+  const cols=[
+    ...state.teams.map(t=>({id:t.id,name:t.name,people:state.participants.filter(p=>p.team_id===t.id)})),
+    {id:"",name:"Без команды",people:unassigned}
+  ];
+  $("participantsBoard").innerHTML=`<div class="teams-dnd">${cols.map(col=>`
+    <div class="team-column">
+      <h4>${escapeHtml(col.name)} <span class="message">(${col.people.length})</span></h4>
+      <div class="team-dropzone" data-drop-team="${col.id}">
+        ${col.people.map(p=>`<div class="team-person drag-card" draggable="true" data-person="${p.id}"><strong>${escapeHtml(p.full_name)}</strong><small>${escapeHtml(p.academic_group)}</small></div>`).join("")}
+      </div>
+    </div>`).join("")}</div>`;
+  document.querySelectorAll(".drag-card").forEach(card=>{
+    card.addEventListener("dragstart",()=>{card.classList.add("dragging");card.dataset.dragging="1"});
+    card.addEventListener("dragend",()=>{card.classList.remove("dragging");delete card.dataset.dragging});
+  });
+  document.querySelectorAll("[data-drop-team]").forEach(zone=>{
+    zone.addEventListener("dragover",e=>{e.preventDefault();zone.classList.add("drag-over")});
+    zone.addEventListener("dragleave",()=>zone.classList.remove("drag-over"));
+    zone.addEventListener("drop",async e=>{
+      e.preventDefault();zone.classList.remove("drag-over");
+      const card=document.querySelector("[data-dragging='1']");
+      if(card) await moveParticipant(card.dataset.person,zone.dataset.dropTeam||null);
+    });
   });
 }
 async function moveParticipant(id,team_id){
@@ -209,3 +237,97 @@ function escapeHtml(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","
     if(data){showView("teacher");await enterTeacher()}
   }
 })();
+
+
+function bindTeacherTabs(){
+  document.querySelectorAll("[data-teacher-tab]").forEach(btn=>{
+    if(btn.dataset.bound)return;btn.dataset.bound="1";
+    btn.onclick=()=>{
+      document.querySelectorAll("[data-teacher-tab]").forEach(b=>b.classList.toggle("active",b===btn));
+      $("teacherGamePanel").classList.toggle("hidden",btn.dataset.teacherTab!=="game");
+      $("teacherEditorPanel").classList.toggle("hidden",btn.dataset.teacherTab!=="editor");
+      $("teacherAnalyticsPanel").classList.toggle("hidden",btn.dataset.teacherTab!=="analytics");
+      if(btn.dataset.teacherTab==="analytics") loadAnalytics();
+      if(btn.dataset.teacherTab==="editor") loadQuestionBank();
+    };
+  });
+}
+
+$("editorQuizSelect").addEventListener("change",async e=>{
+  state.editorQuizId=e.target.value;await loadQuestionBank();
+});
+
+$("createQuizForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const {data,error}=await sb.rpc("org_quiz_create_set",{
+    p_title:$("newQuizTitle").value,
+    p_topic:$("newQuizTopic").value,
+    p_description:$("newQuizDescription").value||null
+  });
+  if(error){msg($("editorMessage"),error.message);return}
+  state.editorQuizId=data;
+  e.target.reset();
+  await loadQuizSets();
+  msg($("editorMessage"),"Квиз создан.");
+});
+
+$("createQuestionForm").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const options=[$("optionA").value,$("optionB").value,$("optionC").value,$("optionD").value].map(x=>x.trim()).filter(Boolean);
+  const correct=Number($("correctOption").value);
+  if(correct>=options.length){msg($("editorMessage"),"Правильный вариант должен существовать.");return}
+  const {error}=await sb.rpc("org_quiz_create_question",{
+    p_quiz_id:$("editorQuizSelect").value,
+    p_prompt:$("newQuestionPrompt").value,
+    p_options:options,
+    p_correct_option:correct,
+    p_explanation:$("newQuestionExplanation").value||null,
+    p_points:100,
+    p_time_limit_sec:Number($("questionTime").value||30)
+  });
+  if(error){msg($("editorMessage"),error.message);return}
+  const quiz=$("editorQuizSelect").value;
+  e.target.reset();$("editorQuizSelect").value=quiz;$("questionTime").value=30;
+  await loadQuestionBank();
+  msg($("editorMessage"),"Вопрос добавлен.");
+});
+
+async function loadQuestionBank(){
+  const id=$("editorQuizSelect")?.value||state.editorQuizId;
+  if(!id)return;
+  state.editorQuizId=id;
+  const {data,error}=await sb.from("org_quiz_questions").select("id,order_index,prompt,options,explanation,time_limit_sec,points").eq("quiz_id",id).order("order_index");
+  if(error){if($("editorMessage"))msg($("editorMessage"),error.message);return}
+  $("questionBankCount").textContent=`${data.length} вопросов`;
+  $("questionBank").innerHTML=data.map(q=>`
+    <div class="bank-row">
+      <div class="bank-index">${q.order_index}</div>
+      <div><strong>${escapeHtml(q.prompt)}</strong><p>${q.options.map((o,i)=>String.fromCharCode(65+i)+". "+escapeHtml(o)).join(" · ")}</p></div>
+      <button class="danger" data-delete-question="${q.id}">Удалить</button>
+    </div>`).join("")||"<p class='message'>В этом квизе пока нет вопросов.</p>";
+  document.querySelectorAll("[data-delete-question]").forEach(b=>b.onclick=async()=>{
+    if(!confirm("Удалить этот вопрос?"))return;
+    const {error}=await sb.rpc("org_quiz_delete_question",{p_question_id:b.dataset.deleteQuestion});
+    if(error)msg($("editorMessage"),error.message);else await loadQuestionBank();
+  });
+}
+
+async function loadAnalytics(){
+  if(!$("sessionHistory"))return;
+  const {data,error}=await sb.from("org_quiz_session_stats").select("*").order("created_at",{ascending:false}).limit(50);
+  if(error){$("sessionHistory").innerHTML=`<p class="message">${escapeHtml(error.message)}</p>`;return}
+  const rows=data||[];
+  $("analyticsSessions").textContent=rows.length;
+  $("analyticsParticipants").textContent=rows.reduce((a,r)=>a+Number(r.participants_count||0),0);
+  const acc=rows.map(r=>Number(r.accuracy_percent)).filter(Number.isFinite);
+  $("analyticsAccuracy").textContent=acc.length?(acc.reduce((a,b)=>a+b,0)/acc.length).toFixed(1)+"%":"—";
+  $("analyticsAnswers").textContent=rows.reduce((a,r)=>a+Number(r.answers_count||0),0);
+  $("sessionHistory").innerHTML=rows.map(r=>`
+    <div class="history-row">
+      <div><strong>${escapeHtml(r.session_title||r.quiz_title)}</strong><small>${escapeHtml(r.quiz_title)} · ${new Date(r.created_at).toLocaleString("ru-RU")}</small></div>
+      <div><strong>${escapeHtml(r.topic)}</strong><small>Код ${escapeHtml(r.code)}</small></div>
+      <div><strong>${r.participants_count}</strong><small>участников</small></div>
+      <div><strong>${r.accuracy_percent??"—"}${r.accuracy_percent==null?"":"%"}</strong><small>${r.answers_count} ответов</small></div>
+    </div>`).join("")||"<p class='message'>Проведённых занятий пока нет.</p>";
+}
+$("refreshAnalytics").onclick=loadAnalytics;
