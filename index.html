@@ -7,6 +7,7 @@
   <title>ORG // QUIZ</title>
   <link rel="stylesheet" href="./styles.css" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
   <header class="topbar">
@@ -135,9 +136,31 @@
         </article>
 
         <article class="card">
-          <div class="card-head"><div><div class="eyebrow">Статистика</div><h2>Результаты в реальном времени</h2></div></div>
-          <div id="teacherLeaderboard" class="leaderboard"></div>
+          <div class="card-head">
+            <div><div class="eyebrow">Презентация вопроса</div><h2>Экран аудитории</h2></div>
+            <button id="fullscreenQuestion" class="ghost">На весь экран</button>
+          </div>
+          <div id="teacherQuestionStage" class="presenter-stage">
+            <div class="presenter-top">
+              <span id="presenterCounter">Ожидание запуска</span>
+              <strong id="presenterTimer">—</strong>
+            </div>
+            <h2 id="presenterPrompt">Создайте комнату и запустите первый вопрос.</h2>
+            <div id="presenterOptions" class="presenter-options"></div>
+            <div id="optionDistribution" class="distribution"></div>
+          </div>
         </article>
+
+        <div class="dashboard-grid">
+          <article class="card">
+            <div class="card-head"><div><div class="eyebrow">Команды</div><h2>Рейтинг команд</h2></div></div>
+            <div id="teacherLeaderboard" class="leaderboard"></div>
+          </article>
+          <article class="card">
+            <div class="card-head"><div><div class="eyebrow">Студенты</div><h2>Индивидуальный рейтинг</h2></div></div>
+            <div id="studentRanking" class="leaderboard"></div>
+          </article>
+        </div>
         </div>
 
         <div id="teacherEditorPanel" class="teacher-panel hidden">
@@ -188,9 +211,26 @@
             <div class="metric"><span>Ответов</span><strong id="analyticsAnswers">0</strong></div>
           </div>
           <article class="card">
-            <div class="card-head"><div><div class="eyebrow">История</div><h2>Проведённые занятия</h2></div><button id="refreshAnalytics" class="ghost">Обновить</button></div>
+            <div class="card-head">
+              <div><div class="eyebrow">История</div><h2>Проведённые занятия</h2></div>
+              <div class="inline-actions">
+                <button id="exportCsv" class="ghost">CSV</button>
+                <button id="exportXlsx" class="secondary">XLSX</button>
+                <button id="refreshAnalytics" class="ghost">Обновить</button>
+              </div>
+            </div>
             <div id="sessionHistory" class="history-list"></div>
           </article>
+          <div class="dashboard-grid">
+            <article class="card">
+              <div class="card-head"><div><div class="eyebrow">По студентам</div><h2>Рейтинг и точность</h2></div></div>
+              <div id="analyticsStudentRanking" class="leaderboard"></div>
+            </article>
+            <article class="card">
+              <div class="card-head"><div><div class="eyebrow">По вопросам</div><h2>Сложность вопросов</h2></div></div>
+              <div id="analyticsQuestionStats" class="question-analytics"></div>
+            </article>
+          </div>
         </div>
       </div>
     </section>
