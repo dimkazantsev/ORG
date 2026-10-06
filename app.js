@@ -514,6 +514,35 @@ async function renderQuestionInteraction(q){
   if(["duel","split","team_pitch"].includes(q.question_type) && phase==="result"){
     await renderOpenResults(q);return;
   }
+  if(q.question_type==="wordcloud" && phase==="result"){
+    const {data}=await sb.from("org_quiz_open_answers").select("answer_text").eq("session_id",state.session.id).eq("question_id",q.id);
+    host.className="wordcloud-stage";
+    const words=(data||[]).flatMap(r=>String(r.answer_text||"").split(/[;,]+/)).map(x=>x.trim()).filter(Boolean);
+    const freq={}; words.forEach(w=>{const k=w.toLowerCase();freq[k]=(freq[k]||0)+1});
+    host.innerHTML=Object.entries(freq).sort((a,b)=>b[1]-a[1]).map(([w,n],i)=>`<span class="cloud-word" style="font-size:${14+Math.min(18,n*3)}px;animation-delay:${i*35}ms">${escapeHtml(w)}${n>1?" ×"+n:""}</span>`).join("")||"<p class=\"message\">Ответов пока нет.</p>";
+    return;
+  }
+  if(q.question_type==="scale"){
+    host.className="scale-wrap";
+    const min=Number(q.config?.min||1), max=Number(q.config?.max||10);
+    host.innerHTML=`<div class="scale-labels"><span>${escapeHtml(q.config?.left||"1")}</span><span>${escapeHtml(q.config?.right||String(max))}</span></div><div class="scale-track">${Array.from({length:max-min+1},(_,i)=>`<button class="scale-point" data-scale="${min+i}">${min+i}</button>`).join("")}</div><button class="primary" data-submit-question disabled>Подтвердить позицию</button>`;
+    let value=null;
+    host.querySelectorAll("[data-scale]").forEach(b=>b.onclick=()=>{value=Number(b.dataset.scale);host.querySelectorAll("[data-scale]").forEach(x=>x.classList.toggle("active",x===b));host.querySelector("[data-submit-question]").disabled=false});
+    host.querySelector("[data-submit-question]").onclick=()=>submitPayload([value]);
+    return;
+  }
+  if(q.question_type==="ranking"){
+    host.className="order-list";
+    host.innerHTML=q.options.map((o,i)=>`<div class="order-item" draggable="true" data-order="${i}"><span class="order-handle">↕</span><span>${escapeHtml(o)}</span></div>`).join("")+'<button class="primary" data-submit-question>Подтвердить ранжирование</button>';
+    enableOrdering();
+    host.querySelector("[data-submit-question]").onclick=()=>submitPayload([...host.querySelectorAll(".order-item")].map(x=>Number(x.dataset.order)));
+    return;
+  }
+  if(q.question_type==="odd_one_out"){
+    host.innerHTML=q.options.map((o,i)=>`<button class="answer" data-i="${i}"><strong>${String.fromCharCode(65+i)}.</strong> ${escapeHtml(o)}</button>`).join("");
+    host.querySelectorAll(".answer").forEach(b=>b.onclick=()=>submitPayload([Number(b.dataset.i)]));
+    return;
+  }
   if(q.question_type==="short"){
     host.className="open-response";
     host.innerHTML='<input id="shortAnswer" placeholder="Введите ответ"><button class="primary" data-submit-question>Ответить</button>';
