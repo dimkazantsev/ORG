@@ -10,27 +10,30 @@
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand"><span class="brand-mark">ORG</span><span class="brand-slash">//</span><span>QUIZ</span></div>
-    <button id="teacherToggle" class="ghost">Преподаватель</button>
+  <div class="ambient ambient-a"></div><div class="ambient ambient-b"></div>
+  <header class="topbar glass">
+    <div class="brand"><span class="brand-orb">O</span><div><strong>ORG</strong><span>// PLAY</span></div></div>
+    <div class="top-actions"><span class="live-chip"><i></i> realtime</span><button id="teacherToggle" class="ghost">Панель преподавателя</button></div>
   </header>
 
   <main class="shell">
     <section id="homeView" class="hero-grid">
-      <article class="hero">
-        <div class="eyebrow">Основы российской государственности</div>
-        <h1>Квиз, который работает как занятие.</h1>
-        <p>Вход по коду, команды, общий рейтинг и статистика преподавателя.</p>
-        <div class="feature-row">
-          <span>Команды</span><span>Realtime</span><span>Статистика</span><span>Банк вопросов</span>
+      <article class="hero neo-panel">
+        <div class="hero-gridlines"></div>
+        <div class="eyebrow hero-label">Основы российской государственности</div>
+        <h1>Не тест.<br><span>Интерактивное занятие.</span></h1>
+        <p>Командные раунды, открытые ответы, голосования, кейсы и live-аналитика — в одной игровой аудитории.</p>
+        <div class="mode-cloud">
+          <span>⚡ Блиц</span><span>✦ Баттл ответов</span><span>↕ Порядок</span><span>◫ Несколько ответов</span><span>◎ Кейсы</span>
         </div>
+        <div class="hero-statline"><b>5+</b><span>форматов заданий</span><b>live</b><span>синхронизация</span><b>∞</b><span>сценариев</span></div>
       </article>
 
-      <article class="card join-card">
+      <article class="card join-card elevated">
         <div class="card-head">
           <div>
-            <div class="eyebrow">Для студента</div>
-            <h2>Войти в игру</h2>
+            <div class="eyebrow">Подключение</div>
+            <h2>Войти в аудиторию</h2>
           </div>
           <span class="status-dot"></span>
         </div>
@@ -38,7 +41,7 @@
           <label>Код комнаты<input id="joinCode" maxlength="8" autocomplete="off" placeholder="Например, ORG24" required></label>
           <label>ФИО<input id="joinName" autocomplete="name" placeholder="Иванов Иван Иванович" required></label>
           <label>Учебная группа<input id="joinGroup" placeholder="МУ-231" required></label>
-          <button class="primary" type="submit">Войти в квиз</button>
+          <button class="primary magnetic" type="submit">Подключиться <span>→</span></button>
           <p id="joinMessage" class="message"></p>
         </form>
       </article>
@@ -57,7 +60,8 @@
         <article class="card question-card">
           <div class="question-meta">
             <span id="questionCounter">Ожидание</span>
-            <span id="questionTimer">—</span>
+            <span id="questionTypeBadge" class="type-badge">Раунд</span>
+            <span id="questionTimer" class="timer-ring">—</span>
           </div>
           <h2 id="questionPrompt">Преподаватель готовит вопрос.</h2>
           <div id="answerOptions" class="answer-grid"></div>
@@ -124,6 +128,8 @@
               <button id="startGame" class="secondary">Начать</button>
               <button id="prevQuestion" class="ghost">← Предыдущий</button>
               <button id="nextQuestion" class="primary">Следующий →</button>
+              <button id="openVoting" class="secondary">Открыть голосование</button>
+              <button id="showResults" class="ghost">Показать результаты</button>
               <button id="finishGame" class="danger">Завершить</button>
             </div>
             <p id="teacherActionMessage" class="message"></p>
@@ -180,6 +186,16 @@
               <h2>Добавить вопрос</h2>
               <form id="createQuestionForm" class="stack">
                 <label>Квиз<select id="editorQuizSelect"></select></label>
+                <label>Формат<select id="questionType">
+                  <option value="single">Один ответ</option>
+                  <option value="multiple">Несколько ответов</option>
+                  <option value="true_false">Верно / неверно</option>
+                  <option value="short">Короткий ответ</option>
+                  <option value="ordering">Порядок</option>
+                  <option value="duel">Баттл ответов</option>
+                  <option value="split">Кейс + голосование</option>
+                </select></label>
+                <div id="questionTypeHint" class="type-hint">Классический вопрос с одним правильным вариантом.</div>
                 <label>Текст вопроса<textarea id="newQuestionPrompt" rows="3" required></textarea></label>
                 <div class="two-col">
                   <label>Вариант A<input id="optionA" required></label>
