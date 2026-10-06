@@ -380,7 +380,7 @@ async function renderLiveTeacherQuestion(){
   const {data:q}=await sb.from("org_quiz_questions").select("*").eq("quiz_id",state.teacherSession.quiz_id).eq("order_index",state.teacherSession.current_question_index).maybeSingle();
   if(!q)return;
   const openMode=["duel","split","wordcloud","team_pitch"].includes(q.question_type);
-  $("openVoting").classList.toggle("hidden",!openMode);
+  $("openVoting").classList.toggle("hidden",!["duel","split","team_pitch"].includes(q.question_type));
   $("showResults").classList.toggle("hidden",!openMode);
   $("presenterCounter").textContent="Вопрос "+q.order_index;
   $("presenterPrompt").textContent=q.prompt;
@@ -508,10 +508,10 @@ async function renderQuestionInteraction(q){
     host.querySelector("[data-submit-question]").onclick=submitOpenAnswer;
     return;
   }
-  if((q.question_type==="duel"||q.question_type==="split") && phase==="vote"){
+  if(["duel","split","team_pitch"].includes(q.question_type) && phase==="vote"){
     await renderVoteCandidates(q);return;
   }
-  if((q.question_type==="duel"||q.question_type==="split") && phase==="result"){
+  if(["duel","split","team_pitch"].includes(q.question_type) && phase==="result"){
     await renderOpenResults(q);return;
   }
   if(q.question_type==="short"){
