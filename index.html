@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#0b1830" />
+  <title>ORG // QUIZ</title>
+  <link rel="stylesheet" href="./styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark">ORG</span><span class="brand-slash">//</span><span>QUIZ</span></div>
+    <button id="teacherToggle" class="ghost">Преподаватель</button>
+  </header>
+
+  <main class="shell">
+    <section id="homeView" class="hero-grid">
+      <article class="hero">
+        <div class="eyebrow">Основы российской государственности</div>
+        <h1>Квиз, который работает как занятие.</h1>
+        <p>Вход по коду, команды, общий рейтинг и статистика преподавателя.</p>
+        <div class="feature-row">
+          <span>Команды</span><span>Realtime</span><span>Статистика</span><span>Банк вопросов</span>
+        </div>
+      </article>
+
+      <article class="card join-card">
+        <div class="card-head">
+          <div>
+            <div class="eyebrow">Для студента</div>
+            <h2>Войти в игру</h2>
+          </div>
+          <span class="status-dot"></span>
+        </div>
+        <form id="joinForm" class="stack">
+          <label>Код комнаты<input id="joinCode" maxlength="8" autocomplete="off" placeholder="Например, ORG24" required></label>
+          <label>ФИО<input id="joinName" autocomplete="name" placeholder="Иванов Иван Иванович" required></label>
+          <label>Учебная группа<input id="joinGroup" placeholder="МУ-231" required></label>
+          <button class="primary" type="submit">Войти в квиз</button>
+          <p id="joinMessage" class="message"></p>
+        </form>
+      </article>
+    </section>
+
+    <section id="studentView" class="hidden">
+      <div class="page-head">
+        <div>
+          <div class="eyebrow">Текущая игра</div>
+          <h1 id="studentQuizTitle">ORG // QUIZ</h1>
+        </div>
+        <div class="pill" id="studentTeam">Без команды</div>
+      </div>
+
+      <div class="dashboard-grid">
+        <article class="card question-card">
+          <div class="question-meta">
+            <span id="questionCounter">Ожидание</span>
+            <span id="questionTimer">—</span>
+          </div>
+          <h2 id="questionPrompt">Преподаватель готовит вопрос.</h2>
+          <div id="answerOptions" class="answer-grid"></div>
+          <p id="answerFeedback" class="message"></p>
+        </article>
+        <aside class="card">
+          <div class="eyebrow">Команды</div>
+          <h3>Текущий рейтинг</h3>
+          <div id="studentLeaderboard" class="leaderboard"></div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="teacherView" class="hidden">
+      <div class="page-head">
+        <div>
+          <div class="eyebrow">Панель преподавателя</div>
+          <h1>Управление занятием</h1>
+        </div>
+        <button id="teacherLogout" class="ghost hidden">Выйти</button>
+      </div>
+
+      <article id="teacherLoginCard" class="card narrow">
+        <h2>Вход преподавателя</h2>
+        <form id="teacherLoginForm" class="stack">
+          <label>Email<input id="teacherEmail" type="email" autocomplete="username" required></label>
+          <label>Пароль<input id="teacherPassword" type="password" autocomplete="current-password" required></label>
+          <button class="primary" type="submit">Войти</button>
+          <p id="teacherLoginMessage" class="message"></p>
+        </form>
+      </article>
+
+      <div id="teacherDashboard" class="hidden">
+        <div class="stats-row">
+          <div class="metric"><span>Комната</span><strong id="metricCode">—</strong></div>
+          <div class="metric"><span>Участники</span><strong id="metricParticipants">0</strong></div>
+          <div class="metric"><span>Команды</span><strong id="metricTeams">0</strong></div>
+          <div class="metric"><span>Статус</span><strong id="metricStatus">—</strong></div>
+        </div>
+
+        <div class="dashboard-grid">
+          <article class="card">
+            <div class="card-head"><div><div class="eyebrow">Новая игра</div><h2>Создать комнату</h2></div></div>
+            <form id="createSessionForm" class="stack">
+              <label>Квиз<select id="quizSelect"></select></label>
+              <label>Название занятия<input id="sessionTitle" placeholder="Семинар 3"></label>
+              <label>Количество команд<input id="teamCount" type="number" min="1" max="16" value="4"></label>
+              <button class="primary" type="submit">Создать комнату</button>
+            </form>
+          </article>
+
+          <article class="card">
+            <div class="card-head"><div><div class="eyebrow">Управление</div><h2>Текущая комната</h2></div></div>
+            <div class="button-grid">
+              <button id="randomizeTeams" class="secondary">Случайно распределить</button>
+              <button id="startGame" class="secondary">Начать</button>
+              <button id="prevQuestion" class="ghost">← Предыдущий</button>
+              <button id="nextQuestion" class="primary">Следующий →</button>
+              <button id="finishGame" class="danger">Завершить</button>
+            </div>
+            <p id="teacherActionMessage" class="message"></p>
+          </article>
+        </div>
+
+        <article class="card">
+          <div class="card-head"><div><div class="eyebrow">Состав</div><h2>Участники и команды</h2></div></div>
+          <div id="participantsBoard" class="participants-board"></div>
+        </article>
+
+        <article class="card">
+          <div class="card-head"><div><div class="eyebrow">Статистика</div><h2>Результаты в реальном времени</h2></div></div>
+          <div id="teacherLeaderboard" class="leaderboard"></div>
+        </article>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="./app.js"></script>
+</body>
+</html>
