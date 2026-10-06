@@ -543,6 +543,13 @@ async function renderQuestionInteraction(q){
     host.querySelectorAll(".answer").forEach(b=>b.onclick=()=>submitPayload([Number(b.dataset.i)]));
     return;
   }
+  if(q.question_type==="matching"){
+    const right=Array.isArray(q.config?.right)?q.config.right:[];
+    host.className="matching-grid";
+    host.innerHTML=q.options.map((left,i)=>`<div class="match-row"><div class="match-left">${escapeHtml(left)}</div><select data-match="${i}"><option value="">Выберите пару</option>${right.map((r,j)=>`<option value="${j}">${escapeHtml(r)}</option>`).join("")}</select></div>`).join("")+'<button class="primary" data-submit-question>Проверить сопоставление</button>';
+    host.querySelector("[data-submit-question]").onclick=()=>{const vals=[...host.querySelectorAll("[data-match]")].map(x=>Number(x.value));if(vals.some(Number.isNaN)){msg($("answerFeedback"),"Сопоставьте все элементы.");return}submitPayload(vals)};
+    return;
+  }
   if(q.question_type==="short"){
     host.className="open-response";
     host.innerHTML='<input id="shortAnswer" placeholder="Введите ответ"><button class="primary" data-submit-question>Ответить</button>';
