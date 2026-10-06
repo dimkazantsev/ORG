@@ -90,6 +90,14 @@
       </article>
 
       <div id="teacherDashboard" class="hidden">
+        <nav class="teacher-tabs" aria-label="Разделы преподавателя">
+          <button class="teacher-tab active" data-teacher-tab="game">Игра</button>
+          <button class="teacher-tab" data-teacher-tab="editor">Банк квизов</button>
+          <button class="teacher-tab" data-teacher-tab="analytics">Аналитика</button>
+        </nav>
+
+        <div id="teacherGamePanel" class="teacher-panel">
+
         <div class="stats-row">
           <div class="metric"><span>Комната</span><strong id="metricCode">—</strong></div>
           <div class="metric"><span>Участники</span><strong id="metricParticipants">0</strong></div>
@@ -130,6 +138,60 @@
           <div class="card-head"><div><div class="eyebrow">Статистика</div><h2>Результаты в реальном времени</h2></div></div>
           <div id="teacherLeaderboard" class="leaderboard"></div>
         </article>
+        </div>
+
+        <div id="teacherEditorPanel" class="teacher-panel hidden">
+          <div class="dashboard-grid">
+            <article class="card">
+              <div class="eyebrow">Конструктор</div>
+              <h2>Новый квиз</h2>
+              <form id="createQuizForm" class="stack">
+                <label>Название<input id="newQuizTitle" placeholder="Россия и мир" required></label>
+                <label>Тема<input id="newQuizTopic" placeholder="Место России в мире" required></label>
+                <label>Описание<textarea id="newQuizDescription" rows="4" placeholder="Краткое описание"></textarea></label>
+                <button class="primary" type="submit">Создать квиз</button>
+              </form>
+            </article>
+            <article class="card">
+              <div class="eyebrow">Вопрос</div>
+              <h2>Добавить вопрос</h2>
+              <form id="createQuestionForm" class="stack">
+                <label>Квиз<select id="editorQuizSelect"></select></label>
+                <label>Текст вопроса<textarea id="newQuestionPrompt" rows="3" required></textarea></label>
+                <div class="two-col">
+                  <label>Вариант A<input id="optionA" required></label>
+                  <label>Вариант B<input id="optionB" required></label>
+                  <label>Вариант C<input id="optionC"></label>
+                  <label>Вариант D<input id="optionD"></label>
+                </div>
+                <div class="two-col">
+                  <label>Правильный ответ<select id="correctOption"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label>
+                  <label>Время, сек.<input id="questionTime" type="number" min="5" max="300" value="30"></label>
+                </div>
+                <label>Пояснение<textarea id="newQuestionExplanation" rows="2"></textarea></label>
+                <button class="primary" type="submit">Добавить вопрос</button>
+                <p id="editorMessage" class="message"></p>
+              </form>
+            </article>
+          </div>
+          <article class="card">
+            <div class="card-head"><div><div class="eyebrow">Банк</div><h2>Вопросы выбранного квиза</h2></div><span id="questionBankCount" class="pill light">0 вопросов</span></div>
+            <div id="questionBank" class="question-bank"></div>
+          </article>
+        </div>
+
+        <div id="teacherAnalyticsPanel" class="teacher-panel hidden">
+          <div class="stats-row">
+            <div class="metric"><span>Проведено игр</span><strong id="analyticsSessions">0</strong></div>
+            <div class="metric"><span>Участников</span><strong id="analyticsParticipants">0</strong></div>
+            <div class="metric"><span>Средняя точность</span><strong id="analyticsAccuracy">—</strong></div>
+            <div class="metric"><span>Ответов</span><strong id="analyticsAnswers">0</strong></div>
+          </div>
+          <article class="card">
+            <div class="card-head"><div><div class="eyebrow">История</div><h2>Проведённые занятия</h2></div><button id="refreshAnalytics" class="ghost">Обновить</button></div>
+            <div id="sessionHistory" class="history-list"></div>
+          </article>
+        </div>
       </div>
     </section>
   </main>
