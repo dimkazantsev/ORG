@@ -457,7 +457,7 @@ function renderQuestionLibrary(){
         <p>${escapeHtml(set?.title||"Без набора")}</p>
         <div class="tag-line">${tags}</div>
         <div class="question-tile-footer">
-          <div class="question-stats"><span>${q.time_limit_sec} сек.</span><span>${q.points} баллов</span></div>
+          <div class="question-stats"><span>${q.time_limit_sec} сек.</span><span>${q.points} баллов</span>${q.config?.source_url?'<span class="source-chip">Источник ✓</span>':""}</div>
           <div class="question-actions">
             <button class="question-action primary-mini" data-preview-question="${q.id}">Открыть</button>
             <button class="question-action" data-edit-question="${q.id}">Изменить</button>
@@ -503,7 +503,9 @@ async function previewLibraryQuestion(id){
   $("previewOptions").innerHTML=(q.options||[]).length
     ? q.options.map((o,i)=>`<div class="preview-option"><span>${String.fromCharCode(65+i)}</span><strong>${escapeHtml(o)}</strong></div>`).join("")
     : '<div class="preview-option muted"><strong>Ответ вводится интерактивно</strong></div>';
-  $("previewExplanation").innerHTML=q.explanation?`<span class="section-kicker">Пояснение</span><p>${escapeHtml(q.explanation)}</p>`:"";
+  $("previewExplanation").innerHTML=(q.explanation||q.config?.source_url)
+    ? `<span class="section-kicker">Пояснение</span>${q.explanation?`<p>${escapeHtml(q.explanation)}</p>`:""}${q.config?.source_url?`<a class="source-link" href="${escapeHtml(q.config.source_url)}" target="_blank" rel="noopener">Открыть источник ↗</a>`:""}`
+    : "";
 }
 async function loadQuizSetLibrary(){
   if(!$("quizSetLibrary"))return;
