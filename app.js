@@ -854,26 +854,83 @@ async function renderQuestionMedia(q,host){
 }
 async function renderRussiaMap(q,host){
   if(!state.regionTopology){
-    const res=await fetch("./data/regions.topojson"); state.regionTopology=await res.json();
+    const res=await fetch("./data/regions.topojson");
+    state.regionTopology=await res.json();
   }
-  const topo=state.regionTopology; const key=Object.keys(topo.objects)[0]; const fc=topojson.feature(topo,topo.objects[key]);
-  host.innerHTML='<div class="russia-map-wrap"><svg viewBox="0 0 1000 520" aria-label="Интерактивная карта России"></svg><div class="map-note">Игровой слой включает 89 геометрий. Территории, чей международный статус оспаривается, визуально отмечены отдельно.</div></div>';
+  const topo=state.regionTopology;
+  const key=Object.keys(topo.objects)[0];
+  const fc=topojson.feature(topo,topo.objects[key]);
+  const isPreview=host.dataset.preview==="1";
+
+  host.innerHTML=`
+    <div class="russia-map-wrap">
+      <div class="map-toolbar">
+        <div class="map-help"><strong>Выберите регион</strong><span>Колесо — масштаб · зажмите карту — перемещение · повторный клик — снять выбор</span></div>
+        <div class="map-controls">
+          <button type="button" data-map-zoom-out title="Отдалить">−</button>
+          <button type="button" data-map-reset title="Сбросить">⌂</button>
+          <button type="button" data-map-zoom-in title="Приблизить">+</button>
+        </div>
+      </div>
+      <div class="map-canvas"><svg viewBox="0 0 1100 620" aria-label="Интерактивная карта России"><g class="map-viewport"></g></svg></div>
+      <div class="map-answerbar">
+        <div><span>Выбрано:</span><strong data-map-selected>ничего</strong></div>
+        <button type="button" class="button-primary" data-map-confirm disabled>${isPreview?"Предпросмотр":"Подтвердить ответ"}</button>
+      </div>
+      <div class="map-note">На карте используется игровой слой из 89 геометрий. Территории с оспариваемым международно-правовым статусом отмечены отдельно.</div>
+    </div>`;
+
   const svg=d3.select(host.querySelector("svg"));
-  const projection=d3.geoMercator().fitExtent([[15,15],[985,505]],fc);
+  const viewport=svg.select(".map-viewport");
+  const projection=d3.geoConicConformal()
+    .parallels([50,68])
+    .rotate([-105,0])
+    .fitExtent([[38,38],[1062,582]],fc);
   const path=d3.geoPath(projection);
-  svg.selectAll("path").data(fc.features).join("path")
+
+  let selectedId=null;
+  const nameOf=d=>d.properties?.name_full||d.properties?.name||d.properties?.id||d.id||"Регион";
+  const idOf=d=>d.properties?.id||d.id||"";
+
+  const regions=viewport.selectAll("path").data(fc.features).join("path")
     .attr("d",path)
     .attr("class",d=>"map-region"+(d.properties?.new2022?" new2022":""))
-    .attr("data-region",d=>d.properties?.id||d.id||"")
-    .on("click",async function(e,d){
-      if(this.classList.contains("correct")||this.classList.contains("wrong"))return;
-      const id=d.properties?.id||d.id||"";
-      const correct=id===q.config?.target_region;
-      this.classList.add(correct?"correct":"wrong");
-      if(host.dataset.preview==="1")return;
-      await submitPayload([id]);
+    .attr("data-region",d=>idOf(d))
+    .attr("tabindex",0)
+    .attr("aria-label",d=>nameOf(d))
+    .on("click",function(e,d){
+      e.stopPropagation();
+      const id=idOf(d);
+      selectedId=selectedId===id?null:id;
+      regions.classed("selected",x=>idOf(x)===selectedId);
+      const selectedFeature=fc.features.find(x=>idOf(x)===selectedId);
+      host.querySelector("[data-map-selected]").textContent=selectedFeature?nameOf(selectedFeature):"ничего";
+      const confirm=host.querySelector("[data-map-confirm]");
+      confirm.disabled=!selectedId||isPreview;
+      playSound("tap");
+    })
+    .on("keydown",function(e,d){
+      if(e.key==="Enter"||e.key===" "){e.preventDefault();this.dispatchEvent(new MouseEvent("click",{bubbles:true}))}
     });
+
+  const zoom=d3.zoom()
+    .scaleExtent([1,9])
+    .translateExtent([[-500,-350],[1600,1000]])
+    .on("zoom",e=>viewport.attr("transform",e.transform));
+  svg.call(zoom).on("dblclick.zoom",null);
+
+  host.querySelector("[data-map-zoom-in]").onclick=()=>svg.transition().duration(180).call(zoom.scaleBy,1.45);
+  host.querySelector("[data-map-zoom-out]").onclick=()=>svg.transition().duration(180).call(zoom.scaleBy,1/1.45);
+  host.querySelector("[data-map-reset]").onclick=()=>svg.transition().duration(220).call(zoom.transform,d3.zoomIdentity);
+  host.querySelector("[data-map-confirm]").onclick=async()=>{
+    if(!selectedId||isPreview)return;
+    const btn=host.querySelector("[data-map-confirm]");
+    btn.disabled=true;btn.textContent="Ответ отправлен";
+    regions.style("pointer-events","none");
+    await submitPayload([selectedId]);
+  };
 }
+
 function showEliminationOverlay(){
   const card=$("questionCard");if(!card||card.querySelector(".elimination-overlay"))return;
   const o=document.createElement("div");o.className="elimination-overlay";o.innerHTML='<div><strong>ВЫБЫВАНИЕ</strong><p>Вы продолжаете игру, но больше не приносите очки команде.</p></div>';card.appendChild(o);setTimeout(()=>o.remove(),2600);
