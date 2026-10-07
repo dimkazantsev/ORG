@@ -416,10 +416,22 @@ $("createQuestionForm").addEventListener("submit",async e=>{
 });
 
 async function loadQuestionBank(){
-  const {data,error}=await sb.from("org_quiz_questions").select("id,quiz_id,order_index,question_type,prompt,options,config,explanation,time_limit_sec,points,tags,difficulty,media_storage_path,created_at,updated_at").order("created_at",{ascending:false});
-  if(error){$("questionBank").innerHTML=`<div class="empty-state"><strong>Не удалось загрузить вопросы</strong><p>${escapeHtml(error.message)}</p></div>`;return}
+  let {data,error}=await sb.from("org_quiz_questions")
+    .select("id,quiz_id,order_index,question_type,prompt,options,config,explanation,time_limit_sec,points,tags,difficulty,media_storage_path,updated_at")
+    .order("updated_at",{ascending:false});
+  if(error){
+    ({data,error}=await sb.from("org_quiz_questions")
+      .select("id,quiz_id,order_index,question_type,prompt,options,config,explanation,time_limit_sec,points,tags,difficulty,media_storage_path")
+      .order("quiz_id",{ascending:true})
+      .order("order_index",{ascending:true}));
+  }
+  if(error){
+    $("questionBank").innerHTML=`<div class="empty-state"><strong>Не удалось загрузить вопросы</strong><p>${escapeHtml(error.message)}</p></div>`;
+    return;
+  }
   state.questionRows=data||[];
-  $("sidebarQuestionCount").textContent=state.questionRows.length+" в банке";$("overviewQuestions").textContent=state.questionRows.length;
+  $("sidebarQuestionCount").textContent=state.questionRows.length+" в банке";
+  $("overviewQuestions").textContent=state.questionRows.length;
   renderQuestionLibrary();
 }
 function renderQuestionLibrary(){
