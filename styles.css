@@ -522,3 +522,36 @@ body{background:#f4f6f8}
   .question-actions{width:100%}.question-action{flex:1}
   .set-card h3{font-size:26px}
 }
+
+.org-pack-section{margin-top:10px}
+.org-pack-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:10px}
+.org-pack-head h3{font-size:32px;letter-spacing:-.045em;margin:4px 0 6px}
+.org-pack-head p{font-size:12px;color:#7b8594;margin:0}
+.org-pack-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+.org-pack-card{
+  min-height:300px;border-radius:22px;padding:20px;display:flex;flex-direction:column;
+  border:2px solid rgba(31,42,68,.08);position:relative;overflow:hidden
+}
+.org-pack-card:nth-child(1){background:#dce7ff}
+.org-pack-card:nth-child(2){background:#f8dce9}
+.org-pack-card:nth-child(3){background:#eef3a8}
+.org-pack-card:nth-child(4){background:#e5dcff}
+.org-pack-card:nth-child(5){background:#d9f0e8}
+.org-pack-index{font-size:12px;font-weight:900;opacity:.55}
+.org-pack-copy{margin-top:32px}
+.org-pack-copy>span{font-size:9px;text-transform:uppercase;letter-spacing:.08em;font-weight:850;opacity:.7}
+.org-pack-copy h4{font-size:25px;line-height:1;letter-spacing:-.045em;margin:7px 0 10px}
+.org-pack-copy p{font-size:10px;line-height:1.4;margin:0;opacity:.74}
+.org-pack-footer{display:grid;grid-template-columns:auto 1fr;align-items:end;gap:2px 7px;margin-top:auto}
+.org-pack-footer strong{font-size:38px;line-height:.8;letter-spacing:-.06em}
+.org-pack-footer>span{font-size:9px;opacity:.6;align-self:end}
+.org-pack-footer .mosaic-button{grid-column:1/-1;margin-top:14px;background:#fff;color:#26324c;min-height:44px;border-radius:12px}
+.source-chip{background:#e7f6ec!important;color:#2c7c51!important}
+.source-link{display:inline-flex;margin-top:10px;font-size:11px;font-weight:800;color:#315efb;text-decoration:none}
+.source-link:hover{text-decoration:underline}
+@media(max-width:1200px){.org-pack-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:680px){
+ .org-pack-grid{grid-template-columns:1fr}
+ .org-pack-card{min-height:240px}
+ .org-pack-head h3{font-size:28px}
+}
