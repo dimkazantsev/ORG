@@ -1195,3 +1195,68 @@ body{
   .generator-result{align-items:stretch;flex-direction:column}
   .generator-result .button-primary{width:100%}
 }
+
+/* V12 — advanced mechanics */
+.combo-badge{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-height:32px;padding:0 11px;border-radius:999px;
+  background:#f2f4f8;border:1px solid #e1e6ee;color:#69758a;
+  font-size:10px;font-weight:850;letter-spacing:.01em;
+  transition:.2s ease;
+}
+.combo-badge.hot{
+  background:#eef1fb;border-color:#d7def4;color:#5869ad;
+  box-shadow:0 4px 12px rgba(88,105,173,.08);
+}
+.combo-explanation{margin-top:8px!important;font-size:10px!important;color:#8a95a7!important}
+.mechanics-strip{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:8px;margin:0 0 12px;
+}
+.mechanic-chip{
+  min-height:70px;padding:13px 15px;border:1px solid var(--line);
+  border-radius:15px;background:#f9fafc;display:grid;align-content:center;gap:4px;
+}
+.mechanic-chip span{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#8994a6;font-weight:800}
+.mechanic-chip strong{font-size:13px;color:#4a566d}
+.mechanic-chip.secret{background:#f5f2fa;border-color:#e6dff0}
+.mechanic-chip.secret strong{color:#75648c}
+.steal-control:not(.hidden){
+  background:#f3f0f8!important;border-color:#e2daed!important;color:#6c5f84!important;
+}
+.steal-card{
+  border-color:#e4ddeb!important;background:#f8f5fa!important;
+}
+.steal-card strong{display:block;margin:5px 0 6px;color:#5e536f}
+.steal-card p{margin:0;color:#847a91;font-size:10px;line-height:1.45}
+.steal-answer-grid{
+  padding:12px;border-radius:18px;background:#f7f4fa;border:1px solid #e8e1ef;
+}
+.steal-answer{
+  border-color:#e2d9eb!important;background:#fff!important;
+}
+.result-wait{display:grid!important}
+.result-wait-card{
+  min-height:150px;border:1px solid var(--line);border-radius:16px;
+  background:#f8f9fb;display:grid;place-items:center;align-content:center;gap:5px;
+  color:#798499;text-align:center;
+}
+.result-wait-card strong{font-size:16px;color:#4f5b70}
+.rescue-action{
+  border:1px solid #d7e5df;background:#f0f6f3;color:#55786b;
+  border-radius:9px;padding:7px 9px;font-size:9px;font-weight:800;
+}
+.rescue-action:disabled{opacity:.45;cursor:not-allowed}
+.secret-round-chip{
+  background:#f2edf7!important;border-color:#e0d6e9!important;color:#6f6082!important;
+}
+.secret-round-chip b{color:#755e91!important;border-color:#ddd2e8!important}
+.question-stage:has(.steal-answer-grid){
+  box-shadow:0 16px 44px rgba(95,77,118,.08)!important;
+}
+@media(max-width:760px){
+  .player-statuses{gap:5px;flex-wrap:wrap}
+  .combo-badge{min-height:28px;padding:0 9px;font-size:9px}
+  .mechanics-strip{grid-template-columns:1fr 1fr}
+  .mechanic-chip{min-height:62px;padding:11px 12px}
+}
