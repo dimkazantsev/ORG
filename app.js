@@ -146,6 +146,7 @@ async function loadQuizSets(){
   const opts=state.quizSets.map(q=>`<option value="${q.id}">${escapeHtml(q.title)} — ${escapeHtml(q.topic)}</option>`).join("");
   $("quizSelect").innerHTML=opts;$("editorQuizSelect").innerHTML=opts;
   $("questionSetFilter").innerHTML='<option value="">Все наборы</option>'+opts;
+  $("bulkTargetSet").innerHTML='<option value="">Переместить в набор…</option>'+opts;
   $("sidebarSetCount").textContent=state.quizSets.length;
   $("overviewSets").textContent=state.quizSets.length;
   if(!state.editorQuizId&&state.quizSets[0])state.editorQuizId=state.quizSets[0].id;
@@ -302,6 +303,7 @@ function bindTeacherTabs(){
   document.querySelectorAll("[data-close-drawer='set']").forEach(b=>b.onclick=()=>closeDrawer("set"));
   document.querySelectorAll("[data-close-drawer='preview']").forEach(b=>b.onclick=()=>closeDrawer("preview"));
   document.querySelectorAll("[data-close-drawer='composer']").forEach(b=>b.onclick=()=>closeDrawer("composer"));
+  document.querySelectorAll("[data-close-drawer='setorder']").forEach(b=>b.onclick=()=>closeDrawer("setorder"));
 }
 function openQuestionDrawer(){
   state.editingQuestion=null;
@@ -320,7 +322,7 @@ function openSetComposer(){
   renderComposer();
 }
 function closeDrawer(type){
-  const el=type==="question"?$("questionEditorDrawer"):type==="set"?$("setEditorDrawer"):type==="composer"?$("setComposerDrawer"):$("questionPreviewDrawer");
+  const el=type==="question"?$("questionEditorDrawer"):type==="set"?$("setEditorDrawer"):type==="composer"?$("setComposerDrawer"):type==="setorder"?$("setOrderDrawer"):$("questionPreviewDrawer");
   el.classList.add("hidden");el.setAttribute("aria-hidden","true");
 }
 
@@ -356,38 +358,60 @@ $("createQuestionForm").addEventListener("submit",async e=>{
     const map={A:0,B:1,C:2,D:3};
     correctPayload=String($("correctMulti").value||"").toUpperCase().split(/[,\s]+/).filter(Boolean).map(x=>map[x]).filter(Number.isInteger).sort((a,b)=>a-b);
     if(!correctPayload.length){msg($("editorMessage"),"Укажите правильные варианты, например A, B.");return}
-  }
-  else if(type==="ordering"||type==="ranking") correctPayload=options.map((_,i)=>i);
+  }else if(type==="ordering"||type==="ranking"||type==="matching") correctPayload=options.map((_,i)=>i);
   else if(type==="odd_one_out") correctPayload=[Number($("correctOption").value)];
   else if(type==="short") correctPayload=[$("optionA").value.trim()];
+
   let config=(type==="duel"||type==="split")?{mode:"audience_vote",anonymous:true}:type==="scale"?{min:1,max:10,left:"Совсем не согласен",right:"Полностью согласен"}:type==="wordcloud"?{max_words:3}:type==="team_pitch"?{mode:"team_pitch",anonymous:false}:{};
-  const media=$("mediaUrl").value.trim();
+  let media=$("mediaUrl").value.trim();
+  let mediaPath=state.editingQuestion?.media_storage_path||null;
+  const file=$("mediaUpload").files?.[0];
+  if(file){
+    try{
+      const uploaded=await uploadQuestionMedia(file);
+      media=uploaded.url;mediaPath=uploaded.path;
+    }catch(err){msg($("editorMessage"),"Загрузка файла: "+err.message);return}
+  }
   if(type==="flag"&&media)config={...config,flag_url:media,media_kind:"flag"};
   if(["person_photo","place_photo"].includes(type)&&media)config={...config,image_url:media,media_kind:type};
   if(type==="anthem"&&media)config={...config,audio_url:media,media_kind:"audio"};
   if(type==="region_map")config={...config,target_region:$("targetRegion").value.trim(),map_dataset:"data/regions.topojson",show_disputed_note:true};
   if(type==="vote")config={...config,poll:true,show_live_results:true};
   if(type==="elimination"||$("eliminateOnWrong").checked)config={...config,eliminate_on_wrong:true,elimination_label:"Выбывание в раунде"};
-  const {error}=await sb.rpc("org_quiz_create_question_v2",{
-    p_quiz_id:$("editorQuizSelect").value,
-    p_question_type:type,
-    p_prompt:$("newQuestionPrompt").value,
-    p_options:options,
-    p_correct_payload:correctPayload,
-    p_config:config,
-    p_explanation:$("newQuestionExplanation").value||null,
-    p_points:100,
-    p_time_limit_sec:Number($("questionTime").value||30)
-  });
-  if(error){msg($("editorMessage"),error.message);return}
+
+  const tags=String($("questionTags").value||"").split(",").map(x=>x.trim()).filter(Boolean);
+  const difficulty=Number($("questionDifficulty").value||2);
+  const points=Number($("questionPoints").value||100);
+  const time=Number($("questionTime").value||30);
+  const editingId=$("editingQuestionId").value;
+
+  if(editingId){
+    const {error}=await sb.rpc("org_quiz_update_question_v3",{
+      p_question_id:editingId,p_quiz_id:$("editorQuizSelect").value,p_question_type:type,p_prompt:$("newQuestionPrompt").value,
+      p_options:options,p_correct_payload:correctPayload,p_config:config,p_explanation:$("newQuestionExplanation").value||null,
+      p_points:points,p_time_limit_sec:time,p_tags:tags,p_difficulty:difficulty,p_media_storage_path:mediaPath
+    });
+    if(error){msg($("editorMessage"),error.message);return}
+  }else{
+    const {data:newId,error}=await sb.rpc("org_quiz_create_question_v2",{
+      p_quiz_id:$("editorQuizSelect").value,p_question_type:type,p_prompt:$("newQuestionPrompt").value,
+      p_options:options,p_correct_payload:correctPayload,p_config:config,p_explanation:$("newQuestionExplanation").value||null,
+      p_points:points,p_time_limit_sec:time
+    });
+    if(error){msg($("editorMessage"),error.message);return}
+    const {error:updateError}=await sb.rpc("org_quiz_update_question_v3",{
+      p_question_id:newId,p_quiz_id:$("editorQuizSelect").value,p_question_type:type,p_prompt:$("newQuestionPrompt").value,
+      p_options:options,p_correct_payload:correctPayload,p_config:config,p_explanation:$("newQuestionExplanation").value||null,
+      p_points:points,p_time_limit_sec:time,p_tags:tags,p_difficulty:difficulty,p_media_storage_path:mediaPath
+    });
+    if(updateError){msg($("editorMessage"),updateError.message);return}
+  }
+
   const quiz=$("editorQuizSelect").value;
-  e.target.reset();$("editorQuizSelect").value=quiz;$("questionTime").value=30;$("questionType").value="single";updateQuestionTypeHint();
-  await loadQuestionBank();
-  await loadQuizSetLibrary();
-  await loadMediaLibrary();
-  closeDrawer("question");
-  await window.openStudioView("questions");
-  showToast("Вопрос сохранён в банк.");
+  state.editingQuestion=null;e.target.reset();$("editingQuestionId").value="";$("editorQuizSelect").value=quiz;
+  $("questionTime").value=30;$("questionPoints").value=100;$("questionDifficulty").value=2;$("questionType").value="single";updateQuestionTypeHint();
+  await loadQuestionBank();await loadQuizSetLibrary();await loadMediaLibrary();closeDrawer("question");
+  await window.openStudioView("questions");showToast(editingId?"Вопрос обновлён.":"Вопрос сохранён в банк.");
 });
 
 async function loadQuestionBank(){
