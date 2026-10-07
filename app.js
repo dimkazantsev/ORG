@@ -92,6 +92,7 @@ async function loadActiveQuestion(){
   $("questionCard").classList.toggle("danger-mode",data.question_type==="elimination");
   await renderQuestionMedia(data,$("mediaStage"));
   await renderQuestionInteraction(data);
+  if(state.viewAsParticipant){lockQuestionUI();msg($("answerFeedback"),"Режим предпросмотра Модератора — ответы не отправляются.");}
 }
 async function submitPayload(payload){
   if(!state.question)return;
@@ -645,7 +646,7 @@ async function renderVoteCandidates(q){
   host.innerHTML=(data||[]).map(a=>`<button class="vote-card" data-vote="${a.answer_id}">${escapeHtml(a.answer_text)}</button>`).join("")||"<p class='message'>Пока нет ответов для голосования.</p>";
   host.querySelectorAll("[data-vote]").forEach(b=>b.onclick=async()=>{
     const {error}=await sb.rpc("org_quiz_vote_open",{p_session_id:state.session.id,p_question_id:q.id,p_answer_id:b.dataset.vote});
-    if(error)msg($("answerFeedback"),humanError(error.message));else{lockQuestionUI();msg($("answerFeedback"),"Голос принят.");}
+    if(error)msg($("answerFeedback"),humanError(error.message));else{playSound("vote");lockQuestionUI();msg($("answerFeedback"),"Голос принят.");}
   });
 }
 async function renderOpenResults(q){
