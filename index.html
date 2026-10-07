@@ -155,16 +155,18 @@
             <div><strong>ORG Studio</strong><small>Moderator workspace</small></div>
           </div>
 
-          <nav class="studio-nav" aria-label="Навигация модератора">
-            <button class="studio-nav-item active" data-studio-view="overview"><span class="nav-dot"></span><span>Обзор</span></button>
-            <button class="studio-nav-item" data-studio-view="live"><span class="nav-dot"></span><span>Живая сессия</span></button>
-            <button class="studio-nav-item" data-studio-view="questions"><span class="nav-dot"></span><span>Банк вопросов</span><b id="sidebarQuestionCount">0</b></button>
-            <button class="studio-nav-item" data-studio-view="sets"><span class="nav-dot"></span><span>Наборы игр</span><b id="sidebarSetCount">0</b></button>
-            <button class="studio-nav-item" data-studio-view="scenarios"><span class="nav-dot"></span><span>Party Night Builder</span></button>
-            <button class="studio-nav-item" data-studio-view="media"><span class="nav-dot"></span><span>Медиатека</span></button>
-            <button class="studio-nav-item" data-studio-view="players"><span class="nav-dot"></span><span>Игроки</span></button>
-            <button class="studio-nav-item" data-studio-view="analytics"><span class="nav-dot"></span><span>Аналитика</span></button>
+          <nav class="studio-nav primary-flow" aria-label="Основной маршрут">
+            <button class="studio-nav-item" data-studio-view="questions"><span class="step-no">1</span><span>Вопросы</span><b id="sidebarQuestionCount">0</b></button>
+            <button class="studio-nav-item" data-studio-view="sets"><span class="step-no">2</span><span>Собрать игру</span><b id="sidebarSetCount">0</b></button>
+            <button class="studio-nav-item" data-studio-view="live"><span class="step-no">3</span><span>Запустить</span></button>
+            <button class="studio-nav-item" data-studio-view="analytics"><span class="step-no">4</span><span>Результаты</span></button>
           </nav>
+          <div class="studio-secondary">
+            <button class="secondary-link" data-studio-view="overview">Обзор</button>
+            <button class="secondary-link" data-studio-view="scenarios">Party Night</button>
+            <button class="secondary-link" data-studio-view="media">Медиатека</button>
+            <button class="secondary-link" data-studio-view="players">Игроки</button>
+          </div>
 
           <div class="studio-sidebar-footer">
             <button id="viewAsParticipant" class="sidebar-action">Предпросмотр участника</button>
@@ -184,7 +186,7 @@
             </div>
           </header>
 
-          <div id="studioOverview" class="studio-view">
+          <div id="studioOverview" class="studio-view hidden">
             <div class="overview-hero">
               <div>
                 <span class="section-kicker">ORG Studio</span>
@@ -219,7 +221,7 @@
 
           <div id="studioLive" class="studio-view hidden">
             <div class="section-toolbar">
-              <div><span class="section-kicker">Живая сессия</span><h2>Управление занятием</h2><p>Создание комнаты, участники, команды и сцена.</p></div>
+              <div><span class="section-kicker">Шаг 3 из 4</span><h2>Запустить игру</h2><p>Выберите набор, создайте комнату и покажите код студентам.</p></div>
             </div>
 
             <div id="teacherGamePanel" class="teacher-panel">
@@ -280,9 +282,9 @@
             </div>
           </div>
 
-          <div id="studioQuestions" class="studio-view hidden">
+          <div id="studioQuestions" class="studio-view">
             <div class="section-toolbar">
-              <div><span class="section-kicker">Контент</span><h2>Банк вопросов</h2><p>Все задания хранятся здесь. Фильтруйте, просматривайте и создавайте новые.</p></div>
+              <div><span class="section-kicker">Шаг 1 из 4</span><h2>Вопросы</h2><p>Сначала создайте или выберите задания. Всё остальное можно сделать позже.</p></div>
               <button id="openQuestionEditor" class="button-primary">+ Создать вопрос</button>
             </div>
 
@@ -308,7 +310,7 @@
 
           <div id="studioSets" class="studio-view hidden">
             <div class="section-toolbar">
-              <div><span class="section-kicker">Сценарии</span><h2>Наборы игр</h2><p>Набор — это последовательность вопросов для конкретного занятия.</p></div>
+              <div><span class="section-kicker">Шаг 2 из 4</span><h2>Собрать игру</h2><p>Выберите готовый набор или соберите свой из банка вопросов.</p></div>
               <div class="toolbar-actions"><button id="openSetComposer" class="button-secondary">Собрать из банка</button><button id="openSetEditor" class="button-primary">+ Создать набор</button></div>
             </div>
             <div id="quizSetLibrary" class="set-library"></div>
@@ -362,7 +364,7 @@
 
           <div id="studioAnalytics" class="studio-view hidden">
             <div class="section-toolbar">
-              <div><span class="section-kicker">Результаты</span><h2>Аналитика</h2><p>История сессий, точность, сложные вопросы и экспорт.</p></div>
+              <div><span class="section-kicker">Шаг 4 из 4</span><h2>Результаты</h2><p>После занятия здесь будут история, точность, сложные вопросы и экспорт.</p></div>
               <div class="toolbar-actions"><button id="exportCsv" class="button-secondary">CSV</button><button id="exportXlsx" class="button-secondary">XLSX</button><button id="refreshAnalytics" class="button-secondary">Обновить</button></div>
             </div>
             <div class="analytics-metrics">
