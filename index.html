@@ -178,66 +178,116 @@
           
 
           <div id="studioLive" class="studio-view hidden">
-            <div class="section-toolbar">
-              <div><span class="section-kicker">Шаг 2 из 3</span><h2>Запустить игру</h2><p>Выберите набор, создайте комнату и покажите код студентам.</p></div>
-              <button class="button-primary" data-open-view="analytics">Дальше: результаты →</button>
+            <div class="section-toolbar calm-toolbar">
+              <div>
+                <span class="section-kicker">Шаг 2 из 3</span>
+                <h2>Подготовка и проведение игры</h2>
+                <p>Идите слева направо: сначала комната, затем команды, затем готовность. Пульт ведущего появляется только после запуска.</p>
+              </div>
+            </div>
+
+            <div class="session-stepper" aria-label="Этапы запуска">
+              <button class="session-step active" data-session-step="room"><span>1</span><div><b>Комната</b><small>Набор и код</small></div></button>
+              <button class="session-step" data-session-step="teams"><span>2</span><div><b>Команды</b><small>Распределение</small></div></button>
+              <button class="session-step" data-session-step="ready"><span>3</span><div><b>Готовность</b><small>Проверка и отсчёт</small></div></button>
+              <button class="session-step" data-session-step="live"><span>4</span><div><b>Игра</b><small>Пульт ведущего</small></div></button>
             </div>
 
             <div id="teacherGamePanel" class="teacher-panel">
-              <div class="live-metrics">
+              <div class="live-metrics soft-metrics">
                 <article><span>Код комнаты</span><strong id="metricCode">—</strong></article>
                 <article><span>Участники</span><strong id="metricParticipants">0</strong></article>
                 <article><span>Команды</span><strong id="metricTeams">0</strong></article>
                 <article><span>Статус</span><strong id="metricStatus">—</strong></article>
               </div>
 
-              <div class="live-layout">
-                <article class="workspace-card session-create-card">
-                  <div class="workspace-card-head"><div><span class="section-kicker">Новая комната</span><h3>Параметры игры</h3></div></div>
-                  <form id="createSessionForm" class="form-stack">
-                    <label>Набор вопросов<select id="quizSelect"></select></label>
-                    <label>Режим<select id="gameMode"><option value="party">Party</option><option value="elimination">На выбывание</option><option value="classic">Классический</option><option value="seminar">Семинар</option></select></label>
-                    <label>Название занятия<input id="sessionTitle" placeholder="Например, География — группа 102"></label>
-                    <label>Количество команд<input id="teamCount" type="number" min="1" max="16" value="4"></label>
-                    <button class="button-primary full" type="submit">Создать комнату</button>
-                  </form>
-                </article>
-
-                <article class="workspace-card control-card">
-                  <div class="workspace-card-head"><div><span class="section-kicker">Пульт ведущего</span><h3>Управление сценой</h3></div></div>
-                  <div class="control-grid-pro">
-                    <button id="startGame" class="button-primary">Начать игру</button>
-                    <button id="nextQuestion" class="button-primary subtle">Следующий вопрос</button>
-                    <button id="prevQuestion" class="button-secondary">Назад</button>
-                    <button id="randomizeTeams" class="button-secondary">Перемешать команды</button>
-                    <button id="openVoting" class="button-secondary">Открыть голосование</button>
-                    <button id="showResults" class="button-secondary">Показать результаты</button>
-                    <button id="finishGame" class="button-danger wide">Завершить сессию</button>
-                  </div>
-                  <p id="teacherActionMessage" class="form-message"></p>
-                </article>
-              </div>
-
-              <article class="workspace-card">
-                <div class="workspace-card-head"><div><span class="section-kicker">Состав аудитории</span><h3>Игроки и команды</h3></div><span class="info-badge">Drag & drop</span></div>
-                <div id="participantsBoard" class="participants-board"></div>
-              </article>
-
-              <article class="workspace-card stage-card">
-                <div class="workspace-card-head"><div><span class="section-kicker">Сцена</span><h3>Большой экран аудитории</h3></div><button id="fullscreenQuestion" class="button-secondary">На весь экран</button></div>
-                <div id="teacherQuestionStage" class="presenter-stage">
-                  <div class="presenter-top"><span id="presenterCounter">Ожидание</span><strong id="presenterTimer">—</strong></div>
-                  <div id="presenterMedia" class="media-stage hidden"></div>
-                  <h2 id="presenterPrompt">Создайте комнату и запустите игру.</h2>
-                  <div id="presenterOptions" class="presenter-options"></div>
-                  <div id="optionDistribution" class="distribution"></div>
+              <section id="setupRoomPanel" class="setup-panel">
+                <div class="setup-panel-head">
+                  <div><span class="section-kicker">Этап 1</span><h3>Создайте комнату</h3><p>Выберите готовый набор или сгенерированную игру. После создания студенты смогут подключаться по коду.</p></div>
                 </div>
-              </article>
+                <form id="createSessionForm" class="setup-form">
+                  <label class="field-wide">Набор игры<select id="quizSelect"></select></label>
+                  <label>Режим<select id="gameMode"><option value="party">Party</option><option value="classic">Классический</option><option value="elimination">На выбывание</option><option value="seminar">Семинар</option></select></label>
+                  <label>Команд<input id="teamCount" type="number" min="1" max="16" value="4"></label>
+                  <label class="field-wide">Название занятия<input id="sessionTitle" placeholder="Например, История кино · группа 102"></label>
+                  <button class="button-primary setup-primary" type="submit">Создать комнату и открыть вход →</button>
+                </form>
+                <p id="teacherActionMessage" class="form-message"></p>
+              </section>
 
-              <div class="two-workspace">
-                <article class="workspace-card"><span class="section-kicker">Команды</span><h3>Рейтинг команд</h3><div id="teacherLeaderboard" class="leaderboard"></div></article>
-                <article class="workspace-card"><span class="section-kicker">Игроки</span><h3>Личный рейтинг</h3><div id="studentRanking" class="leaderboard"></div></article>
-              </div>
+              <section id="setupTeamsPanel" class="setup-panel hidden">
+                <div class="setup-panel-head">
+                  <div><span class="section-kicker">Этап 2</span><h3>Соберите команды</h3><p>Сначала дождитесь участников. Затем распределите автоматически или перетащите вручную. Запуск игры здесь недоступен.</p></div>
+                  <div class="setup-actions">
+                    <button id="randomizeTeams" class="button-secondary strong">Перемешать случайно</button>
+                    <button id="lockTeams" class="button-primary">Зафиксировать команды →</button>
+                  </div>
+                </div>
+                <article class="workspace-card team-workspace">
+                  <div class="workspace-card-head"><div><span class="section-kicker">Участники</span><h3>Распределение по командам</h3></div><span class="info-badge">Drag & drop</span></div>
+                  <div id="participantsBoard" class="participants-board"></div>
+                </article>
+              </section>
+
+              <section id="setupReadyPanel" class="setup-panel hidden">
+                <div class="ready-grid">
+                  <article class="ready-card">
+                    <span class="section-kicker">Этап 3</span>
+                    <h3>Всё готово?</h3>
+                    <div class="readiness-list">
+                      <div><span>Набор игры</span><strong id="readyQuizName">—</strong></div>
+                      <div><span>Участников</span><strong id="readyParticipants">0</strong></div>
+                      <div><span>Команд</span><strong id="readyTeams">0</strong></div>
+                      <div><span>Seed</span><strong id="readySeed">—</strong></div>
+                    </div>
+                  </article>
+                  <article class="ready-card accent">
+                    <span class="section-kicker">Перед стартом</span>
+                    <h3>Обратный отсчёт</h3>
+                    <p>После нажатия студенты увидят единый трёхсекундный отсчёт. Затем первый раунд откроется автоматически.</p>
+                    <div class="setup-actions vertical">
+                      <button id="returnToTeams" class="button-secondary">← Вернуться к командам</button>
+                      <button id="startGame" class="button-primary launch-button">Запустить игру</button>
+                    </div>
+                  </article>
+                </div>
+              </section>
+
+              <section id="setupLivePanel" class="setup-panel hidden">
+                <div class="director-bar">
+                  <div>
+                    <span class="section-kicker">Этап 4 · Режим ведущего</span>
+                    <h3 id="directorRoundTitle">Раунд</h3>
+                    <p id="directorRoundMeta">Вопрос и таймер синхронизированы у преподавателя и участников.</p>
+                  </div>
+                  <div class="director-controls">
+                    <button id="prevQuestion" class="button-secondary">← Назад</button>
+                    <button id="nextQuestion" class="button-primary">Следующий →</button>
+                    <button id="openVoting" class="button-secondary">Голосование</button>
+                    <button id="showResults" class="button-secondary">Результат</button>
+                    <button id="finishGame" class="button-danger">Завершить</button>
+                  </div>
+                </div>
+
+                <article class="workspace-card stage-card">
+                  <div class="workspace-card-head">
+                    <div><span class="section-kicker">Сцена</span><h3>Экран аудитории</h3></div>
+                    <button id="fullscreenQuestion" class="button-secondary">На весь экран</button>
+                  </div>
+                  <div id="teacherQuestionStage" class="presenter-stage">
+                    <div class="presenter-top"><span id="presenterCounter">Ожидание</span><strong id="presenterTimer">—</strong></div>
+                    <div id="presenterMedia" class="media-stage hidden"></div>
+                    <h2 id="presenterPrompt">Игра ещё не запущена.</h2>
+                    <div id="presenterOptions" class="presenter-options"></div>
+                    <div id="optionDistribution" class="distribution"></div>
+                  </div>
+                </article>
+
+                <div class="two-workspace">
+                  <article class="workspace-card"><span class="section-kicker">Команды</span><h3>Рейтинг команд</h3><div id="teacherLeaderboard" class="leaderboard"></div></article>
+                  <article class="workspace-card"><span class="section-kicker">Игроки</span><h3>Личный рейтинг</h3><div id="studentRanking" class="leaderboard"></div></article>
+                </div>
+              </section>
             </div>
           </div>
 
@@ -250,6 +300,25 @@
                 <button class="button-primary" data-open-view="live">Запустить игру →</button>
               </div>
             </div>
+            <section class="generator-card">
+              <div class="generator-copy">
+                <span class="section-kicker">Случайная игра</span>
+                <h3>Собрать игру по seed</h3>
+                <p>Одинаковый seed всегда собирает одну и ту же структуру раундов. Выберите банки, количество раундов и вопросов — система сама соберёт последовательность.</p>
+              </div>
+              <form id="randomGameForm" class="generator-form">
+                <label>Seed<input id="randomSeed" type="number" min="1" max="2147483647" value="482731"></label>
+                <label>Раундов<input id="randomRounds" type="number" min="1" max="12" value="5"></label>
+                <label>Вопросов в раунде<input id="randomQuestions" type="number" min="1" max="20" value="5"></label>
+                <div class="generator-banks field-wide">
+                  <span>Банки для генерации</span>
+                  <div id="randomBankList" class="bank-choice-grid"></div>
+                </div>
+                <button class="button-primary generator-submit" type="submit">Собрать случайную игру →</button>
+              </form>
+              <div id="randomGameResult" class="generator-result hidden"></div>
+            </section>
+
             <section class="game-pack-section compact-packs">
               <div class="game-pack-head">
                 <div><span class="section-kicker">Готовые игры</span><h3>Выберите режим</h3><p>Каждая карточка — готовый запускаемый банк с собственным типом заданий.</p></div>
