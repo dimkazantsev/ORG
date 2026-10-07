@@ -446,13 +446,15 @@ function renderQuestionLibrary(){
   );
   $("questionBankCount").textContent=`${rows.length} вопросов`;
 
-  const icon={single:"✓",multiple:"☷",flag:"⚑",anthem:"♫",person_photo:"◎",place_photo:"⌖",region_map:"◫",vote:"◉",elimination:"!",matching:"⇄",ordering:"↕",duel:"✦",split:"◇",scale:"—",wordcloud:"☁",ranking:"≡",team_pitch:"◆"};
+  const icon={single:"✓",multiple:"☷",flag:"⚑",anthem:"♫",person_photo:"◎",place_photo:"⌖",region_map:"◫",vote:"◉",elimination:"!",matching:"⇄",ordering:"↕",duel:"✦",split:"◇",scale:"—",wordcloud:"☁",ranking:"≡",team_pitch:"◆",film_frame:"▣",film_quote:"❝",film_clip:"▶"};
   const visual=q=>{
     const cfg=q.config||{};
     if(cfg.flag_url)return `<div class="question-visual flag-card"><img src="${escapeHtml(cfg.flag_url)}" alt=""></div>`;
     if(cfg.image_url)return `<div class="question-visual photo-card"><img loading="lazy" src="${escapeHtml(cfg.image_url)}" alt=""></div>`;
     if(cfg.wiki_title||cfg.wiki_search)return `<div class="question-visual photo-card wiki-photo" data-qid="${q.id}"><div class="photo-loader">◉</div></div>`;
     if(cfg.audio_url)return `<div class="question-visual audio-card-large"><span>♫</span><div><strong>Аудиораунд</strong><small>Гимн · нажмите «Открыть», чтобы прослушать</small></div></div>`;
+    if(q.question_type==="film_quote")return `<div class="question-visual quote-card-large"><span>❝</span><strong>${escapeHtml(cfg.quote||q.prompt)}</strong></div>`;
+    if(q.question_type==="film_clip")return `<div class="question-visual video-card-large"><span>▶</span><div><strong>Кинофрагмент</strong><small>Официальное видео «Мосфильма»</small></div></div>`;
     if(q.question_type==="region_map")return `<div class="question-visual map-card-large"><span>◎</span><div><strong>Интерактивная карта</strong><small>Выбор региона · zoom · pan</small></div></div>`;
     const tone={elimination:"danger",duel:"violet",vote:"yellow",single:"blue",multiple:"blue"}[q.question_type]||"mint";
     return `<div class="question-visual abstract-card ${tone}"><span>${icon[q.question_type]||"?"}</span><strong>${questionTypeLabel(q.question_type)}</strong></div>`;
@@ -528,8 +530,15 @@ async function previewLibraryQuestion(id){
   const host=$("previewMedia");host.className="preview-media hidden";host.innerHTML="";
   const cfg=q.config||{};
   if(cfg.flag_url){host.className="preview-media flag-preview";host.innerHTML=`<img src="${escapeHtml(cfg.flag_url)}" alt="">`;}
-  else if(cfg.image_url||cfg.wiki_title||cfg.wiki_search){host.className="preview-media";const image=await resolveQuestionImage(q);host.innerHTML=image?`<img src="${escapeHtml(image)}" alt="">`:`<div class="media-placeholder">Изображение не удалось загрузить</div>`;}
+  else if(cfg.image_url||cfg.wiki_title||cfg.wiki_search){host.className="preview-media";const image=await resolveQuestionImage(q);host.innerHTML=image?`<img src="${escapeHtml(image)}" alt="" style="object-fit:${escapeHtml(cfg.image_fit||"cover")};object-position:${escapeHtml(cfg.image_position||"50% 50%")}">`:`<div class="media-placeholder">Изображение не удалось загрузить</div>`;}
   else if(cfg.audio_url){host.className="preview-media audio-preview";host.innerHTML=`<div class="audio-preview-inner"><span>♫</span><audio controls preload="metadata" src="${escapeHtml(cfg.audio_url)}"></audio></div>`;}
+  else if(q.question_type==="film_clip"&&cfg.youtube_id){
+    host.className="preview-media video-preview";
+    const start=Number(cfg.video_start||0),end=Number(cfg.video_end||0);
+    host.innerHTML=`<iframe class="film-embed" src="https://www.youtube-nocookie.com/embed/${escapeHtml(cfg.youtube_id)}?start=${start}&end=${end}&rel=0" title="Фрагмент фильма" allow="encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+  }
+  else if(q.question_type==="film_quote"){host.className="preview-media quote-preview";host.innerHTML=`<div class="quote-stage">❝ <strong>${escapeHtml(cfg.quote||q.prompt)}</strong></div>`;}
+
   else if(q.question_type==="region_map"){host.className="preview-media";host.dataset.preview="1";await renderRussiaMap(q,host);}
   $("previewOptions").innerHTML=(q.options||[]).length
     ? q.options.map((o,i)=>`<div class="preview-option"><span>${String.fromCharCode(65+i)}</span><strong>${escapeHtml(o)}</strong></div>`).join("")
@@ -597,8 +606,11 @@ async function loadOverview(){
     if(t.startsWith("Россия на карте"))return"◎";
     if(t.startsWith("Гербы регионов"))return"♜";
     if(t.startsWith("Гимны мира"))return"♫";
-    if(t.startsWith("Знаменитые люди"))return"◉";
-    if(t.startsWith("Места мира"))return"⌖";
+    if(t.startsWith("Знаменитые люди России"))return"◉";
+    if(t.startsWith("Советское и российское кино — кадры"))return"▣";
+    if(t.startsWith("Советское и российское кино — фразы"))return"❝";
+    if(t.startsWith("Советское и российское кино — фрагменты"))return"▶";
+    if(t.startsWith("Достопримечательности мира"))return"⌖";
     if(t.startsWith("Тёмная комната"))return"!";
     return"◆";
   };
@@ -610,8 +622,11 @@ async function loadOverview(){
     if(t==="Россия на карте — 89 регионов")return"Интерактивная карта · zoom · pan · подтверждение ответа";
     if(t.startsWith("Гербы регионов"))return"89 гербов субъектов России";
     if(t.startsWith("Гимны мира"))return"Большой аудиобанк национальных гимнов";
-    if(t.startsWith("Знаменитые люди"))return"100 известных людей по фотографии";
-    if(t.startsWith("Места мира"))return"100 мировых достопримечательностей и природных объектов";
+    if(t.startsWith("Знаменитые люди России"))return"100 российских и советских деятелей · Full HD портреты · пояснения";
+    if(t.startsWith("Советское и российское кино — кадры"))return"Угадайте фильм по кадру из официального видео";
+    if(t.startsWith("Советское и российское кино — фразы"))return"Короткие узнаваемые фразы из отечественных фильмов";
+    if(t.startsWith("Советское и российское кино — фрагменты"))return"Короткие официальные видеофрагменты «Мосфильма»";
+    if(t.startsWith("Достопримечательности мира"))return"100 знаменитых достопримечательностей и природных объектов";
     if(t==="Тёмная комната — выбывание")return"Раунды высокого риска";
     return s.description||"";
   };
@@ -805,14 +820,14 @@ const typeHints={
   vote:"Голосование аудитории без правильного ответа.",
   elimination:"Раунд высокого риска: неверный ответ может выбить игрока из командного зачёта."
 };
-function questionTypeLabel(t){return ({single:"Один ответ",multiple:"Несколько ответов",true_false:"Верно / неверно",short:"Короткий ответ",ordering:"Порядок",matching:"Сопоставление",duel:"Баттл ответов",split:"Кейс + голосование",odd_one_out:"Кто лишний",scale:"Шкала позиции",wordcloud:"Облако мнений",ranking:"Ранжирование",team_pitch:"Защита позиции",flag:"Флаг",anthem:"Гимн",person_photo:"Кто это?",place_photo:"Где это?",region_map:"Регион на карте",vote:"Голосование",elimination:"На выбывание"})[t]||"Задание"}
+function questionTypeLabel(t){return ({single:"Один ответ",multiple:"Несколько ответов",true_false:"Верно / неверно",short:"Короткий ответ",ordering:"Порядок",matching:"Сопоставление",duel:"Баттл ответов",split:"Кейс + голосование",odd_one_out:"Кто лишний",scale:"Шкала позиции",wordcloud:"Облако мнений",ranking:"Ранжирование",team_pitch:"Защита позиции",flag:"Флаг",anthem:"Гимн",person_photo:"Кто это?",place_photo:"Где это?",region_map:"Регион на карте",vote:"Голосование",elimination:"На выбывание",film_frame:"Кадр из фильма",film_quote:"Киноцитата",film_clip:"Кинофрагмент"})[t]||"Задание"}
 function updateQuestionTypeHint(){
   if(!$("questionType"))return;
   const t=$("questionType").value;
   $("questionTypeHint").textContent=typeHints[t]||"Интерактивное задание.";
   const optionWrap=$("optionA").closest(".form-grid");
   optionWrap.classList.toggle("hidden",["duel","split","scale","wordcloud","team_pitch","region_map"].includes(t));
-  $("mediaConfig").classList.toggle("hidden",!["flag","anthem","person_photo","place_photo","region_map"].includes(t));
+  $("mediaConfig").classList.toggle("hidden",!["flag","anthem","person_photo","place_photo","region_map","film_frame","film_clip"].includes(t));
   $("correctOptionLabel").classList.toggle("hidden",["duel","split","short","ordering","multiple","scale","wordcloud","ranking","team_pitch"].includes(t));
   $("correctMultiLabel").classList.toggle("hidden",t!=="multiple");
 }
@@ -986,8 +1001,16 @@ async function renderQuestionMedia(q,host){
   host.className="media-stage hidden";host.innerHTML="";
   const cfg=q.config||{};
   if(cfg.flag_url){host.className="media-stage flag-stage";host.innerHTML=`<img src="${escapeHtml(cfg.flag_url)}" alt="Флаг для задания">`;return}
-  if(cfg.image_url||cfg.wiki_title||cfg.wiki_search){const image=await resolveQuestionImage(q);host.className="media-stage";host.innerHTML=image?`<img src="${escapeHtml(image)}" alt="Изображение для задания" style="object-fit:${escapeHtml(cfg.image_fit||"cover")}">`:`<div class="media-placeholder">Изображение не удалось загрузить</div>`;return}
+  if(cfg.image_url||cfg.wiki_title||cfg.wiki_search){const image=await resolveQuestionImage(q);host.className="media-stage";host.innerHTML=image?`<img src="${escapeHtml(image)}" alt="Изображение для задания" style="object-fit:${escapeHtml(cfg.image_fit||"cover")};object-position:${escapeHtml(cfg.image_position||"50% 50%")}">`:`<div class="media-placeholder">Изображение не удалось загрузить</div>`;return}
   if(cfg.audio_url){host.className="media-stage";host.innerHTML=`<div class="audio-card"><div class="note">♫</div><strong>Прослушайте фрагмент</strong><audio controls preload="metadata" src="${escapeHtml(cfg.audio_url)}"></audio></div>`;return}
+  if(q.question_type==="film_clip"&&cfg.youtube_id){
+    const start=Number(cfg.video_start||0),end=Number(cfg.video_end||0);
+    host.className="media-stage video-stage";
+    host.innerHTML=`<iframe class="film-embed" src="https://www.youtube-nocookie.com/embed/${escapeHtml(cfg.youtube_id)}?start=${start}&end=${end}&rel=0" title="Фрагмент фильма" allow="encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+    return;
+  }
+  if(q.question_type==="film_quote"){host.className="media-stage quote-media-stage";host.innerHTML=`<div class="quote-stage">❝ <strong>${escapeHtml(cfg.quote||q.prompt)}</strong></div>`;return}
+
   if(q.question_type==="region_map"){host.className="media-stage";await renderRussiaMap(q,host);return}
 }
 async function renderRussiaMap(q,host){
