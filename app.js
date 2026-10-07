@@ -298,13 +298,14 @@ function bindTeacherTabs(){
   $("openSetEditor").onclick=()=>openSetDrawer();
   document.querySelectorAll("[data-close-drawer='question']").forEach(b=>b.onclick=()=>closeDrawer("question"));
   document.querySelectorAll("[data-close-drawer='set']").forEach(b=>b.onclick=()=>closeDrawer("set"));
+  document.querySelectorAll("[data-close-drawer='preview']").forEach(b=>b.onclick=()=>closeDrawer("preview"));
 }
 function openQuestionDrawer(){
   $("questionEditorDrawer").classList.remove("hidden");$("questionEditorDrawer").setAttribute("aria-hidden","false");updateQuestionTypeHint();
 }
 function openSetDrawer(){$("setEditorDrawer").classList.remove("hidden");$("setEditorDrawer").setAttribute("aria-hidden","false")}
 function closeDrawer(type){
-  const el=type==="question"?$("questionEditorDrawer"):$("setEditorDrawer");el.classList.add("hidden");el.setAttribute("aria-hidden","true");
+  const el=type==="question"?$("questionEditorDrawer"):type==="set"?$("setEditorDrawer"):$("questionPreviewDrawer");el.classList.add("hidden");el.setAttribute("aria-hidden","true");
 }
 
 $("editorQuizSelect").addEventListener("change",async e=>{
@@ -402,9 +403,23 @@ function renderQuestionLibrary(){
     if(error)showToast(error.message);else{await loadQuestionBank();await loadQuizSetLibrary();}
   });
 }
-function previewLibraryQuestion(id){
+async function previewLibraryQuestion(id){
   const q=(state.questionRows||[]).find(x=>x.id===id);if(!q)return;
-  showToast(questionTypeLabel(q.question_type)+": "+q.prompt.slice(0,90));
+  $("questionPreviewDrawer").classList.remove("hidden");$("questionPreviewDrawer").setAttribute("aria-hidden","false");
+  $("previewType").textContent=questionTypeLabel(q.question_type);
+  $("previewTitle").textContent=q.prompt;
+  const set=state.quizSets.find(s=>s.id===q.quiz_id);
+  $("previewMeta").innerHTML=`<span>${escapeHtml(set?.title||"Без набора")}</span><span>${q.time_limit_sec} сек.</span><span>${q.points} баллов</span>`;
+  const host=$("previewMedia");host.className="preview-media hidden";host.innerHTML="";
+  const cfg=q.config||{};
+  if(cfg.flag_url){host.className="preview-media flag-preview";host.innerHTML=`<img src="${escapeHtml(cfg.flag_url)}" alt="">`;}
+  else if(cfg.image_url){host.className="preview-media";host.innerHTML=`<img src="${escapeHtml(cfg.image_url)}" alt="">`;}
+  else if(cfg.audio_url){host.className="preview-media audio-preview";host.innerHTML=`<div class="audio-preview-inner"><span>♫</span><audio controls preload="metadata" src="${escapeHtml(cfg.audio_url)}"></audio></div>`;}
+  else if(q.question_type==="region_map"){host.className="preview-media";await renderRussiaMap(q,host);}
+  $("previewOptions").innerHTML=(q.options||[]).length
+    ? q.options.map((o,i)=>`<div class="preview-option"><span>${String.fromCharCode(65+i)}</span><strong>${escapeHtml(o)}</strong></div>`).join("")
+    : '<div class="preview-option muted"><strong>Ответ вводится интерактивно</strong></div>';
+  $("previewExplanation").innerHTML=q.explanation?`<span class="section-kicker">Пояснение</span><p>${escapeHtml(q.explanation)}</p>`:"";
 }
 async function loadQuizSetLibrary(){
   if(!$("quizSetLibrary"))return;
@@ -420,9 +435,13 @@ async function loadMediaLibrary(){
   if(!$("mediaLibrary"))return;
   const rows=(state.questionRows||[]).filter(q=>q.config&&(q.config.image_url||q.config.flag_url||q.config.audio_url));
   $("mediaLibrary").innerHTML=rows.map(q=>{
-    const cfg=q.config||{};const url=cfg.image_url||cfg.flag_url||cfg.audio_url;const visual=cfg.audio_url?'<div class="media-thumb">♫</div>':`<div class="media-thumb"><img src="${escapeHtml(url)}" alt=""></div>`;
-    return `<article class="media-item">${visual}<div class="media-info"><strong>${escapeHtml(q.prompt.slice(0,65))}</strong><small>${questionTypeLabel(q.question_type)}</small></div></article>`;
+    const cfg=q.config||{};const url=cfg.image_url||cfg.flag_url||cfg.audio_url;
+    const visual=cfg.audio_url
+      ? `<div class="media-thumb audio-thumb"><span>♫</span><audio controls preload="none" src="${escapeHtml(url)}"></audio></div>`
+      : `<div class="media-thumb"><img src="${escapeHtml(url)}" alt=""></div>`;
+    return `<article class="media-item">${visual}<div class="media-info"><strong>${escapeHtml(q.prompt.slice(0,65))}</strong><small>${questionTypeLabel(q.question_type)}</small><button class="text-button" data-media-preview="${q.id}">Открыть вопрос →</button></div></article>`;
   }).join("")||'<div class="empty-state"><strong>Медиатека пуста</strong><p>Медиа появятся после создания фото-, флаг- или аудиовопросов.</p></div>';
+  document.querySelectorAll("[data-media-preview]").forEach(b=>b.onclick=()=>previewLibraryQuestion(b.dataset.mediaPreview));
 }
 function loadPlayersDirectory(){
   if(!$("playersDirectory"))return;
