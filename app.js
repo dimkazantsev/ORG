@@ -193,6 +193,18 @@ function renderParticipants(){
       </div>
     </div>`).join("")}</div>`;
   document.querySelectorAll(".drag-card").forEach(card=>{
+    const p=state.participants.find(x=>x.id===card.dataset.person);
+    if(p?.life_state==="eliminated")card.classList.add("eliminated");
+    const small=card.querySelector("small");
+    if(small)small.textContent=(small.textContent||"")+" · "+(p?.life_state==="eliminated"?"выбыл":"в игре");
+    const actions=document.createElement("div");actions.className="life-actions";
+    const out=document.createElement("button");out.className="danger";out.textContent="Выбить";
+    const back=document.createElement("button");back.className="secondary";back.textContent="Вернуть";
+    out.onclick=async e=>{e.stopPropagation();const {error}=await sb.rpc("org_party_set_life_state",{p_participant_id:p.id,p_state:"eliminated",p_reason:"Решение Модератора"});if(error)msg($("teacherActionMessage"),error.message);else{playSound("eliminate");await refreshTeacher()}};
+    back.onclick=async e=>{e.stopPropagation();const {error}=await sb.rpc("org_party_set_life_state",{p_participant_id:p.id,p_state:"alive",p_reason:null});if(error)msg($("teacherActionMessage"),error.message);else{playSound("correct");await refreshTeacher()}};
+    actions.append(out,back);card.append(actions);
+  });
+  document.querySelectorAll(".drag-card").forEach(card=>{
     card.addEventListener("dragstart",()=>{card.classList.add("dragging");card.dataset.dragging="1"});
     card.addEventListener("dragend",()=>{card.classList.remove("dragging");delete card.dataset.dragging});
   });
