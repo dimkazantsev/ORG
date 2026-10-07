@@ -222,6 +222,7 @@
           <div id="studioLive" class="studio-view hidden">
             <div class="section-toolbar">
               <div><span class="section-kicker">Шаг 3 из 4</span><h2>Запустить игру</h2><p>Выберите набор, создайте комнату и покажите код студентам.</p></div>
+              <button class="button-primary" data-open-view="analytics">Дальше: результаты →</button>
             </div>
 
             <div id="teacherGamePanel" class="teacher-panel">
@@ -285,7 +286,7 @@
           <div id="studioQuestions" class="studio-view">
             <div class="section-toolbar">
               <div><span class="section-kicker">Шаг 1 из 4</span><h2>Вопросы</h2><p>Сначала создайте или выберите задания. Всё остальное можно сделать позже.</p></div>
-              <button id="openQuestionEditor" class="button-primary">+ Создать вопрос</button>
+              <div class="toolbar-actions"><button id="openQuestionEditor" class="button-secondary">+ Создать вопрос</button><button class="button-primary" data-open-view="sets">Дальше: собрать игру →</button></div>
             </div>
 
             <div class="filter-bar">
@@ -311,7 +312,7 @@
           <div id="studioSets" class="studio-view hidden">
             <div class="section-toolbar">
               <div><span class="section-kicker">Шаг 2 из 4</span><h2>Собрать игру</h2><p>Выберите готовый набор или соберите свой из банка вопросов.</p></div>
-              <div class="toolbar-actions"><button id="openSetComposer" class="button-secondary">Собрать из банка</button><button id="openSetEditor" class="button-primary">+ Создать набор</button></div>
+              <div class="toolbar-actions"><button id="openSetComposer" class="button-secondary">Собрать из банка</button><button id="openSetEditor" class="button-secondary">+ Пустой набор</button><button class="button-primary" data-open-view="live">Дальше: запустить →</button></div>
             </div>
             <div id="quizSetLibrary" class="set-library"></div>
           </div>
