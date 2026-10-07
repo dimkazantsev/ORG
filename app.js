@@ -521,15 +521,23 @@ const typeHints={
   scale:"Шкала позиции 1–10. Используется для фиксации мнений и обсуждения.",
   wordcloud:"Короткие ответы собираются в живое облако мнений.",
   ranking:"Перетащите элементы и выстройте их по приоритету.",
-  team_pitch:"Команда формулирует позицию, затем аудитория оценивает предложения."
+  team_pitch:"Команда формулирует позицию, затем аудитория оценивает предложения.",
+  flag:"Покажите флаг и предложите варианты стран.",
+  anthem:"Аудио-фрагмент гимна: участники угадывают страну.",
+  person_photo:"Угадайте известного человека по фотографии.",
+  place_photo:"Определите место или страну по фотографии.",
+  region_map:"Игрок кликает по нужному субъекту на интерактивной карте России.",
+  vote:"Голосование аудитории без правильного ответа.",
+  elimination:"Раунд высокого риска: неверный ответ может выбить игрока из командного зачёта."
 };
-function questionTypeLabel(t){return ({single:"Один ответ",multiple:"Несколько ответов",true_false:"Верно / неверно",short:"Короткий ответ",ordering:"Порядок",matching:"Сопоставление",duel:"Баттл ответов",split:"Кейс + голосование",odd_one_out:"Кто лишний",scale:"Шкала позиции",wordcloud:"Облако мнений",ranking:"Ранжирование",team_pitch:"Защита позиции"})[t]||"Задание"}
+function questionTypeLabel(t){return ({single:"Один ответ",multiple:"Несколько ответов",true_false:"Верно / неверно",short:"Короткий ответ",ordering:"Порядок",matching:"Сопоставление",duel:"Баттл ответов",split:"Кейс + голосование",odd_one_out:"Кто лишний",scale:"Шкала позиции",wordcloud:"Облако мнений",ranking:"Ранжирование",team_pitch:"Защита позиции",flag:"Флаг",anthem:"Гимн",person_photo:"Кто это?",place_photo:"Где это?",region_map:"Регион на карте",vote:"Голосование",elimination:"На выбывание"})[t]||"Задание"}
 function updateQuestionTypeHint(){
   if(!$("questionType"))return;
   const t=$("questionType").value;
   $("questionTypeHint").textContent=typeHints[t]||"Интерактивное задание.";
   const optionWrap=$("optionA").closest(".two-col");
-  optionWrap.classList.toggle("hidden",["duel","split","scale","wordcloud","team_pitch"].includes(t));
+  optionWrap.classList.toggle("hidden",["duel","split","scale","wordcloud","team_pitch","region_map"].includes(t));
+  $("mediaConfig").classList.toggle("hidden",!["flag","anthem","person_photo","place_photo","region_map"].includes(t));
   $("correctOptionLabel").classList.toggle("hidden",["duel","split","short","ordering","multiple","scale","wordcloud","ranking","team_pitch"].includes(t));
   $("correctMultiLabel").classList.toggle("hidden",t!=="multiple");
 }
