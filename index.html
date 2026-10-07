@@ -175,63 +175,7 @@
             
           </header>
 
-          <div id="studioOverview" class="studio-view hidden legacy-section">
-            <div class="overview-mosaic">
-              <article class="mosaic-hero">
-                <div class="mosaic-chip">ORG Studio · преподаватель</div>
-                <h2>Провести игру<br>без лишних экранов.</h2>
-                <p>Четыре понятных шага: выберите вопросы, соберите игру, запустите комнату и посмотрите результаты.</p>
-                <div class="mosaic-hero-actions">
-                  <button class="mosaic-button pink" data-open-view="questions">Начать с вопросов</button>
-                  <button class="mosaic-button lime" data-open-view="scenarios">Собрать Party Night</button>
-                </div>
-              </article>
-
-              <button class="mosaic-step step-one" data-open-view="questions">
-                <span class="mosaic-step-number">01</span>
-                <div><small>Сначала</small><strong>Вопросы</strong><p>Создать, найти или выбрать готовые задания</p></div>
-                <b id="overviewQuestions">0</b>
-              </button>
-
-              <button class="mosaic-step step-two" data-open-view="sets">
-                <span class="mosaic-step-number">02</span>
-                <div><small>Затем</small><strong>Собрать игру</strong><p>Набор, порядок вопросов и сценарий</p></div>
-                <b id="overviewSets">0</b>
-              </button>
-
-              <button class="mosaic-step step-three" data-open-view="live">
-                <span class="mosaic-step-number">03</span>
-                <div><small>В аудитории</small><strong>Запустить</strong><p>Код комнаты, команды и большой экран</p></div>
-                <span class="mosaic-arrow">↗</span>
-              </button>
-
-              <button class="mosaic-step step-four" data-open-view="analytics">
-                <span class="mosaic-step-number">04</span>
-                <div><small>После игры</small><strong>Результаты</strong><p>Точность, участники и сложные вопросы</p></div>
-                <span class="mosaic-arrow">↗</span>
-              </button>
-            </div>
-
-            
-
-            <div class="overview-bottom">
-              <article class="overview-summary-card">
-                <div><span class="section-kicker">База контента</span><h3>Готово к занятию</h3></div>
-                <div class="overview-summary-metrics">
-                  <div><strong id="analyticsSessions">0</strong><span>сессий</span></div>
-                  <div><strong id="analyticsParticipants">0</strong><span>участников</span></div>
-                </div>
-              </article>
-              <article class="overview-summary-card">
-                <div class="workspace-card-head"><div><span class="section-kicker">Последние наборы</span><h3>Быстрый старт</h3></div><button class="text-button" data-open-view="sets">Все наборы →</button></div>
-                <div id="overviewQuizSets" class="compact-list"></div>
-              </article>
-              <article class="overview-summary-card">
-                <div class="workspace-card-head"><div><span class="section-kicker">Живая сессия</span><h3>Состояние</h3></div><button class="text-button" data-open-view="live">Открыть →</button></div>
-                <div id="overviewLiveState" class="empty-state compact"><strong>Нет активной комнаты</strong><p>Когда создадите игру, её состояние появится здесь.</p></div>
-              </article>
-            </div>
-          </div>
+          
 
           <div id="studioLive" class="studio-view hidden">
             <div class="section-toolbar">
@@ -334,59 +278,13 @@
             <div id="questionBank" class="question-library"></div>
           </div>
 
-          <div id="studioSets" class="studio-view hidden legacy-section">
-            <div class="section-toolbar">
-              <div><span class="section-kicker">Шаг 2 из 4</span><h2>Собрать игру</h2><p>Выберите готовый набор или соберите свой из банка вопросов.</p></div>
-              <div class="toolbar-actions"><button id="openSetComposer" class="button-secondary">Собрать из банка</button><button id="openSetEditor" class="button-secondary">+ Пустой набор</button><button class="button-primary" data-open-view="live">Дальше: запустить →</button></div>
-            </div>
-            <div id="quizSetLibrary" class="set-library"></div>
-          </div>
+          
 
-          <div id="studioScenarios" class="studio-view hidden legacy-section">
-            <div class="section-toolbar">
-              <div><span class="section-kicker">Автосценарий</span><h2>Party Night Builder</h2><p>Соберите игровой вечер автоматически: выберите число раундов каждого типа — система случайно подберёт задания из банка.</p></div>
-            </div>
-            <div class="scenario-layout">
-              <article class="workspace-card">
-                <div class="workspace-card-head"><div><span class="section-kicker">Параметры</span><h3>Структура вечера</h3></div></div>
-                <form id="partyNightForm" class="form-stack">
-                  <label>Название<input id="partyNightTitle" value="ORG Party Night"></label>
-                  <div class="scenario-grid">
-                    <label>Флаги<input id="partyCountFlag" type="number" min="0" max="20" value="3"></label>
-                    <label>Гимны<input id="partyCountAnthem" type="number" min="0" max="20" value="2"></label>
-                    <label>Люди по фото<input id="partyCountPerson" type="number" min="0" max="20" value="2"></label>
-                    <label>Места по фото<input id="partyCountPlace" type="number" min="0" max="20" value="2"></label>
-                    <label>Карта России<input id="partyCountMap" type="number" min="0" max="20" value="3"></label>
-                    <label>Обычные тесты<input id="partyCountTest" type="number" min="0" max="20" value="3"></label>
-                    <label>Голосования<input id="partyCountVote" type="number" min="0" max="20" value="1"></label>
-                    <label>Баттлы<input id="partyCountDuel" type="number" min="0" max="20" value="1"></label>
-                    <label>Выбывание<input id="partyCountElimination" type="number" min="0" max="20" value="2"></label>
-                  </div>
-                  <label class="check-row"><input id="partyShuffle" type="checkbox" checked><span>Перемешать раунды</span></label>
-                  <button class="button-primary full" type="submit">Собрать Party Night</button>
-                  <p id="partyNightMessage" class="form-message"></p>
-                </form>
-              </article>
-              <article class="workspace-card">
-                <div class="workspace-card-head"><div><span class="section-kicker">Предпросмотр</span><h3>Очередь раундов</h3></div></div>
-                <div id="partyNightPreview" class="scenario-preview"><div class="empty-state compact"><strong>Сценарий ещё не собран</strong><p>Настройте количество раундов слева.</p></div></div>
-              </article>
-            </div>
-          </div>
+          
 
-          <div id="studioMedia" class="studio-view hidden legacy-section">
-            <div class="section-toolbar">
-              <div><span class="section-kicker">Ресурсы</span><h2>Медиатека</h2><p>Изображения, флаги и аудио, которые используются в заданиях.</p></div>
-            </div>
-            <div id="mediaLibrary" class="media-library"></div>
-          </div>
+          
 
-          <div id="studioPlayers" class="studio-view hidden legacy-section">
-            <div class="section-toolbar">
-              <div><span class="section-kicker">Аудитория</span><h2>Игроки</h2><p>Участники текущей комнаты, команды и статус выбывания.</p></div>
-            </div>
-            <article class="workspace-card"><div id="playersDirectory" class="players-directory"></div></article>
-          </div>
+          
 
           <div id="studioAnalytics" class="studio-view hidden">
             <div class="section-toolbar">
