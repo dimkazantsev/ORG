@@ -156,3 +156,84 @@ body{background:linear-gradient(180deg,#f8f9fd 0%,#f2f5fa 100%)}
   .composer-columns{grid-template-columns:1fr}
   .scenario-grid{grid-template-columns:1fr 1fr}
 }
+
+/* V4: simplified teacher flow + usable map */
+.primary-flow{display:grid;gap:7px;margin-top:20px}
+.primary-flow .studio-nav-item{
+  grid-template-columns:30px 1fr auto;
+  min-height:50px;padding:9px 10px;border-radius:12px
+}
+.step-no{
+  width:28px;height:28px;border-radius:9px;display:grid;place-items:center;
+  background:rgba(255,255,255,.68);border:1px solid #d8def0;
+  color:#53608b;font-size:10px;font-weight:900
+}
+.primary-flow .studio-nav-item.active .step-no{
+  background:#fff;color:#4f5fc8;border-color:transparent
+}
+.studio-secondary{
+  display:grid;gap:3px;margin-top:18px;padding-top:15px;border-top:1px solid #d9dfef
+}
+.secondary-link{
+  background:transparent;text-align:left;color:#7d879d;
+  padding:8px 10px;border-radius:8px;font-size:11px;font-weight:700
+}
+.secondary-link:hover,.secondary-link.active{background:rgba(255,255,255,.62);color:#344267}
+.studio-topbar h1{font-size:26px}
+.section-toolbar h2{font-size:28px}
+.russia-map-wrap{
+  width:100%;min-height:0;padding:0;background:#f8fafc;border:1px solid #dfe5ee;
+  border-radius:16px;overflow:hidden
+}
+.map-toolbar{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:12px 14px;background:rgba(255,255,255,.96);border-bottom:1px solid #e3e8ef
+}
+.map-help{display:grid;gap:2px}.map-help strong{font-size:12px}.map-help span{font-size:10px;color:#7c8799}
+.map-controls{display:flex;gap:5px}
+.map-controls button{
+  width:34px;height:34px;border:1px solid #dce2ea;border-radius:9px;background:#fff;
+  color:#44516a;font-size:18px;font-weight:800
+}
+.map-controls button:hover{background:#f3f6fa}
+.map-canvas{
+  width:100%;height:min(62vh,620px);min-height:430px;background:#f5f7fa;
+  overflow:hidden;cursor:grab;touch-action:none
+}
+.map-canvas:active{cursor:grabbing}
+.map-canvas svg{width:100%;height:100%;display:block}
+.map-viewport{transform-origin:0 0}
+.map-region{
+  fill:#dce3ed;stroke:#fff;stroke-width:.8;cursor:pointer;
+  vector-effect:non-scaling-stroke;transition:fill .12s ease,filter .12s ease
+}
+.map-region:hover{fill:#aebcf4;filter:brightness(1.01)}
+.map-region.selected{fill:#5970e8;filter:drop-shadow(0 1px 2px rgba(64,77,145,.18))}
+.map-region.new2022{fill:#e7def7;stroke-dasharray:2 1}
+.map-region.new2022.selected{fill:#8a6bd9}
+.map-region.correct{fill:#45b97b}
+.map-region.wrong{fill:#e66775}
+.map-answerbar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 14px;border-top:1px solid #e3e8ef;background:#fff
+}
+.map-answerbar>div{display:flex;align-items:center;gap:6px;font-size:11px;color:#7a8596}
+.map-answerbar strong{color:#1b2537;font-size:12px}
+.map-answerbar button{min-width:170px}
+.map-answerbar button:disabled{opacity:.45;cursor:not-allowed;box-shadow:none}
+.map-note{padding:8px 14px 10px;background:#fff;color:#8a94a5;font-size:9px;line-height:1.45}
+.media-stage:has(.russia-map-wrap),.preview-media:has(.russia-map-wrap){
+  display:block;min-height:0;padding:0;background:transparent;border:0;overflow:visible
+}
+@media(max-width:760px){
+  .studio-nav.primary-flow{display:flex;gap:5px}
+  .primary-flow .studio-nav-item{min-width:max-content;grid-template-columns:26px auto}
+  .primary-flow .studio-nav-item b{display:none}
+  .studio-secondary{display:flex;overflow:auto;border-top:0;margin-top:6px;padding-top:0}
+  .secondary-link{min-width:max-content;background:rgba(255,255,255,.45)}
+  .map-toolbar{align-items:flex-start}
+  .map-help span{max-width:220px}
+  .map-canvas{height:56vh;min-height:360px}
+  .map-answerbar{align-items:stretch;flex-direction:column}
+  .map-answerbar button{width:100%}
+}
