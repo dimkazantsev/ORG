@@ -547,6 +547,24 @@ function loadPlayersDirectory(){
 async function loadOverview(){
   await loadQuizSetLibrary();
   if(state.teacherSession){$("overviewLiveState").innerHTML=`<strong>Комната ${escapeHtml(state.teacherSession.code)}</strong><p>${escapeHtml(state.teacherSession.title||"Активная сессия")} · ${statusLabel(state.teacherSession.status)}</p>`;}
+  const packs=state.quizSets.filter(s=>s.title.startsWith("ОРГ · ")).sort((a,b)=>a.title.localeCompare(b.title,"ru"));
+  const host=$("overviewOrgPacks");
+  if(host){
+    host.innerHTML=packs.map((s,i)=>{
+      const count=(state.questionRows||[]).filter(q=>q.quiz_id===s.id).length;
+      return `<article class="org-pack-card pack-${i+1}">
+        <div class="org-pack-index">0${i+1}</div>
+        <div class="org-pack-copy"><span>${escapeHtml(s.topic)}</span><h4>${escapeHtml(s.title.replace(/^ОРГ · \d+\.\s*/,""))}</h4><p>${escapeHtml(s.description||"")}</p></div>
+        <div class="org-pack-footer"><strong>${count}</strong><span>вопросов</span><button class="mosaic-button" data-org-pack="${s.id}">Открыть вопросы →</button></div>
+      </article>`;
+    }).join("");
+    host.querySelectorAll("[data-org-pack]").forEach(b=>b.onclick=async()=>{
+      await window.openStudioView("questions");
+      $("questionSetFilter").value=b.dataset.orgPack;
+      renderQuestionLibrary();
+      window.scrollTo({top:0,behavior:"smooth"});
+    });
+  }
 }
 
 async function loadAnalytics(){
