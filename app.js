@@ -484,7 +484,7 @@ function renderQuestionLibrary(){
 
   document.querySelectorAll(".wiki-photo[data-qid]").forEach(async el=>{
     const q=(state.questionRows||[]).find(x=>x.id===el.dataset.qid);if(!q)return;
-    const image=await getQuestionImage(q.config||{});
+    const image=await resolveQuestionImage(q);
     if(image)el.innerHTML=`<img loading="lazy" src="${escapeHtml(image)}" alt="">`;
     else el.innerHTML='<div class="photo-loader">Нет фото</div>';
   });
@@ -517,7 +517,7 @@ async function previewLibraryQuestion(id){
   const host=$("previewMedia");host.className="preview-media hidden";host.innerHTML="";
   const cfg=q.config||{};
   if(cfg.flag_url){host.className="preview-media flag-preview";host.innerHTML=`<img src="${escapeHtml(cfg.flag_url)}" alt="">`;}
-  else if(cfg.image_url||cfg.wiki_title||cfg.wiki_search){host.className="preview-media";const image=await getQuestionImage(cfg);host.innerHTML=image?`<img src="${escapeHtml(image)}" alt="">`:`<div class="media-placeholder">Изображение не удалось загрузить</div>`;}
+  else if(cfg.image_url||cfg.wiki_title||cfg.wiki_search){host.className="preview-media";const image=await resolveQuestionImage(q);host.innerHTML=image?`<img src="${escapeHtml(image)}" alt="">`:`<div class="media-placeholder">Изображение не удалось загрузить</div>`;}
   else if(cfg.audio_url){host.className="preview-media audio-preview";host.innerHTML=`<div class="audio-preview-inner"><span>♫</span><audio controls preload="metadata" src="${escapeHtml(cfg.audio_url)}"></audio></div>`;}
   else if(q.question_type==="region_map"){host.className="preview-media";host.dataset.preview="1";await renderRussiaMap(q,host);}
   $("previewOptions").innerHTML=(q.options||[]).length
@@ -948,36 +948,27 @@ function renderLifeState(){
 }
 
 const wikiImageCache=new Map();
-async function resolveWikiImage(title){
-  if(!title)return null;
-  if(wikiImageCache.has(title))return wikiImageCache.get(title);
-  try{
-    const u="https://en.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&origin=*&pithumbsize=1000&titles="+encodeURIComponent(title);
-    const r=await fetch(u);const j=await r.json();
-    const p=Object.values(j?.query?.pages||{})[0];
-    const url=p?.thumbnail?.source||p?.original?.source||null;
-    wikiImageCache.set(title,url);return url;
-  }catch{wikiImageCache.set(title,null);return null}
-}
-async function resolveWikiSearchImage(search){
-  if(!search)return null;
-  const key="search:"+search;if(wikiImageCache.has(key))return wikiImageCache.get(key);
-  try{
-    const su="https://ru.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=1&srsearch="+encodeURIComponent(search);
-    const sr=await fetch(su);const sj=await sr.json();const title=sj?.query?.search?.[0]?.title;
-    if(!title){wikiImageCache.set(key,null);return null}
-    const iu="https://ru.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&origin=*&pithumbsize=1000&titles="+encodeURIComponent(title);
-    const ir=await fetch(iu);const ij=await ir.json();const p=Object.values(ij?.query?.pages||{})[0];
-    const url=p?.thumbnail?.source||p?.original?.source||null;
-    wikiImageCache.set(key,url);return url;
-  }catch{wikiImageCache.set(key,null);return null}
-}
-async function getQuestionImage(cfg={}){
+async function resolveQuestionImage(q){
+  if(!q)return null;
+  const cfg=q.config||{};
   if(cfg.image_url)return cfg.image_url;
-  if(cfg.wiki_title)return await resolveWikiImage(cfg.wiki_title);
-  if(cfg.wiki_search)return await resolveWikiSearchImage(cfg.wiki_search);
-  return null;
+  if(wikiImageCache.has(q.id))return wikiImageCache.get(q.id);
+  try{
+    const {data,error}=await sb.functions.invoke("org-resolve-image",{body:{question_id:q.id}});
+    if(error)throw error;
+    const url=data?.url||null;
+    wikiImageCache.set(q.id,url);
+    if(url){
+      q.config={...cfg,image_url:url};
+    }
+    return url;
+  }catch(err){
+    console.warn("Image resolve failed",q.id,err);
+    wikiImageCache.set(q.id,null);
+    return null;
+  }
 }
+
 
 async function renderQuestionMedia(q,host){
   if(!host)return;
