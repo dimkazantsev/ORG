@@ -138,7 +138,7 @@ async function enterTeacher(){
   await loadQuizSets();
   await loadAnalytics();
   await loadOverview();
-  await window.openStudioView("questions");
+  await window.openStudioView("overview");
 }
 async function loadQuizSets(){
   const {data,error}=await sb.from("org_quiz_sets").select("id,title,topic,description,created_at").order("created_at",{ascending:false});
