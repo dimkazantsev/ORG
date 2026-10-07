@@ -859,41 +859,54 @@ async function renderRussiaMap(q,host){
     state.regionTopology=await res.json();
   }
   const topo=state.regionTopology;
-  const key=Object.keys(topo.objects)[0];
-  const fc=topojson.feature(topo,topo.objects[key]);
+  const obj=topo.objects.ru89||topo.objects[Object.keys(topo.objects)[0]];
+  const fc=topojson.feature(topo,obj);
+  const outline=topojson.merge(topo,obj.geometries);
   const isPreview=host.dataset.preview==="1";
 
   host.innerHTML=`
     <div class="russia-map-wrap">
       <div class="map-toolbar">
-        <div class="map-help"><strong>Выберите регион</strong><span>Колесо — масштаб · зажмите карту — перемещение · повторный клик — снять выбор</span></div>
+        <div class="map-help"><strong>Найдите регион на карте</strong><span>Колесо мыши — масштаб · перетаскивание — перемещение · клик — выбрать/снять</span></div>
         <div class="map-controls">
-          <button type="button" data-map-zoom-out title="Отдалить">−</button>
-          <button type="button" data-map-reset title="Сбросить">⌂</button>
-          <button type="button" data-map-zoom-in title="Приблизить">+</button>
+          <button type="button" data-map-zoom-out aria-label="Отдалить">−</button>
+          <button type="button" data-map-reset aria-label="Сбросить масштаб">⌂</button>
+          <button type="button" data-map-zoom-in aria-label="Приблизить">+</button>
         </div>
       </div>
-      <div class="map-canvas"><svg viewBox="0 0 1100 620" aria-label="Интерактивная карта России"><g class="map-viewport"></g></svg></div>
+      <div class="map-canvas"><svg aria-label="Интерактивная карта России"><g class="map-viewport"><g class="map-regions"></g><g class="map-outline"></g></g></svg></div>
       <div class="map-answerbar">
-        <div><span>Выбрано:</span><strong data-map-selected>ничего</strong></div>
-        <button type="button" class="button-primary" data-map-confirm disabled>${isPreview?"Предпросмотр":"Подтвердить ответ"}</button>
+        <div><span>Ваш выбор</span><strong data-map-selected>Регион не выбран</strong></div>
+        <button type="button" class="button-primary" data-map-confirm disabled>${isPreview?"Режим просмотра":"Подтвердить ответ"}</button>
       </div>
-      <div class="map-note">На карте используется игровой слой из 89 геометрий. Территории с оспариваемым международно-правовым статусом отмечены отдельно.</div>
+      <div class="map-note">Спорные в международно-правовом отношении территории отмечены отдельной штриховкой.</div>
     </div>`;
 
+  const canvas=host.querySelector(".map-canvas");
   const svg=d3.select(host.querySelector("svg"));
   const viewport=svg.select(".map-viewport");
-  const projection=d3.geoConicConformal()
-    .parallels([50,68])
-    .rotate([-105,0])
-    .fitExtent([[38,38],[1062,582]],fc);
+  const regionLayer=svg.select(".map-regions");
+  const outlineLayer=svg.select(".map-outline");
+
+  const width=Math.max(720,canvas.clientWidth||1000);
+  const height=Math.max(420,canvas.clientHeight||560);
+  svg.attr("viewBox",`0 0 ${width} ${height}`).attr("width",width).attr("height",height);
+
+  const projection=d3.geoConicEqualArea().parallels([50,70]).rotate([-100,0]);
+  const pad=Math.max(18,Math.min(width,height)*.035);
+  projection.fitExtent([[pad,pad],[width-pad,height-pad]],fc);
   const path=d3.geoPath(projection);
 
   let selectedId=null;
-  const nameOf=d=>d.properties?.name_full||d.properties?.name||d.properties?.id||d.id||"Регион";
   const idOf=d=>d.properties?.id||d.id||"";
+  const nameOf=d=>d.properties?.name_full||d.properties?.name||idOf(d)||"Регион";
 
-  const regions=viewport.selectAll("path").data(fc.features).join("path")
+  outlineLayer.append("path")
+    .datum(outline)
+    .attr("class","map-country-outline")
+    .attr("d",path);
+
+  const regions=regionLayer.selectAll("path").data(fc.features,d=>idOf(d)).join("path")
     .attr("d",path)
     .attr("class",d=>"map-region"+(d.properties?.new2022?" new2022":""))
     .attr("data-region",d=>idOf(d))
@@ -904,24 +917,19 @@ async function renderRussiaMap(q,host){
       const id=idOf(d);
       selectedId=selectedId===id?null:id;
       regions.classed("selected",x=>idOf(x)===selectedId);
-      const selectedFeature=fc.features.find(x=>idOf(x)===selectedId);
-      host.querySelector("[data-map-selected]").textContent=selectedFeature?nameOf(selectedFeature):"ничего";
-      const confirm=host.querySelector("[data-map-confirm]");
-      confirm.disabled=!selectedId||isPreview;
+      const picked=fc.features.find(x=>idOf(x)===selectedId);
+      host.querySelector("[data-map-selected]").textContent=picked?nameOf(picked):"Регион не выбран";
+      host.querySelector("[data-map-confirm]").disabled=!selectedId||isPreview;
       playSound("tap");
-    })
-    .on("keydown",function(e,d){
-      if(e.key==="Enter"||e.key===" "){e.preventDefault();this.dispatchEvent(new MouseEvent("click",{bubbles:true}))}
     });
 
   const zoom=d3.zoom()
-    .scaleExtent([1,9])
-    .translateExtent([[-500,-350],[1600,1000]])
+    .scaleExtent([1,14])
     .on("zoom",e=>viewport.attr("transform",e.transform));
   svg.call(zoom).on("dblclick.zoom",null);
 
-  host.querySelector("[data-map-zoom-in]").onclick=()=>svg.transition().duration(180).call(zoom.scaleBy,1.45);
-  host.querySelector("[data-map-zoom-out]").onclick=()=>svg.transition().duration(180).call(zoom.scaleBy,1/1.45);
+  host.querySelector("[data-map-zoom-in]").onclick=()=>svg.transition().duration(180).call(zoom.scaleBy,1.6);
+  host.querySelector("[data-map-zoom-out]").onclick=()=>svg.transition().duration(180).call(zoom.scaleBy,1/1.6);
   host.querySelector("[data-map-reset]").onclick=()=>svg.transition().duration(220).call(zoom.transform,d3.zoomIdentity);
   host.querySelector("[data-map-confirm]").onclick=async()=>{
     if(!selectedId||isPreview)return;
