@@ -192,8 +192,6 @@ async function loadQuizSets(){
   $("quizSelect").innerHTML=opts;$("editorQuizSelect").innerHTML=opts;
   $("questionSetFilter").innerHTML='<option value="">Все наборы</option>'+opts;
   $("bulkTargetSet").innerHTML='<option value="">Переместить в набор…</option>'+opts;
-  if($("sidebarSetCount"))$("sidebarSetCount").textContent=state.quizSets.length+" наборов";
-  if($("overviewSets"))$("overviewSets").textContent=state.quizSets.length;
   if(!state.editorQuizId&&state.quizSets[0])state.editorQuizId=state.quizSets[0].id;
   if(state.editorQuizId)$("editorQuizSelect").value=state.editorQuizId;
   await loadQuestionBank();
@@ -568,7 +566,7 @@ $("createQuestionForm").addEventListener("submit",async e=>{
   const quiz=$("editorQuizSelect").value;
   state.editingQuestion=null;e.target.reset();$("editingQuestionId").value="";$("editorQuizSelect").value=quiz;
   $("questionTime").value=30;$("questionPoints").value=100;$("questionDifficulty").value=2;$("questionType").value="single";updateQuestionTypeHint();
-  await loadQuestionBank();await loadQuizSetLibrary();await loadMediaLibrary();closeDrawer("question");
+  await loadQuestionBank();closeDrawer("question");
   await window.openStudioView("questions");showToast(editingId?"Вопрос обновлён.":"Вопрос сохранён в банк.");
 });
 
@@ -589,7 +587,6 @@ async function loadQuestionBank(){
   const visibleSetIds=new Set((state.quizSets||[]).map(s=>s.id));
   state.questionRows=(data||[]).filter(q=>visibleSetIds.has(q.quiz_id));
   $("sidebarQuestionCount").textContent=state.questionRows.length+" в банке";
-  if($("overviewQuestions"))$("overviewQuestions").textContent=state.questionRows.length;
   renderQuestionLibrary();
 }
 function renderQuestionLibrary(){
@@ -668,7 +665,7 @@ function renderQuestionLibrary(){
     if(!confirm("Удалить этот вопрос?"))return;
     const {error}=await sb.rpc("org_quiz_delete_question",{p_question_id:b.dataset.deleteQuestion});
     if(error)showToast(error.message);
-    else{state.bulkQuestionIds.delete(b.dataset.deleteQuestion);await loadQuestionBank();await loadQuizSetLibrary();}
+    else{state.bulkQuestionIds.delete(b.dataset.deleteQuestion);await loadQuestionBank();}
   });
   updateBulkBar();
 }
@@ -704,43 +701,6 @@ async function previewLibraryQuestion(id){
     ? `<span class="section-kicker">Пояснение</span>${q.explanation?`<p>${escapeHtml(q.explanation)}</p>`:""}${q.config?.source_url?`<a class="source-link" href="${escapeHtml(q.config.source_url)}" target="_blank" rel="noopener">Открыть источник ↗</a>`:""}`
     : "";
 }
-async function loadQuizSetLibrary(){
-  if(!$("quizSetLibrary"))return;
-  const rows=state.questionRows||[];
-  $("quizSetLibrary").innerHTML=state.quizSets.map(s=>{
-    const setRows=rows.filter(q=>q.quiz_id===s.id);
-    const count=setRows.length;
-    const types=[...new Set(setRows.map(q=>questionTypeLabel(q.question_type)))].slice(0,3);
-    return `<article class="set-card">
-      <div class="set-card-top"><span class="section-kicker">${escapeHtml(s.topic)}</span><span class="info-badge">${count} вопросов</span></div>
-      <h3>${escapeHtml(s.title)}</h3><p>${escapeHtml(s.description||"Описание не добавлено.")}</p>
-      <div class="set-type-line">${types.map(t=>`<span>${escapeHtml(t)}</span>`).join("")}</div>
-      <div class="set-card-footer"><span>${new Date(s.created_at).toLocaleDateString("ru-RU")}</span><div class="row-actions">
-        <button class="text-button" data-set-order="${s.id}">Порядок</button>
-        <button class="text-button" data-set-open="${s.id}">Вопросы →</button>
-      </div></div>
-    </article>`;
-  }).join("")||'<div class="empty-state"><strong>Нет наборов</strong><p>Создайте первый набор игры.</p></div>';
-  document.querySelectorAll("[data-set-open]").forEach(b=>b.onclick=()=>{ $("questionSetFilter").value=b.dataset.setOpen;window.openStudioView("questions");renderQuestionLibrary();});
-  document.querySelectorAll("[data-set-order]").forEach(b=>b.onclick=()=>openSetOrder(b.dataset.setOrder));
-  $("overviewQuizSets").innerHTML=state.quizSets.slice(0,5).map(s=>`<div class="compact-row"><div><strong>${escapeHtml(s.title)}</strong><small>${escapeHtml(s.topic)}</small></div><span class="info-badge">${rows.filter(q=>q.quiz_id===s.id).length}</span></div>`).join("");
-}
-async function loadMediaLibrary(){
-  if(!$("mediaLibrary"))return;
-  const rows=(state.questionRows||[]).filter(q=>q.config&&(q.config.image_url||q.config.flag_url||q.config.audio_url));
-  $("mediaLibrary").innerHTML=rows.map(q=>{
-    const cfg=q.config||{};const url=cfg.image_url||cfg.flag_url||cfg.audio_url;
-    const visual=cfg.audio_url
-      ? `<div class="media-thumb audio-thumb"><span>♫</span><audio controls preload="none" src="${escapeHtml(url)}"></audio></div>`
-      : `<div class="media-thumb"><img src="${escapeHtml(url)}" alt=""></div>`;
-    return `<article class="media-item">${visual}<div class="media-info"><strong>${escapeHtml(q.prompt.slice(0,65))}</strong><small>${questionTypeLabel(q.question_type)}</small><button class="text-button" data-media-preview="${q.id}">Открыть вопрос →</button></div></article>`;
-  }).join("")||'<div class="empty-state"><strong>Медиатека пуста</strong><p>Медиа появятся после создания фото-, флаг- или аудиовопросов.</p></div>';
-  document.querySelectorAll("[data-media-preview]").forEach(b=>b.onclick=()=>previewLibraryQuestion(b.dataset.mediaPreview));
-}
-function loadPlayersDirectory(){
-  if(!$("playersDirectory"))return;
-  $("playersDirectory").innerHTML=(state.participants||[]).map(p=>`<div class="player-directory-row"><div><strong>${escapeHtml(p.full_name)}</strong><small>${escapeHtml(p.academic_group)}</small></div><span>${escapeHtml(state.teams.find(t=>t.id===p.team_id)?.name||"Без команды")}</span><span>${p.life_state==="eliminated"?"Выбыл":"В игре"}</span></div>`).join("")||'<div class="empty-state"><strong>Нет участников</strong><p>Игроки появятся после подключения к комнате.</p></div>';
-}
 async function loadOverview(){
   const packs=(state.quizSets||[]).filter(s=>s.published!==false);
   const rank=s=>{
@@ -751,9 +711,12 @@ async function loadOverview(){
     if(t==="Россия на карте — 89 регионов")return 4;
     if(t.startsWith("Гербы регионов России"))return 5;
     if(t.startsWith("Гимны мира —"))return 6;
-    if(t.startsWith("Знаменитые люди —"))return 7;
-    if(t.startsWith("Места мира —"))return 8;
-    if(t==="Тёмная комната — выбывание")return 9;
+    if(t.startsWith("Знаменитые люди России"))return 7;
+    if(t.startsWith("Советское и российское кино — кадры"))return 8;
+    if(t.startsWith("Советское и российское кино — фразы"))return 9;
+    if(t.startsWith("Советское и российское кино — фрагменты"))return 10;
+    if(t.startsWith("Достопримечательности мира"))return 11;
+    if(t==="Тёмная комната — выбывание")return 12;
     return 99;
   };
   const icons=t=>{
@@ -1303,12 +1266,12 @@ $("bulkAddTag")?.addEventListener("click",async()=>{
 $("bulkMove")?.addEventListener("click",async()=>{
   const target=$("bulkTargetSet").value;if(!target||!state.bulkQuestionIds.size)return showToast("Выберите набор.");
   const {error}=await sb.rpc("org_quiz_bulk_action",{p_question_ids:[...state.bulkQuestionIds],p_action:"move",p_target_set:target,p_tag:null});
-  if(error)return showToast(error.message);state.bulkQuestionIds.clear();await loadQuestionBank();await loadQuizSetLibrary();showToast("Вопросы перемещены.");
+  if(error)return showToast(error.message);state.bulkQuestionIds.clear();await loadQuestionBank();showToast("Вопросы перемещены.");
 });
 $("bulkDelete")?.addEventListener("click",async()=>{
   if(!state.bulkQuestionIds.size||!confirm("Удалить выбранные вопросы?"))return;
   const {error}=await sb.rpc("org_quiz_bulk_action",{p_question_ids:[...state.bulkQuestionIds],p_action:"delete",p_target_set:null,p_tag:null});
-  if(error)return showToast(error.message);state.bulkQuestionIds.clear();await loadQuestionBank();await loadQuizSetLibrary();showToast("Выбранные вопросы удалены.");
+  if(error)return showToast(error.message);state.bulkQuestionIds.clear();await loadQuestionBank();showToast("Выбранные вопросы удалены.");
 });
 
 
@@ -1399,37 +1362,4 @@ $("saveSetOrder")?.addEventListener("click",async()=>{
   const {error}=await sb.rpc("org_quiz_reorder_set",{p_quiz_id:state.orderingSetId,p_question_ids:state.orderingIds});
   if(error)return showToast(error.message);
   closeDrawer("setorder");await loadQuestionBank();showToast("Порядок сохранён.");
-});
-
-function shuffleArray(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
-function buildPartyNightSelection(){
-  const specs=[
-    ["flag",Number($("partyCountFlag").value||0)],["anthem",Number($("partyCountAnthem").value||0)],
-    ["person_photo",Number($("partyCountPerson").value||0)],["place_photo",Number($("partyCountPlace").value||0)],
-    ["region_map",Number($("partyCountMap").value||0)],["single",Number($("partyCountTest").value||0)],
-    ["vote",Number($("partyCountVote").value||0)],["duel",Number($("partyCountDuel").value||0)],
-    ["elimination",Number($("partyCountElimination").value||0)]
-  ];
-  let picked=[];
-  for(const [type,n] of specs){
-    const pool=shuffleArray((state.questionRows||[]).filter(q=>q.question_type===type));
-    picked.push(...pool.slice(0,n));
-  }
-  if($("partyShuffle").checked)picked=shuffleArray(picked);
-  return picked;
-}
-function renderPartyNightPreview(rows){
-  if(!$("partyNightPreview"))return;
-  $("partyNightPreview").innerHTML=rows.length?rows.map((q,i)=>`<div class="scenario-row"><span>${i+1}</span><div><strong>${escapeHtml(q.prompt)}</strong><small>${questionTypeLabel(q.question_type)}</small></div></div>`).join(""):'<div class="empty-state compact"><strong>Сценарий ещё не собран</strong><p>Настройте количество раундов слева.</p></div>';
-}
-["partyCountFlag","partyCountAnthem","partyCountPerson","partyCountPlace","partyCountMap","partyCountTest","partyCountVote","partyCountDuel","partyCountElimination","partyShuffle"].forEach(id=>$(id)?.addEventListener("input",()=>renderPartyNightPreview(buildPartyNightSelection())));
-$("partyNightForm")?.addEventListener("submit",async e=>{
-  e.preventDefault();
-  const rows=buildPartyNightSelection();renderPartyNightPreview(rows);
-  if(!rows.length)return msg($("partyNightMessage"),"Выберите хотя бы один раунд.");
-  const {data,error}=await sb.rpc("org_party_create_set_from_questions",{
-    p_title:$("partyNightTitle").value||"ORG Party Night",p_topic:"Party Night",p_description:"Автоматически собранный сценарий",p_question_ids:rows.map(q=>q.id)
-  });
-  if(error)return msg($("partyNightMessage"),error.message);
-  await loadQuizSets();msg($("partyNightMessage"),"Party Night создан.");showToast("Готов новый Party Night.");
 });
