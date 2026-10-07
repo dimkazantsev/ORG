@@ -424,31 +424,50 @@ async function loadQuestionBank(){
 }
 function renderQuestionLibrary(){
   const search=($("questionSearch")?.value||"").trim().toLowerCase();
-  const setId=$("questionSetFilter")?.value||"";const type=$("questionTypeFilter")?.value||"";
+  const setId=$("questionSetFilter")?.value||"";
+  const type=$("questionTypeFilter")?.value||"";
   const difficulty=$("questionDifficultyFilter")?.value||"";
   const rows=(state.questionRows||[]).filter(q=>
     (!setId||q.quiz_id===setId)&&(!type||q.question_type===type)&&(!difficulty||String(q.difficulty||2)===difficulty)&&
     (!search||q.prompt.toLowerCase().includes(search)||(q.tags||[]).some(t=>String(t).toLowerCase().includes(search)))
   );
   $("questionBankCount").textContent=`${rows.length} вопросов`;
+
   const icon={single:"✓",multiple:"☷",flag:"⚑",anthem:"♫",person_photo:"◎",place_photo:"⌖",region_map:"◫",vote:"◉",elimination:"!",matching:"⇄",ordering:"↕",duel:"✦",split:"◇",scale:"—",wordcloud:"☁",ranking:"≡",team_pitch:"◆"};
+  const visual=q=>{
+    const cfg=q.config||{};
+    if(cfg.flag_url)return `<div class="question-visual flag-card"><img src="${escapeHtml(cfg.flag_url)}" alt=""></div>`;
+    if(cfg.image_url)return `<div class="question-visual photo-card"><img src="${escapeHtml(cfg.image_url)}" alt=""></div>`;
+    if(cfg.audio_url)return `<div class="question-visual audio-card-large"><span>♫</span><div><strong>Аудиораунд</strong><small>Гимн · нажмите «Открыть», чтобы прослушать</small></div></div>`;
+    if(q.question_type==="region_map")return `<div class="question-visual map-card-large"><span>◎</span><div><strong>Интерактивная карта</strong><small>Выбор региона · zoom · pan</small></div></div>`;
+    const tone={elimination:"danger",duel:"violet",vote:"yellow",single:"blue",multiple:"blue"}[q.question_type]||"mint";
+    return `<div class="question-visual abstract-card ${tone}"><span>${icon[q.question_type]||"?"}</span><strong>${questionTypeLabel(q.question_type)}</strong></div>`;
+  };
+
   $("questionBank").innerHTML=rows.map(q=>{
     const set=state.quizSets.find(s=>s.id===q.quiz_id);
     const checked=state.bulkQuestionIds.has(q.id)?"checked":"";
     const tags=(q.tags||[]).slice(0,3).map(t=>`<span class="mini-tag">${escapeHtml(t)}</span>`).join("");
-    return `<article class="question-card-row ${checked?"selected-row":""}">
-      <label class="row-check"><input type="checkbox" data-select-question="${q.id}" ${checked}></label>
-      <div class="question-type-icon">${icon[q.question_type]||"?"}</div>
-      <div class="question-copy"><strong>${escapeHtml(q.prompt)}</strong><small>${escapeHtml(set?.title||"Без набора")} · ${questionTypeLabel(q.question_type)} · сложность ${q.difficulty||2}</small><div class="tag-line">${tags}</div></div>
-      <div class="question-meta-cell">${q.time_limit_sec} сек.</div>
-      <div class="question-meta-cell">${q.points} баллов</div>
-      <div class="row-actions">
-        <button class="row-icon-btn" data-preview-question="${q.id}" title="Предпросмотр">◉</button>
-        <button class="row-icon-btn" data-edit-question="${q.id}" title="Редактировать">✎</button>
-        <button class="row-icon-btn danger" data-delete-question="${q.id}" title="Удалить">×</button>
+    return `<article class="question-tile ${checked?"selected-row":""}">
+      <div class="question-tile-check"><label><input type="checkbox" data-select-question="${q.id}" ${checked}><span></span></label></div>
+      ${visual(q)}
+      <div class="question-tile-body">
+        <div class="question-tile-top"><span class="question-kind">${questionTypeLabel(q.question_type)}</span><span class="difficulty-chip">Сложность ${q.difficulty||2}</span></div>
+        <h3>${escapeHtml(q.prompt)}</h3>
+        <p>${escapeHtml(set?.title||"Без набора")}</p>
+        <div class="tag-line">${tags}</div>
+        <div class="question-tile-footer">
+          <div class="question-stats"><span>${q.time_limit_sec} сек.</span><span>${q.points} баллов</span></div>
+          <div class="question-actions">
+            <button class="question-action primary-mini" data-preview-question="${q.id}">Открыть</button>
+            <button class="question-action" data-edit-question="${q.id}">Изменить</button>
+            <button class="question-action danger" data-delete-question="${q.id}" aria-label="Удалить">×</button>
+          </div>
+        </div>
       </div>
     </article>`;
   }).join("")||'<div class="empty-state"><strong>Вопросы не найдены</strong><p>Измените фильтры или создайте новый вопрос.</p></div>';
+
   document.querySelectorAll("[data-select-question]").forEach(x=>x.onchange=()=>{
     x.checked?state.bulkQuestionIds.add(x.dataset.selectQuestion):state.bulkQuestionIds.delete(x.dataset.selectQuestion);
     updateBulkBar();renderQuestionLibrary();
@@ -456,8 +475,10 @@ function renderQuestionLibrary(){
   document.querySelectorAll("[data-preview-question]").forEach(b=>b.onclick=()=>previewLibraryQuestion(b.dataset.previewQuestion));
   document.querySelectorAll("[data-edit-question]").forEach(b=>b.onclick=()=>editQuestion(b.dataset.editQuestion));
   document.querySelectorAll("[data-delete-question]").forEach(b=>b.onclick=async()=>{
-    if(!confirm("Удалить этот вопрос?"))return;const {error}=await sb.rpc("org_quiz_delete_question",{p_question_id:b.dataset.deleteQuestion});
-    if(error)showToast(error.message);else{state.bulkQuestionIds.delete(b.dataset.deleteQuestion);await loadQuestionBank();await loadQuizSetLibrary();}
+    if(!confirm("Удалить этот вопрос?"))return;
+    const {error}=await sb.rpc("org_quiz_delete_question",{p_question_id:b.dataset.deleteQuestion});
+    if(error)showToast(error.message);
+    else{state.bulkQuestionIds.delete(b.dataset.deleteQuestion);await loadQuestionBank();await loadQuizSetLibrary();}
   });
   updateBulkBar();
 }
