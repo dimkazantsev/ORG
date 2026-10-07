@@ -125,6 +125,7 @@
           <article class="mini-card rules-card">
             <div class="kicker">Статус игрока</div>
             <p id="lifeExplanation">Ваши баллы идут в общий счёт команды.</p>
+            <p id="rescueStatus" class="rescue-status">Спасение команды: доступно.</p>
             <p id="comboExplanation" class="combo-explanation">Серия правильных ответов увеличивает множитель.</p>
           </article>
           <article id="stealStudentCard" class="mini-card steal-card hidden">
@@ -292,6 +293,14 @@
                   <div class="mechanic-chip"><span>Перехват</span><strong id="mechanicSteal">Готов</strong></div>
                   <div class="mechanic-chip secret"><span>Секретный раунд</span><strong id="mechanicSecret">Скрыт</strong></div>
                 </div>
+
+                <article id="liveRescuePanel" class="workspace-card rescue-workspace">
+                  <div class="workspace-card-head">
+                    <div><span class="section-kicker">Командная механика</span><h3>Спасение выбывшего</h3></div>
+                    <span class="info-badge">1 раз на команду</span>
+                  </div>
+                  <div id="liveRescueList" class="live-rescue-list"></div>
+                </article>
 
                 <article class="workspace-card stage-card">
                   <div class="workspace-card-head">
