@@ -4,7 +4,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const $ = (id)=>document.getElementById(id);
 const views = {home:$("homeView"),student:$("studentView"),teacher:$("teacherView")};
-const state = {session:null,participant:null,teams:[],participants:[],question:null,studentStartedAt:null,teacherSession:null,teacherUser:null,subs:[],quizSets:[],editorQuizId:null,timerHandle:null,analyticsRows:[],selectedAnalyticsSession:null,sound:true,viewAsParticipant:false,regionTopology:null,questionRows:[],bulkQuestionIds:new Set(),composerQuestionIds:[],editingQuestion:null,generatedGame:null,setupStep:"room",phaseTimer:null};
+const state = {session:null,participant:null,teams:[],participants:[],question:null,studentStartedAt:null,teacherSession:null,teacherUser:null,subs:[],quizSets:[],editorQuizId:null,timerHandle:null,analyticsRows:[],selectedAnalyticsSession:null,sound:true,viewAsParticipant:false,regionTopology:null,questionRows:[],bulkQuestionIds:new Set(),composerQuestionIds:[],editingQuestion:null,generatedGame:null,setupStep:"room",phaseTimer:null,stealTimer:null};
 
 function showView(name){
   const layer=$("transitionLayer");
@@ -71,6 +71,11 @@ async function loadStudentTeams(){
   const mine=state.teams.find(t=>t.id===state.participant?.team_id);
   $("studentTeam").textContent=mine?mine.name:"Без команды";
   $("studentLeaderboard").innerHTML=state.teams.map((t,i)=>leaderRow(i,t.name,t.score)).join("")||"<p class='message'>Команды ещё не сформированы.</p>";
+  if($("stealStudentText")&&mine){
+    $("stealStudentText").textContent=mine.rescue_available
+      ?"У команды ещё есть одно спасение выбывшего игрока."
+      :"Спасение команды уже использовано.";
+  }
 }
 function clearPhaseTimer(){
   if(state.phaseTimer){clearInterval(state.phaseTimer);state.phaseTimer=null}
@@ -150,15 +155,41 @@ async function submitPayload(payload){
   if(!state.question)return;
   lockQuestionUI();
   const ms=Math.round(performance.now()-state.studentStartedAt);
-  const {data,error}=await sb.rpc("org_quiz_submit_payload",{
+  const {data,error}=await sb.rpc("org_quiz_submit_payload_v2",{
     p_session_id:state.session.id,p_question_id:state.question.id,p_answer:payload,p_response_ms:ms
   });
   if(error){msg($("answerFeedback"),humanError(error.message));return}
   const r=data?.[0];
-  if(r?.is_correct){playSound("correct");msg($("answerFeedback"),`Верно. +${r.points_awarded} баллов`);}
-  else{playSound(state.question?.question_type==="elimination"?"eliminate":"wrong");msg($("answerFeedback"),"Ответ принят.");}
+  if(r?.is_correct){
+    playSound("correct");
+    const combo=Number(r.combo_multiplier||1)>1?` · комбо ×${String(r.combo_multiplier).replace(".",",")}`:"";
+    const bonus=Number(r.combo_bonus||0)>0?` (+${r.combo_bonus} бонус)`:"";
+    msg($("answerFeedback"),`Верно. +${r.points_awarded} баллов${bonus}${combo}`);
+  }else{
+    playSound(state.question?.question_type==="elimination"?"eliminate":"wrong");
+    msg($("answerFeedback"),"Неверно. Серия сброшена.");
+  }
   if(state.session?.id){await loadStudentSession(state.session.id);}
   if(state.participant?.life_state==="eliminated") showEliminationOverlay();
+}
+async function submitSteal(payload){
+  if(!state.question)return;
+  lockQuestionUI();
+  const {data,error}=await sb.rpc("org_quiz_submit_steal",{
+    p_session_id:state.session.id,p_question_id:state.question.id,p_answer:payload
+  });
+  if(error){msg($("answerFeedback"),humanError(error.message));return}
+  const r=data?.[0];
+  if(r?.won_steal){
+    playSound("correct");
+    msg($("answerFeedback"),`Перехват! +${r.points_awarded} баллов вашей команде.`);
+  }else if(r?.is_correct){
+    msg($("answerFeedback"),"Ответ верный, но другая команда успела первой.");
+  }else{
+    playSound("wrong");
+    msg($("answerFeedback"),"Перехват не удался.");
+  }
+  await loadStudentSession(state.session.id);
 }
 function subscribeStudent(sessionId){
   clearSubs();
@@ -235,16 +266,17 @@ $("randomGameForm")?.addEventListener("submit",async e=>{
     .select("order_index,config").eq("quiz_id",row.quiz_id).order("order_index");
   const roundMap=new Map();
   (generatedRows||[]).forEach(q=>{
-    const n=Number(q.config?.round_number||1),title=q.config?.round_title||("Раунд "+n);
-    if(!roundMap.has(n))roundMap.set(n,{n,title,count:0});
+    const n=Number(q.config?.round_number||1),title=q.config?.round_title||("Раунд "+n),secret=!!q.config?.secret_round;
+    if(!roundMap.has(n))roundMap.set(n,{n,title,count:0,secret});
     roundMap.get(n).count++;
   });
   const roundPlan=[...roundMap.values()].sort((a,b)=>a.n-b.n);
-  state.generatedGame={id:row.quiz_id,title:row.title,seed:row.seed,questionCount:row.question_count,rounds:roundPlan};
+  const secretRound=roundPlan.find(r=>r.secret)?.n||null;
+  state.generatedGame={id:row.quiz_id,title:row.title,seed:row.seed,questionCount:row.question_count,rounds:roundPlan,secretRound};
   const opt=document.createElement("option");opt.value=row.quiz_id;opt.textContent=row.title+" — "+row.question_count+" вопросов";opt.dataset.generated="1";
   $("quizSelect").prepend(opt);$("quizSelect").value=row.quiz_id;
   const result=$("randomGameResult");result.classList.remove("hidden");
-  result.innerHTML=`<div class="generated-summary"><span class="section-kicker">Готово</span><strong>${escapeHtml(row.title)}</strong><p>${row.question_count} вопросов · seed ${seed}</p><div class="generated-rounds">${roundPlan.map(r=>`<span><b>${r.n}</b>${escapeHtml(r.title)} · ${r.count}</span>`).join("")}</div></div><button class="button-primary" type="button" data-use-random>Перейти к запуску →</button>`;
+  result.innerHTML=`<div class="generated-summary"><span class="section-kicker">Готово</span><strong>${escapeHtml(row.title)}</strong><p>${row.question_count} вопросов · seed ${seed}</p><div class="generated-rounds">${roundPlan.map(r=>`<span class="${r.secret?"secret-round-chip":""}"><b>${r.n}</b>${r.secret?"Секретный раунд · ???":escapeHtml(r.title)+" · "+r.count}</span>`).join("")}</div></div><button class="button-primary" type="button" data-use-random>Перейти к запуску →</button>`;
   result.querySelector("[data-use-random]").onclick=()=>window.openStudioView("live");
   playSound("correct");
 });
@@ -279,16 +311,23 @@ async function beginQuestion(index,{allowBreak=true}={}){
   const q=await currentQuestionMeta(index);if(!q)return;
   const rn=Number(q.config?.round_number||1);
   const rt=q.config?.round_title||"Раунд "+rn;
+  const secret=!!q.config?.secret_round;
   const changing=allowBreak&&state.teacherSession.status==="live"&&rn!==Number(state.teacherSession.round_number||1);
   if(changing){
-    await setSession({status:"round_break",current_question_index:index,round_number:rn,round_title:rt,transition_started_at:new Date().toISOString(),question_started_at:null});
+    await setSession({
+      status:"round_break",current_question_index:index,round_number:rn,
+      round_title:secret?("Секретный раунд · "+rt):rt,
+      secret_round_revealed:secret?true:state.teacherSession.secret_round_revealed,
+      transition_started_at:new Date().toISOString(),question_started_at:null,
+      interaction_phase:"answer",steal_question_id:null,steal_open_until:null,steal_winner_team_id:null
+    });
     setTimeout(async()=>{
       if(state.teacherSession?.status==="round_break"&&state.teacherSession.current_question_index===index){
-        await setSession({status:"live",round_number:rn,round_title:rt,transition_started_at:null,question_started_at:new Date().toISOString()});
+        await setSession({status:"live",round_number:rn,round_title:secret?("Секретный раунд · "+rt):rt,transition_started_at:null,question_started_at:new Date().toISOString(),interaction_phase:"answer",steal_question_id:null,steal_open_until:null,steal_winner_team_id:null});
       }
     },4000);
   }else{
-    await setSession({status:"live",current_question_index:index,round_number:rn,round_title:rt,transition_started_at:null,question_started_at:new Date().toISOString(),interaction_phase:"answer"});
+    await setSession({status:"live",current_question_index:index,round_number:rn,round_title:secret?("Секретный раунд · "+rt):rt,secret_round_revealed:secret?true:state.teacherSession.secret_round_revealed,transition_started_at:null,question_started_at:new Date().toISOString(),interaction_phase:"answer",steal_question_id:null,steal_open_until:null,steal_winner_team_id:null});
   }
 }
 
@@ -301,7 +340,9 @@ $("createSessionForm").addEventListener("submit",async e=>{
   const {data,error}=await sb.from("org_quiz_sessions").insert({
     quiz_id:selectedId,code:c,title:$("sessionTitle").value||null,
     team_count:Number($("teamCount").value||4),game_mode:$("gameMode").value,created_by:state.teacherUser.id,
-    setup_stage:"teams",game_seed:seed
+    setup_stage:"teams",game_seed:seed,
+    secret_round_number:state.generatedGame?.id===selectedId?(state.generatedGame.secretRound||null):null,
+    secret_round_revealed:false
   }).select().single();
   if(error){msg($("teacherActionMessage"),error.message);return}
   state.teacherSession=data;
@@ -327,6 +368,13 @@ async function refreshTeacher(){
   if($("readyQuizName"))$("readyQuizName").textContent=set?.title||"Сгенерированная игра";
   if($("directorRoundTitle"))$("directorRoundTitle").textContent=s.round_title||"Раунд "+(s.round_number||1);
   if($("directorRoundMeta"))$("directorRoundMeta").textContent=s.status==="round_break"?"Переход к новому раунду…":"Вопрос "+(s.current_question_index||0)+" · "+statusLabel(s.status);
+  if($("mechanicCombo"))$("mechanicCombo").textContent=s.combo_enabled?"Вкл.":"Выкл.";
+  if($("mechanicRescue"))$("mechanicRescue").textContent=s.rescue_enabled?"1 на команду":"Выкл.";
+  if($("mechanicSteal"))$("mechanicSteal").textContent=s.interaction_phase==="steal"?"Открыт":(s.steal_enabled?"Готов":"Выкл.");
+  if($("mechanicSecret")){
+    const revealed=s.secret_round_revealed||Number(s.round_number||0)===Number(s.secret_round_number||-1);
+    $("mechanicSecret").textContent=!s.secret_round_number?"Нет":(revealed?("Раунд "+s.secret_round_number):"Скрыт");
+  }
   const step=["live","paused","countdown","round_break","finished"].includes(s.status)?"live":(s.setup_stage==="ready"?"ready":(s.setup_stage==="teams"?"teams":"room"));
   showSetupStep(step);
   renderParticipants();renderTeacherLeaderboard();await renderLiveTeacherQuestion();await loadLiveStudentRanking();
@@ -356,10 +404,23 @@ function renderParticipants(){
     if(small)small.textContent=(small.textContent||"")+" · "+(p?.life_state==="eliminated"?"выбыл":"в игре");
     const actions=document.createElement("div");actions.className="life-actions";
     const out=document.createElement("button");out.className="danger";out.textContent="Выбить";
-    const back=document.createElement("button");back.className="secondary";back.textContent="Вернуть";
     out.onclick=async e=>{e.stopPropagation();const {error}=await sb.rpc("org_party_set_life_state",{p_participant_id:p.id,p_state:"eliminated",p_reason:"Решение Модератора"});if(error)msg($("teacherActionMessage"),error.message);else{playSound("eliminate");await refreshTeacher()}};
-    back.onclick=async e=>{e.stopPropagation();const {error}=await sb.rpc("org_party_set_life_state",{p_participant_id:p.id,p_state:"alive",p_reason:null});if(error)msg($("teacherActionMessage"),error.message);else{playSound("correct");await refreshTeacher()}};
-    actions.append(out,back);card.append(actions);
+    actions.append(out);
+    if(p?.life_state==="eliminated"){
+      const team=state.teams.find(t=>t.id===p.team_id);
+      const rescue=document.createElement("button");
+      rescue.className="rescue-action";
+      rescue.textContent=team?.rescue_available?"Спасти":"Спасение использовано";
+      rescue.disabled=!team?.rescue_available||!state.teacherSession?.rescue_enabled;
+      rescue.onclick=async e=>{
+        e.stopPropagation();
+        const {error}=await sb.rpc("org_quiz_rescue_player",{p_session_id:state.teacherSession.id,p_participant_id:p.id});
+        if(error){showToast(humanError(error.message));return}
+        playSound("correct");showToast("Игрок возвращён в командный зачёт.");await refreshTeacher();
+      };
+      actions.append(rescue);
+    }
+    card.append(actions);
   });
   document.querySelectorAll(".drag-card").forEach(card=>{
     card.addEventListener("dragstart",()=>{card.classList.add("dragging");card.dataset.dragging="1"});
@@ -411,6 +472,18 @@ $("startGame").onclick=async()=>{
     if(state.teacherSession?.status==="countdown"){await beginQuestion(1,{allowBreak:false})}
   },3000);
 };
+$("openSteal")?.addEventListener("click",async()=>{
+  if(!state.teacherSession||state.teacherSession.status!=="live"){showToast("Перехват доступен только во время активного вопроса.");return}
+  const {data,error}=await sb.rpc("org_quiz_open_steal",{p_session_id:state.teacherSession.id,p_duration_sec:7});
+  if(error){showToast(humanError(error.message));return}
+  playSound("transition");showToast("Перехват открыт на 7 секунд.");
+  clearTimeout(state.stealTimer);
+  state.stealTimer=setTimeout(async()=>{
+    if(state.teacherSession?.interaction_phase==="steal"){
+      await setSession({interaction_phase:"result",steal_open_until:null});
+    }
+  },7200);
+});
 $("nextQuestion").onclick=async()=>{
   if(!state.teacherSession)return;
   const {count}=await sb.from("org_quiz_questions").select("*",{count:"exact",head:true}).eq("quiz_id",state.teacherSession.quiz_id);
@@ -432,7 +505,7 @@ async function setSession(patch){
 }
 function subscribeTeacher(sessionId){
   clearSubs();
-  ["org_quiz_participants","org_quiz_teams","org_quiz_answers"].forEach(table=>{
+  ["org_quiz_participants","org_quiz_teams","org_quiz_answers","org_quiz_steals","org_quiz_rescues"].forEach(table=>{
     state.subs.push(sb.channel("teacher-"+table+"-"+sessionId).on("postgres_changes",{event:"*",schema:"public",table,filter:"session_id=eq."+sessionId},refreshTeacher).subscribe());
   });
   state.subs.push(sb.channel("teacher-session-"+sessionId).on("postgres_changes",{event:"UPDATE",schema:"public",table:"org_quiz_sessions",filter:"id=eq."+sessionId},async payload=>{state.teacherSession=payload.new;await refreshTeacher()}).subscribe());
@@ -870,6 +943,13 @@ async function renderLiveTeacherQuestion(){
   const {data:q}=await sb.from("org_quiz_questions").select("*").eq("quiz_id",state.teacherSession.quiz_id).eq("order_index",state.teacherSession.current_question_index).maybeSingle();
   if(!q)return;
   const openMode=["duel","split","wordcloud","team_pitch"].includes(q.question_type);
+  const stealPhase=state.teacherSession.interaction_phase==="steal";
+  if($("openSteal")){
+    const supported=["single","true_false","odd_one_out","flag","anthem","person_photo","place_photo","region_map","film_frame","film_quote","film_clip"].includes(q.question_type);
+    $("openSteal").classList.toggle("hidden",!supported||openMode);
+    $("openSteal").disabled=stealPhase;
+    $("openSteal").textContent=stealPhase?"Перехват открыт":"Перехват";
+  }
   $("openVoting").classList.toggle("hidden",!["duel","split","team_pitch"].includes(q.question_type));
   $("showResults").classList.toggle("hidden",!openMode);
   $("presenterCounter").textContent="Вопрос "+q.order_index;
@@ -890,6 +970,12 @@ async function renderLiveTeacherQuestion(){
       $("optionDistribution").innerHTML="";
     }
   }else{
+    if(stealPhase){
+      $("presenterCounter").textContent="ПЕРЕХВАТ";
+      $("presenterPrompt").textContent="Перехват: "+q.prompt;
+      const until=state.teacherSession.steal_open_until;
+      if(until)startSharedTimer(Math.max(1,Math.ceil((new Date(until).getTime()-Date.now())/1000)),new Date().toISOString(),$("presenterTimer"));
+    }
     $("presenterOptions").innerHTML=q.options.map((o,i)=>`<div class="presenter-option"><strong>${String.fromCharCode(65+i)}.</strong> ${escapeHtml(o)}</div>`).join("");
     const {data:stats}=await sb.from("org_quiz_question_stats").select("*").eq("session_id",state.teacherSession.id).eq("question_id",q.id).maybeSingle();
     const counts=[stats?.option_a||0,stats?.option_b||0,stats?.option_c||0,stats?.option_d||0].slice(0,q.options.length);
@@ -1000,6 +1086,23 @@ async function renderQuestionInteraction(q){
   const host=$("answerOptions");
   host.className="answer-grid";
   const phase=state.session?.interaction_phase||"answer";
+
+  if(phase==="steal"){
+    $("stealStudentCard")?.classList.remove("hidden");
+    host.className="answer-grid steal-answer-grid";
+    const opts=q.question_type==="true_false" && !q.options.length?["Верно","Неверно"]:q.options;
+    host.innerHTML=opts.map((o,i)=>`<button class="answer steal-answer" data-steal-i="${i}"><strong>${String.fromCharCode(65+i)}.</strong> ${escapeHtml(o)}</button>`).join("");
+    host.querySelectorAll("[data-steal-i]").forEach(b=>b.onclick=()=>submitSteal([Number(b.dataset.stealI)]));
+    const until=state.session?.steal_open_until;
+    if(until)startSharedTimer(Math.max(1,Math.ceil((new Date(until).getTime()-Date.now())/1000)),new Date().toISOString(),$("questionTimer"),()=>lockQuestionUI());
+    return;
+  }
+  $("stealStudentCard")?.classList.add("hidden");
+  if(phase==="result"){
+    host.className="result-wait";
+    host.innerHTML='<div class="result-wait-card"><strong>Раунд ответа закрыт</strong><span>Ожидайте следующий вопрос.</span></div>';
+    return;
+  }
 
   if((q.question_type==="duel"||q.question_type==="split") && phase==="answer"){
     host.className="open-response";
@@ -1125,11 +1228,23 @@ function playSound(kind){
 function renderLifeState(){
   if(!state.participant||!$("lifeBadge"))return;
   const eliminated=state.participant.life_state==="eliminated";
+  const streak=Number(state.participant.current_streak||0);
+  const mult=streak>=7?2:streak>=5?1.5:streak>=3?1.25:1;
   $("lifeBadge").className="life-badge "+(eliminated?"eliminated":"alive");
   $("lifeBadge").textContent=eliminated?"✕ Вы выбили":"● В игре";
+  if($("comboBadge")){
+    $("comboBadge").textContent=streak?("Серия "+streak+" · ×"+String(mult).replace(".",",")):"Серия 0";
+    $("comboBadge").className="combo-badge "+(mult>1?"hot":"");
+  }
   $("lifeExplanation").textContent=eliminated
-    ?"Вы можете продолжать отвечать, но ваши баллы больше не идут в общий счёт команды."
+    ?"Вы остаётесь зрителем раунда. Вернуться в командный зачёт можно через единственное командное спасение."
     :"Ваши баллы идут в общий счёт команды.";
+  if($("comboExplanation")){
+    $("comboExplanation").textContent=streak>=7?"Максимальное комбо ×2."
+      :streak>=5?"Комбо ×1,5. Ещё 2 верных до ×2."
+      :streak>=3?"Комбо ×1,25. Серия продолжает расти."
+      :"3 подряд → ×1,25 · 5 → ×1,5 · 7 → ×2.";
+  }
 }
 
 const wikiImageCache=new Map();
