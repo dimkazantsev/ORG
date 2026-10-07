@@ -138,7 +138,7 @@ async function enterTeacher(){
   await loadQuizSets();
   await loadAnalytics();
   await loadOverview();
-  await window.openStudioView("overview");
+  await window.openStudioView("questions");
 }
 async function loadQuizSets(){
   const {data,error}=await sb.from("org_quiz_sets").select("id,title,topic,description,created_at,published").eq("published",true).order("created_at",{ascending:false});
@@ -148,11 +148,11 @@ async function loadQuizSets(){
   $("quizSelect").innerHTML=opts;$("editorQuizSelect").innerHTML=opts;
   $("questionSetFilter").innerHTML='<option value="">Все наборы</option>'+opts;
   $("bulkTargetSet").innerHTML='<option value="">Переместить в набор…</option>'+opts;
-  $("sidebarSetCount").textContent=state.quizSets.length+" наборов";
-  $("overviewSets").textContent=state.quizSets.length;
+  if($("sidebarSetCount"))$("sidebarSetCount").textContent=state.quizSets.length+" наборов";
+  if($("overviewSets"))$("overviewSets").textContent=state.quizSets.length;
   if(!state.editorQuizId&&state.quizSets[0])state.editorQuizId=state.quizSets[0].id;
   if(state.editorQuizId)$("editorQuizSelect").value=state.editorQuizId;
-  await Promise.all([loadQuestionBank(),loadQuizSetLibrary(),loadMediaLibrary()]);
+  await loadQuestionBank();
 }
 
 $("createSessionForm").addEventListener("submit",async e=>{
@@ -279,27 +279,27 @@ function escapeHtml(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","
 
 function bindTeacherTabs(){
   if(bindTeacherTabs.bound)return;bindTeacherTabs.bound=true;
-  const titles={overview:["Рабочее пространство","Обзор"],live:["Сессия","Живая сессия"],questions:["Контент","Банк вопросов"],sets:["Сценарии","Наборы игр"],scenarios:["Автосценарий","Party Night Builder"],media:["Ресурсы","Медиатека"],players:["Аудитория","Игроки"],analytics:["Результаты","Аналитика"]};
-  const ids={overview:"studioOverview",live:"studioLive",questions:"studioQuestions",sets:"studioSets",scenarios:"studioScenarios",media:"studioMedia",players:"studioPlayers",analytics:"studioAnalytics"};
+  const titles={
+    questions:["Контент","Игровые банки"],
+    live:["Сессия","Запустить игру"],
+    analytics:["Результаты","Результаты"]
+  };
+  const ids={questions:"studioQuestions",live:"studioLive",analytics:"studioAnalytics"};
   const open=async view=>{
-    document.querySelectorAll(".studio-nav-item,.secondary-link,.flow-step,.tool-link").forEach(b=>b.classList.toggle("active",b.dataset.studioView===view));
+    if(!titles[view])view="questions";
+    document.querySelectorAll(".flow-step").forEach(b=>b.classList.toggle("active",b.dataset.studioView===view));
     Object.entries(ids).forEach(([k,id])=>$(id)?.classList.toggle("hidden",k!==view));
-    $("studioBreadcrumb").textContent=titles[view][0];$("studioPageTitle").textContent=titles[view][1];
-    if(view==="questions")await loadQuestionBank();
-    if(view==="sets")await loadQuizSetLibrary();
-    if(view==="scenarios")renderPartyNightPreview([]);
-    if(view==="media")await loadMediaLibrary();
-    if(view==="players")loadPlayersDirectory();
+    ["studioOverview","studioSets","studioScenarios","studioMedia","studioPlayers"].forEach(id=>$(id)?.classList.add("hidden"));
+    if($("studioBreadcrumb"))$("studioBreadcrumb").textContent=titles[view][0];
+    if($("studioPageTitle"))$("studioPageTitle").textContent=titles[view][1];
+    if(view==="questions"){await loadQuestionBank();await loadOverview();}
     if(view==="analytics")await loadAnalytics();
   };
   window.openStudioView=open;
   document.querySelectorAll("[data-studio-view]").forEach(b=>b.onclick=()=>open(b.dataset.studioView));
   document.querySelectorAll("[data-open-view]").forEach(b=>b.onclick=()=>open(b.dataset.openView));
-  $("quickCreateQuestion").onclick=()=>openQuestionDrawer();
-  $("openQuestionEditor").onclick=()=>openQuestionDrawer();
-  $("quickCreateSession").onclick=()=>open("sets");
-  $("openSetEditor").onclick=()=>openSetDrawer();
-  $("openSetComposer").onclick=()=>openSetComposer();
+  if($("openQuestionEditor"))$("openQuestionEditor").onclick=()=>openQuestionDrawer();
+  if($("openSetComposer"))$("openSetComposer").onclick=()=>openSetComposer();
   document.querySelectorAll("[data-close-drawer='question']").forEach(b=>b.onclick=()=>closeDrawer("question"));
   document.querySelectorAll("[data-close-drawer='set']").forEach(b=>b.onclick=()=>closeDrawer("set"));
   document.querySelectorAll("[data-close-drawer='preview']").forEach(b=>b.onclick=()=>closeDrawer("preview"));
