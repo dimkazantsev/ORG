@@ -402,6 +402,7 @@
                 <label id="correctOptionLabel">Правильный ответ<select id="correctOption"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label>
                 <label id="correctMultiLabel" class="hidden">Правильные варианты<input id="correctMulti" placeholder="A, B"></label>
                 <label>Время, сек.<input id="questionTime" type="number" min="5" max="300" value="30"></label>
+                <label>Баллы<input id="questionPoints" type="number" min="0" max="10000" value="100"></label>
                 <label>Сложность<select id="questionDifficulty"><option value="1">1 — легко</option><option value="2" selected>2</option><option value="3">3 — средне</option><option value="4">4</option><option value="5">5 — сложно</option></select></label>
                 <label>Теги<input id="questionTags" placeholder="география, флаги, easy"></label>
               </div>
@@ -436,6 +437,16 @@
               <div class="composer-columns"><div><h3>Банк</h3><div id="composerBank" class="composer-list"></div></div><div><h3>В наборе <span id="composerCount">0</span></h3><div id="composerSelected" class="composer-list selected"></div></div></div>
               <div class="drawer-actions"><button type="button" class="button-secondary" data-close-drawer="composer">Отмена</button><button class="button-primary" type="submit">Создать набор</button></div>
             </form>
+          </aside>
+        </div>
+
+        <div id="setOrderDrawer" class="editor-drawer hidden" aria-hidden="true">
+          <div class="drawer-backdrop" data-close-drawer="setorder"></div>
+          <aside class="drawer-panel">
+            <div class="drawer-head"><div><span class="section-kicker">Наборы игр</span><h2 id="setOrderTitle">Порядок вопросов</h2></div><button class="drawer-close" data-close-drawer="setorder">×</button></div>
+            <p class="drawer-copy">Перетаскивайте вопросы мышью или пальцем. Порядок сохраняется в наборе и используется в живой игре.</p>
+            <div id="setOrderList" class="set-order-list"></div>
+            <div class="drawer-actions"><button type="button" class="button-secondary" data-close-drawer="setorder">Отмена</button><button id="saveSetOrder" class="button-primary" type="button">Сохранить порядок</button></div>
           </aside>
         </div>
 
