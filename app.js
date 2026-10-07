@@ -415,7 +415,7 @@ async function previewLibraryQuestion(id){
   if(cfg.flag_url){host.className="preview-media flag-preview";host.innerHTML=`<img src="${escapeHtml(cfg.flag_url)}" alt="">`;}
   else if(cfg.image_url){host.className="preview-media";host.innerHTML=`<img src="${escapeHtml(cfg.image_url)}" alt="">`;}
   else if(cfg.audio_url){host.className="preview-media audio-preview";host.innerHTML=`<div class="audio-preview-inner"><span>♫</span><audio controls preload="metadata" src="${escapeHtml(cfg.audio_url)}"></audio></div>`;}
-  else if(q.question_type==="region_map"){host.className="preview-media";await renderRussiaMap(q,host);}
+  else if(q.question_type==="region_map"){host.className="preview-media";host.dataset.preview="1";await renderRussiaMap(q,host);}
   $("previewOptions").innerHTML=(q.options||[]).length
     ? q.options.map((o,i)=>`<div class="preview-option"><span>${String.fromCharCode(65+i)}</span><strong>${escapeHtml(o)}</strong></div>`).join("")
     : '<div class="preview-option muted"><strong>Ответ вводится интерактивно</strong></div>';
@@ -797,6 +797,7 @@ async function renderRussiaMap(q,host){
       const id=d.properties?.id||d.id||"";
       const correct=id===q.config?.target_region;
       this.classList.add(correct?"correct":"wrong");
+      if(host.dataset.preview==="1")return;
       await submitPayload([id]);
     });
 }
