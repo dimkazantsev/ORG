@@ -238,6 +238,11 @@
                   <option value="team_pitch">Защита позиции</option>
                 </select></label>
                 <div id="questionTypeHint" class="type-hint">Выберите механику уровня.</div>
+                <div id="mediaConfig" class="two-col">
+                  <label>URL медиа<input id="mediaUrl" placeholder="Фото / аудио / флаг"></label>
+                  <label>Целевой регион<input id="targetRegion" placeholder="Например, altai-krai"></label>
+                </div>
+                <label class="toggle-line"><input id="eliminateOnWrong" type="checkbox"> Ошибка выбивает игрока из командного зачёта</label>
                 <label>Вопрос<textarea id="newQuestionPrompt" rows="3" required></textarea></label>
                 <div class="two-col">
                   <label>Вариант A<input id="optionA"></label><label>Вариант B<input id="optionB"></label>
