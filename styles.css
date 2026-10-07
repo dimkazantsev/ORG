@@ -1173,3 +1173,25 @@ body{
 .life-badge.eliminated{background:#f8edef!important;color:#9c5965!important;border-color:#edd6db!important}
 .timer-danger{background:#f8edef!important;color:#a65361!important;border-color:#efd8dd!important}
 .danger-mode{border-color:#eadbde!important;box-shadow:0 14px 34px rgba(126,75,86,.07)!important}
+
+.seed-field{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
+.seed-field label{min-width:0}
+.seed-button{min-height:46px!important;border-radius:12px!important;padding:0 13px!important;white-space:nowrap}
+.generated-summary{min-width:0}
+.generated-rounds{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.generated-rounds span{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 9px;border-radius:999px;
+  background:#f3f5f9;border:1px solid #e2e7ef;color:#667287;
+  font-size:10px;font-weight:700;
+}
+.generated-rounds b{
+  width:20px;height:20px;border-radius:50%;display:grid;place-items:center;
+  background:#fff;color:#586ab5;font-size:9px;border:1px solid #dbe1f2;
+}
+@media(max-width:720px){
+  .seed-field{grid-template-columns:1fr}
+  .seed-button{width:100%}
+  .generator-result{align-items:stretch;flex-direction:column}
+  .generator-result .button-primary{width:100%}
+}
