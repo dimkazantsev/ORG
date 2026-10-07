@@ -141,7 +141,7 @@ async function enterTeacher(){
   await window.openStudioView("overview");
 }
 async function loadQuizSets(){
-  const {data,error}=await sb.from("org_quiz_sets").select("id,title,topic,description,created_at").order("created_at",{ascending:false});
+  const {data,error}=await sb.from("org_quiz_sets").select("id,title,topic,description,created_at,published").eq("published",true).order("created_at",{ascending:false});
   if(error){showToast(error.message);return}
   state.quizSets=data||[];
   const opts=state.quizSets.map(q=>`<option value="${q.id}">${escapeHtml(q.title)} — ${escapeHtml(q.topic)}</option>`).join("");
@@ -429,7 +429,8 @@ async function loadQuestionBank(){
     $("questionBank").innerHTML=`<div class="empty-state"><strong>Не удалось загрузить вопросы</strong><p>${escapeHtml(error.message)}</p></div>`;
     return;
   }
-  state.questionRows=data||[];
+  const visibleSetIds=new Set((state.quizSets||[]).map(s=>s.id));
+  state.questionRows=(data||[]).filter(q=>visibleSetIds.has(q.quiz_id));
   $("sidebarQuestionCount").textContent=state.questionRows.length+" в банке";
   $("overviewQuestions").textContent=state.questionRows.length;
   renderQuestionLibrary();
@@ -558,21 +559,33 @@ function loadPlayersDirectory(){
 }
 async function loadOverview(){
   await loadQuizSetLibrary();
-  if(state.teacherSession){$("overviewLiveState").innerHTML=`<strong>Комната ${escapeHtml(state.teacherSession.code)}</strong><p>${escapeHtml(state.teacherSession.title||"Активная сессия")} · ${statusLabel(state.teacherSession.status)}</p>`;}
-  const packs=state.quizSets.filter(s=>s.title.startsWith("ОРГ · ")).sort((a,b)=>a.title.localeCompare(b.title,"ru"));
-  const host=$("overviewOrgPacks");
+  if(state.teacherSession){
+    $("overviewLiveState").innerHTML=`<strong>Комната ${escapeHtml(state.teacherSession.code)}</strong><p>${escapeHtml(state.teacherSession.title||"Активная сессия")} · ${statusLabel(state.teacherSession.status)}</p>`;
+  }
+  const order=["Флаги мира — 196 SVG","Россия на карте — 89 регионов","Гимны мира — аудиораунд","Лица науки и культуры","Места мира","Тёмная комната — выбывание"];
+  const icons={"Флаги мира — 196 SVG":"⚑","Россия на карте — 89 регионов":"◎","Гимны мира — аудиораунд":"♫","Лица науки и культуры":"◉","Места мира":"⌖","Тёмная комната — выбывание":"!"};
+  const notes={"Флаги мира — 196 SVG":"193 члена ООН + 2 наблюдателя + 1 бонус","Россия на карте — 89 регионов":"Интерактивная карта · zoom · pan","Гимны мира — аудиораунд":"Аудиораунды с гимнами","Лица науки и культуры":"Угадывание по фотографии","Места мира":"Угадывание места по фото","Тёмная комната — выбывание":"Ошибка может выбить игрока"};
+  const packs=order.map(t=>state.quizSets.find(s=>s.title===t)).filter(Boolean);
+  const host=$("overviewGamePacks");
   if(host){
     host.innerHTML=packs.map((s,i)=>{
       const count=(state.questionRows||[]).filter(q=>q.quiz_id===s.id).length;
-      return `<article class="org-pack-card pack-${i+1}">
-        <div class="org-pack-index">0${i+1}</div>
-        <div class="org-pack-copy"><span>${escapeHtml(s.topic)}</span><h4>${escapeHtml(s.title.replace(/^ОРГ · \d+\.\s*/,""))}</h4><p>${escapeHtml(s.description||"")}</p></div>
-        <div class="org-pack-footer"><strong>${count}</strong><span>вопросов</span><button class="mosaic-button" data-org-pack="${s.id}">Открыть вопросы →</button></div>
+      return `<article class="game-pack-card game-pack-${i+1}">
+        <div class="game-pack-visual"><span>${icons[s.title]||"◆"}</span></div>
+        <div class="game-pack-copy">
+          <span>${escapeHtml(s.topic)}</span>
+          <h4>${escapeHtml(s.title)}</h4>
+          <p>${escapeHtml(notes[s.title]||s.description||"")}</p>
+        </div>
+        <div class="game-pack-footer">
+          <div><strong>${count}</strong><span>заданий</span></div>
+          <button class="game-pack-open" data-game-pack="${s.id}">Открыть →</button>
+        </div>
       </article>`;
     }).join("");
-    host.querySelectorAll("[data-org-pack]").forEach(b=>b.onclick=async()=>{
+    host.querySelectorAll("[data-game-pack]").forEach(b=>b.onclick=async()=>{
       await window.openStudioView("questions");
-      $("questionSetFilter").value=b.dataset.orgPack;
+      $("questionSetFilter").value=b.dataset.gamePack;
       renderQuestionLibrary();
       window.scrollTo({top:0,behavior:"smooth"});
     });
