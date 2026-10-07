@@ -741,3 +741,89 @@ body{background:#f4f6f8}
   .compact-packs .game-pack-card{min-height:300px}
   .photo-loader{min-height:130px}
 }
+
+/* V9 — Russian people + cinema */
+.question-visual.photo-card img,
+.preview-media img,
+.media-stage img{
+  object-position:var(--media-position,50% 50%);
+}
+.question-tile .photo-card img{
+  object-position:50% 18%;
+}
+.quote-card-large{
+  background:linear-gradient(135deg,#fff1b9,#ffd8a8);
+  color:#4a3814;
+  flex-direction:column;
+  gap:12px;
+  padding:30px;
+  text-align:center;
+}
+.quote-card-large>span{
+  font-size:68px;
+  line-height:.8;
+  opacity:.45;
+}
+.quote-card-large>strong{
+  max-width:90%;
+  font-size:22px;
+  line-height:1.18;
+  letter-spacing:-.03em;
+}
+.video-card-large{
+  background:linear-gradient(135deg,#1b2230,#3b244a);
+  color:#fff;
+  gap:18px;
+  padding:30px;
+}
+.video-card-large>span{
+  width:72px;height:72px;border-radius:999px;
+  display:grid;place-items:center;
+  background:#ff456f;
+  font-size:32px;
+  padding-left:4px;
+}
+.video-card-large>div{display:grid}
+.video-card-large strong{font-size:26px}
+.video-card-large small{font-size:10px;color:#d7d9e3;margin-top:5px}
+.quote-stage{
+  width:100%;
+  min-height:280px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:16px;
+  padding:34px;
+  border-radius:18px;
+  background:linear-gradient(135deg,#fff0b2,#ffd7c3);
+  color:#3d321e;
+  text-align:center;
+  font-size:38px;
+}
+.quote-stage strong{
+  max-width:850px;
+  font-size:clamp(26px,3.2vw,48px);
+  line-height:1.1;
+  letter-spacing:-.035em;
+}
+.film-embed{
+  width:100%;
+  aspect-ratio:16/9;
+  min-height:320px;
+  border:0;
+  border-radius:16px;
+  background:#111;
+}
+.video-stage,.video-preview{
+  padding:0!important;
+  overflow:hidden;
+  background:#111!important;
+}
+.person-focus img{
+  object-position:50% 18%!important;
+}
+@media(max-width:760px){
+  .quote-stage{min-height:220px;padding:22px}
+  .quote-stage strong{font-size:28px}
+  .film-embed{min-height:220px}
+}
