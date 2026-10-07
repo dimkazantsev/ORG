@@ -4,15 +4,27 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const $ = (id)=>document.getElementById(id);
 const views = {home:$("homeView"),student:$("studentView"),teacher:$("teacherView")};
-const state = {session:null,participant:null,teams:[],participants:[],question:null,studentStartedAt:null,teacherSession:null,teacherUser:null,subs:[],quizSets:[],editorQuizId:null,timerHandle:null,analyticsRows:[],selectedAnalyticsSession:null};
+const state = {session:null,participant:null,teams:[],participants:[],question:null,studentStartedAt:null,teacherSession:null,teacherUser:null,subs:[],quizSets:[],editorQuizId:null,timerHandle:null,analyticsRows:[],selectedAnalyticsSession:null,sound:true,viewAsParticipant:false,regionTopology:null};
 
 function showView(name){
-  Object.entries(views).forEach(([k,v])=>v.classList.toggle("hidden",k!==name));
+  const layer=$("transitionLayer");
+  layer?.classList.remove("play"); void layer?.offsetWidth; layer?.classList.add("play");
+  playSound("transition");
+  setTimeout(()=>Object.entries(views).forEach(([k,v])=>v.classList.toggle("hidden",k!==name)),220);
 }
 function msg(el,text,kind=""){el.textContent=text;el.dataset.kind=kind}
 function code(){return ("ORG"+Math.random().toString(36).slice(2,6)).toUpperCase()}
 
 $("teacherToggle").onclick=()=>showView("teacher");
+$("brandHome").onclick=()=>showView("home");
+$("openModerator").onclick=()=>showView("teacher");
+document.querySelectorAll("[data-role-tab]").forEach(btn=>btn.onclick=()=>{
+  document.querySelectorAll("[data-role-tab]").forEach(x=>x.classList.toggle("active",x===btn));
+  $("participantAccess").classList.toggle("hidden",btn.dataset.roleTab!=="participant");
+  $("moderatorAccess").classList.toggle("hidden",btn.dataset.roleTab!=="moderator");
+  playSound("tap");
+});
+$("soundToggle").onclick=()=>{state.sound=!state.sound;$("soundToggle").textContent=state.sound?"♪":"×";showToast(state.sound?"Звук включён":"Звук выключен")};
 
 async function ensureAnonymous(){
   const {data:{session}}=await sb.auth.getSession();
@@ -607,3 +619,18 @@ async function renderOpenResults(q){
 }
 $("openVoting").onclick=()=>setSession({interaction_phase:"vote",status:"live"});
 $("showResults").onclick=()=>setSession({interaction_phase:"result",status:"paused"});
+
+function showToast(text){
+  const t=$("toast"); if(!t)return; t.textContent=text;t.classList.remove("hidden");clearTimeout(showToast._t);showToast._t=setTimeout(()=>t.classList.add("hidden"),1800);
+}
+function playSound(kind){
+  if(!state.sound)return;
+  try{
+    const A=window.AudioContext||window.webkitAudioContext; const ctx=playSound.ctx||(playSound.ctx=new A());
+    const o=ctx.createOscillator(),g=ctx.createGain();o.connect(g);g.connect(ctx.destination);
+    const spec={tap:[440,.045],correct:[660,.14],wrong:[180,.22],transition:[320,.10],eliminate:[120,.45],vote:[520,.08]}[kind]||[360,.06];
+    o.frequency.value=spec[0];o.type=kind==="wrong"||kind==="eliminate"?"sawtooth":"sine";
+    g.gain.setValueAtTime(.0001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.08,ctx.currentTime+.01);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+spec[1]);
+    o.start();o.stop(ctx.currentTime+spec[1]+.02);
+  }catch{}
+}
