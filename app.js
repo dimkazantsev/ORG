@@ -308,16 +308,25 @@ $("createQuestionForm").addEventListener("submit",async e=>{
   const type=$("questionType").value;
   const options=[$("optionA").value,$("optionB").value,$("optionC").value,$("optionD").value].map(x=>x.trim()).filter(Boolean);
   let correctPayload=[];
-  if(type==="single"||type==="true_false") correctPayload=[Number($("correctOption").value)];
+  if(["single","true_false","flag","anthem","person_photo","place_photo","elimination"].includes(type)) correctPayload=[Number($("correctOption").value)];
+  else if(type==="region_map") correctPayload=[$("targetRegion").value.trim()];
+  else if(type==="vote") correctPayload=[];
   else if(type==="multiple"){
     const map={A:0,B:1,C:2,D:3};
-    correctPayload=String($("correctMulti").value||"").toUpperCase().split(/[,s]+/).filter(Boolean).map(x=>map[x]).filter(Number.isInteger).sort((a,b)=>a-b);
+    correctPayload=String($("correctMulti").value||"").toUpperCase().split(/[,\s]+/).filter(Boolean).map(x=>map[x]).filter(Number.isInteger).sort((a,b)=>a-b);
     if(!correctPayload.length){msg($("editorMessage"),"Укажите правильные варианты, например A, B.");return}
   }
   else if(type==="ordering"||type==="ranking") correctPayload=options.map((_,i)=>i);
   else if(type==="odd_one_out") correctPayload=[Number($("correctOption").value)];
   else if(type==="short") correctPayload=[$("optionA").value.trim()];
-  const config=(type==="duel"||type==="split")?{mode:"audience_vote",anonymous:true}:type==="scale"?{min:1,max:10,left:"Совсем не согласен",right:"Полностью согласен"}:type==="wordcloud"?{max_words:3}:type==="team_pitch"?{mode:"team_pitch",anonymous:false}:{};
+  let config=(type==="duel"||type==="split")?{mode:"audience_vote",anonymous:true}:type==="scale"?{min:1,max:10,left:"Совсем не согласен",right:"Полностью согласен"}:type==="wordcloud"?{max_words:3}:type==="team_pitch"?{mode:"team_pitch",anonymous:false}:{};
+  const media=$("mediaUrl").value.trim();
+  if(type==="flag"&&media)config={...config,flag_url:media,media_kind:"flag"};
+  if(["person_photo","place_photo"].includes(type)&&media)config={...config,image_url:media,media_kind:type};
+  if(type==="anthem"&&media)config={...config,audio_url:media,media_kind:"audio"};
+  if(type==="region_map")config={...config,target_region:$("targetRegion").value.trim(),map_dataset:"data/regions.topojson",show_disputed_note:true};
+  if(type==="vote")config={...config,poll:true,show_live_results:true};
+  if(type==="elimination"||$("eliminateOnWrong").checked)config={...config,eliminate_on_wrong:true,elimination_label:"Выбывание в раунде"};
   const {error}=await sb.rpc("org_quiz_create_question_v2",{
     p_quiz_id:$("editorQuizSelect").value,
     p_question_type:type,
