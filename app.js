@@ -634,8 +634,8 @@ async function loadAnalytics(){
   const {data,error}=await sb.from("org_quiz_session_stats").select("*").order("created_at",{ascending:false}).limit(50);
   if(error){$("sessionHistory").innerHTML=`<p class="message">${escapeHtml(error.message)}</p>`;return}
   const rows=data||[];
-  $("analyticsSessions").textContent=rows.length;
-  $("analyticsParticipants").textContent=rows.reduce((a,r)=>a+Number(r.participants_count||0),0);
+  if($("analyticsSessions"))$("analyticsSessions").textContent=rows.length;
+  if($("analyticsParticipants"))$("analyticsParticipants").textContent=rows.reduce((a,r)=>a+Number(r.participants_count||0),0);
   const acc=rows.map(r=>Number(r.accuracy_percent)).filter(Number.isFinite);
   $("analyticsAccuracy").textContent=acc.length?(acc.reduce((a,b)=>a+b,0)/acc.length).toFixed(1)+"%":"—";
   $("analyticsAnswers").textContent=rows.reduce((a,r)=>a+Number(r.answers_count||0),0);
