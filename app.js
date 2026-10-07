@@ -47,7 +47,9 @@ $("joinForm").addEventListener("submit",async(e)=>{
     if(error) throw error;
     const row=data?.[0];
     state.participant={id:row.participant_id};
+    await sb.rpc("org_party_set_profile",{p_role:"participant",p_display_name:$("joinName").value,p_avatar_seed:$("joinName").value,p_preferences:{}});
     $("studentQuizTitle").textContent=row.quiz_title;
+    $("playerAvatar").textContent=($("joinName").value.trim()[0]||"У").toUpperCase();
     showView("student");
     await loadStudentSession(row.session_id);
     subscribeStudent(row.session_id);
@@ -58,7 +60,7 @@ async function loadStudentSession(sessionId){
   const {data:s}=await sb.from("org_quiz_sessions").select("*").eq("id",sessionId).single();
   state.session=s;
   const {data:p}=await sb.from("org_quiz_participants").select("*").eq("session_id",sessionId).maybeSingle();
-  if(p){state.participant=p}
+  if(p){state.participant=p;renderLifeState()}
   await loadStudentTeams();
   await loadActiveQuestion();
 }
@@ -633,4 +635,14 @@ function playSound(kind){
     g.gain.setValueAtTime(.0001,ctx.currentTime);g.gain.exponentialRampToValueAtTime(.08,ctx.currentTime+.01);g.gain.exponentialRampToValueAtTime(.0001,ctx.currentTime+spec[1]);
     o.start();o.stop(ctx.currentTime+spec[1]+.02);
   }catch{}
+}
+
+function renderLifeState(){
+  if(!state.participant||!$("lifeBadge"))return;
+  const eliminated=state.participant.life_state==="eliminated";
+  $("lifeBadge").className="life-badge "+(eliminated?"eliminated":"alive");
+  $("lifeBadge").textContent=eliminated?"✕ Вы выбили":"● В игре";
+  $("lifeExplanation").textContent=eliminated
+    ?"Вы можете продолжать отвечать, но ваши баллы больше не идут в общий счёт команды."
+    :"Ваши баллы идут в общий счёт команды.";
 }
