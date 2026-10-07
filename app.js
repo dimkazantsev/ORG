@@ -432,7 +432,7 @@ async function loadQuestionBank(){
   const visibleSetIds=new Set((state.quizSets||[]).map(s=>s.id));
   state.questionRows=(data||[]).filter(q=>visibleSetIds.has(q.quiz_id));
   $("sidebarQuestionCount").textContent=state.questionRows.length+" в банке";
-  $("overviewQuestions").textContent=state.questionRows.length;
+  if($("overviewQuestions"))$("overviewQuestions").textContent=state.questionRows.length;
   renderQuestionLibrary();
 }
 function renderQuestionLibrary(){
@@ -450,7 +450,8 @@ function renderQuestionLibrary(){
   const visual=q=>{
     const cfg=q.config||{};
     if(cfg.flag_url)return `<div class="question-visual flag-card"><img src="${escapeHtml(cfg.flag_url)}" alt=""></div>`;
-    if(cfg.image_url)return `<div class="question-visual photo-card"><img src="${escapeHtml(cfg.image_url)}" alt=""></div>`;
+    if(cfg.image_url)return `<div class="question-visual photo-card"><img loading="lazy" src="${escapeHtml(cfg.image_url)}" alt=""></div>`;
+    if(cfg.wiki_title||cfg.wiki_search)return `<div class="question-visual photo-card wiki-photo" data-qid="${q.id}"><div class="photo-loader">◉</div></div>`;
     if(cfg.audio_url)return `<div class="question-visual audio-card-large"><span>♫</span><div><strong>Аудиораунд</strong><small>Гимн · нажмите «Открыть», чтобы прослушать</small></div></div>`;
     if(q.question_type==="region_map")return `<div class="question-visual map-card-large"><span>◎</span><div><strong>Интерактивная карта</strong><small>Выбор региона · zoom · pan</small></div></div>`;
     const tone={elimination:"danger",duel:"violet",vote:"yellow",single:"blue",multiple:"blue"}[q.question_type]||"mint";
@@ -481,6 +482,12 @@ function renderQuestionLibrary(){
     </article>`;
   }).join("")||'<div class="empty-state"><strong>Вопросы не найдены</strong><p>Измените фильтры или создайте новый вопрос.</p></div>';
 
+  document.querySelectorAll(".wiki-photo[data-qid]").forEach(async el=>{
+    const q=(state.questionRows||[]).find(x=>x.id===el.dataset.qid);if(!q)return;
+    const image=await getQuestionImage(q.config||{});
+    if(image)el.innerHTML=`<img loading="lazy" src="${escapeHtml(image)}" alt="">`;
+    else el.innerHTML='<div class="photo-loader">Нет фото</div>';
+  });
   document.querySelectorAll("[data-select-question]").forEach(x=>x.onchange=()=>{
     x.checked?state.bulkQuestionIds.add(x.dataset.selectQuestion):state.bulkQuestionIds.delete(x.dataset.selectQuestion);
     updateBulkBar();renderQuestionLibrary();
@@ -510,7 +517,7 @@ async function previewLibraryQuestion(id){
   const host=$("previewMedia");host.className="preview-media hidden";host.innerHTML="";
   const cfg=q.config||{};
   if(cfg.flag_url){host.className="preview-media flag-preview";host.innerHTML=`<img src="${escapeHtml(cfg.flag_url)}" alt="">`;}
-  else if(cfg.image_url){host.className="preview-media";host.innerHTML=`<img src="${escapeHtml(cfg.image_url)}" alt="">`;}
+  else if(cfg.image_url||cfg.wiki_title||cfg.wiki_search){host.className="preview-media";const image=await getQuestionImage(cfg);host.innerHTML=image?`<img src="${escapeHtml(image)}" alt="">`:`<div class="media-placeholder">Изображение не удалось загрузить</div>`;}
   else if(cfg.audio_url){host.className="preview-media audio-preview";host.innerHTML=`<div class="audio-preview-inner"><span>♫</span><audio controls preload="metadata" src="${escapeHtml(cfg.audio_url)}"></audio></div>`;}
   else if(q.question_type==="region_map"){host.className="preview-media";host.dataset.preview="1";await renderRussiaMap(q,host);}
   $("previewOptions").innerHTML=(q.options||[]).length
@@ -558,38 +565,68 @@ function loadPlayersDirectory(){
   $("playersDirectory").innerHTML=(state.participants||[]).map(p=>`<div class="player-directory-row"><div><strong>${escapeHtml(p.full_name)}</strong><small>${escapeHtml(p.academic_group)}</small></div><span>${escapeHtml(state.teams.find(t=>t.id===p.team_id)?.name||"Без команды")}</span><span>${p.life_state==="eliminated"?"Выбыл":"В игре"}</span></div>`).join("")||'<div class="empty-state"><strong>Нет участников</strong><p>Игроки появятся после подключения к комнате.</p></div>';
 }
 async function loadOverview(){
-  await loadQuizSetLibrary();
-  if(state.teacherSession){
-    $("overviewLiveState").innerHTML=`<strong>Комната ${escapeHtml(state.teacherSession.code)}</strong><p>${escapeHtml(state.teacherSession.title||"Активная сессия")} · ${statusLabel(state.teacherSession.status)}</p>`;
-  }
-  const order=["Флаги мира — 196 SVG","Россия на карте — 89 регионов","Гимны мира — аудиораунд","Лица науки и культуры","Места мира","Тёмная комната — выбывание"];
-  const icons={"Флаги мира — 196 SVG":"⚑","Россия на карте — 89 регионов":"◎","Гимны мира — аудиораунд":"♫","Лица науки и культуры":"◉","Места мира":"⌖","Тёмная комната — выбывание":"!"};
-  const notes={"Флаги мира — 196 SVG":"193 члена ООН + 2 наблюдателя + 1 бонус","Россия на карте — 89 регионов":"Интерактивная карта · zoom · pan","Гимны мира — аудиораунд":"Аудиораунды с гимнами","Лица науки и культуры":"Угадывание по фотографии","Места мира":"Угадывание места по фото","Тёмная комната — выбывание":"Ошибка может выбить игрока"};
-  const packs=order.map(t=>state.quizSets.find(s=>s.title===t)).filter(Boolean);
+  const packs=(state.quizSets||[]).filter(s=>s.published!==false);
+  const rank=s=>{
+    const t=s.title;
+    if(t==="Флаги мира — 196 SVG")return 1;
+    if(t.startsWith("Флаговый марафон"))return 2;
+    if(t.startsWith("Последний выживший"))return 3;
+    if(t==="Россия на карте — 89 регионов")return 4;
+    if(t.startsWith("Гербы регионов России"))return 5;
+    if(t.startsWith("Гимны мира —"))return 6;
+    if(t.startsWith("Знаменитые люди —"))return 7;
+    if(t.startsWith("Места мира —"))return 8;
+    if(t==="Тёмная комната — выбывание")return 9;
+    return 99;
+  };
+  const icons=t=>{
+    if(t.startsWith("Флаги"))return"⚑";
+    if(t.startsWith("Флаговый марафон"))return"⚡";
+    if(t.startsWith("Последний выживший"))return"☠";
+    if(t.startsWith("Россия на карте"))return"◎";
+    if(t.startsWith("Гербы регионов"))return"♜";
+    if(t.startsWith("Гимны мира"))return"♫";
+    if(t.startsWith("Знаменитые люди"))return"◉";
+    if(t.startsWith("Места мира"))return"⌖";
+    if(t.startsWith("Тёмная комната"))return"!";
+    return"◆";
+  };
+  const note=s=>{
+    const t=s.title;
+    if(t==="Флаги мира — 196 SVG")return"196 SVG-флагов · 193 члена ООН + 2 наблюдателя + 1 бонус";
+    if(t.startsWith("Флаговый марафон"))return"60 быстрых флагов · 8 секунд на ответ";
+    if(t.startsWith("Последний выживший"))return"40 флагов · одна ошибка выбивает из командного зачёта";
+    if(t==="Россия на карте — 89 регионов")return"Интерактивная карта · zoom · pan · подтверждение ответа";
+    if(t.startsWith("Гербы регионов"))return"89 гербов субъектов России";
+    if(t.startsWith("Гимны мира"))return"Большой аудиобанк национальных гимнов";
+    if(t.startsWith("Знаменитые люди"))return"100 известных людей по фотографии";
+    if(t.startsWith("Места мира"))return"100 мировых достопримечательностей и природных объектов";
+    if(t==="Тёмная комната — выбывание")return"Раунды высокого риска";
+    return s.description||"";
+  };
+  const ordered=[...packs].sort((a,b)=>rank(a)-rank(b)||a.title.localeCompare(b.title,"ru"));
   const host=$("overviewGamePacks");
-  if(host){
-    host.innerHTML=packs.map((s,i)=>{
-      const count=(state.questionRows||[]).filter(q=>q.quiz_id===s.id).length;
-      return `<article class="game-pack-card game-pack-${i+1}">
-        <div class="game-pack-visual"><span>${icons[s.title]||"◆"}</span></div>
-        <div class="game-pack-copy">
-          <span>${escapeHtml(s.topic)}</span>
-          <h4>${escapeHtml(s.title)}</h4>
-          <p>${escapeHtml(notes[s.title]||s.description||"")}</p>
-        </div>
-        <div class="game-pack-footer">
-          <div><strong>${count}</strong><span>заданий</span></div>
-          <button class="game-pack-open" data-game-pack="${s.id}">Открыть →</button>
-        </div>
-      </article>`;
-    }).join("");
-    host.querySelectorAll("[data-game-pack]").forEach(b=>b.onclick=async()=>{
-      await window.openStudioView("questions");
-      $("questionSetFilter").value=b.dataset.gamePack;
-      renderQuestionLibrary();
-      window.scrollTo({top:0,behavior:"smooth"});
-    });
-  }
+  if(!host)return;
+  host.innerHTML=ordered.map((s,i)=>{
+    const count=(state.questionRows||[]).filter(q=>q.quiz_id===s.id).length;
+    return `<article class="game-pack-card game-pack-${(i%9)+1}">
+      <div class="game-pack-visual"><span>${icons(s.title)}</span></div>
+      <div class="game-pack-copy">
+        <span>${escapeHtml(s.topic)}</span>
+        <h4>${escapeHtml(s.title)}</h4>
+        <p>${escapeHtml(note(s))}</p>
+      </div>
+      <div class="game-pack-footer">
+        <div><strong>${count}</strong><span>заданий</span></div>
+        <button class="game-pack-open" data-game-pack="${s.id}">Открыть →</button>
+      </div>
+    </article>`;
+  }).join("");
+  host.querySelectorAll("[data-game-pack]").forEach(b=>b.onclick=()=>{
+    $("questionSetFilter").value=b.dataset.gamePack;
+    renderQuestionLibrary();
+    document.querySelector(".filter-bar")?.scrollIntoView({behavior:"smooth",block:"start"});
+  });
 }
 
 async function loadAnalytics(){
@@ -910,12 +947,44 @@ function renderLifeState(){
     :"Ваши баллы идут в общий счёт команды.";
 }
 
+const wikiImageCache=new Map();
+async function resolveWikiImage(title){
+  if(!title)return null;
+  if(wikiImageCache.has(title))return wikiImageCache.get(title);
+  try{
+    const u="https://en.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&origin=*&pithumbsize=1000&titles="+encodeURIComponent(title);
+    const r=await fetch(u);const j=await r.json();
+    const p=Object.values(j?.query?.pages||{})[0];
+    const url=p?.thumbnail?.source||p?.original?.source||null;
+    wikiImageCache.set(title,url);return url;
+  }catch{wikiImageCache.set(title,null);return null}
+}
+async function resolveWikiSearchImage(search){
+  if(!search)return null;
+  const key="search:"+search;if(wikiImageCache.has(key))return wikiImageCache.get(key);
+  try{
+    const su="https://ru.wikipedia.org/w/api.php?action=query&list=search&format=json&origin=*&srlimit=1&srsearch="+encodeURIComponent(search);
+    const sr=await fetch(su);const sj=await sr.json();const title=sj?.query?.search?.[0]?.title;
+    if(!title){wikiImageCache.set(key,null);return null}
+    const iu="https://ru.wikipedia.org/w/api.php?action=query&prop=pageimages&format=json&origin=*&pithumbsize=1000&titles="+encodeURIComponent(title);
+    const ir=await fetch(iu);const ij=await ir.json();const p=Object.values(ij?.query?.pages||{})[0];
+    const url=p?.thumbnail?.source||p?.original?.source||null;
+    wikiImageCache.set(key,url);return url;
+  }catch{wikiImageCache.set(key,null);return null}
+}
+async function getQuestionImage(cfg={}){
+  if(cfg.image_url)return cfg.image_url;
+  if(cfg.wiki_title)return await resolveWikiImage(cfg.wiki_title);
+  if(cfg.wiki_search)return await resolveWikiSearchImage(cfg.wiki_search);
+  return null;
+}
+
 async function renderQuestionMedia(q,host){
   if(!host)return;
   host.className="media-stage hidden";host.innerHTML="";
   const cfg=q.config||{};
   if(cfg.flag_url){host.className="media-stage flag-stage";host.innerHTML=`<img src="${escapeHtml(cfg.flag_url)}" alt="Флаг для задания">`;return}
-  if(cfg.image_url){host.className="media-stage";host.innerHTML=`<img src="${escapeHtml(cfg.image_url)}" alt="Изображение для задания" style="object-fit:${escapeHtml(cfg.image_fit||"cover")}">`;return}
+  if(cfg.image_url||cfg.wiki_title||cfg.wiki_search){const image=await getQuestionImage(cfg);host.className="media-stage";host.innerHTML=image?`<img src="${escapeHtml(image)}" alt="Изображение для задания" style="object-fit:${escapeHtml(cfg.image_fit||"cover")}">`:`<div class="media-placeholder">Изображение не удалось загрузить</div>`;return}
   if(cfg.audio_url){host.className="media-stage";host.innerHTML=`<div class="audio-card"><div class="note">♫</div><strong>Прослушайте фрагмент</strong><audio controls preload="metadata" src="${escapeHtml(cfg.audio_url)}"></audio></div>`;return}
   if(q.question_type==="region_map"){host.className="media-stage";await renderRussiaMap(q,host);return}
 }
@@ -1109,7 +1178,7 @@ $("setComposerForm")?.addEventListener("submit",async e=>{
     p_title:$("composerTitle").value,p_topic:$("composerTopic").value,p_description:$("composerDescription").value||null,p_question_ids:state.composerQuestionIds
   });
   if(error)return showToast(error.message);
-  closeDrawer("composer");await loadQuizSets();await window.openStudioView("sets");showToast("Набор собран.");
+  closeDrawer("composer");await loadQuizSets();await window.openStudioView("questions");showToast("Микс собран.");
 });
 
 function openSetOrder(setId){
