@@ -1260,3 +1260,22 @@ body{
   .mechanics-strip{grid-template-columns:1fr 1fr}
   .mechanic-chip{min-height:62px;padding:11px 12px}
 }
+
+.rescue-status{
+  margin:7px 0 0!important;
+  padding-top:7px;border-top:1px solid #edf0f4;
+  font-size:10px!important;color:#718177!important;
+}
+.rescue-workspace{margin-bottom:12px;box-shadow:none!important;background:#fbfcfd!important}
+.live-rescue-list{display:grid;gap:7px}
+.rescue-row{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:11px 12px;border:1px solid #e4e9ee;border-radius:13px;background:#fff;
+}
+.rescue-row>div{display:grid;gap:3px;min-width:0}
+.rescue-row strong{font-size:11px;color:#354255;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rescue-row small{font-size:9px;color:#8a95a7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:720px){
+  .rescue-row{align-items:stretch;flex-direction:column}
+  .rescue-row .rescue-action{width:100%;min-height:38px}
+}
