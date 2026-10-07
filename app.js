@@ -89,6 +89,8 @@ async function loadActiveQuestion(){
   startSharedTimer(data.time_limit_sec,state.session.question_started_at,$("questionTimer"),()=>lockQuestionUI());
   $("questionPrompt").textContent=data.prompt;
   $("answerFeedback").textContent="";
+  $("questionCard").classList.toggle("danger-mode",data.question_type==="elimination");
+  await renderQuestionMedia(data,$("mediaStage"));
   await renderQuestionInteraction(data);
 }
 async function submitPayload(payload){
@@ -100,7 +102,10 @@ async function submitPayload(payload){
   });
   if(error){msg($("answerFeedback"),humanError(error.message));return}
   const r=data?.[0];
-  msg($("answerFeedback"),r?.is_correct?`Верно. +${r.points_awarded} баллов`:"Ответ принят.");
+  if(r?.is_correct){playSound("correct");msg($("answerFeedback"),`Верно. +${r.points_awarded} баллов`);}
+  else{playSound(state.question?.question_type==="elimination"?"eliminate":"wrong");msg($("answerFeedback"),"Ответ принят.");}
+  if(state.session?.id){await loadStudentSession(state.session.id);}
+  if(state.participant?.life_state==="eliminated") showEliminationOverlay();
 }
 function subscribeStudent(sessionId){
   clearSubs();
@@ -645,4 +650,39 @@ function renderLifeState(){
   $("lifeExplanation").textContent=eliminated
     ?"Вы можете продолжать отвечать, но ваши баллы больше не идут в общий счёт команды."
     :"Ваши баллы идут в общий счёт команды.";
+}
+
+async function renderQuestionMedia(q,host){
+  if(!host)return;
+  host.className="media-stage hidden";host.innerHTML="";
+  const cfg=q.config||{};
+  if(cfg.flag_url){host.className="media-stage flag-stage";host.innerHTML=`<img src="${escapeHtml(cfg.flag_url)}" alt="Флаг для задания">`;return}
+  if(cfg.image_url){host.className="media-stage";host.innerHTML=`<img src="${escapeHtml(cfg.image_url)}" alt="Изображение для задания" style="object-fit:${escapeHtml(cfg.image_fit||"cover")}">`;return}
+  if(cfg.audio_url){host.className="media-stage";host.innerHTML=`<div class="audio-card"><div class="note">♫</div><strong>Прослушайте фрагмент</strong><audio controls preload="metadata" src="${escapeHtml(cfg.audio_url)}"></audio></div>`;return}
+  if(q.question_type==="region_map"){host.className="media-stage";await renderRussiaMap(q,host);return}
+}
+async function renderRussiaMap(q,host){
+  if(!state.regionTopology){
+    const res=await fetch("./data/regions.topojson"); state.regionTopology=await res.json();
+  }
+  const topo=state.regionTopology; const key=Object.keys(topo.objects)[0]; const fc=topojson.feature(topo,topo.objects[key]);
+  host.innerHTML='<div class="russia-map-wrap"><svg viewBox="0 0 1000 520" aria-label="Интерактивная карта России"></svg><div class="map-note">Игровой слой включает 89 геометрий. Территории, чей международный статус оспаривается, визуально отмечены отдельно.</div></div>';
+  const svg=d3.select(host.querySelector("svg"));
+  const projection=d3.geoMercator().fitExtent([[15,15],[985,505]],fc);
+  const path=d3.geoPath(projection);
+  svg.selectAll("path").data(fc.features).join("path")
+    .attr("d",path)
+    .attr("class",d=>"map-region"+(d.properties?.new2022?" new2022":""))
+    .attr("data-region",d=>d.properties?.id||d.id||"")
+    .on("click",async function(e,d){
+      if(this.classList.contains("correct")||this.classList.contains("wrong"))return;
+      const id=d.properties?.id||d.id||"";
+      const correct=id===q.config?.target_region;
+      this.classList.add(correct?"correct":"wrong");
+      await submitPayload([id]);
+    });
+}
+function showEliminationOverlay(){
+  const card=$("questionCard");if(!card||card.querySelector(".elimination-overlay"))return;
+  const o=document.createElement("div");o.className="elimination-overlay";o.innerHTML='<div><strong>ВЫБЫВАНИЕ</strong><p>Вы продолжаете игру, но больше не приносите очки команде.</p></div>';card.appendChild(o);setTimeout(()=>o.remove(),2600);
 }
