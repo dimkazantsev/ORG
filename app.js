@@ -482,12 +482,23 @@ function renderQuestionLibrary(){
     </article>`;
   }).join("")||'<div class="empty-state"><strong>Вопросы не найдены</strong><p>Измените фильтры или создайте новый вопрос.</p></div>';
 
-  document.querySelectorAll(".wiki-photo[data-qid]").forEach(async el=>{
+  const wikiEls=[...document.querySelectorAll(".wiki-photo[data-qid]")];
+  const hydrateWikiPhoto=async el=>{
+    if(el.dataset.loaded==="1")return;
+    el.dataset.loaded="1";
     const q=(state.questionRows||[]).find(x=>x.id===el.dataset.qid);if(!q)return;
     const image=await resolveQuestionImage(q);
     if(image)el.innerHTML=`<img loading="lazy" src="${escapeHtml(image)}" alt="">`;
-    else el.innerHTML='<div class="photo-loader">Нет фото</div>';
-  });
+    else{el.dataset.loaded="0";el.innerHTML='<div class="photo-loader">Нет фото</div>';}
+  };
+  if("IntersectionObserver" in window){
+    const io=new IntersectionObserver(entries=>{
+      entries.forEach(e=>{if(e.isIntersecting){io.unobserve(e.target);hydrateWikiPhoto(e.target)}});
+    },{rootMargin:"500px 0px"});
+    wikiEls.forEach(el=>io.observe(el));
+  }else{
+    wikiEls.slice(0,12).forEach(hydrateWikiPhoto);
+  }
   document.querySelectorAll("[data-select-question]").forEach(x=>x.onchange=()=>{
     x.checked?state.bulkQuestionIds.add(x.dataset.selectQuestion):state.bulkQuestionIds.delete(x.dataset.selectQuestion);
     updateBulkBar();renderQuestionLibrary();
@@ -975,7 +986,7 @@ async function renderQuestionMedia(q,host){
   host.className="media-stage hidden";host.innerHTML="";
   const cfg=q.config||{};
   if(cfg.flag_url){host.className="media-stage flag-stage";host.innerHTML=`<img src="${escapeHtml(cfg.flag_url)}" alt="Флаг для задания">`;return}
-  if(cfg.image_url||cfg.wiki_title||cfg.wiki_search){const image=await getQuestionImage(cfg);host.className="media-stage";host.innerHTML=image?`<img src="${escapeHtml(image)}" alt="Изображение для задания" style="object-fit:${escapeHtml(cfg.image_fit||"cover")}">`:`<div class="media-placeholder">Изображение не удалось загрузить</div>`;return}
+  if(cfg.image_url||cfg.wiki_title||cfg.wiki_search){const image=await resolveQuestionImage(q);host.className="media-stage";host.innerHTML=image?`<img src="${escapeHtml(image)}" alt="Изображение для задания" style="object-fit:${escapeHtml(cfg.image_fit||"cover")}">`:`<div class="media-placeholder">Изображение не удалось загрузить</div>`;return}
   if(cfg.audio_url){host.className="media-stage";host.innerHTML=`<div class="audio-card"><div class="note">♫</div><strong>Прослушайте фрагмент</strong><audio controls preload="metadata" src="${escapeHtml(cfg.audio_url)}"></audio></div>`;return}
   if(q.question_type==="region_map"){host.className="media-stage";await renderRussiaMap(q,host);return}
 }
