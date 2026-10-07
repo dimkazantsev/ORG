@@ -138,6 +138,7 @@ async function enterTeacher(){
   await loadQuizSets();
   await loadAnalytics();
   await loadOverview();
+  await window.openStudioView("questions");
 }
 async function loadQuizSets(){
   const {data,error}=await sb.from("org_quiz_sets").select("id,title,topic,description,created_at").order("created_at",{ascending:false});
@@ -281,7 +282,7 @@ function bindTeacherTabs(){
   const titles={overview:["Рабочее пространство","Обзор"],live:["Сессия","Живая сессия"],questions:["Контент","Банк вопросов"],sets:["Сценарии","Наборы игр"],scenarios:["Автосценарий","Party Night Builder"],media:["Ресурсы","Медиатека"],players:["Аудитория","Игроки"],analytics:["Результаты","Аналитика"]};
   const ids={overview:"studioOverview",live:"studioLive",questions:"studioQuestions",sets:"studioSets",scenarios:"studioScenarios",media:"studioMedia",players:"studioPlayers",analytics:"studioAnalytics"};
   const open=async view=>{
-    document.querySelectorAll(".studio-nav-item").forEach(b=>b.classList.toggle("active",b.dataset.studioView===view));
+    document.querySelectorAll(".studio-nav-item,.secondary-link").forEach(b=>b.classList.toggle("active",b.dataset.studioView===view));
     Object.entries(ids).forEach(([k,id])=>$(id)?.classList.toggle("hidden",k!==view));
     $("studioBreadcrumb").textContent=titles[view][0];$("studioPageTitle").textContent=titles[view][1];
     if(view==="questions")await loadQuestionBank();
@@ -296,7 +297,7 @@ function bindTeacherTabs(){
   document.querySelectorAll("[data-open-view]").forEach(b=>b.onclick=()=>open(b.dataset.openView));
   $("quickCreateQuestion").onclick=()=>openQuestionDrawer();
   $("openQuestionEditor").onclick=()=>openQuestionDrawer();
-  $("quickCreateSession").onclick=()=>open("live");
+  $("quickCreateSession").onclick=()=>open("sets");
   $("openSetEditor").onclick=()=>openSetDrawer();
   $("openSetComposer").onclick=()=>openSetComposer();
   document.querySelectorAll("[data-close-drawer='question']").forEach(b=>b.onclick=()=>closeDrawer("question"));
