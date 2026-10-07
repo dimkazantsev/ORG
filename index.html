@@ -99,6 +99,7 @@
         </div>
         <div class="player-statuses">
           <span id="lifeBadge" class="life-badge alive">● В игре</span>
+          <span id="comboBadge" class="combo-badge">Серия 0</span>
           <span class="team-pill" id="studentTeam">Без команды</span>
         </div>
       </div>
@@ -124,6 +125,12 @@
           <article class="mini-card rules-card">
             <div class="kicker">Статус игрока</div>
             <p id="lifeExplanation">Ваши баллы идут в общий счёт команды.</p>
+            <p id="comboExplanation" class="combo-explanation">Серия правильных ответов увеличивает множитель.</p>
+          </article>
+          <article id="stealStudentCard" class="mini-card steal-card hidden">
+            <div class="kicker">Перехват</div>
+            <strong id="stealStudentTitle">Шанс забрать вопрос</strong>
+            <p id="stealStudentText">Первая другая команда с правильным ответом получает половину базовых очков.</p>
           </article>
         </aside>
       </div>
@@ -274,8 +281,16 @@
                     <button id="nextQuestion" class="button-primary">Следующий →</button>
                     <button id="openVoting" class="button-secondary">Голосование</button>
                     <button id="showResults" class="button-secondary">Результат</button>
+                    <button id="openSteal" class="button-secondary steal-control">Перехват</button>
                     <button id="finishGame" class="button-danger">Завершить</button>
                   </div>
+                </div>
+
+                <div class="mechanics-strip">
+                  <div class="mechanic-chip"><span>Combo</span><strong id="mechanicCombo">Вкл.</strong></div>
+                  <div class="mechanic-chip"><span>Спасение</span><strong id="mechanicRescue">1 на команду</strong></div>
+                  <div class="mechanic-chip"><span>Перехват</span><strong id="mechanicSteal">Готов</strong></div>
+                  <div class="mechanic-chip secret"><span>Секретный раунд</span><strong id="mechanicSecret">Скрыт</strong></div>
                 </div>
 
                 <article class="workspace-card stage-card">
