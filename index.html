@@ -156,10 +156,9 @@
               <div><strong>ORG Studio</strong><small>Кабинет преподавателя</small></div>
             </div>
             <nav class="flow-steps" aria-label="Основной маршрут">
-              <button class="flow-step active" data-studio-view="questions"><span>1</span><div><b>Вопросы</b><small id="sidebarQuestionCount">0 в банке</small></div></button>
-              <button class="flow-step" data-studio-view="sets"><span>2</span><div><b>Собрать игру</b><small id="sidebarSetCount">0 наборов</small></div></button>
-              <button class="flow-step" data-studio-view="live"><span>3</span><div><b>Запустить</b><small>Комната и команды</small></div></button>
-              <button class="flow-step" data-studio-view="analytics"><span>4</span><div><b>Результаты</b><small>Статистика занятия</small></div></button>
+              <button class="flow-step active" data-studio-view="questions"><span>1</span><div><b>Игровые банки</b><small id="sidebarQuestionCount">0 заданий</small></div></button>
+              <button class="flow-step" data-studio-view="live"><span>2</span><div><b>Запустить</b><small>Комната и команды</small></div></button>
+              <button class="flow-step" data-studio-view="analytics"><span>3</span><div><b>Результаты</b><small>Статистика игры</small></div></button>
             </nav>
             <div class="flowbar-actions">
               <button id="viewAsParticipant" class="button-secondary">Вид участника</button>
@@ -167,24 +166,16 @@
             </div>
           </div>
 
-          <div class="studio-tools-row">
-            <button class="tool-link" data-studio-view="overview">Обзор</button>
-            <button class="tool-link" data-studio-view="scenarios">Party Night</button>
-            <button class="tool-link" data-studio-view="media">Медиатека</button>
-            <button class="tool-link" data-studio-view="players">Игроки</button>
-          </div>
+          
           <header class="studio-topbar">
             <div>
               <span id="studioBreadcrumb" class="section-kicker">Рабочее пространство</span>
               <h1 id="studioPageTitle">Обзор</h1>
             </div>
-            <div class="studio-top-actions">
-              <button id="quickCreateQuestion" class="button-secondary">+ Вопрос</button>
-              <button id="quickCreateSession" class="button-primary">+ Новая игра</button>
-            </div>
+            
           </header>
 
-          <div id="studioOverview" class="studio-view">
+          <div id="studioOverview" class="studio-view hidden legacy-section">
             <div class="overview-mosaic">
               <article class="mosaic-hero">
                 <div class="mosaic-chip">ORG Studio · преподаватель</div>
@@ -221,12 +212,7 @@
               </button>
             </div>
 
-            <section class="game-pack-section">
-              <div class="game-pack-head">
-                <div><span class="section-kicker">Игровые банки</span><h3>Готовые режимы для занятия</h3><p>Флаги, карта регионов, гимны, знаменитые люди, места и раунды на выбывание — сразу из базы.</p></div>
-              </div>
-              <div id="overviewGamePacks" class="game-pack-grid"></div>
-            </section>
+            
 
             <div class="overview-bottom">
               <article class="overview-summary-card">
@@ -249,7 +235,7 @@
 
           <div id="studioLive" class="studio-view hidden">
             <div class="section-toolbar">
-              <div><span class="section-kicker">Шаг 3 из 4</span><h2>Запустить игру</h2><p>Выберите набор, создайте комнату и покажите код студентам.</p></div>
+              <div><span class="section-kicker">Шаг 2 из 3</span><h2>Запустить игру</h2><p>Выберите набор, создайте комнату и покажите код студентам.</p></div>
               <button class="button-primary" data-open-view="analytics">Дальше: результаты →</button>
             </div>
 
@@ -313,8 +299,19 @@
 
           <div id="studioQuestions" class="studio-view">
             <div class="section-toolbar">
-              <div><span class="section-kicker">Шаг 1 из 4</span><h2>Вопросы</h2><p>Сначала создайте или выберите задания. Всё остальное можно сделать позже.</p></div>
-              <div class="toolbar-actions"><button id="openQuestionEditor" class="button-secondary">+ Создать вопрос</button><button class="button-primary" data-open-view="sets">Дальше: собрать игру →</button></div>
+              <div><span class="section-kicker">Шаг 1 из 3</span><h2>Игровые банки</h2><p>Выберите готовый режим или откройте его вопросы. Никаких лишних разделов.</p></div>
+              <div class="toolbar-actions">
+                <button id="openSetComposer" class="button-secondary">Собрать микс</button>
+                <button id="openQuestionEditor" class="button-secondary">+ Свой вопрос</button>
+                <button class="button-primary" data-open-view="live">Запустить игру →</button>
+              </div>
+            </div>
+            <section class="game-pack-section compact-packs">
+              <div class="game-pack-head">
+                <div><span class="section-kicker">Готовые игры</span><h3>Выберите режим</h3><p>Каждая карточка — готовый запускаемый банк с собственным типом заданий.</p></div>
+              </div>
+              <div id="overviewGamePacks" class="game-pack-grid"></div>
+            </section>
             </div>
 
             <div class="filter-bar">
@@ -337,7 +334,7 @@
             <div id="questionBank" class="question-library"></div>
           </div>
 
-          <div id="studioSets" class="studio-view hidden">
+          <div id="studioSets" class="studio-view hidden legacy-section">
             <div class="section-toolbar">
               <div><span class="section-kicker">Шаг 2 из 4</span><h2>Собрать игру</h2><p>Выберите готовый набор или соберите свой из банка вопросов.</p></div>
               <div class="toolbar-actions"><button id="openSetComposer" class="button-secondary">Собрать из банка</button><button id="openSetEditor" class="button-secondary">+ Пустой набор</button><button class="button-primary" data-open-view="live">Дальше: запустить →</button></div>
@@ -345,7 +342,7 @@
             <div id="quizSetLibrary" class="set-library"></div>
           </div>
 
-          <div id="studioScenarios" class="studio-view hidden">
+          <div id="studioScenarios" class="studio-view hidden legacy-section">
             <div class="section-toolbar">
               <div><span class="section-kicker">Автосценарий</span><h2>Party Night Builder</h2><p>Соберите игровой вечер автоматически: выберите число раундов каждого типа — система случайно подберёт задания из банка.</p></div>
             </div>
@@ -377,14 +374,14 @@
             </div>
           </div>
 
-          <div id="studioMedia" class="studio-view hidden">
+          <div id="studioMedia" class="studio-view hidden legacy-section">
             <div class="section-toolbar">
               <div><span class="section-kicker">Ресурсы</span><h2>Медиатека</h2><p>Изображения, флаги и аудио, которые используются в заданиях.</p></div>
             </div>
             <div id="mediaLibrary" class="media-library"></div>
           </div>
 
-          <div id="studioPlayers" class="studio-view hidden">
+          <div id="studioPlayers" class="studio-view hidden legacy-section">
             <div class="section-toolbar">
               <div><span class="section-kicker">Аудитория</span><h2>Игроки</h2><p>Участники текущей комнаты, команды и статус выбывания.</p></div>
             </div>
@@ -393,7 +390,7 @@
 
           <div id="studioAnalytics" class="studio-view hidden">
             <div class="section-toolbar">
-              <div><span class="section-kicker">Шаг 4 из 4</span><h2>Результаты</h2><p>После занятия здесь будут история, точность, сложные вопросы и экспорт.</p></div>
+              <div><span class="section-kicker">Шаг 3 из 3</span><h2>Результаты</h2><p>После занятия здесь будут история, точность, сложные вопросы и экспорт.</p></div>
               <div class="toolbar-actions"><button id="exportCsv" class="button-secondary">CSV</button><button id="exportXlsx" class="button-secondary">XLSX</button><button id="refreshAnalytics" class="button-secondary">Обновить</button></div>
             </div>
             <div class="analytics-metrics">
