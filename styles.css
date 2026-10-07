@@ -555,3 +555,165 @@ body{background:#f4f6f8}
  .org-pack-card{min-height:240px}
  .org-pack-head h3{font-size:28px}
 }
+
+/* V7 — game banks, aligned geometry */
+.game-pack-section{margin-top:12px}
+.game-pack-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin:0 0 12px}
+.game-pack-head h3{margin:5px 0 6px;font-size:36px;line-height:1;letter-spacing:-.05em}
+.game-pack-head p{margin:0;max-width:760px;color:#7a8495;font-size:13px;line-height:1.45}
+.game-pack-grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+}
+.game-pack-card{
+  min-width:0;
+  min-height:360px;
+  display:grid;
+  grid-template-rows:150px 1fr auto;
+  border:2px solid #e1e5ec;
+  border-radius:24px;
+  overflow:hidden;
+  background:#fff;
+  box-shadow:0 8px 24px rgba(34,49,78,.045);
+}
+.game-pack-visual{
+  display:grid;
+  place-items:center;
+  min-height:150px;
+  font-size:72px;
+  font-weight:950;
+  line-height:1;
+}
+.game-pack-copy{
+  display:flex;
+  flex-direction:column;
+  padding:20px 22px 16px;
+}
+.game-pack-copy>span{
+  font-size:10px;
+  font-weight:850;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:#68758b;
+}
+.game-pack-copy h4{
+  margin:8px 0 9px;
+  min-height:58px;
+  font-size:27px;
+  line-height:1.02;
+  letter-spacing:-.045em;
+}
+.game-pack-copy p{
+  margin:0;
+  min-height:38px;
+  color:#707b8e;
+  font-size:11px;
+  line-height:1.45;
+}
+.game-pack-footer{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:16px 22px 20px;
+  border-top:1px solid #edf0f4;
+}
+.game-pack-footer>div{display:flex;align-items:baseline;gap:6px}
+.game-pack-footer strong{font-size:34px;line-height:1;letter-spacing:-.05em}
+.game-pack-footer span{font-size:10px;color:#7d8798}
+.game-pack-open{
+  min-width:122px;
+  min-height:40px;
+  padding:9px 13px;
+  border-radius:12px;
+  background:#fff;
+  border:1px solid rgba(31,43,73,.13);
+  color:#27344b;
+  font-size:11px;
+  font-weight:850;
+}
+.game-pack-open:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(34,49,78,.08)}
+.game-pack-1{background:#0e4ab8;color:#fff;border-color:#0e4ab8}
+.game-pack-1 .game-pack-visual{background:#0e4ab8;color:#d9ee16}
+.game-pack-1 .game-pack-copy>span,.game-pack-1 .game-pack-copy p,.game-pack-1 .game-pack-footer span{color:#dbe6ff}
+.game-pack-1 .game-pack-footer{border-color:rgba(255,255,255,.18)}
+.game-pack-1 .game-pack-open{background:#ff3f92;color:#fff;border-color:#ff3f92}
+.game-pack-2{background:#dbeaff}
+.game-pack-2 .game-pack-visual{background:#cde2ff;color:#195cbc}
+.game-pack-3{background:#f8dce9}
+.game-pack-3 .game-pack-visual{background:#f4c8dc;color:#c43a78}
+.game-pack-4{background:#ece4ff}
+.game-pack-4 .game-pack-visual{background:#e0d3ff;color:#7456c9}
+.game-pack-5{background:#dff1e9}
+.game-pack-5 .game-pack-visual{background:#d0ebdf;color:#2b855f}
+.game-pack-6{background:#1e2430;color:#fff;border-color:#1e2430}
+.game-pack-6 .game-pack-visual{background:#161b25;color:#ff567f}
+.game-pack-6 .game-pack-copy>span,.game-pack-6 .game-pack-copy p,.game-pack-6 .game-pack-footer span{color:#b9c1d0}
+.game-pack-6 .game-pack-footer{border-color:rgba(255,255,255,.12)}
+.game-pack-6 .game-pack-open{background:#ff567f;color:#fff;border-color:#ff567f}
+
+/* flag SVG cards */
+.question-visual.flag-card{
+  background:#f4f7fb;
+  padding:20px;
+}
+.question-visual.flag-card img{
+  width:100%;
+  height:100%;
+  max-height:180px;
+  object-fit:contain;
+  object-position:center;
+  filter:drop-shadow(0 10px 18px rgba(35,48,72,.08));
+}
+.question-tile{
+  grid-template-rows:220px minmax(260px,auto);
+}
+.question-tile-body{
+  min-height:260px;
+}
+.question-tile h3{
+  min-height:54px;
+}
+.question-tile-footer{
+  min-height:54px;
+}
+.question-actions .question-action{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+}
+.row-actions button,.map-controls button,.drawer-close,.icon-btn{
+  display:inline-grid;
+  place-items:center;
+  line-height:1;
+}
+
+/* keep primary flow visually aligned */
+.flow-step{
+  grid-template-columns:34px minmax(0,1fr);
+}
+.flow-step>span{
+  display:grid;
+  place-items:center;
+  line-height:1;
+}
+.flow-step>div{min-width:0}
+.flow-step b,.flow-step small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+@media(max-width:1180px){
+  .game-pack-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+  .game-pack-head h3{font-size:30px}
+  .game-pack-grid{grid-template-columns:1fr}
+  .game-pack-card{min-height:320px;grid-template-rows:130px 1fr auto}
+  .game-pack-visual{min-height:130px;font-size:62px}
+  .game-pack-copy{padding:18px}
+  .game-pack-copy h4{font-size:24px;min-height:auto}
+  .game-pack-copy p{min-height:auto}
+  .game-pack-footer{padding:14px 18px 18px}
+  .game-pack-open{min-width:112px}
+  .question-tile{grid-template-rows:180px minmax(250px,auto)}
+  .question-visual.flag-card img{max-height:145px}
+}
