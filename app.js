@@ -100,6 +100,8 @@ async function loadActiveQuestion(){
   if(!state.session)return;
   if(state.session.status==="lobby"){
     hideStudentPhase();
+    $("mediaStage").className="media-stage hidden";$("mediaStage").innerHTML="";$("answerFeedback").textContent="";
+    $("questionCard").classList.remove("danger-mode");
     $("questionCounter").textContent="Лобби";
     $("questionPrompt").textContent=state.session.setup_stage==="ready"?"Команды готовы. Ожидаем запуска преподавателем.":"Ожидаем распределения по командам.";
     $("answerOptions").innerHTML="";
@@ -107,12 +109,16 @@ async function loadActiveQuestion(){
     return;
   }
   if(state.session.status==="countdown"){
+    $("mediaStage").className="media-stage hidden";$("mediaStage").innerHTML="";$("answerFeedback").textContent="";
+    $("questionCard").classList.remove("danger-mode");
     $("questionCounter").textContent="Старт";
     $("questionPrompt").textContent="Игра начинается…";$("answerOptions").innerHTML="";$("questionTimer").textContent="—";
     showStudentPhase("countdown",state.session.transition_started_at,3,"Игра начинается","Приготовьтесь. Первый вопрос откроется автоматически.");
     return;
   }
   if(state.session.status==="round_break"){
+    $("mediaStage").className="media-stage hidden";$("mediaStage").innerHTML="";$("answerFeedback").textContent="";
+    $("questionCard").classList.remove("danger-mode");
     $("questionCounter").textContent="Переход";$("answerOptions").innerHTML="";$("questionTimer").textContent="—";
     const rt=state.session.round_title||"Следующий раунд";
     $("questionPrompt").textContent=rt;
@@ -121,6 +127,8 @@ async function loadActiveQuestion(){
   }
   if(state.session.status==="finished"){
     hideStudentPhase();
+    $("mediaStage").className="media-stage hidden";$("mediaStage").innerHTML="";$("answerFeedback").textContent="";
+    $("questionCard").classList.remove("danger-mode");
     $("questionCounter").textContent="Финиш";$("questionPrompt").textContent="Игра завершена."; $("answerOptions").innerHTML="";$("questionTimer").textContent="—"; return;
   }
   hideStudentPhase();
@@ -203,6 +211,12 @@ function renderRandomBankList(){
   const preferred=state.quizSets.filter(s=>!s.title.startsWith("Флаговый марафон")&&!s.title.startsWith("Последний выживший")&&s.title!=="Тёмная комната — выбывание");
   host.innerHTML=preferred.map((s,i)=>`<label class="bank-choice"><input type="checkbox" value="${s.id}" ${i<6?"checked":""}><span><b>${escapeHtml(s.title)}</b><small>${escapeHtml(s.topic)}</small></span></label>`).join("");
 }
+$("randomizeSeed")?.addEventListener("click",()=>{
+  const a=new Uint32Array(1);crypto.getRandomValues(a);
+  $("randomSeed").value=String(1+(a[0]%2147483646));
+  playSound("tap");
+});
+
 $("randomGameForm")?.addEventListener("submit",async e=>{
   e.preventDefault();
   const sourceIds=[...document.querySelectorAll("#randomBankList input:checked")].map(x=>x.value);
@@ -217,11 +231,20 @@ $("randomGameForm")?.addEventListener("submit",async e=>{
   if(btn){btn.disabled=false;btn.textContent="Собрать случайную игру →"}
   if(error){showToast(humanError(error.message));return}
   const row=data?.[0];if(!row)return;
-  state.generatedGame={id:row.quiz_id,title:row.title,seed:row.seed,questionCount:row.question_count};
+  const {data:generatedRows}=await sb.from("org_quiz_questions")
+    .select("order_index,config").eq("quiz_id",row.quiz_id).order("order_index");
+  const roundMap=new Map();
+  (generatedRows||[]).forEach(q=>{
+    const n=Number(q.config?.round_number||1),title=q.config?.round_title||("Раунд "+n);
+    if(!roundMap.has(n))roundMap.set(n,{n,title,count:0});
+    roundMap.get(n).count++;
+  });
+  const roundPlan=[...roundMap.values()].sort((a,b)=>a.n-b.n);
+  state.generatedGame={id:row.quiz_id,title:row.title,seed:row.seed,questionCount:row.question_count,rounds:roundPlan};
   const opt=document.createElement("option");opt.value=row.quiz_id;opt.textContent=row.title+" — "+row.question_count+" вопросов";opt.dataset.generated="1";
   $("quizSelect").prepend(opt);$("quizSelect").value=row.quiz_id;
   const result=$("randomGameResult");result.classList.remove("hidden");
-  result.innerHTML=`<div><span class="section-kicker">Готово</span><strong>${escapeHtml(row.title)}</strong><p>${rounds} раундов × ${questions} вопросов · seed ${seed}</p></div><button class="button-primary" type="button" data-use-random>Перейти к запуску →</button>`;
+  result.innerHTML=`<div class="generated-summary"><span class="section-kicker">Готово</span><strong>${escapeHtml(row.title)}</strong><p>${row.question_count} вопросов · seed ${seed}</p><div class="generated-rounds">${roundPlan.map(r=>`<span><b>${r.n}</b>${escapeHtml(r.title)} · ${r.count}</span>`).join("")}</div></div><button class="button-primary" type="button" data-use-random>Перейти к запуску →</button>`;
   result.querySelector("[data-use-random]").onclick=()=>window.openStudioView("live");
   playSound("correct");
 });
@@ -821,17 +844,20 @@ function startSharedTimer(limitSec,startedAt,el,onEnd){
 async function renderLiveTeacherQuestion(){
   if(!state.teacherSession)return;
   if(state.teacherSession.status==="lobby"){
+    $("presenterMedia").className="media-stage hidden";$("presenterMedia").innerHTML="";
     $("presenterCounter").textContent="Лобби";
     $("presenterPrompt").textContent="Игра ещё не запущена.";
     $("presenterOptions").innerHTML="";$("optionDistribution").innerHTML="";$("presenterTimer").textContent="—";return;
   }
   if(state.teacherSession.status==="countdown"){
+    $("presenterMedia").className="media-stage hidden";$("presenterMedia").innerHTML="";
     $("presenterCounter").textContent="Старт";
     $("presenterPrompt").textContent="Игра начинается…";
     $("presenterOptions").innerHTML="";$("optionDistribution").innerHTML="";
     startSharedTimer(3,state.teacherSession.transition_started_at,$("presenterTimer"));return;
   }
   if(state.teacherSession.status==="round_break"){
+    $("presenterMedia").className="media-stage hidden";$("presenterMedia").innerHTML="";
     $("presenterCounter").textContent="Новый раунд";
     $("presenterPrompt").textContent=state.teacherSession.round_title||"Следующий раунд";
     $("presenterOptions").innerHTML='<div class="presenter-option round-transition-copy">Приготовьтесь к следующему блоку вопросов.</div>';
