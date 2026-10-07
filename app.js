@@ -125,6 +125,7 @@ $("teacherLoginForm").addEventListener("submit",async e=>{
   const {data:isAdmin,error:adminErr}=await sb.rpc("org_quiz_is_admin_check");
   if(adminErr||!isAdmin){await sb.auth.signOut();msg($("teacherLoginMessage"),"У этой учётной записи нет прав преподавателя.");return}
   state.teacherUser=data.user;
+  await sb.rpc("org_party_set_profile",{p_role:"moderator",p_display_name:data.user.email||"Модератор",p_avatar_seed:"moderator",p_preferences:{}});
   await enterTeacher();
 });
 
@@ -153,7 +154,7 @@ $("createSessionForm").addEventListener("submit",async e=>{
   const c=code();
   const {data,error}=await sb.from("org_quiz_sessions").insert({
     quiz_id:$("quizSelect").value,code:c,title:$("sessionTitle").value||null,
-    team_count:Number($("teamCount").value||4),created_by:state.teacherUser.id
+    team_count:Number($("teamCount").value||4),game_mode:$("gameMode").value,created_by:state.teacherUser.id
   }).select().single();
   if(error){msg($("teacherActionMessage"),error.message);return}
   state.teacherSession=data;
@@ -403,6 +404,7 @@ async function renderLiveTeacherQuestion(){
   $("showResults").classList.toggle("hidden",!openMode);
   $("presenterCounter").textContent="Вопрос "+q.order_index;
   $("presenterPrompt").textContent=q.prompt;
+  await renderQuestionMedia(q,$("presenterMedia"));
   startSharedTimer(q.time_limit_sec,state.teacherSession.question_started_at,$("presenterTimer"));
   if(openMode){
     if(state.teacherSession.interaction_phase==="answer"){
@@ -686,3 +688,17 @@ function showEliminationOverlay(){
   const card=$("questionCard");if(!card||card.querySelector(".elimination-overlay"))return;
   const o=document.createElement("div");o.className="elimination-overlay";o.innerHTML='<div><strong>ВЫБЫВАНИЕ</strong><p>Вы продолжаете игру, но больше не приносите очки команде.</p></div>';card.appendChild(o);setTimeout(()=>o.remove(),2600);
 }
+
+$("viewAsParticipant").onclick=async()=>{
+  if(!state.teacherSession){showToast("Сначала создайте комнату");return}
+  state.viewAsParticipant=true;
+  state.session=state.teacherSession;
+  state.participant={id:"preview",team_id:null,life_state:"alive",contributes_to_team:false};
+  const quiz=state.quizSets.find(q=>q.id===state.teacherSession.quiz_id);
+  $("studentQuizTitle").textContent=quiz?.title||"Предпросмотр";
+  $("playerAvatar").textContent="М";
+  renderLifeState();
+  await loadStudentTeams();
+  await loadActiveQuestion();
+  showView("student");
+};
