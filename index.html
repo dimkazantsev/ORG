@@ -160,6 +160,7 @@
             <button class="studio-nav-item" data-studio-view="live"><span class="nav-dot"></span><span>Живая сессия</span></button>
             <button class="studio-nav-item" data-studio-view="questions"><span class="nav-dot"></span><span>Банк вопросов</span><b id="sidebarQuestionCount">0</b></button>
             <button class="studio-nav-item" data-studio-view="sets"><span class="nav-dot"></span><span>Наборы игр</span><b id="sidebarSetCount">0</b></button>
+            <button class="studio-nav-item" data-studio-view="scenarios"><span class="nav-dot"></span><span>Party Night Builder</span></button>
             <button class="studio-nav-item" data-studio-view="media"><span class="nav-dot"></span><span>Медиатека</span></button>
             <button class="studio-nav-item" data-studio-view="players"><span class="nav-dot"></span><span>Игроки</span></button>
             <button class="studio-nav-item" data-studio-view="analytics"><span class="nav-dot"></span><span>Аналитика</span></button>
@@ -289,7 +290,17 @@
               <div class="search-field"><span>⌕</span><input id="questionSearch" placeholder="Поиск по тексту вопроса"></div>
               <select id="questionSetFilter"><option value="">Все наборы</option></select>
               <select id="questionTypeFilter"><option value="">Все типы</option><option value="single">Тест</option><option value="flag">Флаг</option><option value="anthem">Гимн</option><option value="person_photo">Фото человека</option><option value="place_photo">Фото места</option><option value="region_map">Карта</option><option value="vote">Голосование</option><option value="elimination">Выбывание</option><option value="duel">Баттл</option></select>
+              <select id="questionDifficultyFilter"><option value="">Любая сложность</option><option value="1">1 — легко</option><option value="2">2</option><option value="3">3 — средне</option><option value="4">4</option><option value="5">5 — сложно</option></select>
               <span id="questionBankCount" class="info-badge">0 вопросов</span>
+            </div>
+            <div id="bulkQuestionBar" class="bulk-bar hidden">
+              <strong><span id="bulkSelectedCount">0</span> выбрано</strong>
+              <select id="bulkTargetSet"><option value="">Переместить в набор…</option></select>
+              <input id="bulkTag" placeholder="Добавить тег">
+              <button id="bulkAddTag" class="button-secondary">Добавить тег</button>
+              <button id="bulkMove" class="button-secondary">Переместить</button>
+              <button id="bulkDelete" class="button-danger">Удалить</button>
+              <button id="bulkClear" class="text-button">Снять выбор</button>
             </div>
 
             <div id="questionBank" class="question-library"></div>
@@ -298,9 +309,41 @@
           <div id="studioSets" class="studio-view hidden">
             <div class="section-toolbar">
               <div><span class="section-kicker">Сценарии</span><h2>Наборы игр</h2><p>Набор — это последовательность вопросов для конкретного занятия.</p></div>
-              <button id="openSetEditor" class="button-primary">+ Создать набор</button>
+              <div class="toolbar-actions"><button id="openSetComposer" class="button-secondary">Собрать из банка</button><button id="openSetEditor" class="button-primary">+ Создать набор</button></div>
             </div>
             <div id="quizSetLibrary" class="set-library"></div>
+          </div>
+
+          <div id="studioScenarios" class="studio-view hidden">
+            <div class="section-toolbar">
+              <div><span class="section-kicker">Автосценарий</span><h2>Party Night Builder</h2><p>Соберите игровой вечер автоматически: выберите число раундов каждого типа — система случайно подберёт задания из банка.</p></div>
+            </div>
+            <div class="scenario-layout">
+              <article class="workspace-card">
+                <div class="workspace-card-head"><div><span class="section-kicker">Параметры</span><h3>Структура вечера</h3></div></div>
+                <form id="partyNightForm" class="form-stack">
+                  <label>Название<input id="partyNightTitle" value="ORG Party Night"></label>
+                  <div class="scenario-grid">
+                    <label>Флаги<input id="partyCountFlag" type="number" min="0" max="20" value="3"></label>
+                    <label>Гимны<input id="partyCountAnthem" type="number" min="0" max="20" value="2"></label>
+                    <label>Люди по фото<input id="partyCountPerson" type="number" min="0" max="20" value="2"></label>
+                    <label>Места по фото<input id="partyCountPlace" type="number" min="0" max="20" value="2"></label>
+                    <label>Карта России<input id="partyCountMap" type="number" min="0" max="20" value="3"></label>
+                    <label>Обычные тесты<input id="partyCountTest" type="number" min="0" max="20" value="3"></label>
+                    <label>Голосования<input id="partyCountVote" type="number" min="0" max="20" value="1"></label>
+                    <label>Баттлы<input id="partyCountDuel" type="number" min="0" max="20" value="1"></label>
+                    <label>Выбывание<input id="partyCountElimination" type="number" min="0" max="20" value="2"></label>
+                  </div>
+                  <label class="check-row"><input id="partyShuffle" type="checkbox" checked><span>Перемешать раунды</span></label>
+                  <button class="button-primary full" type="submit">Собрать Party Night</button>
+                  <p id="partyNightMessage" class="form-message"></p>
+                </form>
+              </article>
+              <article class="workspace-card">
+                <div class="workspace-card-head"><div><span class="section-kicker">Предпросмотр</span><h3>Очередь раундов</h3></div></div>
+                <div id="partyNightPreview" class="scenario-preview"><div class="empty-state compact"><strong>Сценарий ещё не собран</strong><p>Настройте количество раундов слева.</p></div></div>
+              </article>
+            </div>
           </div>
 
           <div id="studioMedia" class="studio-view hidden">
@@ -337,17 +380,19 @@
         <div id="questionEditorDrawer" class="editor-drawer hidden" aria-hidden="true">
           <div class="drawer-backdrop" data-close-drawer="question"></div>
           <aside class="drawer-panel">
-            <div class="drawer-head"><div><span class="section-kicker">Банк вопросов</span><h2>Новый вопрос</h2></div><button class="drawer-close" data-close-drawer="question">×</button></div>
+            <div class="drawer-head"><div><span class="section-kicker">Банк вопросов</span><h2 id="questionEditorTitle">Новый вопрос</h2></div><button class="drawer-close" data-close-drawer="question">×</button></div>
             <form id="createQuestionForm" class="form-stack">
               <label>Набор<select id="editorQuizSelect"></select></label>
               <label>Тип задания<select id="questionType">
                 <option value="single">Обычный тест</option><option value="multiple">Несколько ответов</option><option value="flag">Угадать флаг</option><option value="anthem">Угадать гимн</option><option value="person_photo">Человек по фото</option><option value="place_photo">Место по фото</option><option value="region_map">Регион на карте</option><option value="vote">Голосование</option><option value="elimination">На выбывание</option><option value="matching">Сопоставление</option><option value="ordering">Порядок</option><option value="duel">Баттл ответов</option><option value="split">Кейс</option><option value="scale">Шкала позиции</option><option value="wordcloud">Облако мнений</option><option value="ranking">Ранжирование</option><option value="team_pitch">Защита позиции</option>
               </select></label>
               <div id="questionTypeHint" class="editor-hint">Выберите механику уровня.</div>
+              <input id="editingQuestionId" type="hidden">
               <label>Вопрос<textarea id="newQuestionPrompt" rows="4" placeholder="Введите формулировку вопроса" required></textarea></label>
               <div id="mediaConfig" class="form-grid">
                 <label>URL изображения / аудио<input id="mediaUrl" placeholder="https://…"></label>
-                <label>Целевой регион<input id="targetRegion" placeholder="altai-krai"></label>
+                <label>Загрузить файл<input id="mediaUpload" type="file" accept="image/*,audio/*"></label>
+                <label>Целевой регион<input id="targetRegion" placeholder="altai-kray"></label>
               </div>
               <div class="form-grid">
                 <label>Вариант A<input id="optionA"></label><label>Вариант B<input id="optionB"></label>
@@ -357,6 +402,8 @@
                 <label id="correctOptionLabel">Правильный ответ<select id="correctOption"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label>
                 <label id="correctMultiLabel" class="hidden">Правильные варианты<input id="correctMulti" placeholder="A, B"></label>
                 <label>Время, сек.<input id="questionTime" type="number" min="5" max="300" value="30"></label>
+                <label>Сложность<select id="questionDifficulty"><option value="1">1 — легко</option><option value="2" selected>2</option><option value="3">3 — средне</option><option value="4">4</option><option value="5">5 — сложно</option></select></label>
+                <label>Теги<input id="questionTags" placeholder="география, флаги, easy"></label>
               </div>
               <label class="check-row"><input id="eliminateOnWrong" type="checkbox"><span>Ошибка выбивает игрока из командного зачёта</span></label>
               <label>Пояснение<textarea id="newQuestionExplanation" rows="3" placeholder="Показывается после ответа"></textarea></label>
@@ -378,6 +425,20 @@
             </form>
           </aside>
         </div>
+        <div id="setComposerDrawer" class="editor-drawer hidden" aria-hidden="true">
+          <div class="drawer-backdrop" data-close-drawer="composer"></div>
+          <aside class="drawer-panel preview-panel">
+            <div class="drawer-head"><div><span class="section-kicker">Наборы игр</span><h2>Собрать набор из банка</h2></div><button class="drawer-close" data-close-drawer="composer">×</button></div>
+            <form id="setComposerForm" class="form-stack">
+              <div class="form-grid"><label>Название<input id="composerTitle" required placeholder="Новый игровой набор"></label><label>Тема<input id="composerTopic" required placeholder="ОРГ / География"></label></div>
+              <label>Описание<textarea id="composerDescription" rows="2"></textarea></label>
+              <div class="composer-toolbar"><input id="composerSearch" placeholder="Поиск вопросов"><select id="composerType"><option value="">Все типы</option><option value="flag">Флаги</option><option value="anthem">Гимны</option><option value="person_photo">Люди</option><option value="place_photo">Места</option><option value="region_map">Карта</option><option value="elimination">Выбывание</option></select></div>
+              <div class="composer-columns"><div><h3>Банк</h3><div id="composerBank" class="composer-list"></div></div><div><h3>В наборе <span id="composerCount">0</span></h3><div id="composerSelected" class="composer-list selected"></div></div></div>
+              <div class="drawer-actions"><button type="button" class="button-secondary" data-close-drawer="composer">Отмена</button><button class="button-primary" type="submit">Создать набор</button></div>
+            </form>
+          </aside>
+        </div>
+
         <div id="questionPreviewDrawer" class="editor-drawer hidden" aria-hidden="true">
           <div class="drawer-backdrop" data-close-drawer="preview"></div>
           <aside class="drawer-panel preview-panel">
