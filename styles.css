@@ -1146,3 +1146,30 @@ body{
 @media(prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important;transition-duration:.001ms!important}
 }
+
+/* V11 — specificity cleanup: remove legacy rainbow */
+.mode-card.c-blue,.mode-card.c-violet,.mode-card.c-green,.mode-card.c-peach,
+.mode-card.c-cyan,.mode-card.c-yellow,.mode-card.c-red,.mode-card.c-lilac{
+  background:#fff!important;color:#2a3548!important;border-color:var(--line)!important;
+}
+.mode-card.c-blue>span,.mode-card.c-violet>span,.mode-card.c-green>span,.mode-card.c-peach>span,
+.mode-card.c-cyan>span,.mode-card.c-yellow>span,.mode-card.c-red>span,.mode-card.c-lilac>span{
+  background:#f1f4f9!important;color:#6678bd!important;
+}
+.abstract-card.blue,.abstract-card.violet,.abstract-card.yellow,.abstract-card.danger,.abstract-card.mint{
+  background:#f1f4f8!important;color:#65748d!important;
+}
+.question-tile.selected-row{
+  outline:3px solid rgba(101,119,200,.13)!important;
+  border-color:#cfd7ee!important;
+}
+.role-tab.active{
+  background:var(--accent-soft)!important;color:#4f609e!important;border-color:#d8dff2!important;
+}
+.transition-layer{
+  background:rgba(247,248,251,.96)!important;color:#5667ad!important;
+}
+.transition-layer span{letter-spacing:.16em!important;font-weight:750!important}
+.life-badge.eliminated{background:#f8edef!important;color:#9c5965!important;border-color:#edd6db!important}
+.timer-danger{background:#f8edef!important;color:#a65361!important;border-color:#efd8dd!important}
+.danger-mode{border-color:#eadbde!important;box-shadow:0 14px 34px rgba(126,75,86,.07)!important}
