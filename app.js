@@ -71,10 +71,9 @@ async function loadStudentTeams(){
   const mine=state.teams.find(t=>t.id===state.participant?.team_id);
   $("studentTeam").textContent=mine?mine.name:"Без команды";
   $("studentLeaderboard").innerHTML=state.teams.map((t,i)=>leaderRow(i,t.name,t.score)).join("")||"<p class='message'>Команды ещё не сформированы.</p>";
-  if($("stealStudentText")&&mine){
-    $("stealStudentText").textContent=mine.rescue_available
-      ?"У команды ещё есть одно спасение выбывшего игрока."
-      :"Спасение команды уже использовано.";
+  if($("rescueStatus")){
+    $("rescueStatus").textContent=!mine?"Спасение команды: —"
+      :(mine.rescue_available?"Спасение команды: доступно.":"Спасение команды: уже использовано.");
   }
 }
 function clearPhaseTimer(){
@@ -377,7 +376,7 @@ async function refreshTeacher(){
   }
   const step=["live","paused","countdown","round_break","finished"].includes(s.status)?"live":(s.setup_stage==="ready"?"ready":(s.setup_stage==="teams"?"teams":"room"));
   showSetupStep(step);
-  renderParticipants();renderTeacherLeaderboard();await renderLiveTeacherQuestion();await loadLiveStudentRanking();
+  renderParticipants();renderTeacherLeaderboard();renderLiveRescuePanel();await renderLiveTeacherQuestion();await loadLiveStudentRanking();
 }
 function renderParticipants(){
   if(!state.teams.length){
@@ -440,6 +439,30 @@ async function moveParticipant(id,team_id){
   const {error}=await sb.from("org_quiz_participants").update({team_id}).eq("id",id);
   if(error)msg($("teacherActionMessage"),error.message);else await refreshTeacher();
 }
+function renderLiveRescuePanel(){
+  const host=$("liveRescueList");if(!host)return;
+  if(!state.teacherSession?.rescue_enabled){
+    host.innerHTML='<p class="message">Спасение отключено для этой сессии.</p>';return;
+  }
+  const eliminated=state.participants.filter(p=>p.life_state==="eliminated"&&p.team_id);
+  if(!eliminated.length){
+    host.innerHTML='<p class="message">Сейчас нет выбывших игроков.</p>';return;
+  }
+  host.innerHTML=eliminated.map(p=>{
+    const team=state.teams.find(t=>t.id===p.team_id);
+    const available=!!team?.rescue_available;
+    return `<div class="rescue-row">
+      <div><strong>${escapeHtml(p.full_name)}</strong><small>${escapeHtml(team?.name||"Без команды")} · ${escapeHtml(p.elimination_reason||"выбыл")}</small></div>
+      <button class="rescue-action" data-live-rescue="${p.id}" ${available?"":"disabled"}>${available?"Спасти":"Уже использовано"}</button>
+    </div>`;
+  }).join("");
+  host.querySelectorAll("[data-live-rescue]").forEach(b=>b.onclick=async()=>{
+    const {error}=await sb.rpc("org_quiz_rescue_player",{p_session_id:state.teacherSession.id,p_participant_id:b.dataset.liveRescue});
+    if(error){showToast(humanError(error.message));return}
+    playSound("correct");showToast("Игрок возвращён в командный зачёт.");await refreshTeacher();
+  });
+}
+
 function renderTeacherLeaderboard(){
   const sorted=[...state.teams].sort((a,b)=>b.score-a.score);
   $("teacherLeaderboard").innerHTML=sorted.map((t,i)=>leaderRow(i,t.name,t.score)).join("")||"<p class='message'>Нет команд.</p>";
