@@ -148,7 +148,7 @@ async function loadQuizSets(){
   $("quizSelect").innerHTML=opts;$("editorQuizSelect").innerHTML=opts;
   $("questionSetFilter").innerHTML='<option value="">Все наборы</option>'+opts;
   $("bulkTargetSet").innerHTML='<option value="">Переместить в набор…</option>'+opts;
-  $("sidebarSetCount").textContent=state.quizSets.length;
+  $("sidebarSetCount").textContent=state.quizSets.length+" наборов";
   $("overviewSets").textContent=state.quizSets.length;
   if(!state.editorQuizId&&state.quizSets[0])state.editorQuizId=state.quizSets[0].id;
   if(state.editorQuizId)$("editorQuizSelect").value=state.editorQuizId;
@@ -282,7 +282,7 @@ function bindTeacherTabs(){
   const titles={overview:["Рабочее пространство","Обзор"],live:["Сессия","Живая сессия"],questions:["Контент","Банк вопросов"],sets:["Сценарии","Наборы игр"],scenarios:["Автосценарий","Party Night Builder"],media:["Ресурсы","Медиатека"],players:["Аудитория","Игроки"],analytics:["Результаты","Аналитика"]};
   const ids={overview:"studioOverview",live:"studioLive",questions:"studioQuestions",sets:"studioSets",scenarios:"studioScenarios",media:"studioMedia",players:"studioPlayers",analytics:"studioAnalytics"};
   const open=async view=>{
-    document.querySelectorAll(".studio-nav-item,.secondary-link").forEach(b=>b.classList.toggle("active",b.dataset.studioView===view));
+    document.querySelectorAll(".studio-nav-item,.secondary-link,.flow-step,.tool-link").forEach(b=>b.classList.toggle("active",b.dataset.studioView===view));
     Object.entries(ids).forEach(([k,id])=>$(id)?.classList.toggle("hidden",k!==view));
     $("studioBreadcrumb").textContent=titles[view][0];$("studioPageTitle").textContent=titles[view][1];
     if(view==="questions")await loadQuestionBank();
@@ -419,7 +419,7 @@ async function loadQuestionBank(){
   const {data,error}=await sb.from("org_quiz_questions").select("id,quiz_id,order_index,question_type,prompt,options,config,explanation,time_limit_sec,points,tags,difficulty,media_storage_path,created_at,updated_at").order("created_at",{ascending:false});
   if(error){$("questionBank").innerHTML=`<div class="empty-state"><strong>Не удалось загрузить вопросы</strong><p>${escapeHtml(error.message)}</p></div>`;return}
   state.questionRows=data||[];
-  $("sidebarQuestionCount").textContent=state.questionRows.length;$("overviewQuestions").textContent=state.questionRows.length;
+  $("sidebarQuestionCount").textContent=state.questionRows.length+" в банке";$("overviewQuestions").textContent=state.questionRows.length;
   renderQuestionLibrary();
 }
 function renderQuestionLibrary(){
