@@ -149,32 +149,30 @@
       </article>
 
       <div id="teacherDashboard" class="studio-shell hidden">
-        <aside class="studio-sidebar">
-          <div class="studio-brand">
-            <span class="studio-mark">O</span>
-            <div><strong>ORG Studio</strong><small>Moderator workspace</small></div>
-          </div>
-
-          <nav class="studio-nav primary-flow" aria-label="Основной маршрут">
-            <button class="studio-nav-item" data-studio-view="questions"><span class="step-no">1</span><span>Вопросы</span><b id="sidebarQuestionCount">0</b></button>
-            <button class="studio-nav-item" data-studio-view="sets"><span class="step-no">2</span><span>Собрать игру</span><b id="sidebarSetCount">0</b></button>
-            <button class="studio-nav-item" data-studio-view="live"><span class="step-no">3</span><span>Запустить</span></button>
-            <button class="studio-nav-item" data-studio-view="analytics"><span class="step-no">4</span><span>Результаты</span></button>
-          </nav>
-          <div class="studio-secondary">
-            <button class="secondary-link" data-studio-view="overview">Обзор</button>
-            <button class="secondary-link" data-studio-view="scenarios">Party Night</button>
-            <button class="secondary-link" data-studio-view="media">Медиатека</button>
-            <button class="secondary-link" data-studio-view="players">Игроки</button>
-          </div>
-
-          <div class="studio-sidebar-footer">
-            <button id="viewAsParticipant" class="sidebar-action">Предпросмотр участника</button>
-            <button id="teacherLogout" class="sidebar-action muted hidden">Выйти</button>
-          </div>
-        </aside>
-
         <section class="studio-main">
+          <div class="studio-flowbar">
+            <div class="flowbar-brand">
+              <span class="studio-mark">O</span>
+              <div><strong>ORG Studio</strong><small>Кабинет преподавателя</small></div>
+            </div>
+            <nav class="flow-steps" aria-label="Основной маршрут">
+              <button class="flow-step active" data-studio-view="questions"><span>1</span><div><b>Вопросы</b><small id="sidebarQuestionCount">0 в банке</small></div></button>
+              <button class="flow-step" data-studio-view="sets"><span>2</span><div><b>Собрать игру</b><small id="sidebarSetCount">0 наборов</small></div></button>
+              <button class="flow-step" data-studio-view="live"><span>3</span><div><b>Запустить</b><small>Комната и команды</small></div></button>
+              <button class="flow-step" data-studio-view="analytics"><span>4</span><div><b>Результаты</b><small>Статистика занятия</small></div></button>
+            </nav>
+            <div class="flowbar-actions">
+              <button id="viewAsParticipant" class="button-secondary">Вид участника</button>
+              <button id="teacherLogout" class="button-secondary hidden">Выйти</button>
+            </div>
+          </div>
+
+          <div class="studio-tools-row">
+            <button class="tool-link" data-studio-view="overview">Обзор</button>
+            <button class="tool-link" data-studio-view="scenarios">Party Night</button>
+            <button class="tool-link" data-studio-view="media">Медиатека</button>
+            <button class="tool-link" data-studio-view="players">Игроки</button>
+          </div>
           <header class="studio-topbar">
             <div>
               <span id="studioBreadcrumb" class="section-kicker">Рабочее пространство</span>
