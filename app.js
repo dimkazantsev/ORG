@@ -4,7 +4,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const $ = (id)=>document.getElementById(id);
 const views = {home:$("homeView"),student:$("studentView"),teacher:$("teacherView")};
-const state = {session:null,participant:null,teams:[],participants:[],question:null,studentStartedAt:null,teacherSession:null,teacherUser:null,subs:[],quizSets:[],editorQuizId:null,timerHandle:null,analyticsRows:[],selectedAnalyticsSession:null,sound:true,viewAsParticipant:false,regionTopology:null,questionRows:[],bulkQuestionIds:new Set(),composerQuestionIds:[],editingQuestion:null};
+const state = {session:null,participant:null,teams:[],participants:[],question:null,studentStartedAt:null,teacherSession:null,teacherUser:null,subs:[],quizSets:[],editorQuizId:null,timerHandle:null,analyticsRows:[],selectedAnalyticsSession:null,sound:true,viewAsParticipant:false,regionTopology:null,questionRows:[],bulkQuestionIds:new Set(),composerQuestionIds:[],editingQuestion:null,generatedGame:null,setupStep:"room",phaseTimer:null};
 
 function showView(name){
   const layer=$("transitionLayer");
@@ -72,14 +72,58 @@ async function loadStudentTeams(){
   $("studentTeam").textContent=mine?mine.name:"Без команды";
   $("studentLeaderboard").innerHTML=state.teams.map((t,i)=>leaderRow(i,t.name,t.score)).join("")||"<p class='message'>Команды ещё не сформированы.</p>";
 }
+function clearPhaseTimer(){
+  if(state.phaseTimer){clearInterval(state.phaseTimer);state.phaseTimer=null}
+}
+function hideStudentPhase(){
+  clearPhaseTimer();
+  $("studentPhaseOverlay")?.classList.add("hidden");
+}
+function showStudentPhase(kind,startedAt,durationSec,title,text){
+  const overlay=$("studentPhaseOverlay");if(!overlay)return;
+  overlay.classList.remove("hidden");
+  $("phaseEyebrow").textContent=kind==="countdown"?"Старт игры":"Следующий раунд";
+  $("phaseTitle").textContent=title||"Приготовьтесь";
+  $("phaseText").textContent=text||"Продолжение через несколько секунд.";
+  const count=$("phaseCountdown");
+  clearPhaseTimer();
+  const tick=()=>{
+    const elapsed=startedAt?Math.floor((Date.now()-new Date(startedAt).getTime())/1000):0;
+    const left=Math.max(0,durationSec-elapsed);
+    count.textContent=left>0?String(left):"•";
+    if(left<=0){clearPhaseTimer()}
+  };
+  tick();state.phaseTimer=setInterval(tick,200);
+}
+
 async function loadActiveQuestion(){
   if(!state.session)return;
   if(state.session.status==="lobby"){
-    $("questionCounter").textContent="Лобби";$("questionPrompt").textContent="Ожидаем запуска преподавателем."; $("answerOptions").innerHTML=""; return;
+    hideStudentPhase();
+    $("questionCounter").textContent="Лобби";
+    $("questionPrompt").textContent=state.session.setup_stage==="ready"?"Команды готовы. Ожидаем запуска преподавателем.":"Ожидаем распределения по командам.";
+    $("answerOptions").innerHTML="";
+    $("questionTimer").textContent="—";
+    return;
+  }
+  if(state.session.status==="countdown"){
+    $("questionCounter").textContent="Старт";
+    $("questionPrompt").textContent="Игра начинается…";$("answerOptions").innerHTML="";$("questionTimer").textContent="—";
+    showStudentPhase("countdown",state.session.transition_started_at,3,"Игра начинается","Приготовьтесь. Первый вопрос откроется автоматически.");
+    return;
+  }
+  if(state.session.status==="round_break"){
+    $("questionCounter").textContent="Переход";$("answerOptions").innerHTML="";$("questionTimer").textContent="—";
+    const rt=state.session.round_title||"Следующий раунд";
+    $("questionPrompt").textContent=rt;
+    showStudentPhase("round",state.session.transition_started_at,4,rt,"Новый раунд начнётся через несколько секунд.");
+    return;
   }
   if(state.session.status==="finished"){
-    $("questionCounter").textContent="Финиш";$("questionPrompt").textContent="Квиз завершён."; $("answerOptions").innerHTML=""; return;
+    hideStudentPhase();
+    $("questionCounter").textContent="Финиш";$("questionPrompt").textContent="Игра завершена."; $("answerOptions").innerHTML="";$("questionTimer").textContent="—"; return;
   }
+  hideStudentPhase();
   const {data,error}=await sb.from("org_quiz_questions").select("*")
     .eq("quiz_id",state.session.quiz_id).eq("order_index",state.session.current_question_index).maybeSingle();
   if(error||!data){$("questionPrompt").textContent="Ожидаем следующий вопрос.";return}
@@ -153,20 +197,97 @@ async function loadQuizSets(){
   if(!state.editorQuizId&&state.quizSets[0])state.editorQuizId=state.quizSets[0].id;
   if(state.editorQuizId)$("editorQuizSelect").value=state.editorQuizId;
   await loadQuestionBank();
+  renderRandomBankList();
+}
+
+function renderRandomBankList(){
+  const host=$("randomBankList");if(!host)return;
+  const preferred=state.quizSets.filter(s=>!s.title.startsWith("Флаговый марафон")&&!s.title.startsWith("Последний выживший")&&s.title!=="Тёмная комната — выбывание");
+  host.innerHTML=preferred.map((s,i)=>`<label class="bank-choice"><input type="checkbox" value="${s.id}" ${i<6?"checked":""}><span><b>${escapeHtml(s.title)}</b><small>${escapeHtml(s.topic)}</small></span></label>`).join("");
+}
+$("randomGameForm")?.addEventListener("submit",async e=>{
+  e.preventDefault();
+  const sourceIds=[...document.querySelectorAll("#randomBankList input:checked")].map(x=>x.value);
+  if(!sourceIds.length){showToast("Выберите хотя бы один банк.");return}
+  const seed=Math.max(1,Number($("randomSeed").value||1));
+  const rounds=Math.max(1,Number($("randomRounds").value||5));
+  const questions=Math.max(1,Number($("randomQuestions").value||5));
+  const btn=e.submitter; if(btn){btn.disabled=true;btn.textContent="Собираю…"}
+  const {data,error}=await sb.rpc("org_quiz_generate_game",{
+    p_seed:seed,p_round_count:rounds,p_questions_per_round:questions,p_source_set_ids:sourceIds
+  });
+  if(btn){btn.disabled=false;btn.textContent="Собрать случайную игру →"}
+  if(error){showToast(humanError(error.message));return}
+  const row=data?.[0];if(!row)return;
+  state.generatedGame={id:row.quiz_id,title:row.title,seed:row.seed,questionCount:row.question_count};
+  const opt=document.createElement("option");opt.value=row.quiz_id;opt.textContent=row.title+" — "+row.question_count+" вопросов";opt.dataset.generated="1";
+  $("quizSelect").prepend(opt);$("quizSelect").value=row.quiz_id;
+  const result=$("randomGameResult");result.classList.remove("hidden");
+  result.innerHTML=`<div><span class="section-kicker">Готово</span><strong>${escapeHtml(row.title)}</strong><p>${rounds} раундов × ${questions} вопросов · seed ${seed}</p></div><button class="button-primary" type="button" data-use-random>Перейти к запуску →</button>`;
+  result.querySelector("[data-use-random]").onclick=()=>window.openStudioView("live");
+  playSound("correct");
+});
+
+function showSetupStep(step){
+  state.setupStep=step;
+  document.querySelectorAll(".session-step").forEach(b=>b.classList.toggle("active",b.dataset.sessionStep===step));
+  const map={room:"setupRoomPanel",teams:"setupTeamsPanel",ready:"setupReadyPanel",live:"setupLivePanel"};
+  Object.entries(map).forEach(([k,id])=>$(id)?.classList.toggle("hidden",k!==step));
+}
+document.querySelectorAll("[data-session-step]").forEach(b=>b.onclick=()=>{
+  const target=b.dataset.sessionStep;
+  const s=state.teacherSession;
+  if(target==="room"){showSetupStep("room");return}
+  if(!s){showToast("Сначала создайте комнату.");return}
+  if(target==="teams"){showSetupStep("teams");return}
+  if(target==="ready"){
+    if(!state.participants.length){showToast("Сначала дождитесь участников.");return}
+    if(state.participants.some(p=>!p.team_id)){showToast("Сначала распределите всех по командам.");return}
+    showSetupStep("ready");return;
+  }
+  if(target==="live"&&["live","paused","round_break","countdown"].includes(s.status)){showSetupStep("live")}
+});
+
+async function currentQuestionMeta(index){
+  if(!state.teacherSession)return null;
+  const {data}=await sb.from("org_quiz_questions").select("order_index,config,prompt").eq("quiz_id",state.teacherSession.quiz_id).eq("order_index",index).maybeSingle();
+  return data||null;
+}
+async function beginQuestion(index,{allowBreak=true}={}){
+  if(!state.teacherSession)return;
+  const q=await currentQuestionMeta(index);if(!q)return;
+  const rn=Number(q.config?.round_number||1);
+  const rt=q.config?.round_title||"Раунд "+rn;
+  const changing=allowBreak&&state.teacherSession.status==="live"&&rn!==Number(state.teacherSession.round_number||1);
+  if(changing){
+    await setSession({status:"round_break",current_question_index:index,round_number:rn,round_title:rt,transition_started_at:new Date().toISOString(),question_started_at:null});
+    setTimeout(async()=>{
+      if(state.teacherSession?.status==="round_break"&&state.teacherSession.current_question_index===index){
+        await setSession({status:"live",round_number:rn,round_title:rt,transition_started_at:null,question_started_at:new Date().toISOString()});
+      }
+    },4000);
+  }else{
+    await setSession({status:"live",current_question_index:index,round_number:rn,round_title:rt,transition_started_at:null,question_started_at:new Date().toISOString(),interaction_phase:"answer"});
+  }
 }
 
 $("createSessionForm").addEventListener("submit",async e=>{
   e.preventDefault();
   const c=code();
+  const selectedId=$("quizSelect").value;
+  const selectedSet=state.quizSets.find(x=>x.id===selectedId);
+  const seed=state.generatedGame?.id===selectedId?state.generatedGame.seed:(selectedSet?.seed||null);
   const {data,error}=await sb.from("org_quiz_sessions").insert({
-    quiz_id:$("quizSelect").value,code:c,title:$("sessionTitle").value||null,
-    team_count:Number($("teamCount").value||4),game_mode:$("gameMode").value,created_by:state.teacherUser.id
+    quiz_id:selectedId,code:c,title:$("sessionTitle").value||null,
+    team_count:Number($("teamCount").value||4),game_mode:$("gameMode").value,created_by:state.teacherUser.id,
+    setup_stage:"teams",game_seed:seed
   }).select().single();
   if(error){msg($("teacherActionMessage"),error.message);return}
   state.teacherSession=data;
   await refreshTeacher();
   subscribeTeacher(data.id);
-  msg($("teacherActionMessage"),"Комната создана. Код: "+c);
+  showSetupStep("teams");
+  msg($("teacherActionMessage"),"Комната создана. Код "+c+" — теперь дождитесь участников и распределите команды.");
 });
 
 async function refreshTeacher(){
@@ -178,6 +299,15 @@ async function refreshTeacher(){
   state.participants=participants||[];state.teams=teams||[];
   $("metricCode").textContent=s.code;$("metricParticipants").textContent=state.participants.length;
   $("metricTeams").textContent=state.teams.length;$("metricStatus").textContent=statusLabel(s.status);
+  if($("readyParticipants"))$("readyParticipants").textContent=state.participants.length;
+  if($("readyTeams"))$("readyTeams").textContent=state.teams.length;
+  if($("readySeed"))$("readySeed").textContent=s.game_seed||"—";
+  const set=state.quizSets.find(x=>x.id===s.quiz_id)||state.generatedGame;
+  if($("readyQuizName"))$("readyQuizName").textContent=set?.title||"Сгенерированная игра";
+  if($("directorRoundTitle"))$("directorRoundTitle").textContent=s.round_title||"Раунд "+(s.round_number||1);
+  if($("directorRoundMeta"))$("directorRoundMeta").textContent=s.status==="round_break"?"Переход к новому раунду…":"Вопрос "+(s.current_question_index||0)+" · "+statusLabel(s.status);
+  const step=["live","paused","countdown","round_break","finished"].includes(s.status)?"live":(s.setup_stage==="ready"?"ready":(s.setup_stage==="teams"?"teams":"room"));
+  showSetupStep(step);
   renderParticipants();renderTeacherLeaderboard();await renderLiveTeacherQuestion();await loadLiveStudentRanking();
 }
 function renderParticipants(){
@@ -235,17 +365,44 @@ function renderTeacherLeaderboard(){
 $("randomizeTeams").onclick=async()=>{
   if(!state.teacherSession)return;
   const {error}=await sb.rpc("org_quiz_randomize_teams",{p_session_id:state.teacherSession.id});
-  if(error)msg($("teacherActionMessage"),error.message);else{msg($("teacherActionMessage"),"Команды распределены.");await refreshTeacher()}
+  if(error)msg($("teacherActionMessage"),error.message);
+  else{msg($("teacherActionMessage"),"Команды распределены случайно. Проверьте состав и при необходимости перетащите участников.");await refreshTeacher()}
 };
-$("startGame").onclick=()=>setSession({status:"live",current_question_index:1,interaction_phase:"answer",started_at:new Date().toISOString(),question_started_at:new Date().toISOString()});
+$("lockTeams")?.addEventListener("click",async()=>{
+  if(!state.teacherSession)return;
+  if(!state.participants.length){showToast("Нет подключённых участников.");return}
+  if(state.participants.some(p=>!p.team_id)){showToast("Распределите всех участников по командам.");return}
+  await setSession({setup_stage:"ready"});
+  showSetupStep("ready");
+});
+$("returnToTeams")?.addEventListener("click",async()=>{
+  if(!state.teacherSession)return;
+  await setSession({setup_stage:"teams"});showSetupStep("teams");
+});
+$("startGame").onclick=async()=>{
+  if(!state.teacherSession)return;
+  if(!state.participants.length){showToast("Нужен хотя бы один участник.");return}
+  if(state.participants.some(p=>!p.team_id)){showToast("Сначала распределите всех по командам.");return}
+  await setSession({status:"countdown",setup_stage:"live",current_question_index:1,interaction_phase:"answer",started_at:new Date().toISOString(),transition_started_at:new Date().toISOString(),question_started_at:null});
+  showSetupStep("live");
+  playSound("transition");
+  setTimeout(async()=>{
+    if(state.teacherSession?.status==="countdown"){await beginQuestion(1,{allowBreak:false})}
+  },3000);
+};
 $("nextQuestion").onclick=async()=>{
   if(!state.teacherSession)return;
   const {count}=await sb.from("org_quiz_questions").select("*",{count:"exact",head:true}).eq("quiz_id",state.teacherSession.quiz_id);
-  const next=Math.min((state.teacherSession.current_question_index||0)+1,count||1);
-  await setSession({status:"live",current_question_index:next,interaction_phase:"answer",question_started_at:new Date().toISOString()});
+  const next=(state.teacherSession.current_question_index||0)+1;
+  if(next>(count||0)){showToast("Это был последний вопрос.");return}
+  await beginQuestion(next,{allowBreak:true});
 };
-$("prevQuestion").onclick=()=>setSession({current_question_index:Math.max(1,(state.teacherSession?.current_question_index||1)-1),interaction_phase:"answer",question_started_at:new Date().toISOString()});
-$("finishGame").onclick=()=>setSession({status:"finished",ended_at:new Date().toISOString(),question_started_at:null});
+$("prevQuestion").onclick=async()=>{
+  if(!state.teacherSession)return;
+  const prev=Math.max(1,(state.teacherSession.current_question_index||1)-1);
+  await beginQuestion(prev,{allowBreak:false});
+};
+$("finishGame").onclick=()=>setSession({status:"finished",setup_stage:"done",ended_at:new Date().toISOString(),question_started_at:null,transition_started_at:null});
 async function setSession(patch){
   if(!state.teacherSession)return;
   const {data,error}=await sb.from("org_quiz_sessions").update(patch).eq("id",state.teacherSession.id).select().single();
@@ -262,7 +419,7 @@ function subscribeTeacher(sessionId){
 function clearSubs(){state.subs.forEach(c=>sb.removeChannel(c));state.subs=[]}
 $("teacherLogout").onclick=async()=>{clearSubs();await sb.auth.signOut();location.reload()}
 function leaderRow(i,name,score){return `<div class="leader-row"><div class="rank">${i+1}</div><div><strong>${escapeHtml(name)}</strong></div><div class="score">${score}</div></div>`}
-function statusLabel(s){return ({lobby:"Лобби",live:"Идёт",paused:"Пауза",finished:"Завершено"})[s]||s}
+function statusLabel(s){return ({lobby:"Лобби",countdown:"Отсчёт",round_break:"Переход",live:"Идёт",paused:"Пауза",finished:"Завершено"})[s]||s}
 function humanError(s=""){if(s.includes("SESSION_NOT_FOUND"))return"Комната не найдена или уже закрыта.";if(s.includes("TIME_EXPIRED"))return"Время на ответ истекло.";if(s.includes("QUESTION_NOT_ACTIVE"))return"Этот вопрос уже закрыт.";if(s.includes("Anonymous sign-ins are disabled"))return"Анонимный вход студентов отключён в Supabase.";return s}
 function escapeHtml(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 
@@ -450,8 +607,8 @@ function renderQuestionLibrary(){
   const visual=q=>{
     const cfg=q.config||{};
     if(cfg.flag_url)return `<div class="question-visual flag-card"><img src="${escapeHtml(cfg.flag_url)}" alt=""></div>`;
-    if(cfg.image_url)return `<div class="question-visual photo-card"><img loading="lazy" src="${escapeHtml(cfg.image_url)}" alt=""></div>`;
-    if(cfg.wiki_title||cfg.wiki_search)return `<div class="question-visual photo-card wiki-photo" data-qid="${q.id}"><div class="photo-loader">◉</div></div>`;
+    if(cfg.image_url)return `<div class="question-visual photo-card ${q.question_type==="person_photo"?"person-photo":""}"><img loading="lazy" src="${escapeHtml(cfg.image_url)}" alt=""></div>`;
+    if(cfg.wiki_title||cfg.wiki_search)return `<div class="question-visual photo-card wiki-photo ${q.question_type==="person_photo"?"person-photo":""}" data-qid="${q.id}"><div class="photo-loader">◉</div></div>`;
     if(cfg.audio_url)return `<div class="question-visual audio-card-large"><span>♫</span><div><strong>Аудиораунд</strong><small>Гимн · нажмите «Открыть», чтобы прослушать</small></div></div>`;
     if(q.question_type==="film_quote")return `<div class="question-visual quote-card-large"><span>❝</span><strong>${escapeHtml(cfg.quote||q.prompt)}</strong></div>`;
     if(q.question_type==="film_clip")return `<div class="question-visual video-card-large"><span>▶</span><div><strong>Кинофрагмент</strong><small>Официальное видео «Мосфильма»</small></div></div>`;
@@ -530,7 +687,7 @@ async function previewLibraryQuestion(id){
   const host=$("previewMedia");host.className="preview-media hidden";host.innerHTML="";
   const cfg=q.config||{};
   if(cfg.flag_url){host.className="preview-media flag-preview";host.innerHTML=`<img src="${escapeHtml(cfg.flag_url)}" alt="">`;}
-  else if(cfg.image_url||cfg.wiki_title||cfg.wiki_search){host.className="preview-media";const image=await resolveQuestionImage(q);host.innerHTML=image?`<img src="${escapeHtml(image)}" alt="" style="object-fit:${escapeHtml(cfg.image_fit||"cover")};object-position:${escapeHtml(cfg.image_position||"50% 50%")}">`:`<div class="media-placeholder">Изображение не удалось загрузить</div>`;}
+  else if(cfg.image_url||cfg.wiki_title||cfg.wiki_search){host.className="preview-media"+(q.question_type==="person_photo"?" person-photo":"");const image=await resolveQuestionImage(q);host.innerHTML=image?`<img src="${escapeHtml(image)}" alt="" style="object-fit:${escapeHtml(cfg.image_fit||"cover")};object-position:${escapeHtml(cfg.image_position||"50% 50%")}">`:`<div class="media-placeholder">Изображение не удалось загрузить</div>`;}
   else if(cfg.audio_url){host.className="preview-media audio-preview";host.innerHTML=`<div class="audio-preview-inner"><span>♫</span><audio controls preload="metadata" src="${escapeHtml(cfg.audio_url)}"></audio></div>`;}
   else if(q.question_type==="film_clip"&&cfg.youtube_id){
     host.className="preview-media video-preview";
@@ -702,8 +859,21 @@ async function renderLiveTeacherQuestion(){
   if(!state.teacherSession)return;
   if(state.teacherSession.status==="lobby"){
     $("presenterCounter").textContent="Лобби";
-    $("presenterPrompt").textContent="Ожидаем запуска.";
+    $("presenterPrompt").textContent="Игра ещё не запущена.";
     $("presenterOptions").innerHTML="";$("optionDistribution").innerHTML="";$("presenterTimer").textContent="—";return;
+  }
+  if(state.teacherSession.status==="countdown"){
+    $("presenterCounter").textContent="Старт";
+    $("presenterPrompt").textContent="Игра начинается…";
+    $("presenterOptions").innerHTML="";$("optionDistribution").innerHTML="";
+    startSharedTimer(3,state.teacherSession.transition_started_at,$("presenterTimer"));return;
+  }
+  if(state.teacherSession.status==="round_break"){
+    $("presenterCounter").textContent="Новый раунд";
+    $("presenterPrompt").textContent=state.teacherSession.round_title||"Следующий раунд";
+    $("presenterOptions").innerHTML='<div class="presenter-option round-transition-copy">Приготовьтесь к следующему блоку вопросов.</div>';
+    $("optionDistribution").innerHTML="";
+    startSharedTimer(4,state.teacherSession.transition_started_at,$("presenterTimer"));return;
   }
   if(state.teacherSession.status==="finished"){
     $("presenterCounter").textContent="Финиш";$("presenterPrompt").textContent="Квиз завершён."; $("presenterOptions").innerHTML="";$("optionDistribution").innerHTML="";$("presenterTimer").textContent="—";return;
@@ -1001,7 +1171,7 @@ async function renderQuestionMedia(q,host){
   host.className="media-stage hidden";host.innerHTML="";
   const cfg=q.config||{};
   if(cfg.flag_url){host.className="media-stage flag-stage";host.innerHTML=`<img src="${escapeHtml(cfg.flag_url)}" alt="Флаг для задания">`;return}
-  if(cfg.image_url||cfg.wiki_title||cfg.wiki_search){const image=await resolveQuestionImage(q);host.className="media-stage";host.innerHTML=image?`<img src="${escapeHtml(image)}" alt="Изображение для задания" style="object-fit:${escapeHtml(cfg.image_fit||"cover")};object-position:${escapeHtml(cfg.image_position||"50% 50%")}">`:`<div class="media-placeholder">Изображение не удалось загрузить</div>`;return}
+  if(cfg.image_url||cfg.wiki_title||cfg.wiki_search){const image=await resolveQuestionImage(q);host.className="media-stage"+(q.question_type==="person_photo"?" person-photo":"");host.innerHTML=image?`<img src="${escapeHtml(image)}" alt="Изображение для задания" style="object-fit:${escapeHtml(cfg.image_fit||"cover")};object-position:${escapeHtml(cfg.image_position||"50% 50%")}">`:`<div class="media-placeholder">Изображение не удалось загрузить</div>`;return}
   if(cfg.audio_url){host.className="media-stage";host.innerHTML=`<div class="audio-card"><div class="note">♫</div><strong>Прослушайте фрагмент</strong><audio controls preload="metadata" src="${escapeHtml(cfg.audio_url)}"></audio></div>`;return}
   if(q.question_type==="film_clip"&&cfg.youtube_id){
     const start=Number(cfg.video_start||0),end=Number(cfg.video_end||0);
