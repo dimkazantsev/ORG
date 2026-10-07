@@ -322,7 +322,9 @@ $("createQuizForm").addEventListener("submit",async e=>{
   state.editorQuizId=data;
   e.target.reset();
   await loadQuizSets();
-  msg($("editorMessage"),"Квиз создан.");
+  closeDrawer("set");
+  await window.openStudioView("sets");
+  showToast("Набор создан.");
 });
 
 $("createQuestionForm").addEventListener("submit",async e=>{
@@ -364,7 +366,11 @@ $("createQuestionForm").addEventListener("submit",async e=>{
   const quiz=$("editorQuizSelect").value;
   e.target.reset();$("editorQuizSelect").value=quiz;$("questionTime").value=30;$("questionType").value="single";updateQuestionTypeHint();
   await loadQuestionBank();
-  msg($("editorMessage"),"Вопрос добавлен.");
+  await loadQuizSetLibrary();
+  await loadMediaLibrary();
+  closeDrawer("question");
+  await window.openStudioView("questions");
+  showToast("Вопрос сохранён в банк.");
 });
 
 async function loadQuestionBank(){
@@ -597,7 +603,7 @@ function updateQuestionTypeHint(){
   if(!$("questionType"))return;
   const t=$("questionType").value;
   $("questionTypeHint").textContent=typeHints[t]||"Интерактивное задание.";
-  const optionWrap=$("optionA").closest(".two-col");
+  const optionWrap=$("optionA").closest(".form-grid");
   optionWrap.classList.toggle("hidden",["duel","split","scale","wordcloud","team_pitch","region_map"].includes(t));
   $("mediaConfig").classList.toggle("hidden",!["flag","anthem","person_photo","place_photo","region_map"].includes(t));
   $("correctOptionLabel").classList.toggle("hidden",["duel","split","short","ordering","multiple","scale","wordcloud","ranking","team_pitch"].includes(t));
