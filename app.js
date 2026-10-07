@@ -137,17 +137,20 @@ async function enterTeacher(){
   bindTeacherTabs();
   await loadQuizSets();
   await loadAnalytics();
+  await loadOverview();
 }
 async function loadQuizSets(){
-  const {data,error}=await sb.from("org_quiz_sets").select("id,title,topic").order("created_at");
-  if(error){msg($("teacherActionMessage"),error.message);return}
+  const {data,error}=await sb.from("org_quiz_sets").select("id,title,topic,description,created_at").order("created_at",{ascending:false});
+  if(error){showToast(error.message);return}
   state.quizSets=data||[];
   const opts=state.quizSets.map(q=>`<option value="${q.id}">${escapeHtml(q.title)} — ${escapeHtml(q.topic)}</option>`).join("");
-  $("quizSelect").innerHTML=opts;
-  $("editorQuizSelect").innerHTML=opts;
-  if(!state.editorQuizId && state.quizSets[0]) state.editorQuizId=state.quizSets[0].id;
-  if(state.editorQuizId) $("editorQuizSelect").value=state.editorQuizId;
-  await loadQuestionBank();
+  $("quizSelect").innerHTML=opts;$("editorQuizSelect").innerHTML=opts;
+  $("questionSetFilter").innerHTML='<option value="">Все наборы</option>'+opts;
+  $("sidebarSetCount").textContent=state.quizSets.length;
+  $("overviewSets").textContent=state.quizSets.length;
+  if(!state.editorQuizId&&state.quizSets[0])state.editorQuizId=state.quizSets[0].id;
+  if(state.editorQuizId)$("editorQuizSelect").value=state.editorQuizId;
+  await Promise.all([loadQuestionBank(),loadQuizSetLibrary(),loadMediaLibrary()]);
 }
 
 $("createSessionForm").addEventListener("submit",async e=>{
@@ -273,17 +276,35 @@ function escapeHtml(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","
 
 
 function bindTeacherTabs(){
-  document.querySelectorAll("[data-teacher-tab]").forEach(btn=>{
-    if(btn.dataset.bound)return;btn.dataset.bound="1";
-    btn.onclick=()=>{
-      document.querySelectorAll("[data-teacher-tab]").forEach(b=>b.classList.toggle("active",b===btn));
-      $("teacherGamePanel").classList.toggle("hidden",btn.dataset.teacherTab!=="game");
-      $("teacherEditorPanel").classList.toggle("hidden",btn.dataset.teacherTab!=="editor");
-      $("teacherAnalyticsPanel").classList.toggle("hidden",btn.dataset.teacherTab!=="analytics");
-      if(btn.dataset.teacherTab==="analytics") loadAnalytics();
-      if(btn.dataset.teacherTab==="editor") loadQuestionBank();
-    };
-  });
+  if(bindTeacherTabs.bound)return;bindTeacherTabs.bound=true;
+  const titles={overview:["Рабочее пространство","Обзор"],live:["Сессия","Живая сессия"],questions:["Контент","Банк вопросов"],sets:["Сценарии","Наборы игр"],media:["Ресурсы","Медиатека"],players:["Аудитория","Игроки"],analytics:["Результаты","Аналитика"]};
+  const ids={overview:"studioOverview",live:"studioLive",questions:"studioQuestions",sets:"studioSets",media:"studioMedia",players:"studioPlayers",analytics:"studioAnalytics"};
+  const open=async view=>{
+    document.querySelectorAll(".studio-nav-item").forEach(b=>b.classList.toggle("active",b.dataset.studioView===view));
+    Object.entries(ids).forEach(([k,id])=>$(id)?.classList.toggle("hidden",k!==view));
+    $("studioBreadcrumb").textContent=titles[view][0];$("studioPageTitle").textContent=titles[view][1];
+    if(view==="questions")await loadQuestionBank();
+    if(view==="sets")await loadQuizSetLibrary();
+    if(view==="media")await loadMediaLibrary();
+    if(view==="players")loadPlayersDirectory();
+    if(view==="analytics")await loadAnalytics();
+  };
+  window.openStudioView=open;
+  document.querySelectorAll("[data-studio-view]").forEach(b=>b.onclick=()=>open(b.dataset.studioView));
+  document.querySelectorAll("[data-open-view]").forEach(b=>b.onclick=()=>open(b.dataset.openView));
+  $("quickCreateQuestion").onclick=()=>openQuestionDrawer();
+  $("openQuestionEditor").onclick=()=>openQuestionDrawer();
+  $("quickCreateSession").onclick=()=>open("live");
+  $("openSetEditor").onclick=()=>openSetDrawer();
+  document.querySelectorAll("[data-close-drawer='question']").forEach(b=>b.onclick=()=>closeDrawer("question"));
+  document.querySelectorAll("[data-close-drawer='set']").forEach(b=>b.onclick=()=>closeDrawer("set"));
+}
+function openQuestionDrawer(){
+  $("questionEditorDrawer").classList.remove("hidden");$("questionEditorDrawer").setAttribute("aria-hidden","false");updateQuestionTypeHint();
+}
+function openSetDrawer(){$("setEditorDrawer").classList.remove("hidden");$("setEditorDrawer").setAttribute("aria-hidden","false")}
+function closeDrawer(type){
+  const el=type==="question"?$("questionEditorDrawer"):$("setEditorDrawer");el.classList.add("hidden");el.setAttribute("aria-hidden","true");
 }
 
 $("editorQuizSelect").addEventListener("change",async e=>{
@@ -347,23 +368,63 @@ $("createQuestionForm").addEventListener("submit",async e=>{
 });
 
 async function loadQuestionBank(){
-  const id=$("editorQuizSelect")?.value||state.editorQuizId;
-  if(!id)return;
-  state.editorQuizId=id;
-  const {data,error}=await sb.from("org_quiz_questions").select("id,order_index,question_type,prompt,options,config,explanation,time_limit_sec,points").eq("quiz_id",id).order("order_index");
-  if(error){if($("editorMessage"))msg($("editorMessage"),error.message);return}
-  $("questionBankCount").textContent=`${data.length} вопросов`;
-  $("questionBank").innerHTML=data.map(q=>`
-    <div class="bank-row">
-      <div class="bank-index">${q.order_index}</div>
-      <div><strong>${escapeHtml(q.prompt)}</strong><p>${questionTypeLabel(q.question_type)} · ${q.options.map((o,i)=>String.fromCharCode(65+i)+". "+escapeHtml(o)).join(" · ")}</p></div>
-      <button class="danger" data-delete-question="${q.id}">Удалить</button>
-    </div>`).join("")||"<p class='message'>В этом квизе пока нет вопросов.</p>";
+  const {data,error}=await sb.from("org_quiz_questions").select("id,quiz_id,order_index,question_type,prompt,options,config,explanation,time_limit_sec,points,created_at").order("created_at",{ascending:false});
+  if(error){$("questionBank").innerHTML=`<div class="empty-state"><strong>Не удалось загрузить вопросы</strong><p>${escapeHtml(error.message)}</p></div>`;return}
+  state.questionRows=data||[];
+  $("sidebarQuestionCount").textContent=state.questionRows.length;$("overviewQuestions").textContent=state.questionRows.length;
+  renderQuestionLibrary();
+}
+function renderQuestionLibrary(){
+  const search=($("questionSearch")?.value||"").trim().toLowerCase();
+  const setId=$("questionSetFilter")?.value||"";const type=$("questionTypeFilter")?.value||"";
+  const rows=(state.questionRows||[]).filter(q=>(!setId||q.quiz_id===setId)&&(!type||q.question_type===type)&&(!search||q.prompt.toLowerCase().includes(search)));
+  $("questionBankCount").textContent=`${rows.length} вопросов`;
+  const icon={single:"✓",multiple:"☷",flag:"⚑",anthem:"♫",person_photo:"◎",place_photo:"⌖",region_map:"◫",vote:"◉",elimination:"!",matching:"⇄",ordering:"↕",duel:"✦",split:"◇",scale:"—",wordcloud:"☁",ranking:"≡",team_pitch:"◆"};
+  $("questionBank").innerHTML=rows.map(q=>{
+    const set=state.quizSets.find(s=>s.id===q.quiz_id);
+    return `<article class="question-card-row">
+      <div class="question-type-icon">${icon[q.question_type]||"?"}</div>
+      <div class="question-copy"><strong>${escapeHtml(q.prompt)}</strong><small>${escapeHtml(set?.title||"Без набора")} · ${questionTypeLabel(q.question_type)}</small></div>
+      <div class="question-meta-cell">${q.time_limit_sec} сек.</div>
+      <div class="question-meta-cell">${q.points} баллов</div>
+      <div class="row-actions"><button class="row-icon-btn" data-preview-question="${q.id}" title="Предпросмотр">◉</button><button class="row-icon-btn danger" data-delete-question="${q.id}" title="Удалить">×</button></div>
+    </article>`;
+  }).join("")||'<div class="empty-state"><strong>Вопросы не найдены</strong><p>Измените фильтры или создайте новый вопрос.</p></div>';
+  document.querySelectorAll("[data-preview-question]").forEach(b=>b.onclick=()=>previewLibraryQuestion(b.dataset.previewQuestion));
   document.querySelectorAll("[data-delete-question]").forEach(b=>b.onclick=async()=>{
-    if(!confirm("Удалить этот вопрос?"))return;
-    const {error}=await sb.rpc("org_quiz_delete_question",{p_question_id:b.dataset.deleteQuestion});
-    if(error)msg($("editorMessage"),error.message);else await loadQuestionBank();
+    if(!confirm("Удалить этот вопрос?"))return;const {error}=await sb.rpc("org_quiz_delete_question",{p_question_id:b.dataset.deleteQuestion});
+    if(error)showToast(error.message);else{await loadQuestionBank();await loadQuizSetLibrary();}
   });
+}
+function previewLibraryQuestion(id){
+  const q=(state.questionRows||[]).find(x=>x.id===id);if(!q)return;
+  showToast(questionTypeLabel(q.question_type)+": "+q.prompt.slice(0,90));
+}
+async function loadQuizSetLibrary(){
+  if(!$("quizSetLibrary"))return;
+  const rows=state.questionRows||[];
+  $("quizSetLibrary").innerHTML=state.quizSets.map(s=>{
+    const count=rows.filter(q=>q.quiz_id===s.id).length;
+    return `<article class="set-card"><div class="set-card-top"><span class="section-kicker">${escapeHtml(s.topic)}</span><span class="info-badge">${count} вопросов</span></div><h3>${escapeHtml(s.title)}</h3><p>${escapeHtml(s.description||"Описание не добавлено.")}</p><div class="set-card-footer"><span>${new Date(s.created_at).toLocaleDateString("ru-RU")}</span><button class="text-button" data-set-open="${s.id}">Открыть →</button></div></article>`;
+  }).join("")||'<div class="empty-state"><strong>Нет наборов</strong><p>Создайте первый набор игры.</p></div>';
+  document.querySelectorAll("[data-set-open]").forEach(b=>b.onclick=()=>{ $("questionSetFilter").value=b.dataset.setOpen;window.openStudioView("questions");renderQuestionLibrary();});
+  $("overviewQuizSets").innerHTML=state.quizSets.slice(0,5).map(s=>`<div class="compact-row"><div><strong>${escapeHtml(s.title)}</strong><small>${escapeHtml(s.topic)}</small></div><span class="info-badge">${rows.filter(q=>q.quiz_id===s.id).length}</span></div>`).join("");
+}
+async function loadMediaLibrary(){
+  if(!$("mediaLibrary"))return;
+  const rows=(state.questionRows||[]).filter(q=>q.config&&(q.config.image_url||q.config.flag_url||q.config.audio_url));
+  $("mediaLibrary").innerHTML=rows.map(q=>{
+    const cfg=q.config||{};const url=cfg.image_url||cfg.flag_url||cfg.audio_url;const visual=cfg.audio_url?'<div class="media-thumb">♫</div>':`<div class="media-thumb"><img src="${escapeHtml(url)}" alt=""></div>`;
+    return `<article class="media-item">${visual}<div class="media-info"><strong>${escapeHtml(q.prompt.slice(0,65))}</strong><small>${questionTypeLabel(q.question_type)}</small></div></article>`;
+  }).join("")||'<div class="empty-state"><strong>Медиатека пуста</strong><p>Медиа появятся после создания фото-, флаг- или аудиовопросов.</p></div>';
+}
+function loadPlayersDirectory(){
+  if(!$("playersDirectory"))return;
+  $("playersDirectory").innerHTML=(state.participants||[]).map(p=>`<div class="player-directory-row"><div><strong>${escapeHtml(p.full_name)}</strong><small>${escapeHtml(p.academic_group)}</small></div><span>${escapeHtml(state.teams.find(t=>t.id===p.team_id)?.name||"Без команды")}</span><span>${p.life_state==="eliminated"?"Выбыл":"В игре"}</span></div>`).join("")||'<div class="empty-state"><strong>Нет участников</strong><p>Игроки появятся после подключения к комнате.</p></div>';
+}
+async function loadOverview(){
+  await loadQuizSetLibrary();
+  if(state.teacherSession){$("overviewLiveState").innerHTML=`<strong>Комната ${escapeHtml(state.teacherSession.code)}</strong><p>${escapeHtml(state.teacherSession.title||"Активная сессия")} · ${statusLabel(state.teacherSession.status)}</p>`;}
 }
 
 async function loadAnalytics(){
@@ -732,3 +793,7 @@ $("viewAsParticipant").onclick=async()=>{
   await loadActiveQuestion();
   showView("student");
 };
+
+$("questionSearch")?.addEventListener("input",renderQuestionLibrary);
+$("questionSetFilter")?.addEventListener("change",renderQuestionLibrary);
+$("questionTypeFilter")?.addEventListener("change",renderQuestionLibrary);
