@@ -487,10 +487,21 @@ async function loadQuizSetLibrary(){
   if(!$("quizSetLibrary"))return;
   const rows=state.questionRows||[];
   $("quizSetLibrary").innerHTML=state.quizSets.map(s=>{
-    const count=rows.filter(q=>q.quiz_id===s.id).length;
-    return `<article class="set-card"><div class="set-card-top"><span class="section-kicker">${escapeHtml(s.topic)}</span><span class="info-badge">${count} вопросов</span></div><h3>${escapeHtml(s.title)}</h3><p>${escapeHtml(s.description||"Описание не добавлено.")}</p><div class="set-card-footer"><span>${new Date(s.created_at).toLocaleDateString("ru-RU")}</span><button class="text-button" data-set-open="${s.id}">Открыть →</button></div></article>`;
+    const setRows=rows.filter(q=>q.quiz_id===s.id);
+    const count=setRows.length;
+    const types=[...new Set(setRows.map(q=>questionTypeLabel(q.question_type)))].slice(0,3);
+    return `<article class="set-card">
+      <div class="set-card-top"><span class="section-kicker">${escapeHtml(s.topic)}</span><span class="info-badge">${count} вопросов</span></div>
+      <h3>${escapeHtml(s.title)}</h3><p>${escapeHtml(s.description||"Описание не добавлено.")}</p>
+      <div class="set-type-line">${types.map(t=>`<span>${escapeHtml(t)}</span>`).join("")}</div>
+      <div class="set-card-footer"><span>${new Date(s.created_at).toLocaleDateString("ru-RU")}</span><div class="row-actions">
+        <button class="text-button" data-set-order="${s.id}">Порядок</button>
+        <button class="text-button" data-set-open="${s.id}">Вопросы →</button>
+      </div></div>
+    </article>`;
   }).join("")||'<div class="empty-state"><strong>Нет наборов</strong><p>Создайте первый набор игры.</p></div>';
   document.querySelectorAll("[data-set-open]").forEach(b=>b.onclick=()=>{ $("questionSetFilter").value=b.dataset.setOpen;window.openStudioView("questions");renderQuestionLibrary();});
+  document.querySelectorAll("[data-set-order]").forEach(b=>b.onclick=()=>openSetOrder(b.dataset.setOrder));
   $("overviewQuizSets").innerHTML=state.quizSets.slice(0,5).map(s=>`<div class="compact-row"><div><strong>${escapeHtml(s.title)}</strong><small>${escapeHtml(s.topic)}</small></div><span class="info-badge">${rows.filter(q=>q.quiz_id===s.id).length}</span></div>`).join("");
 }
 async function loadMediaLibrary(){
@@ -902,4 +913,127 @@ $("bulkDelete")?.addEventListener("click",async()=>{
   if(!state.bulkQuestionIds.size||!confirm("Удалить выбранные вопросы?"))return;
   const {error}=await sb.rpc("org_quiz_bulk_action",{p_question_ids:[...state.bulkQuestionIds],p_action:"delete",p_target_set:null,p_tag:null});
   if(error)return showToast(error.message);state.bulkQuestionIds.clear();await loadQuestionBank();await loadQuizSetLibrary();showToast("Выбранные вопросы удалены.");
+});
+
+
+async function uploadQuestionMedia(file){
+  if(!state.teacherUser)throw new Error("Нужен вход Модератора.");
+  const ext=(file.name.split(".").pop()||"bin").toLowerCase().replace(/[^a-z0-9]/g,"");
+  const base=file.name.replace(/\.[^.]+$/,"").replace(/[^a-zA-Z0-9а-яА-Я_-]+/g,"-").slice(0,60)||"media";
+  const path=`${state.teacherUser.id}/${Date.now()}-${base}.${ext}`;
+  const {error}=await sb.storage.from("org-party-media").upload(path,file,{cacheControl:"3600",upsert:false,contentType:file.type||undefined});
+  if(error)throw error;
+  const {data}=sb.storage.from("org-party-media").getPublicUrl(path);
+  return {path,url:data.publicUrl};
+}
+
+async function editQuestion(id){
+  const {data,error}=await sb.rpc("org_quiz_get_question_admin",{p_question_id:id});
+  if(error)return showToast(error.message);
+  const q=data;state.editingQuestion=q;
+  $("editingQuestionId").value=q.id;$("questionEditorTitle").textContent="Редактировать вопрос";
+  $("editorQuizSelect").value=q.quiz_id;$("questionType").value=q.question_type;$("newQuestionPrompt").value=q.prompt||"";
+  const opts=Array.isArray(q.options)?q.options:[];
+  ["optionA","optionB","optionC","optionD"].forEach((id,i)=>$(id).value=opts[i]||"");
+  $("newQuestionExplanation").value=q.explanation||"";$("questionTime").value=q.time_limit_sec||30;$("questionPoints").value=q.points??100;
+  $("questionDifficulty").value=q.difficulty||2;$("questionTags").value=(q.tags||[]).join(", ");
+  $("mediaUpload").value="";
+  const cfg=q.config||{};
+  $("mediaUrl").value=cfg.flag_url||cfg.image_url||cfg.audio_url||"";
+  $("targetRegion").value=cfg.target_region||"";
+  $("eliminateOnWrong").checked=!!cfg.eliminate_on_wrong;
+  const cp=Array.isArray(q.correct_payload)?q.correct_payload:[];
+  if(q.question_type==="multiple")$("correctMulti").value=cp.map(i=>String.fromCharCode(65+Number(i))).join(", ");
+  else if(["single","true_false","flag","anthem","person_photo","place_photo","elimination","odd_one_out"].includes(q.question_type))$("correctOption").value=String(cp[0]??0);
+  $("questionEditorDrawer").classList.remove("hidden");$("questionEditorDrawer").setAttribute("aria-hidden","false");updateQuestionTypeHint();
+}
+
+function renderComposer(){
+  const search=($("composerSearch")?.value||"").trim().toLowerCase();
+  const type=$("composerType")?.value||"";
+  const selected=new Set(state.composerQuestionIds);
+  const rows=(state.questionRows||[]).filter(q=>!selected.has(q.id)&&(!type||q.question_type===type)&&(!search||q.prompt.toLowerCase().includes(search)));
+  $("composerBank").innerHTML=rows.slice(0,150).map(q=>`<button type="button" class="composer-item" data-composer-add="${q.id}"><span>${questionTypeLabel(q.question_type)}</span><strong>${escapeHtml(q.prompt)}</strong><small>+ добавить</small></button>`).join("")||'<div class="empty-state compact"><strong>Нет вопросов</strong></div>';
+  $("composerSelected").innerHTML=state.composerQuestionIds.map((id,i)=>{
+    const q=state.questionRows.find(x=>x.id===id);if(!q)return"";
+    return `<div class="composer-item selected-item" draggable="true" data-composer-id="${id}"><span class="drag-grip">⋮⋮</span><div><small>${i+1}. ${questionTypeLabel(q.question_type)}</small><strong>${escapeHtml(q.prompt)}</strong></div><button type="button" data-composer-remove="${id}">×</button></div>`;
+  }).join("")||'<div class="empty-state compact"><strong>Добавьте вопросы</strong><p>Нажимайте на задания слева.</p></div>';
+  $("composerCount").textContent=state.composerQuestionIds.length;
+  document.querySelectorAll("[data-composer-add]").forEach(b=>b.onclick=()=>{state.composerQuestionIds.push(b.dataset.composerAdd);renderComposer()});
+  document.querySelectorAll("[data-composer-remove]").forEach(b=>b.onclick=()=>{state.composerQuestionIds=state.composerQuestionIds.filter(x=>x!==b.dataset.composerRemove);renderComposer()});
+  let dragged=null;
+  document.querySelectorAll("[data-composer-id]").forEach(el=>{
+    el.ondragstart=()=>{dragged=el.dataset.composerId;el.classList.add("dragging")};
+    el.ondragend=()=>{el.classList.remove("dragging");dragged=null};
+    el.ondragover=e=>{e.preventDefault();if(!dragged||dragged===el.dataset.composerId)return;const from=state.composerQuestionIds.indexOf(dragged),to=state.composerQuestionIds.indexOf(el.dataset.composerId);if(from<0||to<0)return;state.composerQuestionIds.splice(to,0,state.composerQuestionIds.splice(from,1)[0]);renderComposer()};
+  });
+}
+$("composerSearch")?.addEventListener("input",renderComposer);
+$("composerType")?.addEventListener("change",renderComposer);
+$("setComposerForm")?.addEventListener("submit",async e=>{
+  e.preventDefault();
+  if(!state.composerQuestionIds.length)return showToast("Добавьте хотя бы один вопрос.");
+  const {data,error}=await sb.rpc("org_party_create_set_from_questions",{
+    p_title:$("composerTitle").value,p_topic:$("composerTopic").value,p_description:$("composerDescription").value||null,p_question_ids:state.composerQuestionIds
+  });
+  if(error)return showToast(error.message);
+  closeDrawer("composer");await loadQuizSets();await window.openStudioView("sets");showToast("Набор собран.");
+});
+
+function openSetOrder(setId){
+  const set=state.quizSets.find(s=>s.id===setId);if(!set)return;
+  state.orderingSetId=setId;state.orderingIds=(state.questionRows||[]).filter(q=>q.quiz_id===setId).sort((a,b)=>a.order_index-b.order_index).map(q=>q.id);
+  $("setOrderTitle").textContent=set.title;renderSetOrder();
+  $("setOrderDrawer").classList.remove("hidden");$("setOrderDrawer").setAttribute("aria-hidden","false");
+}
+function renderSetOrder(){
+  $("setOrderList").innerHTML=(state.orderingIds||[]).map((id,i)=>{
+    const q=state.questionRows.find(x=>x.id===id);if(!q)return"";
+    return `<div class="set-order-item" draggable="true" data-order-id="${id}"><span class="drag-grip">⋮⋮</span><span class="order-no">${i+1}</span><div><strong>${escapeHtml(q.prompt)}</strong><small>${questionTypeLabel(q.question_type)}</small></div></div>`;
+  }).join("")||'<div class="empty-state"><strong>В наборе нет вопросов</strong></div>';
+  let dragged=null;
+  document.querySelectorAll("[data-order-id]").forEach(el=>{
+    el.ondragstart=()=>{dragged=el.dataset.orderId;el.classList.add("dragging")};
+    el.ondragend=()=>{el.classList.remove("dragging");dragged=null};
+    el.ondragover=e=>{e.preventDefault();if(!dragged||dragged===el.dataset.orderId)return;const a=state.orderingIds.indexOf(dragged),b=state.orderingIds.indexOf(el.dataset.orderId);state.orderingIds.splice(b,0,state.orderingIds.splice(a,1)[0]);renderSetOrder()};
+  });
+}
+$("saveSetOrder")?.addEventListener("click",async()=>{
+  if(!state.orderingSetId)return;
+  const {error}=await sb.rpc("org_quiz_reorder_set",{p_quiz_id:state.orderingSetId,p_question_ids:state.orderingIds});
+  if(error)return showToast(error.message);
+  closeDrawer("setorder");await loadQuestionBank();showToast("Порядок сохранён.");
+});
+
+function shuffleArray(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function buildPartyNightSelection(){
+  const specs=[
+    ["flag",Number($("partyCountFlag").value||0)],["anthem",Number($("partyCountAnthem").value||0)],
+    ["person_photo",Number($("partyCountPerson").value||0)],["place_photo",Number($("partyCountPlace").value||0)],
+    ["region_map",Number($("partyCountMap").value||0)],["single",Number($("partyCountTest").value||0)],
+    ["vote",Number($("partyCountVote").value||0)],["duel",Number($("partyCountDuel").value||0)],
+    ["elimination",Number($("partyCountElimination").value||0)]
+  ];
+  let picked=[];
+  for(const [type,n] of specs){
+    const pool=shuffleArray((state.questionRows||[]).filter(q=>q.question_type===type));
+    picked.push(...pool.slice(0,n));
+  }
+  if($("partyShuffle").checked)picked=shuffleArray(picked);
+  return picked;
+}
+function renderPartyNightPreview(rows){
+  if(!$("partyNightPreview"))return;
+  $("partyNightPreview").innerHTML=rows.length?rows.map((q,i)=>`<div class="scenario-row"><span>${i+1}</span><div><strong>${escapeHtml(q.prompt)}</strong><small>${questionTypeLabel(q.question_type)}</small></div></div>`).join(""):'<div class="empty-state compact"><strong>Сценарий ещё не собран</strong><p>Настройте количество раундов слева.</p></div>';
+}
+["partyCountFlag","partyCountAnthem","partyCountPerson","partyCountPlace","partyCountMap","partyCountTest","partyCountVote","partyCountDuel","partyCountElimination","partyShuffle"].forEach(id=>$(id)?.addEventListener("input",()=>renderPartyNightPreview(buildPartyNightSelection())));
+$("partyNightForm")?.addEventListener("submit",async e=>{
+  e.preventDefault();
+  const rows=buildPartyNightSelection();renderPartyNightPreview(rows);
+  if(!rows.length)return msg($("partyNightMessage"),"Выберите хотя бы один раунд.");
+  const {data,error}=await sb.rpc("org_party_create_set_from_questions",{
+    p_title:$("partyNightTitle").value||"ORG Party Night",p_topic:"Party Night",p_description:"Автоматически собранный сценарий",p_question_ids:rows.map(q=>q.id)
+  });
+  if(error)return msg($("partyNightMessage"),error.message);
+  await loadQuizSets();msg($("partyNightMessage"),"Party Night создан.");showToast("Готов новый Party Night.");
 });
