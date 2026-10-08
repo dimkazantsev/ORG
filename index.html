@@ -128,6 +128,19 @@
             <p id="rescueStatus" class="rescue-status">Спасение команды: доступно.</p>
             <p id="comboExplanation" class="combo-explanation">Серия правильных ответов увеличивает множитель.</p>
           </article>
+          <article id="powerBankCard" class="mini-card power-bank-card">
+            <div class="power-bank-head">
+              <div><div class="kicker">Банк силы</div><strong id="powerBankValue">0 / 100</strong></div>
+              <span id="powerBankLevel" class="power-level">0%</span>
+            </div>
+            <div class="power-meter"><span id="powerMeterFill"></span></div>
+            <div class="power-actions">
+              <button type="button" data-power="hint"><span>Подсказка</span><small>20</small></button>
+              <button type="button" data-power="freeze"><span>+3 сек</span><small>30</small></button>
+              <button type="button" data-power="double"><span>×2 очков</span><small>50</small></button>
+            </div>
+            <p id="powerBankMessage" class="power-message">Серия из 3+ правильных ответов заряжает команду.</p>
+          </article>
           <article id="stealStudentCard" class="mini-card steal-card hidden">
             <div class="kicker">Перехват</div>
             <strong id="stealStudentTitle">Шанс забрать вопрос</strong>
@@ -291,8 +304,17 @@
                   <div class="mechanic-chip"><span>Combo</span><strong id="mechanicCombo">Вкл.</strong></div>
                   <div class="mechanic-chip"><span>Спасение</span><strong id="mechanicRescue">1 на команду</strong></div>
                   <div class="mechanic-chip"><span>Перехват</span><strong id="mechanicSteal">Готов</strong></div>
+                  <div class="mechanic-chip"><span>Банк силы</span><strong id="mechanicPower">Активен</strong></div>
                   <div class="mechanic-chip secret"><span>Секретный раунд</span><strong id="mechanicSecret">Скрыт</strong></div>
                 </div>
+
+                <article id="livePowerPanel" class="workspace-card power-workspace">
+                  <div class="workspace-card-head">
+                    <div><span class="section-kicker">Командная механика</span><h3>Банк силы команд</h3></div>
+                    <span class="info-badge">0–100</span>
+                  </div>
+                  <div id="livePowerList" class="live-power-list"></div>
+                </article>
 
                 <article id="liveRescuePanel" class="workspace-card rescue-workspace">
                   <div class="workspace-card-head">
