@@ -3,44 +3,46 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#faf9f5">
+  <meta name="theme-color" content="#101b2e">
+  <meta name="color-scheme" content="dark">
   <title>ORG/PARTY — квиз-платформа</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css?v=20261009-1">
   <link rel="stylesheet" href="./theme-light.css?v=20261009-qa4">
+  <link rel="stylesheet" href="./theme-polygon.css?v=20261009-7">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="./lib/d3.v7.min.js"></script>
   <script src="./lib/topojson-client.min.js"></script>
 </head>
-<body>
+<body class="poly-ui">
   <div class="aurora a1"></div><div class="aurora a2"></div><div class="aurora a3"></div>
   <div id="transitionLayer" class="transition-layer"><span>ORG PARTY</span></div>
   <div id="toast" class="toast hidden"></div>
 
   <header class="topbar">
     <button class="brand" id="brandHome" aria-label="На главную">
-      <span class="brand-sigil" aria-hidden="true">✦</span>
+      <span class="brand-sigil" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><path d="M24 3 42 13v22L24 45 6 35V13L24 3Z"/><path d="m24 3 0 20 18 12M24 23 6 35m0-22 18 10 18-10" /></svg></span>
       <span class="brand-copy"><strong>ORG<span class="brand-slash">/</span>PARTY</strong><small>Квиз-платформа</small></span>
     </button>
     <div class="top-actions">
-      <button id="soundToggle" class="icon-btn" title="Звук">♪</button>
+      <button id="soundToggle" class="icon-btn" title="Включить или выключить звук" aria-label="Переключить звук">♫</button>
       <span class="live-chip"><i></i> КВИЗ-ПЛАТФОРМА</span>
       <button id="teacherToggle" class="soft-btn">Модератор</button>
-      <span id="releaseVersion" class="release-version" data-build="20261009.6" title="Версия опубликованного сайта 09.10.2026">v2026.10.09.6</span>
+      <span id="releaseVersion" class="release-version" data-build="20261009.7" title="Версия ORG Polygon / 09.10.2026">v2026.10.09.7</span>
     </div>
   </header>
 
-  <main class="shell">
+  <main class="shell" id="mainContent">
     <section id="homeView">
       <div class="landing-grid">
         <article class="hero-card">
-          <div class="hero-eyebrow"><span class="hero-eyebrow-line"></span> ИНТЕРАКТИВНАЯ ПЛАТФОРМА / 2026</div>
-          <h1>Вопросы,<br>которые <em>захватывают.</em></h1>
+          <div class="hero-eyebrow"><span class="hero-eyebrow-line"></span> ORG / ИНТЕРАКТИВНАЯ ПЛАТФОРМА</div>
+          <h1>Игра,<br>которая <em>объединяет.</em></h1>
           <p>Создавайте квизы, собирайте команды и проводите занятие как живую игру. Один код — и вся аудитория участвует.</p>
-          <div class="hero-sample" aria-label="Как проходит игра">
+          <div class="hero-sample" aria-label="Как проходит игра"><div class="hero-facets" aria-hidden="true"><i></i><i></i><i></i></div>
             <div class="hero-sample-top"><span class="live-dot"></span> В ПРЯМОМ ЭФИРЕ <span>01 / 03</span></div>
             <div class="hero-sample-question">Вопрос<span class="hero-sample-mark">?</span> Ответ<span class="hero-sample-arrow">↗</span></div>
             <div class="hero-sample-bottom"><span>КОМАНДА</span><span>СКОРОСТЬ</span><span>РЕЗУЛЬТАТ</span></div>
