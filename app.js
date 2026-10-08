@@ -4,7 +4,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const $ = (id)=>document.getElementById(id);
 const views = {home:$("homeView"),student:$("studentView"),teacher:$("teacherView")};
-const state = {session:null,participant:null,teams:[],participants:[],question:null,studentStartedAt:null,teacherSession:null,teacherUser:null,subs:[],quizSets:[],editorQuizId:null,timerHandle:null,analyticsRows:[],selectedAnalyticsSession:null,sound:true,viewAsParticipant:false,regionTopology:null,questionRows:[],bulkQuestionIds:new Set(),composerQuestionIds:[],editingQuestion:null,generatedGame:null,setupStep:"room",phaseTimer:null,stealTimer:null,powerUse:null,transitionTimer:null,transitionBusy:false,bankPageSize:48,bankVisible:48};
+const state = {session:null,participant:null,teams:[],participants:[],question:null,studentStartedAt:null,teacherSession:null,teacherUser:null,subs:[],quizSets:[],editorQuizId:null,timerHandle:null,analyticsRows:[],selectedAnalyticsSession:null,sound:true,viewAsParticipant:false,regionTopology:null,questionRows:[],bulkQuestionIds:new Set(),composerQuestionIds:[],editingQuestion:null,generatedGame:null,setupStep:"room",phaseTimer:null,stealTimer:null,powerUse:null,transitionTimer:null,transitionBusy:false,bankPageSize:96,bankVisible:96};
 
 function showView(name){
   const layer=$("transitionLayer");
@@ -385,7 +385,7 @@ async function loadQuizSets(){
   const {data,error}=await sb.from("org_quiz_sets").select("id,title,topic,description,created_at,published,is_generated").order("created_at",{ascending:false});
   if(error){showToast(error.message);return}
   state.quizSets=data||[];
-  const publishedSets=state.quizSets.filter(q=>q.published);
+  const publishedSets=state.quizSets;
   const opts=publishedSets.map(q=>`<option value="${q.id}">${escapeHtml(q.title)} — ${escapeHtml(q.topic)}</option>`).join("");
   $("quizSelect").innerHTML=opts;$("editorQuizSelect").innerHTML=state.quizSets.map(q=>'<option value="'+q.id+'">'+escapeHtml(q.title)+(q.published?'':' · черновик')+'</option>').join("");
   $("questionSetFilter").innerHTML='<option value="">Все наборы</option>'+state.quizSets.map(q=>'<option value="'+q.id+'">'+escapeHtml(q.title)+(q.published?'':' · черновик')+'</option>').join("");
@@ -398,7 +398,7 @@ async function loadQuizSets(){
 
 function renderRandomBankList(){
   const host=$("randomBankList");if(!host)return;
-  const preferred=state.quizSets.filter(s=>s.published&&!s.title.startsWith("Флаговый марафон")&&!s.title.startsWith("Последний выживший")&&s.title!=="Тёмная комната — выбывание");
+  const preferred=state.quizSets.filter(s=>!s.title.startsWith("Флаговый марафон")&&!s.title.startsWith("Последний выживший")&&s.title!=="Тёмная комната — выбывание");
   host.innerHTML=preferred.map((s,i)=>`<label class="bank-choice"><input type="checkbox" value="${s.id}" ${i<6?"checked":""}><span><b>${escapeHtml(s.title)}</b><small>${escapeHtml(s.topic)}</small></span></label>`).join("");
 }
 $("randomizeSeed")?.addEventListener("click",()=>{
@@ -756,8 +756,8 @@ function escapeHtml(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","
 function bindTeacherTabs(){
   if(bindTeacherTabs.bound)return;bindTeacherTabs.bound=true;
   const titles={
-    questions:["Контент","Игровые банки"],
-    live:["Сессия","Запустить игру"],
+    questions:["Контент","Библиотека вопросов"],
+    live:["Сессия","Провести игру"],
     analytics:["Результаты","Результаты"]
   };
   const ids={questions:"studioQuestions",live:"studioLive",analytics:"studioAnalytics"};
@@ -922,7 +922,7 @@ function renderQuestionLibrary(){
   const showDrafts=$("questionShowDrafts")?.checked||false;
   const uniqueOnly=$("questionUniqueOnly")?.checked||false;
   const duplicatesOnly=$("questionDuplicateOnly")?.checked||false;
-  const available=(state.questionRows||[]).filter(q=>showDrafts||state.quizSets.some(s=>s.id===q.quiz_id&&s.published));
+  const available=(state.questionRows||[]).filter(q=>!showDrafts||state.quizSets.some(s=>s.id===q.quiz_id&&s.published));
   const keyFrequency=new Map();
   available.forEach(q=>keyFrequency.set(questionIdentity(q),(keyFrequency.get(questionIdentity(q))||0)+1));
   const seen=new Set();
@@ -942,14 +942,16 @@ function renderQuestionLibrary(){
     return true;
   });
   const displayRows=rows.slice(0,state.bankVisible);
-  $("questionBankCount").textContent=rows.length+" вопросов";
-  if($("librarySummary"))$("librarySummary").textContent=available.length+" записей · "+duplicates+" в группах повторов · "+state.quizSets.filter(x=>!x.published).length+" черновых наборов";
+  $("questionBankCount").textContent=displayRows.length+" / "+rows.length+" вопросов";
+  if($("questionShowAll"))$("questionShowAll").classList.toggle("hidden",rows.length<=state.bankVisible);
+  if($("questionShowAll"))$("questionShowAll").textContent="Показать все "+rows.length+" вопросов";
+  if($("librarySummary"))$("librarySummary").textContent="Найдено "+rows.length+" из "+state.questionRows.length+" вопросов · показано "+displayRows.length+" · "+state.quizSets.length+" наборов";
   $("questionBankMore")?.classList.toggle("hidden",rows.length<=state.bankVisible);
 
   const icon={single:"✓",multiple:"☷",flag:"⚑",anthem:"♫",person_photo:"◎",place_photo:"⌖",region_map:"◫",vote:"◉",elimination:"!",matching:"⇄",ordering:"↕",duel:"✦",split:"◇",scale:"—",wordcloud:"☁",ranking:"≡",team_pitch:"◆",film_frame:"▣",film_quote:"❝",film_clip:"▶"};
   const visual=q=>{
     const cfg=q.config||{};
-    if(cfg.flag_url)return `<div class="question-visual flag-card"><img src="${escapeHtml(cfg.flag_url)}" alt=""></div>`;
+    if(cfg.flag_url)return `<div class="question-visual flag-card"><img loading="lazy" decoding="async" src="${escapeHtml(cfg.flag_url)}" alt=""></div>`;
     if(cfg.image_url)return `<div class="question-visual photo-card ${q.question_type==="person_photo"?"person-photo":""}"><img loading="lazy" src="${escapeHtml(cfg.image_url)}" alt=""></div>`;
     if(cfg.wiki_title||cfg.wiki_search)return `<div class="question-visual photo-card wiki-photo ${q.question_type==="person_photo"?"person-photo":""}" data-qid="${q.id}"><div class="photo-loader">◉</div></div>`;
     if(cfg.audio_url)return `<div class="question-visual audio-card-large"><span>♫</span><div><strong>Аудиораунд</strong><small>Гимн · нажмите «Открыть», чтобы прослушать</small></div></div>`;
@@ -1048,7 +1050,7 @@ async function previewLibraryQuestion(id){
     : "";
 }
 async function loadOverview(){
-  const packs=(state.quizSets||[]).filter(s=>s.published!==false);
+  const packs=state.quizSets||[];
   const rank=s=>{
     const t=s.title;
     if(t==="Флаги мира — 196 SVG")return 1;
@@ -1106,7 +1108,7 @@ async function loadOverview(){
       <div class="game-pack-copy">
         <span>${escapeHtml(s.topic)}</span>
         <h4>${escapeHtml(s.title)}</h4>
-        <p>${escapeHtml(note(s))}</p>
+        <p>${!s.published?'<span class="pack-draft">Черновик</span> ':''}${escapeHtml(note(s))}</p>
       </div>
       <div class="game-pack-footer">
         <div><strong>${count}</strong><span>заданий</span></div>
@@ -1669,9 +1671,10 @@ $("viewAsParticipant").onclick=async()=>{
  node.addEventListener(id==="questionSearch"?"input":"change",()=>{state.bankVisible=state.bankPageSize;renderQuestionLibrary()});
 });
 $("questionBankMore")?.addEventListener("click",()=>{state.bankVisible+=state.bankPageSize;renderQuestionLibrary()});
+$("questionShowAll")?.addEventListener("click",()=>{state.bankVisible=state.questionRows.length+1;renderQuestionLibrary()});
 $("questionClearFilters")?.addEventListener("click",()=>{
  $("questionSearch").value="";$("questionSetFilter").value="";$("questionTypeFilter").value="";$("questionDifficultyFilter").value="";
- $("questionUniqueOnly").checked=true;$("questionShowDrafts").checked=false;$("questionDuplicateOnly").checked=false;
+ $("questionUniqueOnly").checked=false;$("questionShowDrafts").checked=false;$("questionDuplicateOnly").checked=false;
  state.bankVisible=state.bankPageSize;renderQuestionLibrary();
 });
 $("questionSetFilter")?.addEventListener("change",renderQuestionLibrary);
