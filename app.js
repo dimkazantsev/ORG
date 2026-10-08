@@ -166,7 +166,14 @@ function renderEventStage(){
    const start=new Date(s.event_started_at||Date.now()).getTime();
    const sec=Math.max(0,5-Math.floor((Date.now()-start)/1000));
    $("studentEventCountdown").textContent=String(sec);
+   clearPhaseTimer();state.phaseTimer=setInterval(()=>{if(state.session?.status!=="event_break"){clearPhaseTimer();return}const n=Math.max(0,5-Math.floor((Date.now()-start)/1000));$("studentEventCountdown").textContent=String(n)},250);
  }
+}
+async function loadTeamCaptain(){
+ const sid=state.session?.id,teamId=state.participant?.team_id;
+ if(!sid||!teamId){state.teamMembers=[];return}
+ const {data}=await sb.from("org_quiz_participants").select("id,team_id,joined_at,life_state").eq("session_id",sid).eq("team_id",teamId);
+ state.teamMembers=data||[];
 }
 function applyEventRules(){
  const s=state.session;
@@ -274,6 +281,7 @@ async function loadActiveQuestion(){
   $("questionCard").classList.toggle("danger-mode",data.question_type==="elimination");
   await renderQuestionMedia(data,$("mediaStage"));
   await renderQuestionInteraction(data);
+  if(state.session.event_kind==="captain_only")await loadTeamCaptain();
   applyPowerUseToQuestion(data);
   applyEventRules();
   if(state.viewAsParticipant){lockQuestionUI();msg($("answerFeedback"),"Режим предпросмотра Модератора — ответы не отправляются.");}
@@ -472,6 +480,7 @@ $("createSessionForm").addEventListener("submit",async e=>{
     quiz_id:selectedId,code:c,title:$("sessionTitle").value||null,
     team_count:Number($("teamCount").value||4),game_mode:$("gameMode").value,created_by:state.teacherUser.id,
     setup_stage:"teams",game_seed:seed,
+    events_enabled:Number($("sessionEventChance").value)>0,event_chance:Number($("sessionEventChance").value),
     secret_round_number:state.generatedGame?.id===selectedId?(state.generatedGame.secretRound||null):null,
     secret_round_revealed:false
   }).select().single();
