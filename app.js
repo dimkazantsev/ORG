@@ -384,9 +384,9 @@ async function restoreTeacherRoom(){
   return true;
 }
 async function loadQuizSets(){
-  const {data,error}=await sb.from("org_quiz_sets").select("id,title,topic,description,created_at,published,is_generated").order("created_at",{ascending:false});
+  const {data,error}=await sb.from("org_quiz_sets").select("id,title,topic,description,created_at,published,is_generated,archived_at").order("created_at",{ascending:false});
   if(error){showToast(error.message);return}
-  state.quizSets=data||[];
+  state.quizSets=(data||[]).filter(q=>!q.archived_at);
   const publishedSets=state.quizSets.filter(q=>q.published);
   const label=q=>escapeHtml(setDisplayName(q));
   const opts=publishedSets.map(q=>`<option value="${q.id}">${label(q)} — ${escapeHtml(q.topic)}</option>`).join("");
