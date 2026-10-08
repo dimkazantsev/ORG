@@ -3,8 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#f7f8fc">
+  <meta name="theme-color" content="#101826">
   <title>ORG Party — квиз и интерактивные игры</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css">
   <link rel="stylesheet" href="./design-2026.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -20,11 +23,11 @@
   <header class="topbar">
     <button class="brand" id="brandHome" aria-label="На главную">
       <span class="brand-sigil">O</span>
-      <span class="brand-copy"><strong>ORG PARTY</strong><small>Интерактивные игры</small></span>
+      <span class="brand-copy"><strong>ORG<span class="brand-slash">/</span>PARTY</strong><small>Quiz platform</small></span>
     </button>
     <div class="top-actions">
       <button id="soundToggle" class="icon-btn" title="Звук">♪</button>
-      <span class="live-chip"><i></i> ИГРА ОНЛАЙН</span>
+      <span class="live-chip"><i></i> КВИЗ-ПЛАТФОРМА</span>
       <button id="teacherToggle" class="soft-btn">Модератор</button>
     </div>
   </header>
@@ -33,16 +36,18 @@
     <section id="homeView">
       <div class="landing-grid">
         <article class="hero-card">
-          <div class="kicker">Интерактивная платформа · ORG Studio</div>
-          <h1>Знания становятся<br><span class="gradient-text">командной игрой.</span></h1>
-          <p>Флаги, гимны, фото, карта регионов, голосования, командные баттлы, кейсы и раунды на выбывание — в одной живой сессии.</p>
-          <div class="mode-marquee">
-            <span>🏳 Флаги</span><span>♫ Гимны</span><span>◎ Карта России</span><span>◉ Фото</span><span>✦ Баттлы</span><span>☠ Выбывание</span><span>☁ Облако мнений</span>
+          <div class="hero-eyebrow"><span class="hero-eyebrow-line"></span> ИНТЕРАКТИВНАЯ ПЛАТФОРМА / 2026</div>
+          <h1>Вопросы,<br>которые <em>захватывают.</em></h1>
+          <p>Создавайте квизы, собирайте команды и проводите занятие как живую игру. Один код — и вся аудитория участвует.</p>
+          <div class="hero-sample" aria-label="Как проходит игра">
+            <div class="hero-sample-top"><span class="live-dot"></span> В ПРЯМОМ ЭФИРЕ <span>01 / 03</span></div>
+            <div class="hero-sample-question">Вопрос<span class="hero-sample-mark">?</span> Ответ<span class="hero-sample-arrow">↗</span></div>
+            <div class="hero-sample-bottom"><span>КОМАНДА</span><span>СКОРОСТЬ</span><span>РЕЗУЛЬТАТ</span></div>
           </div>
           <div class="hero-numbers">
-            <div><b>01</b><small>Подключитесь по коду</small></div>
-            <div><b>02</b><small>Отвечайте с командой</small></div>
-            <div><b>03</b><small>Следите за результатом</small></div>
+            <div><b>01</b><small>Войти в комнату</small></div>
+            <div><b>02</b><small>Играть командой</small></div>
+            <div><b>03</b><small>Победить вместе</small></div>
           </div>
         </article>
 
@@ -54,31 +59,27 @@
 
           <div id="participantAccess">
             <div class="access-heading">
-              <span class="role-orb participant">У</span>
-              <div><div class="kicker">Войти в игру</div><h2>Подключиться к комнате</h2></div>
+              <div><div class="access-kicker">БЫСТРЫЙ ВХОД / 01</div><h2>Присоединиться<br>к игре.</h2><p class="access-intro">Попросите код у ведущего — регистрация не нужна.</p></div>
             </div>
             <form id="joinForm" class="stack">
-              <label>Код комнаты<input id="joinCode" maxlength="8" autocomplete="off" placeholder="ORG7K2" required></label>
+              <label>Код комнаты<input id="joinCode" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="ORG••••" required></label>
               <label>Имя / ФИО<input id="joinName" autocomplete="name" placeholder="Иванов Иван" required></label>
               <label>Группа<input id="joinGroup" placeholder="МУ-231" required></label>
-              <button class="primary big-btn" type="submit">Войти в игру <span>→</span></button>
+              <button class="primary big-btn" type="submit">Присоединиться <span aria-hidden="true">↗</span></button>
               <p id="joinMessage" class="message"></p>
             </form>
           </div>
 
           <div id="moderatorAccess" class="hidden">
-            <div class="access-heading">
-              <span class="role-orb moderator">М</span>
-              <div><div class="kicker">Управление игрой</div><h2>Профиль Модератора</h2></div>
-            </div>
-            <p class="subcopy">Создавайте комнаты, переключайте уровни, управляйте жизнью игроков и смотрите игру глазами участника.</p>
+            <div class="access-heading"><div><div class="access-kicker">ВЕДУЩИЙ / ORG STUDIO</div><h2>Управлять<br>игрой.</h2></div></div>
+            <p class="subcopy">Банк вопросов, генератор, команды и живое управление раундами — в одной панели.</p>
             <button id="openModerator" class="primary big-btn">Открыть панель Модератора <span>→</span></button>
           </div>
         </article>
       </div>
 
-      <section class="mode-showcase">
-        <div class="section-title"><div><div class="kicker">Игровые форматы</div><h2>Одна платформа. Разные сценарии.</h2></div></div>
+      <details class="mode-disclosure"><summary>Посмотреть игровые форматы <span>↗</span></summary><section class="mode-showcase">
+        <div class="section-title"><div><div class="kicker">ВОЗМОЖНОСТИ</div><h2>Один квиз — много механик.</h2></div></div>
         <div class="mode-grid">
           <article class="mode-card c-blue"><span>🏳</span><h3>Флаг</h3><p>Угадайте страну по флагу.</p></article>
           <article class="mode-card c-violet"><span>♫</span><h3>Гимн</h3><p>Аудио-фрагмент и четыре версии.</p></article>
@@ -89,7 +90,7 @@
           <article class="mode-card c-red"><span>☠</span><h3>Тёмная комната</h3><p>Ошибка выбивает игрока из командного зачёта.</p></article>
           <article class="mode-card c-lilac"><span>✦</span><h3>Баттл ответов</h3><p>Ответьте сами, затем выберите лучший ответ других.</p></article>
         </div>
-      </section>
+      </section></details>
     </section>
 
     <section id="studentView" class="hidden">
@@ -114,6 +115,7 @@
           </div>
           <div id="mediaStage" class="media-stage hidden"></div>
           <h1 id="questionPrompt">Модератор готовит следующий уровень.</h1>
+          <p id="questionHelper" class="question-helper">Выберите ответ. Время ограничено.</p>
           <div id="answerOptions" class="answer-grid"></div>
           <p id="answerFeedback" class="feedback"></p>
         </article>
@@ -197,9 +199,9 @@
               <div><strong>ORG Studio</strong><small>Кабинет преподавателя</small></div>
             </div>
             <nav class="flow-steps" aria-label="Основной маршрут">
-              <button class="flow-step active" data-studio-view="questions"><span>1</span><div><b>Игровые банки</b><small id="sidebarQuestionCount">0 заданий</small></div></button>
-              <button class="flow-step" data-studio-view="live"><span>2</span><div><b>Запустить</b><small>Комната и команды</small></div></button>
-              <button class="flow-step" data-studio-view="analytics"><span>3</span><div><b>Результаты</b><small>Статистика игры</small></div></button>
+              <button class="flow-step active" data-studio-view="questions"><span>01</span><div><b>Библиотека</b><small id="sidebarQuestionCount">0 заданий</small></div></button>
+              <button class="flow-step" data-studio-view="live"><span>02</span><div><b>Провести игру</b><small>Комната и команды</small></div></button>
+              <button class="flow-step" data-studio-view="analytics"><span>03</span><div><b>Результаты</b><small>Статистика игры</small></div></button>
             </nav>
             <div class="flowbar-actions">
               <button id="viewAsParticipant" class="button-secondary">Вид участника</button>
@@ -303,7 +305,7 @@
                   </div>
                   <div class="director-controls">
                     <button id="prevQuestion" class="button-secondary">← Назад</button>
-                    <button id="nextQuestion" class="button-primary">Следующий →</button>
+                    <button id="nextQuestion" class="button-primary">Следующий вопрос <span aria-hidden="true">→</span></button>
                     <button id="openVoting" class="button-secondary">Голосование</button>
                     <button id="showResults" class="button-secondary">Результат</button>
                     <button id="openSteal" class="button-secondary steal-control">Перехват</button>
@@ -316,6 +318,21 @@
                   <div class="director-event-copy"><span>СОБЫТИЕ ВОПРОСА</span><h3 id="directorEventTitle">Новый поворот</h3><p id="directorEventDescription">Особые правила</p></div>
                   <button id="directorEventContinue" type="button" class="button-primary">Продолжить</button>
                 </article>
+                <article class="workspace-card stage-card">
+                  <div class="workspace-card-head">
+                    <div><span class="section-kicker">Сцена</span><h3>Экран аудитории</h3></div>
+                    <button id="fullscreenQuestion" class="button-secondary">На весь экран</button>
+                  </div>
+                  <div id="teacherQuestionStage" class="presenter-stage">
+                    <div class="presenter-top"><span id="presenterCounter">Ожидание</span><strong id="presenterTimer">—</strong></div>
+                    <div id="presenterMedia" class="media-stage hidden"></div>
+                    <h2 id="presenterPrompt">Игра ещё не запущена.</h2>
+                    <div id="presenterOptions" class="presenter-options"></div>
+                    <div id="optionDistribution" class="distribution"></div>
+                  </div>
+                </article>
+
+                <details class="host-extras"><summary><strong>Командные механики и дополнительные инструменты</strong><span>Развернуть ↗</span></summary><div class="host-extras-body">
                 <div class="mechanics-strip">
                   <div class="mechanic-chip"><span>Combo</span><strong id="mechanicCombo">Вкл.</strong></div>
                   <div class="mechanic-chip"><span>Спасение</span><strong id="mechanicRescue">1 на команду</strong></div>
@@ -339,20 +356,8 @@
                   </div>
                   <div id="liveRescueList" class="live-rescue-list"></div>
                 </article>
+                </div></details>
 
-                <article class="workspace-card stage-card">
-                  <div class="workspace-card-head">
-                    <div><span class="section-kicker">Сцена</span><h3>Экран аудитории</h3></div>
-                    <button id="fullscreenQuestion" class="button-secondary">На весь экран</button>
-                  </div>
-                  <div id="teacherQuestionStage" class="presenter-stage">
-                    <div class="presenter-top"><span id="presenterCounter">Ожидание</span><strong id="presenterTimer">—</strong></div>
-                    <div id="presenterMedia" class="media-stage hidden"></div>
-                    <h2 id="presenterPrompt">Игра ещё не запущена.</h2>
-                    <div id="presenterOptions" class="presenter-options"></div>
-                    <div id="optionDistribution" class="distribution"></div>
-                  </div>
-                </article>
 
                 <div class="two-workspace">
                   <article class="workspace-card"><span class="section-kicker">Команды</span><h3>Рейтинг команд</h3><div id="teacherLeaderboard" class="leaderboard"></div></article>
@@ -364,35 +369,16 @@
 
           <div id="studioQuestions" class="studio-view">
             <div class="section-toolbar">
-              <div><span class="section-kicker">Шаг 1 из 3</span><h2>Игровые банки</h2><p>Выберите готовый режим или откройте его вопросы. Никаких лишних разделов.</p></div>
+              <div><span class="section-kicker">КОНТЕНТ / 01</span><h2>Библиотека вопросов</h2><p>Поиск, правки и готовые наборы. Нужное — сразу перед глазами.</p></div>
               <div class="toolbar-actions">
                 <button id="openSetComposer" class="button-secondary">Собрать микс</button>
                 <button id="openQuestionEditor" class="button-secondary">+ Свой вопрос</button>
                 <button class="button-primary" data-open-view="live">Запустить игру →</button>
               </div>
             </div>
-            <section class="generator-card">
-              <div class="generator-copy">
-                <span class="section-kicker">Случайная игра</span>
-                <h3>Собрать игру по seed</h3>
-                <p>Одинаковый seed всегда собирает одну и ту же структуру раундов. Выберите банки, количество раундов и вопросов — система сама соберёт последовательность.</p>
-              </div>
-              <form id="randomGameForm" class="generator-form">
-                <div class="seed-field"><label>Seed<input id="randomSeed" type="number" min="1" max="2147483647" value="482731"></label><button id="randomizeSeed" type="button" class="button-secondary seed-button" title="Случайное число">↻ Случайный</button></div>
-                <label>Раундов<input id="randomRounds" type="number" min="1" max="12" value="5"></label>
-                <label>Вопросов в раунде<input id="randomQuestions" type="number" min="1" max="20" value="5"></label>
-                <div class="generator-banks field-wide">
-                  <span>Банки для генерации</span>
-                  <div id="randomBankList" class="bank-choice-grid"></div>
-                </div>
-                <button class="button-primary generator-submit" type="submit">Собрать случайную игру →</button>
-              </form>
-              <div id="randomGameResult" class="generator-result hidden"></div>
-            </section>
-
             <section class="game-pack-section compact-packs">
               <div class="game-pack-head">
-                <div><span class="section-kicker">Готовые подборки</span><h3>Выберите набор</h3><p>Откройте вопросы, проверьте содержание и перейдите к запуску.</p></div>
+                <div><span class="section-kicker">ПОДБОРКИ</span><h3>Готовые наборы</h3><p>Выберите набор для просмотра или запуска.</p></div>
               </div>
               <div id="overviewGamePacks" class="game-pack-grid"></div>
             </section>
@@ -423,6 +409,27 @@
 
             <div id="questionBank" class="question-library"></div>
             <div class="library-pagination"><button id="questionBankMore" class="button-secondary hidden" type="button">Показать ещё вопросы ↓</button></div>
+            <details class="generator-disclosure">
+              <summary><span><strong>Собрать собственную игру</strong><small>Настройте seed, раунды и банки вопросов</small></span><span class="disclosure-symbol">↗</span></summary>
+            <section class="generator-card">
+              <div class="generator-copy">
+                <span class="section-kicker">Случайная игра</span>
+                <h3>Собрать игру по seed</h3>
+                <p>Одинаковый seed всегда собирает одну и ту же структуру раундов. Выберите банки, количество раундов и вопросов — система сама соберёт последовательность.</p>
+              </div>
+              <form id="randomGameForm" class="generator-form">
+                <div class="seed-field"><label>Seed<input id="randomSeed" type="number" min="1" max="2147483647" value="482731"></label><button id="randomizeSeed" type="button" class="button-secondary seed-button" title="Случайное число">↻ Случайный</button></div>
+                <label>Раундов<input id="randomRounds" type="number" min="1" max="12" value="5"></label>
+                <label>Вопросов в раунде<input id="randomQuestions" type="number" min="1" max="20" value="5"></label>
+                <div class="generator-banks field-wide">
+                  <span>Банки для генерации</span>
+                  <div id="randomBankList" class="bank-choice-grid"></div>
+                </div>
+                <button class="button-primary generator-submit" type="submit">Собрать случайную игру →</button>
+              </form>
+              <div id="randomGameResult" class="generator-result hidden"></div>
+            </section>
+            </details>
           </div>
 
           
