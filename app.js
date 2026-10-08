@@ -409,7 +409,7 @@ function setDisplayName(set){
 }
 function renderRandomBankList(){
   const host=$("randomBankList");if(!host)return;
-  const preferred=state.quizSets.filter(s=>!s.title.startsWith("Флаговый марафон")&&!s.title.startsWith("Последний выживший")&&s.title!=="Тёмная комната — выбывание");
+  const preferred=state.quizSets.filter(s=>s.title!=="Тёмная комната — выбывание");
   host.innerHTML=preferred.map((s,i)=>`<label class="bank-choice"><input type="checkbox" value="${s.id}" ${i<6?"checked":""}><span><b>${escapeHtml(setDisplayName(s))}</b><small>${escapeHtml(s.topic)}</small></span></label>`).join("");
 }
 $("randomizeSeed")?.addEventListener("click",()=>{
@@ -1065,8 +1065,6 @@ async function loadOverview(){
   const rank=s=>{
     const t=s.title;
     if(t==="Флаги мира — 196 SVG")return 1;
-    if(t.startsWith("Флаговый марафон"))return 2;
-    if(t.startsWith("Последний выживший"))return 3;
     if(t==="Россия на карте — 89 регионов")return 4;
     if(t.startsWith("Гербы регионов России"))return 5;
     if(t.startsWith("Гимны мира —"))return 6;
@@ -1080,8 +1078,6 @@ async function loadOverview(){
   };
   const icons=t=>{
     if(t.startsWith("Флаги"))return"⚑";
-    if(t.startsWith("Флаговый марафон"))return"⚡";
-    if(t.startsWith("Последний выживший"))return"☠";
     if(t.startsWith("Россия на карте"))return"◎";
     if(t.startsWith("Гербы регионов"))return"♜";
     if(t.startsWith("Гимны мира"))return"♫";
@@ -1096,8 +1092,6 @@ async function loadOverview(){
   const note=s=>{
     const t=s.title;
     if(t==="Флаги мира — 196 SVG")return"196 SVG-флагов · 193 члена ООН + 2 наблюдателя + 1 бонус";
-    if(t.startsWith("Флаговый марафон"))return"60 быстрых флагов · 8 секунд на ответ";
-    if(t.startsWith("Последний выживший"))return"40 флагов · одна ошибка выбивает из командного зачёта";
     if(t==="Россия на карте — 89 регионов")return"Интерактивная карта · zoom · pan · подтверждение ответа";
     if(t.startsWith("Гербы регионов"))return"89 гербов субъектов России";
     if(t.startsWith("Гимны мира"))return"Большой аудиобанк национальных гимнов";
@@ -1931,7 +1925,7 @@ function validEmblemMedia(cfg){
  try{return /(coat[_ -]?of[_ -]?arms|emblem|blason|wappen|герб|gerb|escudo|armorial|coa[_\-.])/i.test(decodeURIComponent(new URL(String(cfg?.image_url||"")).pathname))}catch{return false}
 }
 function packIcon(title){
- const type=title.startsWith("Флаговый марафон")?"zap":title.startsWith("Флаги")?"flag":title.startsWith("Последний выживший")?"shield":title.startsWith("Россия на карте")?"map":title.startsWith("Гербы регионов")?"award":title.startsWith("Гимны")?"music":title.startsWith("Знаменитые")?"user":title.includes("фразы")?"quote":title.includes("фрагменты")?"play":title.includes("кино")?"film":title.startsWith("Достопримечательности")?"landmark":"sparkles";
+ const type=title.startsWith("Флаги")?"flag":title.startsWith("Россия на карте")?"map":title.startsWith("Гербы регионов")?"award":title.startsWith("Гимны")?"music":title.startsWith("Знаменитые")?"user":title.includes("фразы")?"quote":title.includes("фрагменты")?"play":title.includes("кино")?"film":title.startsWith("Достопримечательности")?"landmark":"sparkles";
  const paths={zap:'<path d="m13 2-9 12h8l-1 8 10-13h-8V2Z"/>',flag:'<path d="M6 21V4m0 1c5-4 9 4 17 0v12c-8 4-12-4-17 0"/>',shield:'<path d="M12 22s9-4.5 9-11V5l-9-3-9 3v6c0 6.5 9 11 9 11Z"/><path d="m9 12 2 2 4-4"/>',map:'<path d="M3 6 9 3l6 3 6-3v15l-6 3-6-3-6 3V6Zm6-3v15m6-12v15"/>',award:'<circle cx="12" cy="8" r="5"/><path d="m9 13-2 9 5-3 5 3-2-9"/>',music:'<path d="M9 18V5l12-2v13M9 9l12-2"/><ellipse cx="6" cy="18" rx="3" ry="2"/><ellipse cx="18" cy="16" rx="3" ry="2"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 22c0-5 3.5-8 8-8s8 3 8 8"/>',quote:'<path d="M10 11H4V5h7v6l-4 6m15-6h-7V5h7v6l-4 6"/>',play:'<rect x="2" y="4" width="20" height="16" rx="3"/><path d="m10 8 6 4-6 4V8"/>',film:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14M3 9h4m-4 6h4m10-6h4m-4 6h4"/>',landmark:'<path d="M3 9 12 3l9 6H3Zm2 0v10m5-10v10m5-10v10m5-10v10M2 22h20M3 19h18"/>',sparkles:'<path d="m12 2 2 7 7 3-7 2-2 7-7-2 7-3 2-7Z"/>'};
  return '<svg viewBox="0 0 24 24" aria-hidden="true">'+paths[type]+'</svg>';
 }
