@@ -63,6 +63,7 @@ async function loadStudentSession(sessionId){
   if(p){state.participant=p;renderLifeState()}
   await loadStudentTeams();
   await loadActiveQuestion();
+  await renderDuel(false);
 }
 async function loadStudentTeams(){
   if(!state.session)return;
@@ -336,6 +337,7 @@ async function submitSteal(payload){
 }
 function subscribeStudent(sessionId){
   clearSubs();
+  duelSubscribe(sessionId,false);
   state.subs.push(
     sb.channel("org-student-session-"+sessionId).on("postgres_changes",{event:"UPDATE",schema:"public",table:"org_quiz_sessions",filter:"id=eq."+sessionId},async payload=>{
       state.session=payload.new;await loadActiveQuestion();
@@ -548,7 +550,7 @@ async function refreshTeacher(){
   }
   const step=["live","paused","countdown","round_break","event_break","finished"].includes(s.status)?"live":(s.setup_stage==="ready"?"ready":(s.setup_stage==="teams"?"teams":"room"));
   showSetupStep(step);
-  renderParticipants();renderTeacherLeaderboard();renderLivePowerPanel();renderLiveRescuePanel();await renderLiveTeacherQuestion();await loadLiveStudentRanking();
+  renderParticipants();renderTeacherLeaderboard();renderLivePowerPanel();renderLiveRescuePanel();await renderLiveTeacherQuestion();await loadLiveStudentRanking();await renderDuel(true);
 }
 // Timed transitions survive a browser reload while moderator authentication persists.
 function scheduleTeacherTransition(s){
@@ -739,6 +741,7 @@ async function setSession(patch){
 }
 function subscribeTeacher(sessionId){
   clearSubs();
+  duelSubscribe(sessionId,true);
   ["org_quiz_participants","org_quiz_teams","org_quiz_answers","org_quiz_steals","org_quiz_rescues","org_quiz_power_uses","org_quiz_power_ledger"].forEach(table=>{
     state.subs.push(sb.channel("teacher-"+table+"-"+sessionId).on("postgres_changes",{event:"*",schema:"public",table,filter:"session_id=eq."+sessionId},refreshTeacher).subscribe());
   });
@@ -1812,3 +1815,96 @@ $("saveSetOrder")?.addEventListener("click",async()=>{
   if(error)return showToast(error.message);
   closeDrawer("setorder");await loadQuestionBank();showToast("Порядок сохранён.");
 });
+
+
+/* ORG · Финальная дуэль · server-authoritative results */
+let duelLastCeremony=null;
+let duelRefreshToken=0;
+const duelErrorText={ADMIN_ONLY:"Только модератор может управлять финалом.",DUEL_ALREADY_EXISTS:"Финальная дуэль уже началась.",TWO_TEAMS_REQUIRED:"Для финала нужны две команды.",THREE_QUESTIONS_REQUIRED:"Укажите три вопроса.",INVALID_QUESTION:"Проверьте вопросы: текст, четыре варианта и правильный ответ.",VOTING_CLOSED:"Голосование уже завершено.",ALREADY_VOTED:"Ваш голос уже учтён.",SPECTATORS_ONLY:"Голосуют только игроки других команд.",FINALISTS_ONLY:"Отвечать могут только действующие игроки команд-финалистов.",TEAM_ALREADY_ANSWERED:"Ваша команда уже ответила.",WAIT_FOR_TWO_ANSWERS:"Необходимо дождаться ответа обеих команд.",QUESTION_NOT_OPEN:"Вопрос ещё не открыт."};
+function duelSay(error){showToast(duelErrorText[error?.message]||error?.message||"Не удалось выполнить действие.");}
+async function duelSnapshot(sid){
+  const {data,error}=await sb.rpc("org_quiz_duel_snapshot",{p_session_id:sid});
+  if(error){console.warn("Duel sync:",error.message);return null}
+  return data;
+}
+function duelTeam(id,teacher){return (teacher?state.teams:state.teams).find(t=>t.id===id)}
+function duelName(id){return duelTeam(id)?.name||"Команда"}
+function duelScore(id){return Number(duelTeam(id)?.score||0)}
+function duelMarkup(d,teacher){
+  if(!d)return "";
+  const mine=state.participant?.team_id;
+  const finalist=mine===d.team_a||mine===d.team_b;
+  const voters=d.votes||{};
+  const myAnswer=(d.answers||[]).find(x=>x.round_no===d.round_no&&x.team_id===mine);
+  const answered=(d.answers||[]).filter(x=>x.round_no===d.round_no);
+  const rounds=[100,200,300].map((v,i)=>'<span class="'+(d.round_no===i+1?'active':'')+'">'+(i+1)+' / '+(d.rule==='double'?v*2:v)+' очков</span>').join("");
+  let content='';
+  if(d.phase==='vote'){
+    content='<p class="duel-description">Все игроки, кроме двух команд-финалистов, выбирают стоимость вопросов. При равенстве голосов действует обычный режим.</p>'+
+      '<div class="duel-vote-grid"><div><b>Обычные ставки</b><strong>'+Number(voters.classic||0)+'</strong><small>100 / 200 / 300</small></div><div><b>Двойные ставки</b><strong>'+Number(voters.double||0)+'</strong><small>200 / 400 / 600</small></div></div>'+
+      (!teacher&&!finalist?'<div class="duel-actions"><button data-duel-vote="classic" '+(d.my_vote?'disabled':'')+'>Обычные ставки</button><button data-duel-vote="double" '+(d.my_vote?'disabled':'')+'>Двойные ставки</button></div>':(!teacher?'<p class="duel-note">Ваша команда участвует в финале. Голосуют зрители.</p>':''))+
+      (d.my_vote?'<p class="duel-note">Ваш голос: '+(d.my_vote==='double'?'Двойные ставки':'Обычные ставки')+'</p>':'');
+  }else if(d.phase==='question'){
+    const q=d.question||{};
+    content='<div class="duel-steps">'+rounds+'</div><h3 class="duel-question">'+escapeHtml(q.prompt||"Вопрос")+'</h3>'+
+      '<div class="duel-options">'+(q.options||[]).map((opt,i)=>'<button data-duel-answer="'+i+'" '+(teacher||!finalist||myAnswer?'disabled':'')+'>'+String.fromCharCode(65+i)+'. '+escapeHtml(opt)+'</button>').join("")+'</div>'+
+      '<p class="duel-note">'+(teacher?'Ожидаем ответы обеих команд.':!finalist?'За этот вопрос отвечают команды-финалисты.':myAnswer?'Ответ команды принят · '+(myAnswer.awarded?'+'+myAnswer.awarded+' очков':'0 очков'):'Один ответ на команду. Первое отправленное решение окончательное.')+'</p>'+
+      '<div class="duel-responses">'+[d.team_a,d.team_b].map(id=>'<span>'+(answered.some(a=>a.team_id===id)?'✓':'○')+' '+escapeHtml(duelName(id))+'</span>').join('')+'</div>';
+  }else{
+    const top=[{id:d.team_a,score:duelScore(d.team_a)},{id:d.team_b,score:duelScore(d.team_b)}].sort((a,b)=>b.score-a.score);
+    const equal=top[0].score===top[1].score;
+    content='<div class="duel-podium">'+top.map((t,i)=>'<div class="duel-podium-place place-'+(i+1)+'"><span>'+(i===0&&!equal?'🏆':'✦')+'</span><small>'+(equal?'Финалист':i===0?'Победитель':'Второе место')+'</small><strong>'+escapeHtml(duelName(t.id))+'</strong><b>'+t.score+' очков</b></div>').join('')+'</div>'+
+    '<p class="duel-note">'+(equal?'Равенство очков: победитель не назначен.':"Финал завершён. Результаты учтены в командном рейтинге.")+'</p>';
+  }
+  const controls=teacher?'<div class="duel-actions"><button class="duel-primary" data-duel-next '+(d.phase==='awards'?'disabled':(d.phase==='question'&&answered.length<2?'disabled':''))+'>'+(d.phase==='vote'?'Закрыть голосование и начать':d.phase==='awards'?'Финал завершён':d.round_no===3?'Объявить победителей':'Следующий вопрос →')+'</button></div>':'';
+  return '<div class="duel-shell '+(d.phase==='awards'?'duel-awards':'')+'"><div class="duel-header"><div><span class="duel-eyebrow">ORG / ФИНАЛ</span><h2>Финальная дуэль</h2><p>'+(d.phase==='vote'?'Условия определяет аудитория':d.phase==='awards'?'Церемония награждения':'Вопрос '+d.round_no+' из 3 · '+(d.rule==='double'?'Двойные ставки':'Обычные ставки'))+'</p></div><span class="duel-medal">✦</span></div><div class="duel-versus"><div><small>Финалист 01</small><strong>'+escapeHtml(duelName(d.team_a))+'</strong><b>'+duelScore(d.team_a)+' очков</b></div><span>VS</span><div><small>Финалист 02</small><strong>'+escapeHtml(duelName(d.team_b))+'</strong><b>'+duelScore(d.team_b)+' очков</b></div></div>'+content+controls+'</div>';
+}
+async function renderDuel(teacher=false){
+  const host=$(teacher?'teacherDuel':'studentDuel');
+  const s=teacher?state.teacherSession:state.session;
+  if(!host||!s)return;
+  const token=++duelRefreshToken;
+  const d=await duelSnapshot(s.id);
+  if(token!==duelRefreshToken&&host.dataset.duelSession!==s.id)return;
+  host.dataset.duelSession=s.id;
+  host.classList.toggle('hidden',!d);
+  if(d){
+    host.innerHTML=duelMarkup(d,teacher);
+    if(d.phase==='awards'&&duelLastCeremony!==s.id){
+      duelLastCeremony=s.id;
+      playSound('correct');
+      host.classList.add('duel-celebrate');
+      setTimeout(()=>host.classList.remove('duel-celebrate'),5000);
+    }
+  }else host.innerHTML='';
+}
+async function duelCall(fn,args,teacher=false){
+  const {error}=await sb.rpc(fn,args);
+  if(error)return duelSay(error);
+  playSound('transition');
+  if(teacher){await refreshTeacher();}else {await loadStudentTeams();await renderDuel(false);}
+}
+document.addEventListener('click',async e=>{
+ const vote=e.target.closest('[data-duel-vote]');
+ if(vote&&state.session)return duelCall('org_quiz_duel_vote',{p_session_id:state.session.id,p_choice:vote.dataset.duelVote});
+ const answer=e.target.closest('[data-duel-answer]');
+ if(answer&&state.session)return duelCall('org_quiz_duel_answer',{p_session_id:state.session.id,p_choice:Number(answer.dataset.duelAnswer)});
+ if(e.target.closest('[data-duel-next]')&&state.teacherSession)return duelCall('org_quiz_duel_advance',{p_session_id:state.teacherSession.id},true);
+});
+$('startDuel')?.addEventListener('click',async()=>{
+ const s=state.teacherSession;
+ if(!s)return showToast('Сначала создайте комнату.');
+ if(state.teams.length<2)return showToast('Нужны минимум две команды.');
+ const inputs=[...document.querySelectorAll('[data-duel-question]')];
+ const questions=inputs.map(el=>({prompt:el.querySelector('textarea').value.trim(),options:[...el.querySelectorAll('input')].map(x=>x.value.trim()),correct:Number(el.querySelector('select').value)}));
+ if(questions.some(q=>q.prompt.length<5||q.options.some(x=>!x)))return showToast('Заполните все три вопроса и все варианты.');
+ await duelCall('org_quiz_duel_start',{p_session_id:s.id,p_questions:questions},true);
+});
+function duelSubscribe(sessionId,teacher){
+ const channel=sb.channel('org-duel-'+(teacher?'host-':'player-')+sessionId)
+ .on('postgres_changes',{event:'*',schema:'public',table:'org_quiz_duels',filter:'session_id=eq.'+sessionId},()=>renderDuel(teacher))
+ .on('postgres_changes',{event:'*',schema:'public',table:'org_quiz_duel_votes',filter:'session_id=eq.'+sessionId},()=>renderDuel(teacher))
+ .on('postgres_changes',{event:'*',schema:'public',table:'org_quiz_duel_answers',filter:'session_id=eq.'+sessionId},async()=>{if(teacher)await refreshTeacher();else{await loadStudentTeams();await renderDuel(false)}})
+ .subscribe();
+ state.subs.push(channel);
+}
