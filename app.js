@@ -747,7 +747,7 @@ function subscribeTeacher(sessionId){
   });
   state.subs.push(sb.channel("teacher-session-"+sessionId).on("postgres_changes",{event:"UPDATE",schema:"public",table:"org_quiz_sessions",filter:"id=eq."+sessionId},async payload=>{state.teacherSession=payload.new;await refreshTeacher()}).subscribe());
 }
-function clearSubs(){state.subs.forEach(c=>sb.removeChannel(c));state.subs=[]}
+function clearSubs(){clearInterval(duelPollTimer);duelPollTimer=null;state.subs.forEach(c=>sb.removeChannel(c));state.subs=[]}
 $("teacherLogout").onclick=async()=>{clearSubs();await sb.auth.signOut();location.reload()}
 function leaderRow(i,name,score){return `<div class="leader-row"><div class="rank">${i+1}</div><div><strong>${escapeHtml(name)}</strong></div><div class="score">${score}</div></div>`}
 function statusLabel(s){return ({lobby:"Лобби",countdown:"Отсчёт",round_break:"Переход",live:"Идёт",paused:"Пауза",event_break:"Событие",finished:"Завершено"})[s]||s}
@@ -1819,6 +1819,7 @@ $("saveSetOrder")?.addEventListener("click",async()=>{
 
 /* ORG · Финальная дуэль · server-authoritative results */
 let duelLastCeremony=null;
+let duelPollTimer=null;
 let duelRefreshToken=0;
 const duelErrorText={ADMIN_ONLY:"Только модератор может управлять финалом.",DUEL_ALREADY_EXISTS:"Финальная дуэль уже началась.",TWO_TEAMS_REQUIRED:"Для финала нужны две команды.",THREE_QUESTIONS_REQUIRED:"Укажите три вопроса.",INVALID_QUESTION:"Проверьте вопросы: текст, четыре варианта и правильный ответ.",VOTING_CLOSED:"Голосование уже завершено.",ALREADY_VOTED:"Ваш голос уже учтён.",SPECTATORS_ONLY:"Голосуют только игроки других команд.",FINALISTS_ONLY:"Отвечать могут только действующие игроки команд-финалистов.",TEAM_ALREADY_ANSWERED:"Ваша команда уже ответила.",WAIT_FOR_TWO_ANSWERS:"Необходимо дождаться ответа обеих команд.",QUESTION_NOT_OPEN:"Вопрос ещё не открыт."};
 function duelSay(error){showToast(duelErrorText[error?.message]||error?.message||"Не удалось выполнить действие.");}
@@ -1907,4 +1908,9 @@ function duelSubscribe(sessionId,teacher){
  .on('postgres_changes',{event:'*',schema:'public',table:'org_quiz_duel_answers',filter:'session_id=eq.'+sessionId},async()=>{if(teacher)await refreshTeacher();else{await loadStudentTeams();await renderDuel(false)}})
  .subscribe();
  state.subs.push(channel);
+ clearInterval(duelPollTimer);
+ duelPollTimer=setInterval(async()=>{
+   if(teacher){if(state.teacherSession?.id===sessionId)await renderDuel(true);}
+   else if(state.session?.id===sessionId){await loadStudentTeams();await renderDuel(false);}
+ },4000);
 }
