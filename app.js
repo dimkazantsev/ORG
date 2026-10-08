@@ -139,7 +139,9 @@ async function useTeamPower(ability){
   applyPowerUseToQuestion(state.question);
   if(state.powerUse?.ability==="freeze"){
     const extra=Number(state.powerUse.payload?.seconds||3);
-    startSharedTimer(Number(state.question.time_limit_sec||30)+extra,state.session.question_started_at,$("questionTimer"),()=>lockQuestionUI());
+    const base=Number(state.question.time_limit_sec||30);
+    const effective=state.session?.event_kind==="turbo"?Math.max(6,Math.round(base*.6)):base;
+    startSharedTimer(effective+extra,state.session.question_started_at,$("questionTimer"),()=>lockQuestionUI());
   }
   showToast(ability==="double"?"×2 активирован.":ability==="freeze"?"Команда получила +3 секунды.":"Подсказка активирована.");
 }
@@ -1315,7 +1317,7 @@ $("questionType").addEventListener("change",updateQuestionTypeHint);
 updateQuestionTypeHint();
 
 function lockQuestionUI(){
-  document.querySelectorAll(".answer,.vote-card,[data-submit-question],.open-response button").forEach(b=>b.disabled=true);
+  document.querySelectorAll("#answerOptions button,#answerOptions input,#answerOptions textarea").forEach(el=>el.disabled=true);
 }
 async function renderQuestionInteraction(q){
   const host=$("answerOptions");
@@ -1338,6 +1340,9 @@ async function renderQuestionInteraction(q){
     return;
   }
   $("stealStudentCard")?.classList.add("hidden");
+  if(phase==="result"&&["duel","split","team_pitch"].includes(q.question_type)){
+    await renderOpenResults(q);return;
+  }
   if(phase==="result"){
     host.className="result-wait";
     host.innerHTML='<div class="result-wait-card"><strong>Раунд ответа закрыт</strong><span>Ожидайте следующий вопрос.</span></div>';
