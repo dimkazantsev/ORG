@@ -1645,12 +1645,24 @@ async function renderRussiaMap(q,host){
     .attr("class","map-region")
     .attr("data-region",d=>idOf(d))
     .attr("tabindex",0)
+    .attr("role","button")
+    .attr("aria-pressed","false")
     .attr("aria-label",d=>nameOf(d))
+    .on("keydown",function(e){
+      if(e.key==="Enter"||e.key===" "){
+        e.preventDefault();
+        this.dispatchEvent(new MouseEvent("click",{bubbles:true}));
+      }
+    })
     .on("click",function(e,d){
       e.stopPropagation();
       const id=idOf(d);
       selectedId=selectedId===id?null:id;
-      regions.classed("selected",x=>idOf(x)===selectedId);
+      regions.classed("selected",x=>idOf(x)===selectedId)
+        .attr("aria-pressed",x=>idOf(x)===selectedId?"true":"false");
+      // SVG paths can receive a rectangular native focus outline after a mouse click.
+      // Keep keyboard focus available, but release pointer focus without changing selection.
+      if(e.detail>0&&typeof this.blur==="function")this.blur();
       const picked=fc.features.find(x=>idOf(x)===selectedId);
       host.querySelector("[data-map-selected]").textContent=picked?nameOf(picked):"Регион не выбран";
       host.querySelector("[data-map-confirm]").disabled=!selectedId;
