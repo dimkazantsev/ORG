@@ -892,7 +892,7 @@ $("createQuestionForm").addEventListener("submit",async e=>{
 });
 
 async function loadQuestionBank(){
- const cols="id,quiz_id,order_index,question_type,prompt,options,config,explanation,time_limit_sec,points,tags,difficulty,media_storage_path,source_question_id,updated_at";
+ const cols="id,quiz_id,order_index,question_type,prompt,options,config,explanation,time_limit_sec,points,tags,difficulty,media_storage_path,source_question_id,correct_payload,updated_at";
  const all=[];
  for(let from=0;from<20000;from+=800){
   const {data,error}=await sb.from("org_quiz_questions").select(cols)
@@ -912,10 +912,10 @@ function questionIdentity(q){
  const normalize=x=>String(x||"").trim().replace(/\s+/g," ").toLocaleLowerCase("ru");
  // A shared prompt is not a duplicate when the flag, photo, audio or answer differs.
  const options=Array.isArray(q.options)?q.options.map(normalize):[];
- const identity=[q.question_type,normalize(q.prompt),...options,
+ const identity=[q.question_type,normalize(q.prompt),...options,JSON.stringify(q.correct_payload||[]),
   normalize(cfg.flag_url),normalize(cfg.audio_url),normalize(cfg.image_url),
   normalize(cfg.wiki_title),normalize(cfg.wiki_search),normalize(cfg.target_region),
-  normalize(cfg.youtube_id),normalize(cfg.quote),normalize(cfg.video_start),normalize(cfg.video_end)];
+  normalize(cfg.youtube_id),normalize(cfg.quote),normalize(cfg.video_start),normalize(cfg.video_end),normalize(cfg.media_url),normalize(q.media_storage_path),normalize(q.source_question_id)];
  return JSON.stringify(identity);
 }
 function renderQuestionLibrary(){
