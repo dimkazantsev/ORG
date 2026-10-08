@@ -121,6 +121,7 @@
           <p id="answerFeedback" class="feedback"></p>
         </article>
 
+        <section id="studentDuel" class="hidden" aria-live="polite"></section>
         <aside class="side-stack">
           <article class="mini-card">
             <div class="kicker">Командный зачёт</div>
@@ -314,6 +315,7 @@
                   </div>
                 </div>
 
+<section class="duel-admin-section"><details class="duel-builder"><summary><span>✦ Финальная дуэль</span><small>Топ-2 команды · 3 вопроса · голосование</small></summary><div class="duel-builder-body"><p>Перед запуском укажите три вопроса. Два лидера выбираются автоматически по текущему рейтингу. После запуска состав участников фиксируется.</p><fieldset data-duel-question><legend>Вопрос 1 · 100 очков</legend><label>Формулировка<textarea rows="2" placeholder="Текст вопроса 1"></textarea></label><div class="duel-editor-options"><label>Вариант A<input type="text" placeholder="Вариант ответа"></label><label>Вариант B<input type="text" placeholder="Вариант ответа"></label><label>Вариант C<input type="text" placeholder="Вариант ответа"></label><label>Вариант D<input type="text" placeholder="Вариант ответа"></label></div><label>Правильный вариант<select><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label></fieldset><fieldset data-duel-question><legend>Вопрос 2 · 200 очков</legend><label>Формулировка<textarea rows="2" placeholder="Текст вопроса 2"></textarea></label><div class="duel-editor-options"><label>Вариант A<input type="text" placeholder="Вариант ответа"></label><label>Вариант B<input type="text" placeholder="Вариант ответа"></label><label>Вариант C<input type="text" placeholder="Вариант ответа"></label><label>Вариант D<input type="text" placeholder="Вариант ответа"></label></div><label>Правильный вариант<select><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label></fieldset><fieldset data-duel-question><legend>Вопрос 3 · 300 очков</legend><label>Формулировка<textarea rows="2" placeholder="Текст вопроса 3"></textarea></label><div class="duel-editor-options"><label>Вариант A<input type="text" placeholder="Вариант ответа"></label><label>Вариант B<input type="text" placeholder="Вариант ответа"></label><label>Вариант C<input type="text" placeholder="Вариант ответа"></label><label>Вариант D<input type="text" placeholder="Вариант ответа"></label></div><label>Правильный вариант<select><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label></fieldset><button type="button" id="startDuel" class="button-primary">Открыть голосование финала</button></div></details><div id="teacherDuel" class="hidden" aria-live="polite"></div></section>
                 <article id="directorEventNotice" class="director-event-notice hidden">
                   <div class="director-event-mark">✦</div>
                   <div class="director-event-copy"><span>СОБЫТИЕ ВОПРОСА</span><h3 id="directorEventTitle">Новый поворот</h3><p id="directorEventDescription">Особые правила</p></div>
@@ -546,6 +548,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="./app.js?v=20261009-1"></script>
+  <script type="module" src="./app.js?v=20261009-duel"></script>
 </body>
 </html>
