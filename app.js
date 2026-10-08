@@ -386,8 +386,7 @@ async function loadQuizSets(){
   if(error){showToast(error.message);return}
   state.quizSets=data||[];
   const publishedSets=state.quizSets.filter(q=>q.published);
-  const titles=state.quizSets.reduce((m,q)=>(m.set(q.title,(m.get(q.title)||0)+1),m),new Map());
-  const label=q=>escapeHtml(q.title)+((titles.get(q.title)||0)>1?" · "+new Date(q.created_at).toLocaleString("ru-RU"):"");
+  const label=q=>escapeHtml(setDisplayName(q));
   const opts=publishedSets.map(q=>`<option value="${q.id}">${label(q)} — ${escapeHtml(q.topic)}</option>`).join("");
   $("quizSelect").innerHTML=opts;$("editorQuizSelect").innerHTML=state.quizSets.map(q=>'<option value="'+q.id+'">'+label(q)+(q.published?'':' · черновик')+'</option>').join("");
   $("questionSetFilter").innerHTML='<option value="">Все наборы</option>'+state.quizSets.map(q=>'<option value="'+q.id+'">'+label(q)+(q.published?'':' · черновик')+'</option>').join("");
@@ -398,10 +397,18 @@ async function loadQuizSets(){
   renderRandomBankList();
 }
 
+// Same-titled sets can contain different questions; label them without deleting user content.
+function setDisplayName(set){
+  const title=String(set?.title||"Набор без названия");
+  const variants=state.quizSets.filter(s=>String(s.title||"").trim().toLocaleLowerCase("ru")===title.trim().toLocaleLowerCase("ru"));
+  if(variants.length<2)return title;
+  const index=variants.findIndex(s=>s.id===set?.id);
+  return title+" · вариант "+(index<0?"?":index+1)+" из "+variants.length;
+}
 function renderRandomBankList(){
   const host=$("randomBankList");if(!host)return;
   const preferred=state.quizSets.filter(s=>!s.title.startsWith("Флаговый марафон")&&!s.title.startsWith("Последний выживший")&&s.title!=="Тёмная комната — выбывание");
-  host.innerHTML=preferred.map((s,i)=>`<label class="bank-choice"><input type="checkbox" value="${s.id}" ${i<6?"checked":""}><span><b>${escapeHtml(s.title)}</b><small>${escapeHtml(s.topic)}</small></span></label>`).join("");
+  host.innerHTML=preferred.map((s,i)=>`<label class="bank-choice"><input type="checkbox" value="${s.id}" ${i<6?"checked":""}><span><b>${escapeHtml(setDisplayName(s))}</b><small>${escapeHtml(s.topic)}</small></span></label>`).join("");
 }
 $("randomizeSeed")?.addEventListener("click",()=>{
   const a=new Uint32Array(1);crypto.getRandomValues(a);
@@ -1109,7 +1116,7 @@ async function loadOverview(){
       <div class="game-pack-visual"><span>${icons(s.title)}</span></div>
       <div class="game-pack-copy">
         <span>${escapeHtml(s.topic)}</span>
-        <h4>${escapeHtml(s.title)}</h4>
+        <h4>${escapeHtml(setDisplayName(s))}</h4>
         <p>${!s.published?'<span class="pack-draft">Черновик</span> ':''}${escapeHtml(note(s))}</p>
       </div>
       <div class="game-pack-footer">
