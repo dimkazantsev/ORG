@@ -35,3 +35,24 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+      - name: Validate published build
+        shell: bash
+        env:
+          PAGES_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          site="${PAGES_URL%/}"
+          echo "Checking GitHub Pages at $site"
+          for attempt in $(seq 1 12); do
+            if curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/index.html?release=20261009-1-$GITHUB_RUN_ID-$attempt" -o /tmp/org-published.html &&
+               grep -q 'data-build="20261009.1"' /tmp/org-published.html &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/app.js?v=20261009-1" -o /tmp/org-published.js &&
+               grep -q 'org_quiz_archive_history' /tmp/org-published.js; then
+              echo "Published HTML and JS both contain the new release."
+              exit 0
+            fi
+            echo "Published assets are not updated (attempt $attempt)"
+            sleep 5
+          done
+          echo 'Published build could not be verified after deployment.'
+          exit 1
