@@ -84,7 +84,7 @@ function renderPowerBank(team){
   if($("powerMeterFill"))$("powerMeterFill").style.width=power+"%";
   const costs={hint:20,freeze:30,double:50};
   const active=state.session?.status==="live"&&state.session?.interaction_phase==="answer"
-    &&state.participant?.life_state!=="eliminated"&&!state.viewAsParticipant;
+    &&state.participant?.life_state!=="eliminated"&&!state.viewAsParticipant&&state.session?.event_kind!=="no_power";
   document.querySelectorAll("[data-power]").forEach(b=>{
     const ability=b.dataset.power;
     b.disabled=!team||!active||!!state.powerUse||power<costs[ability];
@@ -144,6 +144,54 @@ async function useTeamPower(ability){
   showToast(ability==="double"?"×2 активирован.":ability==="freeze"?"Команда получила +3 секунды.":"Подсказка активирована.");
 }
 document.querySelectorAll("[data-power]").forEach(b=>b.addEventListener("click",()=>useTeamPower(b.dataset.power)));
+const EVENT_META={
+ double_stakes:["✕2","Двойная ставка","За правильный ответ начисляется вдвое больше очков."],
+ turbo:["◷","Турбо-вопрос","На ответ отводится только 60% обычного времени."],
+ no_power:["◇","Без усилений","Банк силы на этот вопрос недоступен."],
+ last_second:["✦","Последний шанс","Правильный ответ в последние 5 секунд приносит дополнительные 50%."],
+ captain_only:["♛","Решает капитан","Отвечает первый вошедший действующий участник каждой команды."],
+ blind_answer:["◉","Ответ вслепую","Варианты скрыты. Напишите ответ самостоятельно."]
+};
+function eventLabel(k){return EVENT_META[k]||["✦","Событие","Особые правила вопроса"];}
+function renderEventStage(){
+ const s=state.session;if(!s)return;
+ const active=s.status==="event_break";
+ const overlay=$("studentEventPanel");
+ overlay?.classList.toggle("hidden",!active);
+ if(active){
+   const m=eventLabel(s.event_kind);
+   $("studentEventSymbol").textContent=m[0];
+   $("studentEventTitle").textContent=m[1];
+   $("studentEventDescription").textContent=m[2];
+   const start=new Date(s.event_started_at||Date.now()).getTime();
+   const sec=Math.max(0,5-Math.floor((Date.now()-start)/1000));
+   $("studentEventCountdown").textContent=String(sec);
+ }
+}
+function applyEventRules(){
+ const s=state.session;
+ const ev=s?.event_kind;
+ $("questionCard")?.classList.toggle("event-active",!!ev);
+ if(!ev||s?.status!=="live")return;
+ const m=eventLabel(ev);
+ if($("questionTypeBadge"))$("questionTypeBadge").textContent=m[1];
+ if(ev==="captain_only"){
+   const ours=state.participant?.team_id;
+   const players=(state.teamMembers||[]).filter(p=>p.team_id===ours&&p.life_state==="alive")
+     .sort((a,b)=>new Date(a.joined_at)-new Date(b.joined_at)||a.id.localeCompare(b.id));
+   if(players.length&&players[0].id!==state.participant?.id){
+     lockQuestionUI();msg($("answerFeedback"),"Этот вопрос отвечает капитан команды.");
+   }
+ }
+}
+async function revealEventQuestion(){
+ const s=state.teacherSession;if(!s||s.status!=="event_break")return;
+ const age=Date.now()-new Date(s.event_started_at).getTime();
+ if(age<5000)return;
+ const {data,error}=await sb.rpc("org_quiz_activate_event",{p_session_id:s.id});
+ if(error){showToast(humanError(error.message));return}
+ state.teacherSession=data;await refreshTeacher();
+}
 function clearPhaseTimer(){
   if(state.phaseTimer){clearInterval(state.phaseTimer);state.phaseTimer=null}
 }
@@ -171,6 +219,12 @@ function showStudentPhase(kind,startedAt,durationSec,title,text){
 async function loadActiveQuestion(){
   if(!state.session)return;
   if(state.session.status!=="live"){state.powerUse=null;renderPowerBank(state.teams.find(t=>t.id===state.participant?.team_id));}
+  renderEventStage();
+  if(state.session.status==="event_break"){
+    $("mediaStage").className="media-stage hidden";$("mediaStage").innerHTML="";$("answerOptions").innerHTML="";
+    $("questionPrompt").textContent="Сюрприз раунда!";$("questionTimer").textContent="5 сек.";
+    return;
+  }
   if(state.session.status==="lobby"){
     hideStudentPhase();
     $("mediaStage").className="media-stage hidden";$("mediaStage").innerHTML="";$("answerFeedback").textContent="";
@@ -213,13 +267,15 @@ async function loadActiveQuestion(){
   $("questionCounter").textContent="Вопрос "+data.order_index;
   $("questionTypeBadge").textContent=questionTypeLabel(data.question_type);
   const extraTime=state.powerUse?.ability==="freeze"?Number(state.powerUse.payload?.seconds||3):0;
-  startSharedTimer(Number(data.time_limit_sec||30)+extraTime,state.session.question_started_at,$("questionTimer"),()=>lockQuestionUI());
+  const eventLimit=state.session.event_kind==="turbo"?Math.max(6,Math.round(Number(data.time_limit_sec||30)*.6)):Number(data.time_limit_sec||30);
+  startSharedTimer(eventLimit+extraTime,state.session.question_started_at,$("questionTimer"),()=>lockQuestionUI());
   $("questionPrompt").textContent=data.prompt;
   $("answerFeedback").textContent="";
   $("questionCard").classList.toggle("danger-mode",data.question_type==="elimination");
   await renderQuestionMedia(data,$("mediaStage"));
   await renderQuestionInteraction(data);
   applyPowerUseToQuestion(data);
+  applyEventRules();
   if(state.viewAsParticipant){lockQuestionUI();msg($("answerFeedback"),"Режим предпросмотра Модератора — ответы не отправляются.");}
 }
 async function submitPayload(payload){
@@ -381,28 +437,29 @@ async function currentQuestionMeta(index){
   return data||null;
 }
 async function beginQuestion(index,{allowBreak=true}={}){
-  if(!state.teacherSession)return;
-  const q=await currentQuestionMeta(index);if(!q)return;
-  const rn=Number(q.config?.round_number||1);
-  const rt=q.config?.round_title||"Раунд "+rn;
-  const secret=!!q.config?.secret_round;
-  const changing=allowBreak&&state.teacherSession.status==="live"&&rn!==Number(state.teacherSession.round_number||1);
-  if(changing){
-    await setSession({
-      status:"round_break",current_question_index:index,round_number:rn,
-      round_title:secret?("Секретный раунд · "+rt):rt,
-      secret_round_revealed:secret?true:state.teacherSession.secret_round_revealed,
-      transition_started_at:new Date().toISOString(),question_started_at:null,
-      interaction_phase:"answer",steal_question_id:null,steal_open_until:null,steal_winner_team_id:null
-    });
-    setTimeout(async()=>{
-      if(state.teacherSession?.status==="round_break"&&state.teacherSession.current_question_index===index){
-        await setSession({status:"live",round_number:rn,round_title:secret?("Секретный раунд · "+rt):rt,transition_started_at:null,question_started_at:new Date().toISOString(),interaction_phase:"answer",steal_question_id:null,steal_open_until:null,steal_winner_team_id:null});
-      }
-    },4000);
-  }else{
-    await setSession({status:"live",current_question_index:index,round_number:rn,round_title:secret?("Секретный раунд · "+rt):rt,secret_round_revealed:secret?true:state.teacherSession.secret_round_revealed,transition_started_at:null,question_started_at:new Date().toISOString(),interaction_phase:"answer",steal_question_id:null,steal_open_until:null,steal_winner_team_id:null});
-  }
+ const s=state.teacherSession;if(!s)return;
+ const q=await currentQuestionMeta(index);if(!q)return;
+ const rn=Number(q.config?.round_number||1), rt=q.config?.round_title||"Раунд "+rn;
+ const title=q.config?.secret_round?"Секретный раунд · "+rt:rt;
+ const changing=allowBreak&&s.status==="live"&&rn!==Number(s.round_number||1);
+ const base={current_question_index:index,round_number:rn,round_title:title,
+  secret_round_revealed:!!q.config?.secret_round||!!s.secret_round_revealed,
+  interaction_phase:"answer",steal_question_id:null,steal_open_until:null,steal_winner_team_id:null,
+  event_kind:null,event_question_id:null,event_started_at:null};
+ if(changing){
+   await setSession({...base,status:"round_break",transition_started_at:new Date().toISOString(),question_started_at:null});
+   setTimeout(async()=>{const s2=state.teacherSession;if(s2?.status==="round_break"&&s2.current_question_index===index)await prepareNextEvent(index)},4200);
+ }else await prepareNextEvent(index);
+}
+async function prepareNextEvent(index){
+ const s=state.teacherSession;if(!s)return;
+ const {data,error}=await sb.rpc("org_quiz_prepare_event",{p_session_id:s.id,p_question_index:index});
+ if(error){showToast(humanError(error.message));return}
+ state.teacherSession=data;await refreshTeacher();
+ if(data.status==="event_break"){
+   playSound("transition");
+   setTimeout(()=>revealEventQuestion(),5300);
+ }
 }
 
 $("createSessionForm").addEventListener("submit",async e=>{
@@ -446,11 +503,12 @@ async function refreshTeacher(){
   if($("mechanicRescue"))$("mechanicRescue").textContent=s.rescue_enabled?"1 на команду":"Выкл.";
   if($("mechanicSteal"))$("mechanicSteal").textContent=s.interaction_phase==="steal"?"Открыт":(s.steal_enabled?"Готов":"Выкл.");
   if($("mechanicPower"))$("mechanicPower").textContent=s.power_enabled?"Активен":"Выкл.";
+  if($("mechanicEvents"))$("mechanicEvents").textContent=s.events_enabled?(s.event_chance+"%"):"Выкл.";
   if($("mechanicSecret")){
     const revealed=s.secret_round_revealed||Number(s.round_number||0)===Number(s.secret_round_number||-1);
     $("mechanicSecret").textContent=!s.secret_round_number?"Нет":(revealed?("Раунд "+s.secret_round_number):"Скрыт");
   }
-  const step=["live","paused","countdown","round_break","finished"].includes(s.status)?"live":(s.setup_stage==="ready"?"ready":(s.setup_stage==="teams"?"teams":"room"));
+  const step=["live","paused","countdown","round_break","event_break","finished"].includes(s.status)?"live":(s.setup_stage==="ready"?"ready":(s.setup_stage==="teams"?"teams":"room"));
   showSetupStep(step);
   renderParticipants();renderTeacherLeaderboard();renderLivePowerPanel();renderLiveRescuePanel();await renderLiveTeacherQuestion();await loadLiveStudentRanking();
 }
@@ -600,6 +658,7 @@ $("openSteal")?.addEventListener("click",async()=>{
     }
   },7200);
 });
+$("directorEventContinue")?.addEventListener("click",revealEventQuestion);
 $("nextQuestion").onclick=async()=>{
   if(!state.teacherSession)return;
   const {count}=await sb.from("org_quiz_questions").select("*",{count:"exact",head:true}).eq("quiz_id",state.teacherSession.quiz_id);
@@ -630,7 +689,7 @@ function clearSubs(){state.subs.forEach(c=>sb.removeChannel(c));state.subs=[]}
 $("teacherLogout").onclick=async()=>{clearSubs();await sb.auth.signOut();location.reload()}
 function leaderRow(i,name,score){return `<div class="leader-row"><div class="rank">${i+1}</div><div><strong>${escapeHtml(name)}</strong></div><div class="score">${score}</div></div>`}
 function statusLabel(s){return ({lobby:"Лобби",countdown:"Отсчёт",round_break:"Переход",live:"Идёт",paused:"Пауза",finished:"Завершено"})[s]||s}
-function humanError(s=""){if(s.includes("SESSION_NOT_FOUND"))return"Комната не найдена или уже закрыта.";if(s.includes("TIME_EXPIRED"))return"Время на ответ истекло.";if(s.includes("QUESTION_NOT_ACTIVE"))return"Этот вопрос уже закрыт.";if(s.includes("STEAL_ALREADY_USED"))return"Перехват для этого вопроса уже использован.";if(s.includes("STEAL_REQUIRES_WRONG_ANSWER"))return"Перехват можно открыть только после ошибочного ответа.";if(s.includes("STEAL_NOT_SUPPORTED_FOR_TYPE"))return"Для этого типа задания перехват недоступен.";if(s.includes("STEAL_ALREADY_WON"))return"Перехват уже выиграла другая команда.";if(s.includes("TEAM_ALREADY_SCORED"))return"Ваша команда уже получила очки за этот вопрос.";if(s.includes("TEAM_ALREADY_ATTEMPTED_STEAL"))return"Команда уже использовала попытку перехвата.";if(s.includes("RESCUE_ALREADY_USED"))return"Эта команда уже использовала своё спасение.";if(s.includes("PLAYER_NOT_ELIGIBLE"))return"Этого игрока сейчас нельзя спасти.";if(s.includes("PLAYER_ELIMINATED"))return"Выбывший игрок не может использовать эту механику.";if(s.includes("POWER_NOT_ENOUGH"))return"Недостаточно командной силы.";if(s.includes("POWER_ALREADY_USED_THIS_QUESTION"))return"Команда уже использовала способность на этом вопросе.";if(s.includes("POWER_USE_BEFORE_ANSWER"))return"Способность нужно активировать до ответа команды.";if(s.includes("POWER_NOT_AVAILABLE"))return"Банк силы сейчас недоступен.";if(s.includes("HINT_NOT_AVAILABLE"))return"Для этого задания безопасная подсказка недоступна.";if(s.includes("Anonymous sign-ins are disabled"))return"Анонимный вход студентов отключён в Supabase.";return s}
+function humanError(s=""){if(s.includes("CAPTAIN_ONLY"))return"За эту команду отвечает только капитан.";if(s.includes("BLIND_TEXT_REQUIRED"))return"Напишите ответ текстом.";if(s.includes("EVENT_COUNTDOWN_RUNNING"))return"Дождитесь окончания объявления события.";if(s.includes("SESSION_NOT_FOUND"))return"Комната не найдена или уже закрыта.";if(s.includes("TIME_EXPIRED"))return"Время на ответ истекло.";if(s.includes("QUESTION_NOT_ACTIVE"))return"Этот вопрос уже закрыт.";if(s.includes("STEAL_ALREADY_USED"))return"Перехват для этого вопроса уже использован.";if(s.includes("STEAL_REQUIRES_WRONG_ANSWER"))return"Перехват можно открыть только после ошибочного ответа.";if(s.includes("STEAL_NOT_SUPPORTED_FOR_TYPE"))return"Для этого типа задания перехват недоступен.";if(s.includes("STEAL_ALREADY_WON"))return"Перехват уже выиграла другая команда.";if(s.includes("TEAM_ALREADY_SCORED"))return"Ваша команда уже получила очки за этот вопрос.";if(s.includes("TEAM_ALREADY_ATTEMPTED_STEAL"))return"Команда уже использовала попытку перехвата.";if(s.includes("RESCUE_ALREADY_USED"))return"Эта команда уже использовала своё спасение.";if(s.includes("PLAYER_NOT_ELIGIBLE"))return"Этого игрока сейчас нельзя спасти.";if(s.includes("PLAYER_ELIMINATED"))return"Выбывший игрок не может использовать эту механику.";if(s.includes("POWER_NOT_ENOUGH"))return"Недостаточно командной силы.";if(s.includes("POWER_ALREADY_USED_THIS_QUESTION"))return"Команда уже использовала способность на этом вопросе.";if(s.includes("POWER_USE_BEFORE_ANSWER"))return"Способность нужно активировать до ответа команды.";if(s.includes("POWER_NOT_AVAILABLE"))return"Банк силы сейчас недоступен.";if(s.includes("HINT_NOT_AVAILABLE"))return"Для этого задания безопасная подсказка недоступна.";if(s.includes("Anonymous sign-ins are disabled"))return"Анонимный вход студентов отключён в Supabase.";return s}
 function escapeHtml(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 
 // Восстанавливаем преподавательскую сессию только если пользователь уже авторизован.
@@ -1032,6 +1091,19 @@ function startSharedTimer(limitSec,startedAt,el,onEnd){
 
 async function renderLiveTeacherQuestion(){
   if(!state.teacherSession)return;
+  const event=$("directorEventNotice"), ss=state.teacherSession;
+  event?.classList.toggle("hidden",!ss.event_kind);
+  if(ss.event_kind){
+    const m=eventLabel(ss.event_kind);
+    $("directorEventTitle").textContent=m[1];$("directorEventDescription").textContent=m[2];
+    $("directorEventContinue").classList.toggle("hidden",ss.status!=="event_break");
+  }
+  if(ss.status==="event_break"){
+    $("presenterMedia").className="media-stage hidden";$("presenterMedia").innerHTML="";
+    $("presenterCounter").textContent="СОБЫТИЕ";$("presenterPrompt").textContent=eventLabel(ss.event_kind)[1];
+    $("presenterOptions").innerHTML='<div class="presenter-option"> '+escapeHtml(eventLabel(ss.event_kind)[2])+'</div>';
+    startSharedTimer(5,ss.event_started_at,$("presenterTimer"));return;
+  }
   if(state.teacherSession.status==="lobby"){
     $("presenterMedia").className="media-stage hidden";$("presenterMedia").innerHTML="";
     $("presenterCounter").textContent="Лобби";
@@ -1202,6 +1274,11 @@ async function renderQuestionInteraction(q){
   const host=$("answerOptions");
   host.className="answer-grid";
   const phase=state.session?.interaction_phase||"answer";
+  if(state.session?.event_kind==="blind_answer"&&phase==="answer"){
+    host.className="blind-response";
+    host.innerHTML=`<label for="blindAnswer">Ваш ответ</label><input id="blindAnswer" autocomplete="off" maxlength="180" placeholder="Введите название…" /><button class="button-primary" data-submit-blind type="button">Подтвердить ответ</button>`;
+    host.querySelector("[data-submit-blind]").onclick=()=>submitPayload([host.querySelector("#blindAnswer").value.trim()]);return;
+  }
 
   if(phase==="steal"){
     $("stealStudentCard")?.classList.remove("hidden");
