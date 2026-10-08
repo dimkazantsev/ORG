@@ -927,7 +927,7 @@ function questionIdentity(q){
  const identity=[q.question_type,normalize(q.prompt),...options,
   normalize(cfg.flag_url),normalize(cfg.audio_url),normalize(cfg.image_url),
   normalize(cfg.wiki_title),normalize(cfg.wiki_search),normalize(cfg.target_region),
-  normalize(cfg.youtube_id),normalize(cfg.quote),normalize(cfg.video_start),normalize(cfg.video_end),normalize(cfg.media_url),normalize(q.media_storage_path),normalize(q.source_question_id)];
+  normalize(cfg.youtube_id),normalize(cfg.quote),normalize(cfg.video_start),normalize(cfg.video_end),normalize(cfg.media_url),normalize(q.media_storage_path),normalize(cfg.region_id)];
  return JSON.stringify(identity);
 }
 function renderQuestionLibrary(){
@@ -964,6 +964,7 @@ function renderQuestionLibrary(){
   const visual=q=>{
     const cfg=q.config||{};
     if(cfg.flag_url)return `<div class="question-visual flag-card"><img loading="lazy" decoding="async" src="${escapeHtml(cfg.flag_url)}" alt=""></div>`;
+    if(cfg.media_kind==="region_emblem"&&!validEmblemMedia(cfg))return `<div class="question-visual media-unverified">Изображение герба требует проверки</div>`;
     if(cfg.image_url)return `<div class="question-visual photo-card ${q.question_type==="person_photo"?"person-photo":""}"><img loading="lazy" src="${escapeHtml(cfg.image_url)}" alt=""></div>`;
     if(cfg.wiki_title||cfg.wiki_search)return `<div class="question-visual photo-card wiki-photo ${q.question_type==="person_photo"?"person-photo":""}" data-qid="${q.id}"><div class="photo-loader">◉</div></div>`;
     if(cfg.audio_url)return `<div class="question-visual audio-card-large"><span>♫</span><div><strong>Аудиораунд</strong><small>Гимн · нажмите «Открыть», чтобы прослушать</small></div></div>`;
@@ -1043,7 +1044,7 @@ async function previewLibraryQuestion(id){
   $("previewMeta").innerHTML=`<span>${escapeHtml(set?.title||"Без набора")}</span><span>${q.time_limit_sec} сек.</span><span>${q.points} баллов</span>`;
   const host=$("previewMedia");host.className="preview-media hidden";host.innerHTML="";
   const cfg=q.config||{};
-  if(cfg.flag_url){host.className="preview-media flag-preview";host.innerHTML=`<img src="${escapeHtml(cfg.flag_url)}" alt="">`;}
+  if(cfg.media_kind==="region_emblem"&&!validEmblemMedia(cfg)){host.className="preview-media";host.innerHTML=`<div class="media-placeholder is-unverified">Иллюстрация герба не подтверждена. Замените в редакторе.</div>`;} else if(cfg.flag_url){host.className="preview-media flag-preview";host.innerHTML=`<img src="${escapeHtml(cfg.flag_url)}" alt="">`;}
   else if(cfg.image_url||cfg.wiki_title||cfg.wiki_search){host.className="preview-media"+(q.question_type==="person_photo"?" person-photo":"");const image=await resolveQuestionImage(q);host.innerHTML=image?`<img src="${escapeHtml(image)}" alt="" style="object-fit:${escapeHtml(cfg.image_fit||"cover")};object-position:${escapeHtml(cfg.image_position||"50% 50%")}">`:`<div class="media-placeholder">Изображение не удалось загрузить</div>`;}
   else if(cfg.audio_url){host.className="preview-media audio-preview";host.innerHTML=`<div class="audio-preview-inner"><span>♫</span><audio controls preload="metadata" src="${escapeHtml(cfg.audio_url)}"></audio></div>`;}
   else if(q.question_type==="film_clip"&&cfg.youtube_id){
@@ -1053,10 +1054,8 @@ async function previewLibraryQuestion(id){
   }
   else if(q.question_type==="film_quote"){host.className="preview-media quote-preview";host.innerHTML=`<div class="quote-stage">❝ <strong>${escapeHtml(cfg.quote||q.prompt)}</strong></div>`;}
 
-  else if(q.question_type==="region_map"){host.className="preview-media";host.dataset.preview="1";await renderRussiaMap(q,host);}
-  $("previewOptions").innerHTML=(q.options||[]).length
-    ? q.options.map((o,i)=>`<div class="preview-option"><span>${String.fromCharCode(65+i)}</span><strong>${escapeHtml(o)}</strong></div>`).join("")
-    : '<div class="preview-option muted"><strong>Ответ вводится интерактивно</strong></div>';
+  else if(q.question_type==="region_map"){host.className="preview-media";host.dataset.preview="1";const {data:k}=await sb.rpc("org_quiz_get_question_admin",{p_question_id:q.id});await renderRussiaMap({...q,correct_payload:k?.correct_payload||[]},host);}
+  await renderPreviewPractice(q);
   $("previewExplanation").innerHTML=(q.explanation||q.config?.source_url)
     ? `<span class="section-kicker">Пояснение</span>${q.explanation?`<p>${escapeHtml(q.explanation)}</p>`:""}${q.config?.source_url?`<a class="source-link" href="${escapeHtml(q.config.source_url)}" target="_blank" rel="noopener">Открыть источник ↗</a>`:""}`
     : "";
@@ -1116,7 +1115,7 @@ async function loadOverview(){
   host.innerHTML=ordered.map((s,i)=>{
     const count=(state.questionRows||[]).filter(q=>q.quiz_id===s.id).length;
     return `<article class="game-pack-card game-pack-${(i%9)+1}">
-      <div class="game-pack-visual"><span>${icons(s.title)}</span></div>
+      <div class="game-pack-visual"><span>${packIcon(s.title)}</span></div>
       <div class="game-pack-copy">
         <span>${escapeHtml(s.topic)}</span>
         <h4>${escapeHtml(setDisplayName(s))}</h4>
@@ -1576,7 +1575,8 @@ async function renderQuestionMedia(q,host){
   host.className="media-stage hidden";host.innerHTML="";
   const cfg=q.config||{};
   if(cfg.flag_url){host.className="media-stage flag-stage";host.innerHTML=`<img src="${escapeHtml(cfg.flag_url)}" alt="Флаг для задания">`;return}
-  if(cfg.image_url||cfg.wiki_title||cfg.wiki_search){const image=await resolveQuestionImage(q);host.className="media-stage"+(q.question_type==="person_photo"?" person-photo":"");host.innerHTML=image?`<img src="${escapeHtml(image)}" alt="Изображение для задания" style="object-fit:${escapeHtml(cfg.image_fit||"cover")};object-position:${escapeHtml(cfg.image_position||"50% 50%")}">`:`<div class="media-placeholder">Изображение не удалось загрузить</div>`;return}
+  if(cfg.media_kind==="region_emblem"&&!validEmblemMedia(cfg)){host.className="media-stage";host.innerHTML=`<div class="media-placeholder is-unverified">Изображение герба не подтверждено.</div>`;return}
+   if(cfg.image_url||cfg.wiki_title||cfg.wiki_search){const image=await resolveQuestionImage(q);host.className="media-stage"+(q.question_type==="person_photo"?" person-photo":"");host.innerHTML=image?`<img src="${escapeHtml(image)}" alt="Изображение для задания" style="object-fit:${escapeHtml(cfg.image_fit||"cover")};object-position:${escapeHtml(cfg.image_position||"50% 50%")}">`:`<div class="media-placeholder">Изображение не удалось загрузить</div>`;return}
   if(cfg.audio_url){host.className="media-stage";host.innerHTML=`<div class="audio-card"><div class="note">♫</div><strong>Прослушайте фрагмент</strong><audio controls preload="metadata" src="${escapeHtml(cfg.audio_url)}"></audio></div>`;return}
   if(q.question_type==="film_clip"&&cfg.youtube_id){
     const start=Number(cfg.video_start||0),end=Number(cfg.video_end||0);
@@ -1638,7 +1638,7 @@ async function renderRussiaMap(q,host){
 
   outlineLayer.append("path")
     .datum(outline)
-    .attr("class","map-country-outline")
+    .attr("class","map-country-outline").attr("fill","none").style("pointer-events","none")
     .attr("d",path);
 
   const regions=regionLayer.selectAll("path").data(fc.features,d=>idOf(d)).join("path")
@@ -1654,7 +1654,7 @@ async function renderRussiaMap(q,host){
       regions.classed("selected",x=>idOf(x)===selectedId);
       const picked=fc.features.find(x=>idOf(x)===selectedId);
       host.querySelector("[data-map-selected]").textContent=picked?nameOf(picked):"Регион не выбран";
-      host.querySelector("[data-map-confirm]").disabled=!selectedId||isPreview;
+      host.querySelector("[data-map-confirm]").disabled=!selectedId;
       playSound("tap");
     });
 
@@ -1667,7 +1667,8 @@ async function renderRussiaMap(q,host){
   host.querySelector("[data-map-zoom-out]").onclick=()=>svg.transition().duration(180).call(zoom.scaleBy,1/1.6);
   host.querySelector("[data-map-reset]").onclick=()=>svg.transition().duration(220).call(zoom.transform,d3.zoomIdentity);
   host.querySelector("[data-map-confirm]").onclick=async()=>{
-    if(!selectedId||isPreview)return;
+    if(!selectedId)return;
+    if(isPreview){const expected=q.correct_payload||[];const el=host.querySelector("[data-map-selected]");el.textContent+=expected.length?(expected.map(String).includes(String(selectedId))?" · Верно":" · Эталон: "+expected.join(", ")):" · Выбрано";return;}
     const btn=host.querySelector("[data-map-confirm]");
     btn.disabled=true;btn.textContent="Ответ отправлен";
     regions.style("pointer-events","none");
@@ -1913,4 +1914,38 @@ function duelSubscribe(sessionId,teacher){
    if(teacher){if(state.teacherSession?.id===sessionId)await renderDuel(true);}
    else if(state.session?.id===sessionId){await loadStudentTeams();await renderDuel(false);}
  },4000);
+}
+
+function validEmblemMedia(cfg){
+ try{return /(coat[_ -]?of[_ -]?arms|emblem|blason|wappen|герб|gerb|escudo|armorial|coa[_\-.])/i.test(decodeURIComponent(new URL(String(cfg?.image_url||"")).pathname))}catch{return false}
+}
+function packIcon(title){
+ const type=title.startsWith("Флаговый марафон")?"zap":title.startsWith("Флаги")?"flag":title.startsWith("Последний выживший")?"shield":title.startsWith("Россия на карте")?"map":title.startsWith("Гербы регионов")?"award":title.startsWith("Гимны")?"music":title.startsWith("Знаменитые")?"user":title.includes("фразы")?"quote":title.includes("фрагменты")?"play":title.includes("кино")?"film":title.startsWith("Достопримечательности")?"landmark":"sparkles";
+ const paths={zap:'<path d="m13 2-9 12h8l-1 8 10-13h-8V2Z"/>',flag:'<path d="M6 21V4m0 1c5-4 9 4 17 0v12c-8 4-12-4-17 0"/>',shield:'<path d="M12 22s9-4.5 9-11V5l-9-3-9 3v6c0 6.5 9 11 9 11Z"/><path d="m9 12 2 2 4-4"/>',map:'<path d="M3 6 9 3l6 3 6-3v15l-6 3-6-3-6 3V6Zm6-3v15m6-12v15"/>',award:'<circle cx="12" cy="8" r="5"/><path d="m9 13-2 9 5-3 5 3-2-9"/>',music:'<path d="M9 18V5l12-2v13M9 9l12-2"/><ellipse cx="6" cy="18" rx="3" ry="2"/><ellipse cx="18" cy="16" rx="3" ry="2"/>',user:'<circle cx="12" cy="8" r="4"/><path d="M4 22c0-5 3.5-8 8-8s8 3 8 8"/>',quote:'<path d="M10 11H4V5h7v6l-4 6m15-6h-7V5h7v6l-4 6"/>',play:'<rect x="2" y="4" width="20" height="16" rx="3"/><path d="m10 8 6 4-6 4V8"/>',film:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 5v14M17 5v14M3 9h4m-4 6h4m10-6h4m-4 6h4"/>',landmark:'<path d="M3 9 12 3l9 6H3Zm2 0v10m5-10v10m5-10v10m5-10v10M2 22h20M3 19h18"/>',sparkles:'<path d="m12 2 2 7 7 3-7 2-2 7-7-2 7-3 2-7Z"/>'};
+ return '<svg viewBox="0 0 24 24" aria-hidden="true">'+paths[type]+'</svg>';
+}
+async function renderPreviewPractice(q){
+ const host=$("previewOptions"),feedback=$("previewFeedback");if(!host||!feedback)return;
+ feedback.textContent="";feedback.dataset.result="";
+ const {data:key,error}=await sb.rpc("org_quiz_get_question_admin",{p_question_id:q.id});if(error){feedback.textContent="Ошибка получения эталона.";return}
+ const correct=key.correct_payload,opts=q.options||[],t=q.question_type,multi=t==="multiple",ordering=["ordering","ranking"].includes(t),matching=t==="matching",free=["short","duel","split","wordcloud","team_pitch"].includes(t),scale=t==="scale",evaluative=["duel","split","wordcloud","team_pitch","vote","scale"].includes(t);
+ if(t==="region_map"){host.innerHTML="<p>Выберите регион на карте и подтвердите выбор.</p>";return}
+ let picked=[],order=opts.map((_,i)=>i);
+ const render=()=>{
+   if(ordering){host.innerHTML=order.map((v,i)=>'<div class="preview-order-item"><span>'+escapeHtml(opts[v])+'</span><button data-up="'+i+'" '+(i===0?'disabled':'')+'>↑</button><button data-down="'+i+'" '+(i===order.length-1?'disabled':'')+'>↓</button></div>').join("");host.querySelectorAll("[data-up]").forEach(b=>b.onclick=()=>{let i=Number(b.dataset.up);[order[i-1],order[i]]=[order[i],order[i-1]];render()});host.querySelectorAll("[data-down]").forEach(b=>b.onclick=()=>{let i=Number(b.dataset.down);[order[i+1],order[i]]=[order[i],order[i+1]];render()})}
+   else if(matching)host.innerHTML=opts.map(o=>'<label class="preview-match">'+escapeHtml(o)+'<select data-match><option value="">Выберите</option>'+opts.map((x,j)=>'<option value="'+j+'">'+escapeHtml(x)+'</option>').join('')+'</select></label>').join('');
+   else if(free)host.innerHTML='<textarea class="preview-text-answer" placeholder="Ваш ответ"></textarea>';
+   else if(scale){host.innerHTML='<label>Ваша позиция <output>50</output><input type="range" min="0" max="100" value="50"></label>';host.querySelector("input").oninput=e=>host.querySelector("output").textContent=e.target.value}
+   else {const variants=opts.length?opts:(t==="true_false"?["Верно","Неверно"]:[]);host.innerHTML=variants.map((o,i)=>'<button class="preview-choice '+(picked.includes(i)?'is-selected':'')+'" data-pick="'+i+'">'+String.fromCharCode(65+i)+'. '+escapeHtml(o)+'</button>').join('');host.querySelectorAll("[data-pick]").forEach(b=>b.onclick=()=>{const n=Number(b.dataset.pick);picked=multi?(picked.includes(n)?picked.filter(x=>x!==n):[...picked,n]):[n];feedback.textContent="";render()})}
+   const actions=document.createElement("div");actions.className="preview-try-controls";actions.innerHTML='<button class="preview-check">Проверить ответ</button><button class="preview-retry">Повторить</button>';host.append(actions);
+   actions.querySelector(".preview-retry").onclick=()=>{picked=[];order=opts.map((_,i)=>i);feedback.textContent="";render()};
+   actions.querySelector(".preview-check").onclick=()=>{
+     const value=ordering?order:matching?[...host.querySelectorAll("[data-match]")].map(x=>x.value===""?null:Number(x.value)):free?[host.querySelector("textarea").value.trim()]:scale?[Number(host.querySelector("input").value)]:picked;
+     if(!value.length||value.includes(null)){feedback.textContent="Заполните ответ.";return}
+     const norm=a=>JSON.stringify(Array.isArray(a)?a.map(x=>typeof x==="string"?x.trim().toLowerCase():x):a);
+     const good=norm(value)===norm(correct)||(multi&&norm([...value].sort())===norm([...(correct||[])].sort()));
+     feedback.dataset.result=evaluative?"":good?"correct":"incorrect";
+     feedback.textContent=evaluative?"Ответ сформирован в тренировочном режиме. Оценивание производится по правилам раунда.":good?"Верно! Совпадает с эталоном.":"Неверно. Эталон: "+(Array.isArray(correct)?correct.map(x=>Number.isInteger(x)&&opts[x]!==undefined?opts[x]:x).join("; "):String(correct??"не указан"));
+   };
+ };render();
 }
