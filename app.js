@@ -4,7 +4,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const $ = (id)=>document.getElementById(id);
 const views = {home:$("homeView"),student:$("studentView"),teacher:$("teacherView")};
-const state = {session:null,participant:null,teams:[],participants:[],question:null,studentStartedAt:null,teacherSession:null,teacherUser:null,subs:[],quizSets:[],editorQuizId:null,timerHandle:null,analyticsRows:[],selectedAnalyticsSession:null,sound:true,viewAsParticipant:false,regionTopology:null,questionRows:[],bulkQuestionIds:new Set(),composerQuestionIds:[],editingQuestion:null,generatedGame:null,setupStep:"room",phaseTimer:null,stealTimer:null,powerUse:null,transitionTimer:null,transitionBusy:false};
+const state = {session:null,participant:null,teams:[],participants:[],question:null,studentStartedAt:null,teacherSession:null,teacherUser:null,subs:[],quizSets:[],editorQuizId:null,timerHandle:null,analyticsRows:[],selectedAnalyticsSession:null,sound:true,viewAsParticipant:false,regionTopology:null,questionRows:[],bulkQuestionIds:new Set(),composerQuestionIds:[],editingQuestion:null,generatedGame:null,setupStep:"room",phaseTimer:null,stealTimer:null,powerUse:null,transitionTimer:null,transitionBusy:false,bankPageSize:48,bankVisible:48};
 
 function showView(name){
   const layer=$("transitionLayer");
@@ -382,14 +382,15 @@ async function restoreTeacherRoom(){
   return true;
 }
 async function loadQuizSets(){
-  const {data,error}=await sb.from("org_quiz_sets").select("id,title,topic,description,created_at,published").eq("published",true).order("created_at",{ascending:false});
+  const {data,error}=await sb.from("org_quiz_sets").select("id,title,topic,description,created_at,published,is_generated").order("created_at",{ascending:false});
   if(error){showToast(error.message);return}
   state.quizSets=data||[];
-  const opts=state.quizSets.map(q=>`<option value="${q.id}">${escapeHtml(q.title)} — ${escapeHtml(q.topic)}</option>`).join("");
-  $("quizSelect").innerHTML=opts;$("editorQuizSelect").innerHTML=opts;
-  $("questionSetFilter").innerHTML='<option value="">Все наборы</option>'+opts;
+  const publishedSets=state.quizSets.filter(q=>q.published);
+  const opts=publishedSets.map(q=>`<option value="${q.id}">${escapeHtml(q.title)} — ${escapeHtml(q.topic)}</option>`).join("");
+  $("quizSelect").innerHTML=opts;$("editorQuizSelect").innerHTML=state.quizSets.map(q=>'<option value="'+q.id+'">'+escapeHtml(q.title)+(q.published?'':' · черновик')+'</option>').join("");
+  $("questionSetFilter").innerHTML='<option value="">Все наборы</option>'+state.quizSets.map(q=>'<option value="'+q.id+'">'+escapeHtml(q.title)+(q.published?'':' · черновик')+'</option>').join("");
   $("bulkTargetSet").innerHTML='<option value="">Переместить в набор…</option>'+opts;
-  if(!state.editorQuizId&&state.quizSets[0])state.editorQuizId=state.quizSets[0].id;
+  if(!state.editorQuizId&&state.quizSets[0])state.editorQuizId=publishedSets[0]?.id||state.quizSets[0].id;
   if(state.editorQuizId)$("editorQuizSelect").value=state.editorQuizId;
   await loadQuestionBank();
   renderRandomBankList();
@@ -397,7 +398,7 @@ async function loadQuizSets(){
 
 function renderRandomBankList(){
   const host=$("randomBankList");if(!host)return;
-  const preferred=state.quizSets.filter(s=>!s.title.startsWith("Флаговый марафон")&&!s.title.startsWith("Последний выживший")&&s.title!=="Тёмная комната — выбывание");
+  const preferred=state.quizSets.filter(s=>s.published&&!s.title.startsWith("Флаговый марафон")&&!s.title.startsWith("Последний выживший")&&s.title!=="Тёмная комната — выбывание");
   host.innerHTML=preferred.map((s,i)=>`<label class="bank-choice"><input type="checkbox" value="${s.id}" ${i<6?"checked":""}><span><b>${escapeHtml(s.title)}</b><small>${escapeHtml(s.topic)}</small></span></label>`).join("");
 }
 $("randomizeSeed")?.addEventListener("click",()=>{
@@ -891,34 +892,59 @@ $("createQuestionForm").addEventListener("submit",async e=>{
 });
 
 async function loadQuestionBank(){
-  let {data,error}=await sb.from("org_quiz_questions")
-    .select("id,quiz_id,order_index,question_type,prompt,options,config,explanation,time_limit_sec,points,tags,difficulty,media_storage_path,updated_at")
-    .order("updated_at",{ascending:false});
-  if(error){
-    ({data,error}=await sb.from("org_quiz_questions")
-      .select("id,quiz_id,order_index,question_type,prompt,options,config,explanation,time_limit_sec,points,tags,difficulty,media_storage_path")
-      .order("quiz_id",{ascending:true})
-      .order("order_index",{ascending:true}));
-  }
-  if(error){
-    $("questionBank").innerHTML=`<div class="empty-state"><strong>Не удалось загрузить вопросы</strong><p>${escapeHtml(error.message)}</p></div>`;
-    return;
-  }
-  const visibleSetIds=new Set((state.quizSets||[]).map(s=>s.id));
-  state.questionRows=(data||[]).filter(q=>visibleSetIds.has(q.quiz_id));
-  $("sidebarQuestionCount").textContent=state.questionRows.length+" в банке";
-  renderQuestionLibrary();
+ const cols="id,quiz_id,order_index,question_type,prompt,options,config,explanation,time_limit_sec,points,tags,difficulty,media_storage_path,source_question_id,updated_at";
+ const all=[];
+ for(let from=0;from<20000;from+=800){
+  const {data,error}=await sb.from("org_quiz_questions").select(cols)
+    .order("quiz_id",{ascending:true}).order("order_index",{ascending:true}).order("id",{ascending:true})
+    .range(from,from+799);
+  if(error){$("questionBank").innerHTML='<div class="empty-state"><strong>Ошибка загрузки</strong><p>'+escapeHtml(error.message)+'</p></div>';return}
+  all.push(...(data||[]));
+  if((data||[]).length<800)break;
+ }
+ const visibleSetIds=new Set((state.quizSets||[]).map(x=>x.id));
+ state.questionRows=all.filter(q=>visibleSetIds.has(q.quiz_id));
+ $("sidebarQuestionCount").textContent=state.questionRows.length+" в библиотеке";
+ renderQuestionLibrary();
+}
+function questionIdentity(q){
+ const cfg=q.config||{};
+ const normalize=x=>String(x||"").trim().replace(/\s+/g," ").toLocaleLowerCase("ru");
+ // A shared prompt is not a duplicate when the flag, photo, audio or answer differs.
+ const options=Array.isArray(q.options)?q.options.map(normalize):[];
+ const identity=[q.question_type,normalize(q.prompt),...options,
+  normalize(cfg.flag_url),normalize(cfg.audio_url),normalize(cfg.image_url),
+  normalize(cfg.wiki_title),normalize(cfg.wiki_search),normalize(cfg.target_region),
+  normalize(cfg.youtube_id),normalize(cfg.quote),normalize(cfg.video_start),normalize(cfg.video_end)];
+ return JSON.stringify(identity);
 }
 function renderQuestionLibrary(){
+  const showDrafts=$("questionShowDrafts")?.checked||false;
+  const uniqueOnly=$("questionUniqueOnly")?.checked||false;
+  const duplicatesOnly=$("questionDuplicateOnly")?.checked||false;
+  const available=(state.questionRows||[]).filter(q=>showDrafts||state.quizSets.some(s=>s.id===q.quiz_id&&s.published));
+  const keyFrequency=new Map();
+  available.forEach(q=>keyFrequency.set(questionIdentity(q),(keyFrequency.get(questionIdentity(q))||0)+1));
+  const seen=new Set();
   const search=($("questionSearch")?.value||"").trim().toLowerCase();
   const setId=$("questionSetFilter")?.value||"";
   const type=$("questionTypeFilter")?.value||"";
   const difficulty=$("questionDifficultyFilter")?.value||"";
-  const rows=(state.questionRows||[]).filter(q=>
+  const filtered=available.filter(q=>
     (!setId||q.quiz_id===setId)&&(!type||q.question_type===type)&&(!difficulty||String(q.difficulty||2)===difficulty)&&
     (!search||q.prompt.toLowerCase().includes(search)||(q.tags||[]).some(t=>String(t).toLowerCase().includes(search)))
   );
-  $("questionBankCount").textContent=`${rows.length} вопросов`;
+  const duplicates=available.filter(q=>(keyFrequency.get(questionIdentity(q))||0)>1).length;
+  const rows=filtered.filter(q=>{
+    const key=questionIdentity(q);
+    if(duplicatesOnly&&(keyFrequency.get(key)||0)<=1)return false;
+    if(uniqueOnly&&!duplicatesOnly){if(seen.has(key))return false;seen.add(key)}
+    return true;
+  });
+  const displayRows=rows.slice(0,state.bankVisible);
+  $("questionBankCount").textContent=rows.length+" вопросов";
+  if($("librarySummary"))$("librarySummary").textContent=available.length+" записей · "+duplicates+" в группах повторов · "+state.quizSets.filter(x=>!x.published).length+" черновых наборов";
+  $("questionBankMore")?.classList.toggle("hidden",rows.length<=state.bankVisible);
 
   const icon={single:"✓",multiple:"☷",flag:"⚑",anthem:"♫",person_photo:"◎",place_photo:"⌖",region_map:"◫",vote:"◉",elimination:"!",matching:"⇄",ordering:"↕",duel:"✦",split:"◇",scale:"—",wordcloud:"☁",ranking:"≡",team_pitch:"◆",film_frame:"▣",film_quote:"❝",film_clip:"▶"};
   const visual=q=>{
@@ -934,7 +960,7 @@ function renderQuestionLibrary(){
     return `<div class="question-visual abstract-card ${tone}"><span>${icon[q.question_type]||"?"}</span><strong>${questionTypeLabel(q.question_type)}</strong></div>`;
   };
 
-  $("questionBank").innerHTML=rows.map(q=>{
+  $("questionBank").innerHTML=displayRows.map(q=>{
     const set=state.quizSets.find(s=>s.id===q.quiz_id);
     const checked=state.bulkQuestionIds.has(q.id)?"checked":"";
     const tags=(q.tags||[]).slice(0,3).map(t=>`<span class="mini-tag">${escapeHtml(t)}</span>`).join("");
@@ -942,7 +968,7 @@ function renderQuestionLibrary(){
       <div class="question-tile-check"><label><input type="checkbox" data-select-question="${q.id}" ${checked}><span></span></label></div>
       ${visual(q)}
       <div class="question-tile-body">
-        <div class="question-tile-top"><span class="question-kind">${questionTypeLabel(q.question_type)}</span><span class="difficulty-chip">Сложность ${q.difficulty||2}</span></div>
+        <div class="question-tile-top"><span class="question-kind">${questionTypeLabel(q.question_type)}</span>${(keyFrequency.get(questionIdentity(q))||0)>1?'<span class="duplicate-chip">Повтор · '+keyFrequency.get(questionIdentity(q))+'</span>':''}<span class="difficulty-chip">Сложность ${q.difficulty||2}</span></div>
         <h3>${escapeHtml(q.prompt)}</h3>
         <p>${escapeHtml(set?.title||"Без набора")}</p>
         <div class="tag-line">${tags}</div>
@@ -1638,7 +1664,16 @@ $("viewAsParticipant").onclick=async()=>{
   showView("student");
 };
 
-$("questionSearch")?.addEventListener("input",renderQuestionLibrary);
+["questionSearch","questionSetFilter","questionTypeFilter","questionDifficultyFilter","questionUniqueOnly","questionShowDrafts","questionDuplicateOnly"].forEach(id=>{
+ const node=$(id);if(!node)return;
+ node.addEventListener(id==="questionSearch"?"input":"change",()=>{state.bankVisible=state.bankPageSize;renderQuestionLibrary()});
+});
+$("questionBankMore")?.addEventListener("click",()=>{state.bankVisible+=state.bankPageSize;renderQuestionLibrary()});
+$("questionClearFilters")?.addEventListener("click",()=>{
+ $("questionSearch").value="";$("questionSetFilter").value="";$("questionTypeFilter").value="";$("questionDifficultyFilter").value="";
+ $("questionUniqueOnly").checked=true;$("questionShowDrafts").checked=false;$("questionDuplicateOnly").checked=false;
+ state.bankVisible=state.bankPageSize;renderQuestionLibrary();
+});
 $("questionSetFilter")?.addEventListener("change",renderQuestionLibrary);
 $("questionTypeFilter")?.addEventListener("change",renderQuestionLibrary);
 
