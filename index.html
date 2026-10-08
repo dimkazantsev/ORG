@@ -149,6 +149,16 @@
         </aside>
       </div>
 
+      <div id="studentEventPanel" class="party-event-stage hidden" role="status" aria-live="polite">
+        <div class="party-event-inner">
+          <span id="studentEventKicker" class="party-event-kicker">СЮРПРИЗ РАУНДА</span>
+          <span id="studentEventSymbol" class="party-event-symbol">✦</span>
+          <h2 id="studentEventTitle">Новый поворот</h2>
+          <p id="studentEventDescription">Правила этого вопроса изменились.</p>
+          <div class="party-event-progress"><span></span></div>
+          <strong id="studentEventCountdown" class="party-event-countdown">5</strong>
+        </div>
+      </div>
       <div id="studentPhaseOverlay" class="phase-overlay hidden" aria-live="polite">
         <div class="phase-overlay-card">
           <span id="phaseEyebrow" class="section-kicker">Подготовка</span>
@@ -300,11 +310,16 @@
                   </div>
                 </div>
 
+                <article id="directorEventNotice" class="director-event-notice hidden">
+                  <div class="director-event-mark">✦</div>
+                  <div class="director-event-copy"><span>СОБЫТИЕ ВОПРОСА</span><h3 id="directorEventTitle">Новый поворот</h3><p id="directorEventDescription">Особые правила</p></div>
+                  <button id="directorEventContinue" type="button" class="button-primary">Продолжить</button>
+                </article>
                 <div class="mechanics-strip">
                   <div class="mechanic-chip"><span>Combo</span><strong id="mechanicCombo">Вкл.</strong></div>
                   <div class="mechanic-chip"><span>Спасение</span><strong id="mechanicRescue">1 на команду</strong></div>
                   <div class="mechanic-chip"><span>Перехват</span><strong id="mechanicSteal">Готов</strong></div>
-                  <div class="mechanic-chip"><span>Банк силы</span><strong id="mechanicPower">Активен</strong></div>
+                  <div class="mechanic-chip"><span>События</span><strong id="mechanicEvents">30%</strong></div><div class="mechanic-chip"><span>Банк силы</span><strong id="mechanicPower">Активен</strong></div>
                   <div class="mechanic-chip secret"><span>Секретный раунд</span><strong id="mechanicSecret">Скрыт</strong></div>
                 </div>
 
