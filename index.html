@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css?v=20261009-1">
-  <link rel="stylesheet" href="./theme-light.css?v=20261009-1">
+  <link rel="stylesheet" href="./theme-light.css?v=20261009-qa2">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="./lib/d3.v7.min.js"></script>
@@ -29,7 +29,7 @@
       <button id="soundToggle" class="icon-btn" title="Звук">♪</button>
       <span class="live-chip"><i></i> КВИЗ-ПЛАТФОРМА</span>
       <button id="teacherToggle" class="soft-btn">Модератор</button>
-      <span id="releaseVersion" class="release-version" data-build="20261009.1" title="Версия опубликованного сайта 09.10.2026">v2026.10.09.1</span>
+      <span id="releaseVersion" class="release-version" data-build="20261009.2" title="Версия опубликованного сайта 09.10.2026">v2026.10.09.2</span>
     </div>
   </header>
 
@@ -206,7 +206,7 @@
               <button class="flow-step" data-studio-view="analytics"><span>03</span><div><b>Результаты</b><small>Статистика игры</small></div></button>
             </nav>
             <div class="flowbar-actions">
-              <button id="viewAsParticipant" class="button-secondary">Вид участника</button>
+              <button id="viewAsParticipant" class="button-secondary">Проверить как игрок</button>
               <button id="teacherLogout" class="button-secondary hidden">Выйти</button>
             </div>
           </div>
@@ -372,7 +372,7 @@
 
           <div id="studioQuestions" class="studio-view">
             <div class="section-toolbar">
-              <div><span class="section-kicker">КОНТЕНТ / 01</span><h2>Библиотека вопросов</h2><p>Поиск, правки и готовые наборы. Нужное — сразу перед глазами.</p></div>
+              <div><span class="section-kicker">КОНТЕНТ / 01</span><h2>Каталог заданий</h2><p>Все форматы вопросов, поиск и проверка заданий перед игрой.</p></div>
               <div class="toolbar-actions">
                 <button id="openSetComposer" class="button-secondary">Собрать микс</button>
                 <button id="openQuestionEditor" class="button-secondary">+ Свой вопрос</button>
@@ -397,7 +397,7 @@
               <span id="questionBankCount" class="info-badge">0 вопросов</span>
             </div>
             <div class="library-controls" aria-label="Фильтры качества библиотеки">
-              <label class="library-check"><input id="questionUniqueOnly" type="checkbox"><span>Группировать совпадения</span></label>
+              <label class="library-check"><input id="questionUniqueOnly" type="checkbox" checked><span>Скрывать повторы</span></label>
               <label class="library-check"><input id="questionShowDrafts" type="checkbox"><span>Только опубликованные</span></label>
               <label class="library-check"><input id="questionDuplicateOnly" type="checkbox"><span>Только повторы</span></label>
               <button id="questionClearFilters" class="library-clear" type="button">Сбросить фильтры</button>
@@ -541,13 +541,15 @@
             <div class="drawer-head"><div><span id="previewType" class="section-kicker">Предпросмотр</span><h2 id="previewTitle">Вопрос</h2></div><button class="drawer-close" data-close-drawer="preview">×</button></div>
             <div id="previewMeta" class="preview-meta"></div>
             <div id="previewMedia" class="preview-media hidden"></div>
+            <div class="preview-play-notice">Тестирование не меняет очки и прогресс игроков.</div>
             <div id="previewOptions" class="preview-options"></div>
+            <div id="previewFeedback" class="preview-play-feedback" role="status" aria-live="polite"></div>
             <div id="previewExplanation" class="preview-explanation"></div>
           </aside>
         </div>
       </div>
     </section>
   </main>
-  <script type="module" src="./app.js?v=20261009-duel"></script>
+  <script type="module" src="./app.js?v=20261009-qa2"></script>
 </body>
 </html>
