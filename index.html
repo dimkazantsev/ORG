@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#101826">
+  <meta name="theme-color" content="#faf9f5">
   <title>ORG Party — квиз и интерактивные игры</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css">
-  <link rel="stylesheet" href="./design-2026.css">
+  <link rel="stylesheet" href="./theme-light.css?v=20261008-4">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="./lib/d3.v7.min.js"></script>
@@ -376,14 +376,16 @@
                 <button class="button-primary" data-open-view="live">Запустить игру →</button>
               </div>
             </div>
+            <details class="pack-disclosure">
+              <summary><span class="pack-summary-icon">▧</span><span><strong>Наборы и коллекции</strong><small>Все 34 набора, включая черновики. Нажмите для просмотра.</small></span><span class="pack-summary-arrow">↗</span></summary>
             <section class="game-pack-section compact-packs">
               <div class="game-pack-head">
                 <div><span class="section-kicker">ПОДБОРКИ</span><h3>Готовые наборы</h3><p>Выберите набор для просмотра или запуска.</p></div>
               </div>
               <div id="overviewGamePacks" class="game-pack-grid"></div>
             </section>
-
-            <div class="library-head"><div><span class="section-kicker">Библиотека заданий</span><h3>Все вопросы</h3><p id="librarySummary">Подготовка каталога…</p></div><div class="library-view-note">Поиск, проверка и редактирование — в одном месте</div></div>
+            </details>
+            <div class="library-head"><div><span class="section-kicker">01 / Библиотека</span><h3>Все задания <span class="library-heading-mark">↗</span></h3><p id="librarySummary" aria-live="polite">Загрузка вопросов из банка…</p></div><div class="library-view-note">Ничего не скрыто · фильтры необязательны</div></div>
             <div class="filter-bar">
               <div class="search-field"><span aria-hidden="true">⌕</span><input id="questionSearch" aria-label="Поиск заданий" placeholder="Найти вопрос или тег…"></div>
               <select id="questionSetFilter"><option value="">Все наборы</option></select>
@@ -392,8 +394,8 @@
               <span id="questionBankCount" class="info-badge">0 вопросов</span>
             </div>
             <div class="library-controls" aria-label="Фильтры качества библиотеки">
-              <label class="library-check"><input id="questionUniqueOnly" type="checkbox" checked><span>Объединять точные повторы</span></label>
-              <label class="library-check"><input id="questionShowDrafts" type="checkbox"><span>Показать черновики</span></label>
+              <label class="library-check"><input id="questionUniqueOnly" type="checkbox"><span>Группировать совпадения</span></label>
+              <label class="library-check"><input id="questionShowDrafts" type="checkbox"><span>Только опубликованные</span></label>
               <label class="library-check"><input id="questionDuplicateOnly" type="checkbox"><span>Только повторы</span></label>
               <button id="questionClearFilters" class="library-clear" type="button">Сбросить фильтры</button>
             </div>
@@ -408,7 +410,7 @@
             </div>
 
             <div id="questionBank" class="question-library"></div>
-            <div class="library-pagination"><button id="questionBankMore" class="button-secondary hidden" type="button">Показать ещё вопросы ↓</button></div>
+            <div class="library-pagination"><button id="questionBankMore" class="button-secondary hidden" type="button">Показать ещё 96 вопросов ↓</button><button id="questionShowAll" class="text-button hidden" type="button">Показать все вопросы</button></div>
             <details class="generator-disclosure">
               <summary><span><strong>Собрать собственную игру</strong><small>Настройте seed, раунды и банки вопросов</small></span><span class="disclosure-symbol">↗</span></summary>
             <section class="generator-card">
