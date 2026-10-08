@@ -385,10 +385,12 @@ async function loadQuizSets(){
   const {data,error}=await sb.from("org_quiz_sets").select("id,title,topic,description,created_at,published,is_generated").order("created_at",{ascending:false});
   if(error){showToast(error.message);return}
   state.quizSets=data||[];
-  const publishedSets=state.quizSets;
-  const opts=publishedSets.map(q=>`<option value="${q.id}">${escapeHtml(q.title)} — ${escapeHtml(q.topic)}</option>`).join("");
-  $("quizSelect").innerHTML=opts;$("editorQuizSelect").innerHTML=state.quizSets.map(q=>'<option value="'+q.id+'">'+escapeHtml(q.title)+(q.published?'':' · черновик')+'</option>').join("");
-  $("questionSetFilter").innerHTML='<option value="">Все наборы</option>'+state.quizSets.map(q=>'<option value="'+q.id+'">'+escapeHtml(q.title)+(q.published?'':' · черновик')+'</option>').join("");
+  const publishedSets=state.quizSets.filter(q=>q.published);
+  const titles=state.quizSets.reduce((m,q)=>(m.set(q.title,(m.get(q.title)||0)+1),m),new Map());
+  const label=q=>escapeHtml(q.title)+((titles.get(q.title)||0)>1?" · "+new Date(q.created_at).toLocaleString("ru-RU"):"");
+  const opts=publishedSets.map(q=>`<option value="${q.id}">${label(q)} — ${escapeHtml(q.topic)}</option>`).join("");
+  $("quizSelect").innerHTML=opts;$("editorQuizSelect").innerHTML=state.quizSets.map(q=>'<option value="'+q.id+'">'+label(q)+(q.published?'':' · черновик')+'</option>').join("");
+  $("questionSetFilter").innerHTML='<option value="">Все наборы</option>'+state.quizSets.map(q=>'<option value="'+q.id+'">'+label(q)+(q.published?'':' · черновик')+'</option>').join("");
   $("bulkTargetSet").innerHTML='<option value="">Переместить в набор…</option>'+opts;
   if(!state.editorQuizId&&state.quizSets[0])state.editorQuizId=publishedSets[0]?.id||state.quizSets[0].id;
   if(state.editorQuizId)$("editorQuizSelect").value=state.editorQuizId;
@@ -892,7 +894,7 @@ $("createQuestionForm").addEventListener("submit",async e=>{
 });
 
 async function loadQuestionBank(){
- const cols="id,quiz_id,order_index,question_type,prompt,options,config,explanation,time_limit_sec,points,tags,difficulty,media_storage_path,source_question_id,correct_payload,updated_at";
+ const cols="id,quiz_id,order_index,question_type,prompt,options,config,explanation,time_limit_sec,points,tags,difficulty,media_storage_path,source_question_id,updated_at";
  const all=[];
  for(let from=0;from<20000;from+=800){
   const {data,error}=await sb.from("org_quiz_questions").select(cols)
@@ -912,7 +914,7 @@ function questionIdentity(q){
  const normalize=x=>String(x||"").trim().replace(/\s+/g," ").toLocaleLowerCase("ru");
  // A shared prompt is not a duplicate when the flag, photo, audio or answer differs.
  const options=Array.isArray(q.options)?q.options.map(normalize):[];
- const identity=[q.question_type,normalize(q.prompt),...options,JSON.stringify(q.correct_payload||[]),
+ const identity=[q.question_type,normalize(q.prompt),...options,
   normalize(cfg.flag_url),normalize(cfg.audio_url),normalize(cfg.image_url),
   normalize(cfg.wiki_title),normalize(cfg.wiki_search),normalize(cfg.target_region),
   normalize(cfg.youtube_id),normalize(cfg.quote),normalize(cfg.video_start),normalize(cfg.video_end),normalize(cfg.media_url),normalize(q.media_storage_path),normalize(q.source_question_id)];
@@ -922,7 +924,7 @@ function renderQuestionLibrary(){
   const showDrafts=$("questionShowDrafts")?.checked||false;
   const uniqueOnly=$("questionUniqueOnly")?.checked||false;
   const duplicatesOnly=$("questionDuplicateOnly")?.checked||false;
-  const available=(state.questionRows||[]).filter(q=>!showDrafts||state.quizSets.some(s=>s.id===q.quiz_id&&s.published));
+  const available=(state.questionRows||[]).filter(q=>showDrafts||state.quizSets.some(s=>s.id===q.quiz_id&&s.published));
   const keyFrequency=new Map();
   available.forEach(q=>keyFrequency.set(questionIdentity(q),(keyFrequency.get(questionIdentity(q))||0)+1));
   const seen=new Set();
@@ -1127,28 +1129,44 @@ async function loadAnalytics(){
   if(!$("sessionHistory"))return;
   const {data,error}=await sb.from("org_quiz_session_stats").select("*").order("created_at",{ascending:false}).limit(50);
   if(error){$("sessionHistory").innerHTML=`<p class="message">${escapeHtml(error.message)}</p>`;return}
-  const rows=data||[];
+  const rows=(data||[]).filter(r=>!r.archived_at&&(Number(r.participants_count||0)>0||Number(r.answers_count||0)>0));
   if($("analyticsSessions"))$("analyticsSessions").textContent=rows.length;
   if($("analyticsParticipants"))$("analyticsParticipants").textContent=rows.reduce((a,r)=>a+Number(r.participants_count||0),0);
   const acc=rows.map(r=>Number(r.accuracy_percent)).filter(Number.isFinite);
   $("analyticsAccuracy").textContent=acc.length?(acc.reduce((a,b)=>a+b,0)/acc.length).toFixed(1)+"%":"—";
   $("analyticsAnswers").textContent=rows.reduce((a,r)=>a+Number(r.answers_count||0),0);
   state.analyticsRows=rows;
-  if(!state.selectedAnalyticsSession && rows[0]) state.selectedAnalyticsSession=rows[0].session_id;
+  if(!rows.some(r=>r.session_id===state.selectedAnalyticsSession))state.selectedAnalyticsSession=rows[0]?.session_id||null;
   $("sessionHistory").innerHTML=rows.map(r=>`
-    <button class="history-row history-button ${state.selectedAnalyticsSession===r.session_id?"selected":""}" data-analytics-session="${r.session_id}">
-      <div><strong>${escapeHtml(r.session_title||r.quiz_title)}</strong><small>${escapeHtml(r.quiz_title)} · ${new Date(r.created_at).toLocaleString("ru-RU")}</small></div>
+    <div class="history-entry"><button class="history-row history-button ${state.selectedAnalyticsSession===r.session_id?"selected":""}" data-analytics-session="${r.session_id}">
+      <div><strong>${escapeHtml(r.session_title&&r.session_title!=="0"?r.session_title:r.quiz_title||"Сессия")}</strong><small>${escapeHtml(r.quiz_title)} · ${new Date(r.created_at).toLocaleString("ru-RU")}</small></div>
       <div><strong>${escapeHtml(r.topic)}</strong><small>Код ${escapeHtml(r.code)}</small></div>
       <div><strong>${r.participants_count}</strong><small>участников</small></div>
       <div><strong>${r.accuracy_percent??"—"}${r.accuracy_percent==null?"":"%"}</strong><small>${r.answers_count} ответов</small></div>
-    </button>`).join("")||"<p class='message'>Проведённых занятий пока нет.</p>";
+    </button><button class="history-archive" data-archive-session="${r.session_id}">Архивировать</button></div>`).join("")||"<p class='message'>Нет сессий с участниками или ответами.</p>";
   document.querySelectorAll("[data-analytics-session]").forEach(b=>b.onclick=async()=>{
     state.selectedAnalyticsSession=b.dataset.analyticsSession;
     await loadAnalytics();
     await loadDetailedAnalytics();
   });
-  await loadDetailedAnalytics();
+  document.querySelectorAll("[data-archive-session]").forEach(b=>b.onclick=async()=>{
+    if(!confirm("Архивировать сессию? Результаты сохранятся."))return;
+    await archiveHistory("single",b.dataset.archiveSession);
+  });
+  if(state.selectedAnalyticsSession)await loadDetailedAnalytics();
+  else {$("analyticsStudentRanking").innerHTML="";$("analyticsQuestionStats").innerHTML="";}
 }
+async function archiveHistory(action,id=null){
+  const {data,error}=await sb.rpc("org_quiz_archive_history",{p_action:action,p_session_id:id});
+  if(error)return showToast(humanError(error.message));
+  showToast("Архивировано: "+data);await loadAnalytics();
+}
+$("archiveEmptyHistory")?.addEventListener("click",async()=>{
+ if(confirm("Архивировать все пустые сессии? Данные сохранятся."))await archiveHistory("empty");
+});
+$("archiveFinishedHistory")?.addEventListener("click",async()=>{
+ if(confirm("Архивировать завершённые сессии? Данные сохранятся."))await archiveHistory("completed");
+});
 $("refreshAnalytics").onclick=loadAnalytics;
 
 
