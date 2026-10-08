@@ -4,12 +4,12 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#faf9f5">
-  <title>ORG Party — квиз и интерактивные игры</title>
+  <title>ORG/PARTY — квиз-платформа</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="./styles.css">
-  <link rel="stylesheet" href="./theme-light.css?v=20261008-4">
+  <link rel="stylesheet" href="./styles.css?v=20261009-1">
+  <link rel="stylesheet" href="./theme-light.css?v=20261009-1">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="./lib/d3.v7.min.js"></script>
@@ -29,6 +29,7 @@
       <button id="soundToggle" class="icon-btn" title="Звук">♪</button>
       <span class="live-chip"><i></i> КВИЗ-ПЛАТФОРМА</span>
       <button id="teacherToggle" class="soft-btn">Модератор</button>
+      <span id="releaseVersion" class="release-version" data-build="20261009.1" title="Версия опубликованного сайта 09.10.2026">v2026.10.09.1</span>
     </div>
   </header>
 
@@ -545,6 +546,6 @@
       </div>
     </section>
   </main>
-  <script type="module" src="./app.js"></script>
+  <script type="module" src="./app.js?v=20261009-1"></script>
 </body>
 </html>
