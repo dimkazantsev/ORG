@@ -254,3 +254,18 @@ body{background:#f8f7f4!important;color:#293540!important}
 .media-placeholder.is-unverified{background:#f5f7f7;border-radius:12px;padding:30px;text-align:center;color:#607185;line-height:1.55}
 @media(max-width:680px){.top-actions{gap:5px!important}.top-actions>.icon-btn,.top-actions>.soft-btn,.top-actions>.live-chip,.top-actions>.release-version{height:38px!important;min-height:38px!important}.top-actions>.icon-btn{width:38px!important;min-width:38px!important}.top-actions>.soft-btn{padding:0 10px!important;font-size:12px!important}.top-actions>.release-version{font-size:9px!important;padding:0 6px!important}.game-pack-visual svg{width:56px;height:56px}.preview-match{flex-wrap:wrap}.preview-match select{max-width:100%;width:100%}}
 @media(prefers-reduced-motion:reduce){.preview-options .preview-choice{transition:none!important}}
+
+/* Region selection must not draw a rectangular browser focus ring around SVG path bounds. */
+.map-canvas svg:focus,
+.map-canvas svg .map-region,
+.map-canvas svg .map-region:focus,
+.map-canvas svg .map-region:focus-visible{
+  outline:none!important;
+  outline-offset:0!important;
+  box-shadow:none!important;
+}
+.map-canvas svg .map-region:focus-visible{
+  /* Keyboard focus follows the actual region border, never its bounding rectangle. */
+  stroke:#6c88b4!important;
+  stroke-width:1.7!important;
+}
