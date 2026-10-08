@@ -4,8 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f7f8fc">
-  <title>ORG Party</title>
+  <title>ORG Party — квиз и интерактивные игры</title>
   <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./design-2026.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="./lib/d3.v7.min.js"></script>
@@ -19,11 +20,11 @@
   <header class="topbar">
     <button class="brand" id="brandHome" aria-label="На главную">
       <span class="brand-sigil">O</span>
-      <span class="brand-copy"><strong>ORG PARTY</strong><small>classroom game show</small></span>
+      <span class="brand-copy"><strong>ORG PARTY</strong><small>Интерактивные игры</small></span>
     </button>
     <div class="top-actions">
       <button id="soundToggle" class="icon-btn" title="Звук">♪</button>
-      <span class="live-chip"><i></i> LIVE</span>
+      <span class="live-chip"><i></i> ИГРА ОНЛАЙН</span>
       <button id="teacherToggle" class="soft-btn">Модератор</button>
     </div>
   </header>
@@ -32,23 +33,23 @@
     <section id="homeView">
       <div class="landing-grid">
         <article class="hero-card">
-          <div class="kicker">Игровая платформа для аудитории</div>
-          <h1>Учимся через<br><span class="gradient-text">игру, риск и выбор.</span></h1>
+          <div class="kicker">Интерактивная платформа · ORG Studio</div>
+          <h1>Знания становятся<br><span class="gradient-text">командной игрой.</span></h1>
           <p>Флаги, гимны, фото, карта регионов, голосования, командные баттлы, кейсы и раунды на выбывание — в одной живой сессии.</p>
           <div class="mode-marquee">
             <span>🏳 Флаги</span><span>♫ Гимны</span><span>◎ Карта России</span><span>◉ Фото</span><span>✦ Баттлы</span><span>☠ Выбывание</span><span>☁ Облако мнений</span>
           </div>
           <div class="hero-numbers">
-            <div><b>15+</b><small>механик</small></div>
-            <div><b>89</b><small>геометрий регионов</small></div>
-            <div><b>live</b><small>команды и рейтинг</small></div>
+            <div><b>01</b><small>Подключитесь по коду</small></div>
+            <div><b>02</b><small>Отвечайте с командой</small></div>
+            <div><b>03</b><small>Следите за результатом</small></div>
           </div>
         </article>
 
         <article class="access-card">
           <div class="role-switch">
-            <button class="role-tab active" data-role-tab="participant">Участник</button>
-            <button class="role-tab" data-role-tab="moderator">Модератор</button>
+            <button class="role-tab active" data-role-tab="participant">Я участник</button>
+            <button class="role-tab" data-role-tab="moderator">Я ведущий</button>
           </div>
 
           <div id="participantAccess">
@@ -77,7 +78,7 @@
       </div>
 
       <section class="mode-showcase">
-        <div class="section-title"><div><div class="kicker">Каталог уровней</div><h2>Каждый раунд ощущается по-разному</h2></div></div>
+        <div class="section-title"><div><div class="kicker">Игровые форматы</div><h2>Одна платформа. Разные сценарии.</h2></div></div>
         <div class="mode-grid">
           <article class="mode-card c-blue"><span>🏳</span><h3>Флаг</h3><p>Угадайте страну по флагу.</p></article>
           <article class="mode-card c-violet"><span>♫</span><h3>Гимн</h3><p>Аудио-фрагмент и четыре версии.</p></article>
@@ -391,17 +392,24 @@
 
             <section class="game-pack-section compact-packs">
               <div class="game-pack-head">
-                <div><span class="section-kicker">Готовые игры</span><h3>Выберите режим</h3><p>Каждая карточка — готовый запускаемый банк с собственным типом заданий.</p></div>
+                <div><span class="section-kicker">Готовые подборки</span><h3>Выберите набор</h3><p>Откройте вопросы, проверьте содержание и перейдите к запуску.</p></div>
               </div>
               <div id="overviewGamePacks" class="game-pack-grid"></div>
             </section>
 
+            <div class="library-head"><div><span class="section-kicker">Библиотека заданий</span><h3>Все вопросы</h3><p id="librarySummary">Подготовка каталога…</p></div><div class="library-view-note">Поиск, проверка и редактирование — в одном месте</div></div>
             <div class="filter-bar">
-              <div class="search-field"><span>⌕</span><input id="questionSearch" placeholder="Поиск по тексту вопроса"></div>
+              <div class="search-field"><span aria-hidden="true">⌕</span><input id="questionSearch" aria-label="Поиск заданий" placeholder="Найти вопрос или тег…"></div>
               <select id="questionSetFilter"><option value="">Все наборы</option></select>
               <select id="questionTypeFilter"><option value="">Все типы</option><option value="single">Тест</option><option value="flag">Флаг</option><option value="anthem">Гимн</option><option value="person_photo">Фото человека</option><option value="place_photo">Фото места</option><option value="region_map">Карта</option><option value="vote">Голосование</option><option value="elimination">Выбывание</option><option value="duel">Баттл</option></select>
               <select id="questionDifficultyFilter"><option value="">Любая сложность</option><option value="1">1 — легко</option><option value="2">2</option><option value="3">3 — средне</option><option value="4">4</option><option value="5">5 — сложно</option></select>
               <span id="questionBankCount" class="info-badge">0 вопросов</span>
+            </div>
+            <div class="library-controls" aria-label="Фильтры качества библиотеки">
+              <label class="library-check"><input id="questionUniqueOnly" type="checkbox" checked><span>Объединять точные повторы</span></label>
+              <label class="library-check"><input id="questionShowDrafts" type="checkbox"><span>Показать черновики</span></label>
+              <label class="library-check"><input id="questionDuplicateOnly" type="checkbox"><span>Только повторы</span></label>
+              <button id="questionClearFilters" class="library-clear" type="button">Сбросить фильтры</button>
             </div>
             <div id="bulkQuestionBar" class="bulk-bar hidden">
               <strong><span id="bulkSelectedCount">0</span> выбрано</strong>
@@ -414,6 +422,7 @@
             </div>
 
             <div id="questionBank" class="question-library"></div>
+            <div class="library-pagination"><button id="questionBankMore" class="button-secondary hidden" type="button">Показать ещё вопросы ↓</button></div>
           </div>
 
           
