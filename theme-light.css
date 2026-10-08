@@ -232,7 +232,7 @@ body{background:#f8f7f4!important;color:#293540!important}
 .map-outline{pointer-events:none!important}
 .map-region{fill:#dfeaf5!important;stroke:#fff!important;stroke-width:.9!important;pointer-events:all!important;cursor:pointer}
 .map-region:hover,.map-region:focus{fill:#b8cfea!important}
-.map-region.selected,.map-region.new2022.selected{fill:#e7a18a!important}
+.map-region.selected{fill:#e7a18a!important}
 .map-region:focus-visible{stroke:#3666ad!important;stroke-width:2!important}
 .preview-play-notice{background:#f1f5f9;color:#4b647d;padding:12px 14px;margin:14px 0;border-radius:12px;font-size:12px}
 .preview-play-feedback{min-height:26px;margin:12px 0;color:#536881;font-weight:750}
