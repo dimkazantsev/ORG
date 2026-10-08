@@ -4,7 +4,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const $ = (id)=>document.getElementById(id);
 const views = {home:$("homeView"),student:$("studentView"),teacher:$("teacherView")};
-const state = {session:null,participant:null,teams:[],participants:[],question:null,studentStartedAt:null,teacherSession:null,teacherUser:null,subs:[],quizSets:[],editorQuizId:null,timerHandle:null,analyticsRows:[],selectedAnalyticsSession:null,sound:true,viewAsParticipant:false,regionTopology:null,questionRows:[],bulkQuestionIds:new Set(),composerQuestionIds:[],editingQuestion:null,generatedGame:null,setupStep:"room",phaseTimer:null,stealTimer:null,powerUse:null};
+const state = {session:null,participant:null,teams:[],participants:[],question:null,studentStartedAt:null,teacherSession:null,teacherUser:null,subs:[],quizSets:[],editorQuizId:null,timerHandle:null,analyticsRows:[],selectedAnalyticsSession:null,sound:true,viewAsParticipant:false,regionTopology:null,questionRows:[],bulkQuestionIds:new Set(),composerQuestionIds:[],editingQuestion:null,generatedGame:null,setupStep:"room",phaseTimer:null,stealTimer:null,powerUse:null,transitionTimer:null,transitionBusy:false};
 
 function showView(name){
   const layer=$("transitionLayer");
@@ -192,12 +192,15 @@ function applyEventRules(){
  }
 }
 async function revealEventQuestion(){
- const s=state.teacherSession;if(!s||s.status!=="event_break")return;
+ const s=state.teacherSession;if(!s||s.status!=="event_break"||state.transitionBusy)return;
  const age=Date.now()-new Date(s.event_started_at).getTime();
  if(age<5000)return;
- const {data,error}=await sb.rpc("org_quiz_activate_event",{p_session_id:s.id});
- if(error){showToast(humanError(error.message));return}
- state.teacherSession=data;await refreshTeacher();
+ state.transitionBusy=true;
+ try{
+  const {data,error}=await sb.rpc("org_quiz_activate_event",{p_session_id:s.id});
+  if(error){showToast(humanError(error.message));return}
+  state.teacherSession=data;await refreshTeacher();
+ }finally{state.transitionBusy=false}
 }
 function clearPhaseTimer(){
   if(state.phaseTimer){clearInterval(state.phaseTimer);state.phaseTimer=null}
@@ -228,6 +231,7 @@ async function loadActiveQuestion(){
   if(state.session.status!=="live"){state.powerUse=null;renderPowerBank(state.teams.find(t=>t.id===state.participant?.team_id));}
   renderEventStage();
   if(state.session.status==="event_break"){
+    hideStudentPhase();
     $("mediaStage").className="media-stage hidden";$("mediaStage").innerHTML="";$("answerOptions").innerHTML="";
     $("questionPrompt").textContent="Сюрприз раунда!";$("questionTimer").textContent="5 сек.";
     return;
@@ -359,7 +363,21 @@ async function enterTeacher(){
   await loadQuizSets();
   await loadAnalytics();
   await loadOverview();
-  await window.openStudioView("questions");
+  const restored=await restoreTeacherRoom();
+  await window.openStudioView(restored?"live":"questions");
+}
+async function restoreTeacherRoom(){
+  if(!state.teacherUser?.id||state.teacherSession)return false;
+  const {data,error}=await sb.from("org_quiz_sessions").select("*")
+    .eq("created_by",state.teacherUser.id)
+    .in("status",["lobby","countdown","round_break","event_break","live","paused"])
+    .order("created_at",{ascending:false}).limit(1).maybeSingle();
+  if(error){console.warn("Could not restore moderator room",error.message);return false}
+  if(!data)return false;
+  state.teacherSession=data;
+  subscribeTeacher(data.id);
+  await refreshTeacher();
+  return true;
 }
 async function loadQuizSets(){
   const {data,error}=await sb.from("org_quiz_sets").select("id,title,topic,description,created_at,published").eq("published",true).order("created_at",{ascending:false});
@@ -456,7 +474,6 @@ async function beginQuestion(index,{allowBreak=true}={}){
   event_kind:null,event_question_id:null,event_started_at:null};
  if(changing){
    await setSession({...base,status:"round_break",transition_started_at:new Date().toISOString(),question_started_at:null});
-   setTimeout(async()=>{const s2=state.teacherSession;if(s2?.status==="round_break"&&s2.current_question_index===index)await prepareNextEvent(index)},4200);
  }else await prepareNextEvent(index);
 }
 async function prepareNextEvent(index){
@@ -466,7 +483,6 @@ async function prepareNextEvent(index){
  state.teacherSession=data;await refreshTeacher();
  if(data.status==="event_break"){
    playSound("transition");
-   setTimeout(()=>revealEventQuestion(),5300);
  }
 }
 
@@ -494,6 +510,7 @@ $("createSessionForm").addEventListener("submit",async e=>{
 
 async function refreshTeacher(){
   const s=state.teacherSession;if(!s)return;
+  scheduleTeacherTransition(s);
   const [{data:participants},{data:teams}]=await Promise.all([
     sb.from("org_quiz_participants").select("*").eq("session_id",s.id).order("joined_at"),
     sb.from("org_quiz_teams").select("*").eq("session_id",s.id).order("order_index")
@@ -520,6 +537,30 @@ async function refreshTeacher(){
   const step=["live","paused","countdown","round_break","event_break","finished"].includes(s.status)?"live":(s.setup_stage==="ready"?"ready":(s.setup_stage==="teams"?"teams":"room"));
   showSetupStep(step);
   renderParticipants();renderTeacherLeaderboard();renderLivePowerPanel();renderLiveRescuePanel();await renderLiveTeacherQuestion();await loadLiveStudentRanking();
+}
+// Timed transitions survive a browser reload while moderator authentication persists.
+function scheduleTeacherTransition(s){
+ clearTimeout(state.transitionTimer);
+ state.transitionTimer=null;
+ const stages={
+  countdown:{start:s.transition_started_at,ms:3100},
+  round_break:{start:s.transition_started_at,ms:4300},
+  event_break:{start:s.event_started_at,ms:5300}
+ };
+ const stage=stages[s.status];
+ if(!stage||!stage.start||!Number.isFinite(Date.parse(stage.start)))return;
+ const id=s.id,index=s.current_question_index,status=s.status;
+ state.transitionTimer=setTimeout(async()=>{
+  const latest=state.teacherSession;
+  if(!latest||latest.id!==id||latest.status!==status||latest.current_question_index!==index)return;
+  if(status==="event_break"){await revealEventQuestion();return}
+  if(state.transitionBusy)return;
+  state.transitionBusy=true;
+  try{
+   if(status==="countdown")await beginQuestion(1,{allowBreak:false});
+   else if(status==="round_break")await prepareNextEvent(index);
+  }finally{state.transitionBusy=false}
+ },Math.max(0,Date.parse(stage.start)+stage.ms-Date.now()));
 }
 function renderParticipants(){
   if(!state.teams.length){
@@ -651,9 +692,6 @@ $("startGame").onclick=async()=>{
   await setSession({status:"countdown",setup_stage:"live",current_question_index:1,interaction_phase:"answer",started_at:new Date().toISOString(),transition_started_at:new Date().toISOString(),question_started_at:null});
   showSetupStep("live");
   playSound("transition");
-  setTimeout(async()=>{
-    if(state.teacherSession?.status==="countdown"){await beginQuestion(1,{allowBreak:false})}
-  },3000);
 };
 $("openSteal")?.addEventListener("click",async()=>{
   if(!state.teacherSession||state.teacherSession.status!=="live"){showToast("Перехват доступен только во время активного вопроса.");return}
@@ -697,7 +735,7 @@ function subscribeTeacher(sessionId){
 function clearSubs(){state.subs.forEach(c=>sb.removeChannel(c));state.subs=[]}
 $("teacherLogout").onclick=async()=>{clearSubs();await sb.auth.signOut();location.reload()}
 function leaderRow(i,name,score){return `<div class="leader-row"><div class="rank">${i+1}</div><div><strong>${escapeHtml(name)}</strong></div><div class="score">${score}</div></div>`}
-function statusLabel(s){return ({lobby:"Лобби",countdown:"Отсчёт",round_break:"Переход",live:"Идёт",paused:"Пауза",finished:"Завершено"})[s]||s}
+function statusLabel(s){return ({lobby:"Лобби",countdown:"Отсчёт",round_break:"Переход",live:"Идёт",paused:"Пауза",event_break:"Событие",finished:"Завершено"})[s]||s}
 function humanError(s=""){if(s.includes("CAPTAIN_ONLY"))return"За эту команду отвечает только капитан.";if(s.includes("BLIND_TEXT_REQUIRED"))return"Напишите ответ текстом.";if(s.includes("EVENT_COUNTDOWN_RUNNING"))return"Дождитесь окончания объявления события.";if(s.includes("SESSION_NOT_FOUND"))return"Комната не найдена или уже закрыта.";if(s.includes("TIME_EXPIRED"))return"Время на ответ истекло.";if(s.includes("QUESTION_NOT_ACTIVE"))return"Этот вопрос уже закрыт.";if(s.includes("STEAL_ALREADY_USED"))return"Перехват для этого вопроса уже использован.";if(s.includes("STEAL_REQUIRES_WRONG_ANSWER"))return"Перехват можно открыть только после ошибочного ответа.";if(s.includes("STEAL_NOT_SUPPORTED_FOR_TYPE"))return"Для этого типа задания перехват недоступен.";if(s.includes("STEAL_ALREADY_WON"))return"Перехват уже выиграла другая команда.";if(s.includes("TEAM_ALREADY_SCORED"))return"Ваша команда уже получила очки за этот вопрос.";if(s.includes("TEAM_ALREADY_ATTEMPTED_STEAL"))return"Команда уже использовала попытку перехвата.";if(s.includes("RESCUE_ALREADY_USED"))return"Эта команда уже использовала своё спасение.";if(s.includes("PLAYER_NOT_ELIGIBLE"))return"Этого игрока сейчас нельзя спасти.";if(s.includes("PLAYER_ELIMINATED"))return"Выбывший игрок не может использовать эту механику.";if(s.includes("POWER_NOT_ENOUGH"))return"Недостаточно командной силы.";if(s.includes("POWER_ALREADY_USED_THIS_QUESTION"))return"Команда уже использовала способность на этом вопросе.";if(s.includes("POWER_USE_BEFORE_ANSWER"))return"Способность нужно активировать до ответа команды.";if(s.includes("POWER_NOT_AVAILABLE"))return"Банк силы сейчас недоступен.";if(s.includes("HINT_NOT_AVAILABLE"))return"Для этого задания безопасная подсказка недоступна.";if(s.includes("Anonymous sign-ins are disabled"))return"Анонимный вход студентов отключён в Supabase.";return s}
 function escapeHtml(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 
