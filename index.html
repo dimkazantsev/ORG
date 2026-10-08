@@ -248,7 +248,7 @@
                 <form id="createSessionForm" class="setup-form">
                   <label class="field-wide">Набор игры<select id="quizSelect"></select></label>
                   <label>Режим<select id="gameMode"><option value="party">Party</option><option value="classic">Классический</option><option value="elimination">На выбывание</option><option value="seminar">Семинар</option></select></label>
-                  <label>Команд<input id="teamCount" type="number" min="1" max="16" value="4"></label>
+                  <label>Команд<input id="teamCount" type="number" min="1" max="16" value="4"></label><label>События раундов<select id="sessionEventChance"><option value="0">Выключить</option><option value="15">Редко · 15%</option><option value="30" selected>Нормально · 30%</option><option value="45">Часто · 45%</option><option value="60">Безумие · 60%</option></select></label>
                   <label class="field-wide">Название занятия<input id="sessionTitle" placeholder="Например, История кино · группа 102"></label>
                   <button class="button-primary setup-primary" type="submit">Создать комнату и открыть вход →</button>
                 </form>
