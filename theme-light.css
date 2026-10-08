@@ -196,3 +196,7 @@ input::placeholder,textarea::placeholder{color:#a2a5a5}
 @keyframes orgFadeIn{from{opacity:.7;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:720px){.history-entry{flex-direction:column;align-items:stretch;padding:10px 0}.history-archive{align-self:flex-end}}
 @media(prefers-reduced-motion:reduce){.studio-view:not(.hidden){animation:none!important}.question-tile:hover,.game-pack-card:hover{transform:none!important}}
+
+/* Visible production version: diagnostic marker for release and browser cache. */
+.release-version{display:inline-flex;align-items:center;justify-content:center;white-space:nowrap;min-height:27px;padding:0 8px;border-radius:8px;border:1px solid #eadbd0;background:#fff7f1;color:#96563e;font-size:10px;font-weight:850;letter-spacing:.005em;font-variant-numeric:tabular-nums}
+@media(max-width:640px){.top-actions{gap:5px!important}.release-version{font-size:9px!important;padding:0 6px!important;min-height:25px}.top-actions .soft-btn{padding:7px!important}}
