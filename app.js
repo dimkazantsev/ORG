@@ -4,7 +4,7 @@ const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const $ = (id)=>document.getElementById(id);
 const views = {home:$("homeView"),student:$("studentView"),teacher:$("teacherView")};
-const state = {session:null,participant:null,teams:[],participants:[],question:null,studentStartedAt:null,teacherSession:null,teacherUser:null,subs:[],quizSets:[],editorQuizId:null,timerHandle:null,analyticsRows:[],selectedAnalyticsSession:null,sound:true,viewAsParticipant:false,regionTopology:null,questionRows:[],bulkQuestionIds:new Set(),composerQuestionIds:[],editingQuestion:null,generatedGame:null,setupStep:"room",phaseTimer:null,stealTimer:null};
+const state = {session:null,participant:null,teams:[],participants:[],question:null,studentStartedAt:null,teacherSession:null,teacherUser:null,subs:[],quizSets:[],editorQuizId:null,timerHandle:null,analyticsRows:[],selectedAnalyticsSession:null,sound:true,viewAsParticipant:false,regionTopology:null,questionRows:[],bulkQuestionIds:new Set(),composerQuestionIds:[],editingQuestion:null,generatedGame:null,setupStep:"room",phaseTimer:null,stealTimer:null,powerUse:null};
 
 function showView(name){
   const layer=$("transitionLayer");
@@ -75,7 +75,75 @@ async function loadStudentTeams(){
     $("rescueStatus").textContent=!mine?"Спасение команды: —"
       :(mine.rescue_available?"Спасение команды: доступно.":"Спасение команды: уже использовано.");
   }
+  renderPowerBank(mine);
 }
+function renderPowerBank(team){
+  const power=Math.max(0,Math.min(100,Number(team?.power_points||0)));
+  if($("powerBankValue"))$("powerBankValue").textContent=power+" / 100";
+  if($("powerBankLevel"))$("powerBankLevel").textContent=power+"%";
+  if($("powerMeterFill"))$("powerMeterFill").style.width=power+"%";
+  const costs={hint:20,freeze:30,double:50};
+  const active=state.session?.status==="live"&&state.session?.interaction_phase==="answer"
+    &&state.participant?.life_state!=="eliminated"&&!state.viewAsParticipant;
+  document.querySelectorAll("[data-power]").forEach(b=>{
+    const ability=b.dataset.power;
+    b.disabled=!team||!active||!!state.powerUse||power<costs[ability];
+    b.classList.toggle("used",state.powerUse?.ability===ability);
+  });
+}
+async function loadCurrentPowerUse(questionId){
+  state.powerUse=null;
+  const teamId=state.participant?.team_id;
+  if(!state.session||!teamId||!questionId){renderPowerBank(state.teams.find(t=>t.id===teamId));return null}
+  const {data}=await sb.from("org_quiz_power_uses").select("*")
+    .eq("session_id",state.session.id).eq("team_id",teamId).eq("question_id",questionId).maybeSingle();
+  state.powerUse=data||null;
+  renderPowerBank(state.teams.find(t=>t.id===teamId));
+  return state.powerUse;
+}
+function applyPowerUseToQuestion(q){
+  const use=state.powerUse;
+  $("questionCard")?.classList.remove("power-double","power-freeze","power-hint");
+  if(!use){
+    if($("powerBankMessage"))$("powerBankMessage").textContent="Серия из 3+ правильных ответов заряжает команду.";
+    return;
+  }
+  const payload=use.payload||{};
+  if(use.ability==="double"){
+    $("questionCard")?.classList.add("power-double");
+    if($("powerBankMessage"))$("powerBankMessage").textContent="×2 активирован: правильный ответ команды принесёт двойные очки.";
+  }else if(use.ability==="freeze"){
+    $("questionCard")?.classList.add("power-freeze");
+    if($("powerBankMessage"))$("powerBankMessage").textContent="Таймер команды продлён на 3 секунды.";
+  }else if(use.ability==="hint"){
+    $("questionCard")?.classList.add("power-hint");
+    if(payload.kind==="text"){
+      if($("powerBankMessage"))$("powerBankMessage").textContent="Подсказка: "+String(payload.text||"");
+    }else if(payload.kind==="remove_option"){
+      const indexes=Array.isArray(payload.indexes)?payload.indexes:[];
+      indexes.forEach(i=>{
+        const b=$("answerOptions")?.querySelector('[data-i="'+i+'"]');
+        if(b){b.disabled=true;b.classList.add("power-removed");b.setAttribute("aria-hidden","true")}
+      });
+      if($("powerBankMessage"))$("powerBankMessage").textContent="Подсказка: один неверный вариант убран.";
+    }
+  }
+}
+async function useTeamPower(ability){
+  if(!state.session||!state.question)return;
+  const {data,error}=await sb.rpc("org_quiz_use_power",{p_session_id:state.session.id,p_ability:ability});
+  if(error){showToast(humanError(error.message));return}
+  state.powerUse=data?.[0]||null;
+  playSound("transition");
+  await loadStudentTeams();
+  applyPowerUseToQuestion(state.question);
+  if(state.powerUse?.ability==="freeze"){
+    const extra=Number(state.powerUse.payload?.seconds||3);
+    startSharedTimer(Number(state.question.time_limit_sec||30)+extra,state.session.question_started_at,$("questionTimer"),()=>lockQuestionUI());
+  }
+  showToast(ability==="double"?"×2 активирован.":ability==="freeze"?"Команда получила +3 секунды.":"Подсказка активирована.");
+}
+document.querySelectorAll("[data-power]").forEach(b=>b.addEventListener("click",()=>useTeamPower(b.dataset.power)));
 function clearPhaseTimer(){
   if(state.phaseTimer){clearInterval(state.phaseTimer);state.phaseTimer=null}
 }
@@ -102,6 +170,7 @@ function showStudentPhase(kind,startedAt,durationSec,title,text){
 
 async function loadActiveQuestion(){
   if(!state.session)return;
+  if(state.session.status!=="live"){state.powerUse=null;renderPowerBank(state.teams.find(t=>t.id===state.participant?.team_id));}
   if(state.session.status==="lobby"){
     hideStudentPhase();
     $("mediaStage").className="media-stage hidden";$("mediaStage").innerHTML="";$("answerFeedback").textContent="";
@@ -140,21 +209,24 @@ async function loadActiveQuestion(){
     .eq("quiz_id",state.session.quiz_id).eq("order_index",state.session.current_question_index).maybeSingle();
   if(error||!data){$("questionPrompt").textContent="Ожидаем следующий вопрос.";return}
   state.question=data; state.studentStartedAt=performance.now();
+  await loadCurrentPowerUse(data.id);
   $("questionCounter").textContent="Вопрос "+data.order_index;
   $("questionTypeBadge").textContent=questionTypeLabel(data.question_type);
-  startSharedTimer(data.time_limit_sec,state.session.question_started_at,$("questionTimer"),()=>lockQuestionUI());
+  const extraTime=state.powerUse?.ability==="freeze"?Number(state.powerUse.payload?.seconds||3):0;
+  startSharedTimer(Number(data.time_limit_sec||30)+extraTime,state.session.question_started_at,$("questionTimer"),()=>lockQuestionUI());
   $("questionPrompt").textContent=data.prompt;
   $("answerFeedback").textContent="";
   $("questionCard").classList.toggle("danger-mode",data.question_type==="elimination");
   await renderQuestionMedia(data,$("mediaStage"));
   await renderQuestionInteraction(data);
+  applyPowerUseToQuestion(data);
   if(state.viewAsParticipant){lockQuestionUI();msg($("answerFeedback"),"Режим предпросмотра Модератора — ответы не отправляются.");}
 }
 async function submitPayload(payload){
   if(!state.question)return;
   lockQuestionUI();
   const ms=Math.round(performance.now()-state.studentStartedAt);
-  const {data,error}=await sb.rpc("org_quiz_submit_payload_v2",{
+  const {data,error}=await sb.rpc("org_quiz_submit_payload_v3",{
     p_session_id:state.session.id,p_question_id:state.question.id,p_answer:payload,p_response_ms:ms
   });
   if(error){msg($("answerFeedback"),humanError(error.message));return}
@@ -162,8 +234,10 @@ async function submitPayload(payload){
   if(r?.is_correct){
     playSound("correct");
     const combo=Number(r.combo_multiplier||1)>1?` · комбо ×${String(r.combo_multiplier).replace(".",",")}`:"";
-    const bonus=Number(r.combo_bonus||0)>0?` (+${r.combo_bonus} бонус)`:"";
-    msg($("answerFeedback"),`Верно. +${r.points_awarded} баллов${bonus}${combo}`);
+    const comboBonus=Number(r.combo_bonus||0)>0?` (+${r.combo_bonus} combo)`:"";
+    const powerBonus=Number(r.power_bonus||0)>0?` (+${r.power_bonus} сила)`:"";
+    const gain=Number(r.power_gained||0)>0?` · банк +${r.power_gained}`:"";
+    msg($("answerFeedback"),`Верно. +${r.points_awarded} баллов${comboBonus}${powerBonus}${combo}${gain}`);
   }else{
     playSound(state.question?.question_type==="elimination"?"eliminate":"wrong");
     msg($("answerFeedback"),"Неверно. Серия сброшена.");
@@ -197,7 +271,8 @@ function subscribeStudent(sessionId){
       state.session=payload.new;await loadActiveQuestion();
     }).subscribe(),
     sb.channel("org-student-team-"+sessionId).on("postgres_changes",{event:"*",schema:"public",table:"org_quiz_teams",filter:"session_id=eq."+sessionId},loadStudentTeams).subscribe(),
-    sb.channel("org-student-person-"+sessionId).on("postgres_changes",{event:"UPDATE",schema:"public",table:"org_quiz_participants",filter:"session_id=eq."+sessionId},async()=>{await loadStudentSession(sessionId)}).subscribe()
+    sb.channel("org-student-person-"+sessionId).on("postgres_changes",{event:"UPDATE",schema:"public",table:"org_quiz_participants",filter:"session_id=eq."+sessionId},async()=>{await loadStudentSession(sessionId)}).subscribe(),
+    sb.channel("org-student-power-"+sessionId).on("postgres_changes",{event:"*",schema:"public",table:"org_quiz_power_uses",filter:"session_id=eq."+sessionId},async()=>{await loadStudentSession(sessionId)}).subscribe()
   );
 }
 
@@ -370,13 +445,14 @@ async function refreshTeacher(){
   if($("mechanicCombo"))$("mechanicCombo").textContent=s.combo_enabled?"Вкл.":"Выкл.";
   if($("mechanicRescue"))$("mechanicRescue").textContent=s.rescue_enabled?"1 на команду":"Выкл.";
   if($("mechanicSteal"))$("mechanicSteal").textContent=s.interaction_phase==="steal"?"Открыт":(s.steal_enabled?"Готов":"Выкл.");
+  if($("mechanicPower"))$("mechanicPower").textContent=s.power_enabled?"Активен":"Выкл.";
   if($("mechanicSecret")){
     const revealed=s.secret_round_revealed||Number(s.round_number||0)===Number(s.secret_round_number||-1);
     $("mechanicSecret").textContent=!s.secret_round_number?"Нет":(revealed?("Раунд "+s.secret_round_number):"Скрыт");
   }
   const step=["live","paused","countdown","round_break","finished"].includes(s.status)?"live":(s.setup_stage==="ready"?"ready":(s.setup_stage==="teams"?"teams":"room"));
   showSetupStep(step);
-  renderParticipants();renderTeacherLeaderboard();renderLiveRescuePanel();await renderLiveTeacherQuestion();await loadLiveStudentRanking();
+  renderParticipants();renderTeacherLeaderboard();renderLivePowerPanel();renderLiveRescuePanel();await renderLiveTeacherQuestion();await loadLiveStudentRanking();
 }
 function renderParticipants(){
   if(!state.teams.length){
@@ -438,6 +514,23 @@ function renderParticipants(){
 async function moveParticipant(id,team_id){
   const {error}=await sb.from("org_quiz_participants").update({team_id}).eq("id",id);
   if(error)msg($("teacherActionMessage"),error.message);else await refreshTeacher();
+}
+function renderLivePowerPanel(){
+  const host=$("livePowerList");if(!host)return;
+  if(!state.teacherSession?.power_enabled){
+    host.innerHTML='<p class="message">Банк силы отключён для этой сессии.</p>';return;
+  }
+  if(!state.teams.length){
+    host.innerHTML='<p class="message">Команды ещё не сформированы.</p>';return;
+  }
+  host.innerHTML=state.teams.map(t=>{
+    const power=Math.max(0,Math.min(100,Number(t.power_points||0)));
+    return `<div class="live-power-row">
+      <div class="live-power-copy"><strong>${escapeHtml(t.name)}</strong><small>${power} / 100 силы</small></div>
+      <div class="live-power-meter"><span style="width:${power}%"></span></div>
+      <b>${power}</b>
+    </div>`;
+  }).join("");
 }
 function renderLiveRescuePanel(){
   const host=$("liveRescueList");if(!host)return;
@@ -528,7 +621,7 @@ async function setSession(patch){
 }
 function subscribeTeacher(sessionId){
   clearSubs();
-  ["org_quiz_participants","org_quiz_teams","org_quiz_answers","org_quiz_steals","org_quiz_rescues"].forEach(table=>{
+  ["org_quiz_participants","org_quiz_teams","org_quiz_answers","org_quiz_steals","org_quiz_rescues","org_quiz_power_uses","org_quiz_power_ledger"].forEach(table=>{
     state.subs.push(sb.channel("teacher-"+table+"-"+sessionId).on("postgres_changes",{event:"*",schema:"public",table,filter:"session_id=eq."+sessionId},refreshTeacher).subscribe());
   });
   state.subs.push(sb.channel("teacher-session-"+sessionId).on("postgres_changes",{event:"UPDATE",schema:"public",table:"org_quiz_sessions",filter:"id=eq."+sessionId},async payload=>{state.teacherSession=payload.new;await refreshTeacher()}).subscribe());
@@ -537,7 +630,7 @@ function clearSubs(){state.subs.forEach(c=>sb.removeChannel(c));state.subs=[]}
 $("teacherLogout").onclick=async()=>{clearSubs();await sb.auth.signOut();location.reload()}
 function leaderRow(i,name,score){return `<div class="leader-row"><div class="rank">${i+1}</div><div><strong>${escapeHtml(name)}</strong></div><div class="score">${score}</div></div>`}
 function statusLabel(s){return ({lobby:"Лобби",countdown:"Отсчёт",round_break:"Переход",live:"Идёт",paused:"Пауза",finished:"Завершено"})[s]||s}
-function humanError(s=""){if(s.includes("SESSION_NOT_FOUND"))return"Комната не найдена или уже закрыта.";if(s.includes("TIME_EXPIRED"))return"Время на ответ истекло.";if(s.includes("QUESTION_NOT_ACTIVE"))return"Этот вопрос уже закрыт.";if(s.includes("STEAL_ALREADY_USED"))return"Перехват для этого вопроса уже использован.";if(s.includes("STEAL_REQUIRES_WRONG_ANSWER"))return"Перехват можно открыть только после ошибочного ответа.";if(s.includes("STEAL_NOT_SUPPORTED_FOR_TYPE"))return"Для этого типа задания перехват недоступен.";if(s.includes("STEAL_ALREADY_WON"))return"Перехват уже выиграла другая команда.";if(s.includes("TEAM_ALREADY_SCORED"))return"Ваша команда уже получила очки за этот вопрос.";if(s.includes("TEAM_ALREADY_ATTEMPTED_STEAL"))return"Команда уже использовала попытку перехвата.";if(s.includes("RESCUE_ALREADY_USED"))return"Эта команда уже использовала своё спасение.";if(s.includes("PLAYER_NOT_ELIGIBLE"))return"Этого игрока сейчас нельзя спасти.";if(s.includes("PLAYER_ELIMINATED"))return"Выбывший игрок не может участвовать в перехвате.";if(s.includes("Anonymous sign-ins are disabled"))return"Анонимный вход студентов отключён в Supabase.";return s}
+function humanError(s=""){if(s.includes("SESSION_NOT_FOUND"))return"Комната не найдена или уже закрыта.";if(s.includes("TIME_EXPIRED"))return"Время на ответ истекло.";if(s.includes("QUESTION_NOT_ACTIVE"))return"Этот вопрос уже закрыт.";if(s.includes("STEAL_ALREADY_USED"))return"Перехват для этого вопроса уже использован.";if(s.includes("STEAL_REQUIRES_WRONG_ANSWER"))return"Перехват можно открыть только после ошибочного ответа.";if(s.includes("STEAL_NOT_SUPPORTED_FOR_TYPE"))return"Для этого типа задания перехват недоступен.";if(s.includes("STEAL_ALREADY_WON"))return"Перехват уже выиграла другая команда.";if(s.includes("TEAM_ALREADY_SCORED"))return"Ваша команда уже получила очки за этот вопрос.";if(s.includes("TEAM_ALREADY_ATTEMPTED_STEAL"))return"Команда уже использовала попытку перехвата.";if(s.includes("RESCUE_ALREADY_USED"))return"Эта команда уже использовала своё спасение.";if(s.includes("PLAYER_NOT_ELIGIBLE"))return"Этого игрока сейчас нельзя спасти.";if(s.includes("PLAYER_ELIMINATED"))return"Выбывший игрок не может использовать эту механику.";if(s.includes("POWER_NOT_ENOUGH"))return"Недостаточно командной силы.";if(s.includes("POWER_ALREADY_USED_THIS_QUESTION"))return"Команда уже использовала способность на этом вопросе.";if(s.includes("POWER_USE_BEFORE_ANSWER"))return"Способность нужно активировать до ответа команды.";if(s.includes("POWER_NOT_AVAILABLE"))return"Банк силы сейчас недоступен.";if(s.includes("HINT_NOT_AVAILABLE"))return"Для этого задания безопасная подсказка недоступна.";if(s.includes("Anonymous sign-ins are disabled"))return"Анонимный вход студентов отключён в Supabase.";return s}
 function escapeHtml(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 
 // Восстанавливаем преподавательскую сессию только если пользователь уже авторизован.
