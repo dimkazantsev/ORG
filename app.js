@@ -864,7 +864,7 @@ $("createQuestionForm").addEventListener("submit",async e=>{
   if(type==="flag"&&media)config={...config,flag_url:media,media_kind:"flag"};
   if(["person_photo","place_photo"].includes(type)&&media)config={...config,image_url:media,media_kind:type};
   if(type==="anthem"&&media)config={...config,audio_url:media,media_kind:"audio"};
-  if(type==="region_map")config={...config,target_region:$("targetRegion").value.trim(),map_dataset:"data/regions.topojson",show_disputed_note:true};
+  if(type==="region_map")config={...config,target_region:$("targetRegion").value.trim(),map_dataset:"data/regions.topojson"};
   if(type==="vote")config={...config,poll:true,show_live_results:true};
   if(type==="elimination"||$("eliminateOnWrong").checked)config={...config,eliminate_on_wrong:true,elimination_label:"Выбывание в раунде"};
 
@@ -1614,7 +1614,6 @@ async function renderRussiaMap(q,host){
         <div><span>Ваш выбор</span><strong data-map-selected>Регион не выбран</strong></div>
         <button type="button" class="button-primary" data-map-confirm disabled>${isPreview?"Режим просмотра":"Подтвердить ответ"}</button>
       </div>
-      <div class="map-note">Спорные в международно-правовом отношении территории отмечены отдельной штриховкой.</div>
     </div>`;
 
   const canvas=host.querySelector(".map-canvas");
@@ -1643,7 +1642,7 @@ async function renderRussiaMap(q,host){
 
   const regions=regionLayer.selectAll("path").data(fc.features,d=>idOf(d)).join("path")
     .attr("d",path)
-    .attr("class",d=>"map-region"+(d.properties?.new2022?" new2022":""))
+    .attr("class","map-region")
     .attr("data-region",d=>idOf(d))
     .attr("tabindex",0)
     .attr("aria-label",d=>nameOf(d))
