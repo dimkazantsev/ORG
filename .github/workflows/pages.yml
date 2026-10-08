@@ -44,9 +44,9 @@ jobs:
           site="${PAGES_URL%/}"
           echo "Checking GitHub Pages at $site"
           for attempt in $(seq 1 12); do
-            if curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/index.html?release=20261009-3-$GITHUB_RUN_ID-$attempt" -o /tmp/org-published.html &&
-               grep -q 'data-build="20261009.3"' /tmp/org-published.html &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/app.js?v=20261009-qa3" -o /tmp/org-published.js &&
+            if curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/index.html?release=20261009-4-$GITHUB_RUN_ID-$attempt" -o /tmp/org-published.html &&
+               grep -q 'data-build="20261009.4"' /tmp/org-published.html &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/app.js?v=20261009-qa4" -o /tmp/org-published.js &&
                grep -q 'org_quiz_archive_history' /tmp/org-published.js; then
               echo "Published HTML and JS both contain the new release."
               exit 0
