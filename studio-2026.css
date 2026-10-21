@@ -580,3 +580,11 @@ body.studio-rebuild .question-visual.media-unverified,body.studio-rebuild .media
 @media(prefers-reduced-motion:reduce){
  body.studio-rebuild .duel-celebrate:after{animation:none!important}
 }
+
+
+/* Shared icon drawing contract: prevent old default SVG fills. */
+body.studio-rebuild .game-pack-visual svg,body.studio-rebuild .mode-card svg{
+ fill:none!important;stroke-width:1.75!important;stroke-linecap:round!important;
+ stroke-linejoin:round!important;overflow:visible
+}
+body.studio-rebuild .mode-card svg{width:23px;height:23px;stroke:#245dd0}
