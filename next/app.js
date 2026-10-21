@@ -25,7 +25,7 @@ function connectRoom(code){if(!ctx.client||!code)return;if(ctx.channel&&ctx.chan
  .on('broadcast',{event:'answer'},()=>{if(ctx.mode==='studio')scheduleRefresh(1300)})
  .subscribe();
 }
-function signal(event){ctx.channel?.send({type:'broadcast',event,payload:{changed:true}}).catch(()=>{})}
+function signal(event){ctx.channel?.send({type:'broadcast',event,payload:{changed:true}})?.catch(()=>{})}
 function scheduleRefresh(delay=800){if(ctx.refreshTimer)clearTimeout(ctx.refreshTimer);ctx.refreshTimer=setTimeout(()=>refreshRoom(false),delay)}
 async function refreshRoom(showError=true){if(!ctx.roomCode||ctx.refreshing||!ctx.client)return;
  ctx.refreshing=true;try{const data=await rpc('org_next_state',{p_code:ctx.roomCode});ctx.lastRefresh=Date.now();dataState(data);if(showError){notice('hostNotice','');notice('gameNotice','')}}catch(error){if(showError){notice('hostNotice',error.message,'error');notice('gameNotice',error.message,'error')}}finally{ctx.refreshing=false}}
@@ -80,7 +80,7 @@ function teamMarkup(teams){return (teams||[]).slice().sort((a,b)=>b.score-a.scor
 function renderRoom(){if(ctx.mode!=='studio')return;const s=ctx.room;const has=!!(s&&ctx.roomCode);
  $('createRoomPanel').hidden=has;$('activeRoomPanel').hidden=!has;
  if(!has)return;text('hostRoomCode',s.code);text('hostPlayersCount',(s.players||[]).length);text('hostTeamsCount',(s.teams||[]).length);text('hostPhase',phaseText(s.phase));text('hostRound',s.index<0?'До начала':(s.index+1)+' / '+s.total+' · '+phaseText(s.phase));
- $('hostStart').hidden=s.phase!=='lobby';$('hostReveal').hidden=s.phase!=='question';$('hostNext').hidden=s.phase!=='result';$('hostFinish').hidden=s.phase==='finished';$('hostTeams').innerHTML=teamMarkup(s.teams);
+ $('hostStart').hidden=s.phase!=='lobby';$('hostReveal').hidden=s.phase!=='question';$('hostNext').hidden=s.phase!=='result';$('hostFinish').hidden=s.phase==='finished';$('hostNewRoom').hidden=s.phase!=='finished';$('hostTeams').innerHTML=teamMarkup(s.teams);
  if(s.question&&s.phase!=='lobby'){const x=s.question;$('hostQuestion').hidden=false;
   $('hostQuestion').innerHTML='<div class="row"><span class="eyebrow" style="margin:0">Вопрос '+(s.index+1)+'</span><span class="phase-label">'+(s.phase==='question'?'Ответов: '+s.answers_count+'/'+s.players.length:'Ответ открыт')+'</span></div><h2>'+esc(x.prompt)+'</h2><div class="option-list">'+(x.options||[]).map((option,i)=>'<div class="option '+(s.phase==='result'&&i===Number(x.correct)?'correct':'')+'"><span class="letter">'+String.fromCharCode(65+i)+'</span>'+esc(option)+'</div>').join('')+'</div><p class="muted-small">'+(s.phase==='question'?'До конца вопроса: <b id="hostTimer">'+remaining(s.ends_at)+'</b> сек.':'Разбор вопроса')+'</p>';
  }else $('hostQuestion').hidden=true;
@@ -138,7 +138,7 @@ function attach(){q('#logoHome').addEventListener('click',home);
  $('closeQuizCreator').onclick=()=>{$('quizCreator').hidden=true};$('addQuestion').onclick=addQuestion;$('quizForm').addEventListener('submit',saveQuiz);
  $('refreshCatalog').onclick=loadCatalog;$('importQuiz').onclick=importQuiz;
  $('createRoomForm').addEventListener('submit',createRoom);
- $('hostStart').onclick=()=>advance('start');$('hostReveal').onclick=()=>advance('reveal');$('hostNext').onclick=()=>advance('next');$('hostFinish').onclick=()=>advance('finish');
+ $('hostStart').onclick=()=>advance('start');$('hostReveal').onclick=()=>advance('reveal');$('hostNext').onclick=()=>advance('next');$('hostFinish').onclick=()=>advance('finish');$('hostNewRoom').onclick=()=>{cleanupRoom();storage.del('host-room');renderRoom();tab('room')};
  $('refreshRoom').onclick=()=>refreshRoom();$('copyInvite').onclick=copyInvite;
  $('exportResults').onclick=exportResults;
  $('hostPlayers').addEventListener('change',e=>{const input=e.target.closest('[data-team-for]');if(input)assign(input.dataset.teamFor,input.value)});
