@@ -140,7 +140,7 @@ function attach(){q('#logoHome').addEventListener('click',home);
  $('openPresenter').onclick=openPresenterWindow;$('openPresenterSide').onclick=openPresenterWindow;
  $('rolePlayer').onclick=()=>setRole('player');$('roleHost').onclick=()=>setRole('host');
  $('joinCode').addEventListener('input',e=>{e.target.value=e.target.value.replace(/[^a-f0-9]/gi,'').toUpperCase()});
- const roles=$('#entryPanel .switch');
+ const roles=q('#entryPanel .switch');
  roles.addEventListener('keydown',event=>{
   if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
   event.preventDefault();
