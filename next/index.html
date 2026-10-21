@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="./app.css?v=2">
-<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="./app.js?v=2"></script>
 </head>
 <body>
@@ -102,7 +102,7 @@
     <div class="kpi-bar"><div class="kpi"><span>Игроков</span><strong id="hostPlayersCount">0</strong></div><div class="kpi"><span>Команд</span><strong id="hostTeamsCount">0</strong></div><div class="kpi"><span>Состояние</span><strong id="hostPhase">Ожидание</strong></div></div>
     <div class="panel"><div class="row"><h2>Пульт ведущего</h2><span class="phase-label" id="hostRound">До начала</span></div>
      <div id="hostQuestion" class="stage-question" hidden></div>
-     <div class="control-row" id="hostControls"><button class="btn btn-lime" id="hostStart" type="button">Начать игру</button><button class="btn btn-dark" id="hostReveal" type="button" hidden>Показать ответ</button><button class="btn btn-lime" id="hostNext" type="button" hidden>Следующий вопрос →</button><button class="btn btn-danger" id="hostFinish" type="button">Завершить</button></div>
+     <div class="control-row" id="hostControls"><button class="btn btn-lime" id="hostStart" type="button">Начать игру</button><button class="btn btn-dark" id="hostReveal" type="button" hidden>Показать ответ</button><button class="btn btn-lime" id="hostNext" type="button" hidden>Следующий вопрос →</button><button class="btn btn-danger" id="hostFinish" type="button">Завершить</button><button class="btn" id="hostNewRoom" type="button" hidden>Новая комната</button></div>
      <p id="hostNotice" class="notice" role="status" aria-live="polite"></p>
     </div>
     <div class="grid2" style="margin-top:14px">
