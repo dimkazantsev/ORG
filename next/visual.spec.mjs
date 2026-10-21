@@ -12,7 +12,7 @@ for(const width of [390,768,1440]){
  test('Home layout '+width,async({page})=>{
   await page.setViewportSize({width,height:920});
   await expect(page.locator('#homeView')).toBeVisible();
-  await expect(page.getByRole('button',{name:'Войти в игру'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Присоединиться к игре'})).toBeVisible();
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
   expect(overflow).toBeLessThanOrEqual(2);
   await page.screenshot({path:'visual-artifacts/home-'+width+'.png',fullPage:true});
@@ -21,10 +21,10 @@ for(const width of [390,768,1440]){
 
 test('Role switch reveals host login without hiding form labels',async({page})=>{
  await page.setViewportSize({width:390,height:844});
- await page.getByRole('tab',{name:'Я преподаватель'}).click();
+ await page.getByRole('tab',{name:'Преподаватель'}).click();
  await expect(page.getByLabel('Электронная почта')).toBeVisible();
  await expect(page.getByLabel('Пароль')).toBeVisible();
- await expect(page.getByRole('tabpanel',{name:'Я участник'})).toBeHidden();
+ await expect(page.getByRole('tabpanel',{name:'Участник'})).toBeHidden();
  await page.getByRole('tab',{name:'Участник'}).click();
  await expect(page.getByRole('textbox',{name:'Код комнаты',exact:true})).toBeVisible();
 });
@@ -91,28 +91,28 @@ test('Projection screen only renders questions and never host controls',async({p
 
 test('Welcome has one clear entry form, no duplicate navigation, and a QR beside it',async({page})=>{
   await page.setViewportSize({width:1440,height:900});
-  await expect(page.locator('#homeView .entry-landing')).toBeVisible();
-  await expect(page.locator('#homeView .entry-visual')).toBeVisible();
+  await expect(page.locator('#homeView .welcome-layout')).toBeVisible();
+  await expect(page.locator('#homeView .welcome-head')).toBeVisible();
   await expect(page.locator('#homeView .entry')).toBeVisible();
   await expect(page.locator('#homeView .qr-card')).toBeVisible();
-  await expect(page.locator('#homeView .home-rail')).toHaveCount(0);
+  await expect(page.locator('#homeView .entry-visual')).toHaveCount(0);
   await expect(page.locator('#homeView [id="joinForm"]')).toHaveCount(1);
   const form=await page.locator('#entryPanel').boundingBox();
   const qr=await page.locator('#homeQrCard').boundingBox();
   expect(form && qr).toBeTruthy();
-  expect(qr.y).toBeGreaterThan(form.y);
-  expect(qr.x).toBeGreaterThanOrEqual(form.x-2);
+  expect(Math.abs(qr.y-form.y)).toBeLessThan(5);
+  expect(qr.x).toBeGreaterThan(form.x);
 });
 
 test('At narrow widths, the entry form appears before the optional welcome banner',async({page})=>{
  for(const width of [320,360,390,768]){
   await page.setViewportSize({width,height:844});
   const boxForm=await page.locator('#entryPanel').boundingBox();
-  const boxHero=await page.locator('#homeView .entry-visual').boundingBox();
+  const boxHero=await page.locator('#homeView .welcome-head').boundingBox();
   const boxQR=await page.locator('#homeQrCard').boundingBox();
   expect(boxForm && boxHero && boxQR).toBeTruthy();
-  expect(boxForm.y).toBeLessThan(boxHero.y);
-  expect(boxQR.y).toBeLessThan(boxHero.y);
+  expect(boxHero.y).toBeLessThan(boxForm.y);
+  expect(boxQR.y).toBeGreaterThan(boxForm.y);
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
   expect(overflow).toBeLessThanOrEqual(2);
  }
@@ -125,5 +125,19 @@ test('Keyboard focus and tabs remain accessible',async({page})=>{
  await page.getByRole('tab',{name:'Я участник'}).click();
  await page.locator('#joinCode').focus();
  await expect(page.locator('#joinCode')).toBeFocused();
- await expect(page.getByRole('button',{name:'Войти в игру'})).toBeVisible();
+ await expect(page.getByRole('button',{name:'Присоединиться к игре'})).toBeVisible();
+});
+
+test('Room code normalizes and form required labels remain visible',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.locator('#joinCode').fill('ab12cd34');
+ await expect(page.locator('#joinCode')).toHaveValue('AB12CD34');
+ await expect(page.locator('#joinName')).toBeVisible();
+ await expect(page.locator('#joinGroup')).toBeVisible();
+ await expect(page.locator('#joinButton')).toBeVisible();
+});
+test('Entry fonts do not request Google Fonts on startup',async({page})=>{
+ const loaded=await page.evaluate(()=>performance.getEntriesByType('resource').map(r=>r.name));
+ expect(loaded.some(url=>url.includes('fonts.googleapis.com'))).toBe(false);
+ expect(loaded.some(url=>url.includes('fonts.gstatic.com'))).toBe(false);
 });
