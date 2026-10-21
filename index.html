@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#f5f7fb">
+  <meta name="theme-color" content="#f8fafc">
   <meta name="color-scheme" content="light">
   <title>ORG/PARTY — квиз-платформа</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,27 +11,27 @@
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="./styles.css?v=20261009-1">
   <link rel="stylesheet" href="./theme-light.css?v=20261009-qa4">
-  <link rel="stylesheet" href="./theme-polygon.css?v=20261009-8">
+  <link rel="stylesheet" href="./theme-modern.css?v=20261022-1">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="./lib/d3.v7.min.js"></script>
   <script src="./lib/topojson-client.min.js"></script>
 </head>
-<body class="poly-ui">
+<body class="modern-ui">
   <div class="aurora a1"></div><div class="aurora a2"></div><div class="aurora a3"></div>
   <div id="transitionLayer" class="transition-layer"><span>ORG PARTY</span></div>
   <div id="toast" class="toast hidden"></div>
 
   <header class="topbar">
     <button class="brand" id="brandHome" aria-label="На главную">
-      <span class="brand-sigil" aria-hidden="true"><svg viewBox="0 0 48 48" fill="none"><path d="M24 3 42 13v22L24 45 6 35V13L24 3Z"/><path d="m24 3 0 20 18 12M24 23 6 35m0-22 18 10 18-10" /></svg></span>
+      <span class="brand-sigil" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="9" stroke="currentColor" stroke-width="3.8"/><path d="M16 7v18" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg></span>
       <span class="brand-copy"><strong>ORG<span class="brand-slash">/</span>PARTY</strong><small>Квиз-платформа</small></span>
     </button>
     <div class="top-actions">
       <button id="soundToggle" class="icon-btn" title="Включить или выключить звук" aria-label="Переключить звук">♫</button>
       <span class="live-chip"><i></i> КВИЗ-ПЛАТФОРМА</span>
       <button id="teacherToggle" class="soft-btn">Модератор</button>
-      <span id="releaseVersion" class="release-version" data-build="20261009.8" title="Версия ORG Polygon Light / 09.10.2026">v2026.10.09.8</span>
+      <span id="releaseVersion" class="release-version" data-build="20261022.1" title="Версия ORG Modern / 22.10.2026">v2026.10.22.1</span>
     </div>
   </header>
 
@@ -42,7 +42,7 @@
           <div class="hero-eyebrow"><span class="hero-eyebrow-line"></span> ORG / ИНТЕРАКТИВНАЯ ПЛАТФОРМА</div>
           <h1>Игра,<br>которая <em>объединяет.</em></h1>
           <p>Создавайте квизы, собирайте команды и проводите занятие как живую игру. Один код — и вся аудитория участвует.</p>
-          <div class="hero-sample" aria-label="Как проходит игра"><div class="hero-facets" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="hero-sample" aria-label="Как проходит игра">
             <div class="hero-sample-top"><span class="live-dot"></span> В ПРЯМОМ ЭФИРЕ <span>01 / 03</span></div>
             <div class="hero-sample-question">Вопрос<span class="hero-sample-mark">?</span> Ответ<span class="hero-sample-arrow">↗</span></div>
             <div class="hero-sample-bottom"><span>КОМАНДА</span><span>СКОРОСТЬ</span><span>РЕЗУЛЬТАТ</span></div>
@@ -84,14 +84,14 @@
       <details class="mode-disclosure"><summary>Посмотреть игровые форматы <span>↗</span></summary><section class="mode-showcase">
         <div class="section-title"><div><div class="kicker">ВОЗМОЖНОСТИ</div><h2>Один квиз — много механик.</h2></div></div>
         <div class="mode-grid">
-          <article class="mode-card c-blue"><span>🏳</span><h3>Флаг</h3><p>Угадайте страну по флагу.</p></article>
-          <article class="mode-card c-violet"><span>♫</span><h3>Гимн</h3><p>Аудио-фрагмент и четыре версии.</p></article>
-          <article class="mode-card c-green"><span>◎</span><h3>Регионы</h3><p>Кликабельная карта России.</p></article>
-          <article class="mode-card c-peach"><span>◉</span><h3>Кто это?</h3><p>Знаменитые люди по фотографии.</p></article>
-          <article class="mode-card c-cyan"><span>⌖</span><h3>Где это?</h3><p>Место по случайной фотографии.</p></article>
-          <article class="mode-card c-yellow"><span>◫</span><h3>Голосование</h3><p>Нет правильного ответа — решает аудитория.</p></article>
-          <article class="mode-card c-red"><span>☠</span><h3>Тёмная комната</h3><p>Ошибка выбивает игрока из командного зачёта.</p></article>
-          <article class="mode-card c-lilac"><span>✦</span><h3>Баттл ответов</h3><p>Ответьте сами, затем выберите лучший ответ других.</p></article>
+          <article class="mode-card c-blue"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 21V4m0 1c5-3 9 3 15 0v12c-6 3-10-3-15 0"/></svg></span><h3>Флаг</h3><p>Угадайте страну по флагу.</p></article>
+          <article class="mode-card c-violet"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 18V5l11-2v13M10 9l11-2"/><circle cx="7" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span><h3>Гимн</h3><p>Аудио-фрагмент и четыре версии.</p></article>
+          <article class="mode-card c-green"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 5 6-2 6 3 6-2v15l-6 2-6-3-6 2V5Zm6-2v15m6-12v15"/></svg></span><h3>Регионы</h3><p>Кликабельная карта России.</p></article>
+          <article class="mode-card c-peach"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3-7 8-7s8 3 8 7"/></svg></span><h3>Кто это?</h3><p>Знаменитые люди по фотографии.</p></article>
+          <article class="mode-card c-cyan"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span><h3>Где это?</h3><p>Место по случайной фотографии.</p></article>
+          <article class="mode-card c-yellow"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/></svg></span><h3>Голосование</h3><p>Нет правильного ответа — решает аудитория.</p></article>
+          <article class="mode-card c-red"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg></span><h3>Тёмная комната</h3><p>Ошибка выбивает игрока из командного зачёта.</p></article>
+          <article class="mode-card c-lilac"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 2 2.6 6.4L21 11l-6.4 2.6L12 20l-2.6-6.4L3 11l6.4-2.6L12 2Z"/></svg></span><h3>Баттл ответов</h3><p>Ответьте сами, затем выберите лучший ответ других.</p></article>
         </div>
       </section></details>
     </section>
