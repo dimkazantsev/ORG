@@ -5,13 +5,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#f7f9f7">
 <title>QWIZ-PARTY — экран аудитории</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./presenter.css?v=1">
+<link rel="stylesheet" href="./presenter.css?v=3">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="./vendor/qrcode.min.js"></script>
-<script defer src="./presenter.js?v=1"></script>
+<script defer src="./presenter.js?v=6"></script>
 </head>
 <body>
 <div class="projection-shell" id="projectionShell">
@@ -24,6 +21,7 @@
 </main>
 <footer class="projection-footer">
  <span>QWIZ-PARTY · Экран аудитории</span>
+ <button id="projectionSound" type="button" class="fullscreen-control">♫ Включить звук</button>
  <button id="projectionFullscreen" type="button" class="fullscreen-control">⛶ На весь экран</button>
 </footer>
 <p id="projectionError" role="status" class="projection-error" hidden></p>

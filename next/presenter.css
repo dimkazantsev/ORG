@@ -33,3 +33,63 @@
 body:fullscreen .projection-shell{height:100dvh}
 @media(max-width:750px){.projection-shell{padding:20px}.projection-lobby{grid-template-columns:1fr}.projection-qr{min-height:0;width:max-content;max-width:100%}.projection-options{grid-template-columns:1fr}.projection-question h1{font-size:clamp(30px,7vw,54px)}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.projection-setup{width:min(850px,100%);margin:clamp(20px,8vh,120px) auto;text-align:center}
+.projection-setup h1{font-size:clamp(44px,6vw,88px);line-height:1.08;letter-spacing:-.06em;margin:0 0 22px}
+.projection-setup p{font-size:clamp(17px,1.6vw,23px);color:#67736e;max-width:670px;margin:0 auto 35px}
+.projection-setup-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:13px;align-items:end;background:#fff;padding:24px;border:1px solid #e2e8e4;border-radius:20px;text-align:left}
+.projection-setup-form label{font-size:12px;font-weight:800;color:#5c6c60;grid-column:1 / -1;margin-bottom:-7px}
+.projection-setup-form input{font:800 clamp(21px,2.2vw,34px) ui-monospace,Consolas,monospace;letter-spacing:.12em;min-height:64px;border-radius:12px;border:1px solid #cedbd0;padding:10px 20px;width:100%}
+.projection-setup-form button{background:#293b2f;color:#fff;font:750 15px system-ui,Arial,sans-serif;padding:0 28px;min-height:64px;border:0;border-radius:12px}
+.projection-finale{width:min(1250px,100%);margin:35px auto}
+.projection-finale h1{font-size:clamp(42px,6vw,88px);letter-spacing:-.065em;margin:0 0 15px}
+.projection-finale p{color:#68756a;margin:0 0 30px;font-size:19px}
+.projection-ranking{counter-reset:rank;display:grid;grid-template-columns:1fr 1fr;gap:12px;list-style:none;margin:0;padding:0}
+.projection-ranking li{display:flex;align-items:center;gap:15px;background:#fff;border:1px solid #e3ebe5;border-radius:14px;padding:19px 24px;font-size:clamp(17px,1.7vw,25px)}
+.projection-ranking li:nth-child(1){background:#fceab3;border-color:#f4d88d}
+.projection-ranking li:nth-child(2){background:#e8e8ed}
+.projection-ranking li:nth-child(3){background:#f3dfcb}
+.projection-ranking li strong{flex:1}.projection-ranking li b{font-variant-numeric:tabular-nums}
+.projection-rank{width:42px;height:42px;background:#fff;border-radius:11px;display:grid;place-items:center;font-weight:900;flex:0 0 42px}
+.projection-footer{gap:12px;flex-wrap:wrap}
+.projection-footer .fullscreen-control:first-of-type{margin-left:auto}
+@media(max-width:750px){.projection-setup-form{grid-template-columns:1fr}.projection-setup-form button{width:100%}.projection-ranking{grid-template-columns:1fr}.projection-ranking li{padding:15px}.projection-footer{font-size:11px}}
+
+/* Stage transitions — animated without external images or copyright audio. */
+.projection-activity,.countdown-scene{
+ position:relative;isolation:isolate;overflow:hidden;text-align:center;
+ width:min(1360px,100%);margin:auto;min-height:min(72vh,790px);
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ padding:clamp(35px,5vw,75px);border-radius:32px;
+ background:radial-gradient(ellipse at 22% 24%,#c2f2cf 0%,#e7faec 39%,#fff 85%);
+ border:1px solid #d3ebd8;
+}
+.projection-activity[data-type="break"]{background:radial-gradient(circle at 18% 18%,#f1d3ff 0%,#e4dcfd 45%,#fff 90%)}
+.projection-activity[data-type="bonus"]{background:radial-gradient(circle at 18% 18%,#ffde92 0%,#fff1d2 45%,#fff 90%)}
+.projection-activity[data-type="duel"]{background:radial-gradient(circle at 22% 24%,#ffb8a7 0%,#ffddd2 50%,#fff 95%)}
+.projection-activity:before,.countdown-scene:before{
+ content:"";position:absolute;right:-90px;top:-130px;height:410px;width:410px;
+ border:60px solid rgba(255,255,255,.58);border-radius:40%;z-index:-1;
+ animation:scene-float 7s ease-in-out infinite alternate;
+}
+.projection-activity h1,.countdown-scene h1{
+ font-size:clamp(42px,7vw,112px);letter-spacing:-.065em;line-height:1.1;
+ margin:20px auto 15px;max-width:1000px;
+}
+.projection-activity p,.countdown-scene p{font-size:clamp(19px,2vw,30px);color:#617169}
+.activity-emblem{width:90px;height:90px;border-radius:27px;background:rgba(255,255,255,.75);display:grid;place-items:center;
+ font-size:58px;color:#507653;box-shadow:0 18px 40px rgba(46,82,53,.07);transform:rotate(-10deg);
+ animation:scene-bounce 1.65s cubic-bezier(.2,.8,.25,1) infinite}
+.countdown-number{font-size:clamp(128px,23vw,360px);line-height:1;font-weight:800;letter-spacing:-.09em;
+ font-variant-numeric:tabular-nums;color:#2a7746;text-shadow:0 11px 0 #c5eccd;
+ animation:count-pop .95s ease-in-out infinite alternate}
+.projection-activity .projection-ranking{width:min(1000px,100%);margin:22px auto}
+.projection-activity .projection-ranking li{padding:14px 18px;font-size:18px}
+@keyframes count-pop{0%{transform:scale(.90) rotate(-3deg);filter:blur(1px)}100%{transform:scale(1.02) rotate(2deg);filter:blur(0)}}
+@keyframes scene-float{from{transform:translateY(-18px) rotate(-10deg)}to{transform:translateY(24px) rotate(16deg)}}
+@keyframes scene-bounce{0%,100%{transform:translateY(0) rotate(-9deg)}45%{transform:translateY(-15px) rotate(9deg)}}
+@media(prefers-reduced-motion:reduce){.projection-activity:before,.countdown-scene:before,.activity-emblem,.countdown-number{animation:none!important}}
+
+.projection-media{width:min(760px,100%);height:min(29vh,290px);display:grid;place-items:center;margin:0 auto 27px;background:#fff;border:1px solid #edf0ef;border-radius:18px;overflow:hidden}
+.projection-media img{width:100%;height:100%;object-fit:contain}
+@media(max-width:750px){.projection-media{height:210px}}
