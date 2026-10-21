@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f7f8f4">
+<title>ORG/PARTY — командный квиз</title>
+<meta name="description" content="Командный квиз: вопросы, комнаты, игроки и результаты.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./app.css?v=2">
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script defer src="./app.js?v=2"></script>
+</head>
+<body>
+<header class="topbar">
+ <div class="shell row">
+  <button type="button" class="brand" id="logoHome" aria-label="Вернуться на главную">
+   <span class="brand-mark" aria-hidden="true">о.</span>
+   <span><span class="brand-name">ORG<span>/</span>PARTY</span><span class="brand-tag">ИНТЕЛЛЕКТУАЛЬНЫЕ ИГРЫ</span></span>
+  </button>
+  <div class="header-end"><span class="header-caption"><i class="status-dot" aria-hidden="true"></i>Играй. Думай. Побеждай.</span></div>
+ </div>
+</header>
+<main class="shell">
+<section class="view" id="homeView">
+<div class="home-grid">
+ <div class="intro">
+  <div class="eyebrow">Командный квиз в реальном времени</div>
+  <h1>Думать вместе.<br><em>Побеждать вместе.</em></h1>
+  <p class="lead">Вопросы, команды и живой рейтинг. Ничего лишнего между вами и игрой.</p>
+  <div class="intro-meta"><span class="meta-item"><b>↗</b> Вход по коду</span><span class="meta-item"><b>◎</b> Командный зачёт</span><span class="meta-item"><b>✓</b> Без установки</span></div>
+ </div>
+ <div class="entry" id="entryPanel">
+  <div class="switch" role="tablist" aria-label="Способ входа">
+   <button type="button" role="tab" id="rolePlayer" aria-selected="true" aria-controls="playerEntry">Участник</button>
+   <button type="button" role="tab" id="roleHost" aria-selected="false" aria-controls="hostEntry">Преподаватель</button>
+  </div>
+  <div id="playerEntry" role="tabpanel" aria-labelledby="rolePlayer">
+   <h2>Войти в игру</h2><p class="entry-desc">Код комнаты у преподавателя. Регистрация не нужна.</p>
+   <form class="stack" id="joinForm">
+    <label>Код комнаты<input id="joinCode" placeholder="8 символов" maxlength="8" autocapitalize="characters" autocomplete="off" spellcheck="false" required></label>
+    <label>Имя и фамилия<input id="joinName" autocomplete="name" placeholder="Иван Иванов" minlength="2" maxlength="100" required></label>
+    <label>Учебная группа<input id="joinGroup" placeholder="Например, ПУ-231" maxlength="50"></label>
+    <button class="btn btn-dark" type="submit" id="joinButton">Присоединиться <span aria-hidden="true">↗</span></button>
+   </form>
+   <p id="joinNotice" class="notice" role="status" aria-live="polite"></p>
+  </div>
+  <div id="hostEntry" role="tabpanel" aria-labelledby="roleHost" hidden>
+   <h2>Кабинет ведущего</h2><p class="entry-desc">Подготовка вопросов, управление комнатой и результатами.</p>
+   <form class="stack" id="loginForm">
+    <label>Электронная почта<input type="email" id="loginEmail" autocomplete="username" required placeholder="Ваш email"></label>
+    <label>Пароль<input type="password" id="loginPassword" autocomplete="current-password" required placeholder="Ваш пароль"></label>
+    <button class="btn btn-dark" id="loginButton" type="submit">Войти в кабинет <span aria-hidden="true">↗</span></button>
+   </form>
+   <p id="loginNotice" class="notice" role="status" aria-live="polite"></p>
+  </div>
+  <div class="entry-foot"><span class="symbol">✓</span><span>Работает на компьютере, планшете и телефоне</span></div>
+ </div>
+</div>
+<div class="home-foot"><span><b>01.</b> Выберите игру</span><span><b>02.</b> Соберите команды</span><span><b>03.</b> Отвечайте и соревнуйтесь</span></div>
+</section>
+<section id="studioView" class="view" hidden>
+<div class="workspace">
+ <aside class="sidebar" aria-label="Разделы преподавателя">
+  <p class="nav-caption">Рабочее пространство</p>
+  <button type="button" class="side-btn" data-tab="library" aria-current="page"><b>01</b> Библиотека</button>
+  <button type="button" class="side-btn" data-tab="room"><b>02</b> Провести игру</button>
+  <button type="button" class="side-btn" data-tab="results"><b>03</b> Результаты</button>
+  <div class="side-footer"><button class="btn btn-small" id="logoutButton" type="button">Выйти из кабинета</button></div>
+ </aside>
+ <div>
+  <div class="page-head"><div><div class="eyebrow" id="studioEyebrow">ORG / Студия</div><h1 id="studioHeading">Библиотека</h1><p id="studioDescription">Ваши вопросы и готовые наборы.</p></div></div>
+  <section id="libraryTab">
+   <div class="toolbar"><button type="button" class="btn btn-dark" id="createQuizToggle">+ Создать набор</button><button type="button" class="btn" id="refreshCatalog">Обновить</button><button type="button" class="btn" data-tab="room">К проведению →</button></div>
+   <div id="quizCreator" class="panel" hidden>
+    <div class="row row-top"><div><h2>Новый набор</h2><p>Создайте вопросы. Правильные ответы будут доступны только серверу.</p></div><button type="button" class="btn btn-small" id="closeQuizCreator">Закрыть</button></div>
+    <form id="quizForm"><label>Название набора<input id="quizTitle" placeholder="Например, Россия: история и культура" maxlength="140" minlength="2" required></label>
+     <div id="questionEditors"></div>
+     <div class="toolbar"><button type="button" class="btn" id="addQuestion">+ Добавить вопрос</button><button type="submit" class="btn btn-lime" id="saveQuizButton">Сохранить набор</button></div>
+     <p id="quizNotice" class="notice" role="status" aria-live="polite"></p>
+    </form>
+   </div>
+   <div class="panel"><div class="row"><h2>Мои наборы</h2><span class="subtle" id="quizCount">0 наборов</span></div><div id="quizList" class="item-list"><p class="placeholder">Загрузка…</p></div></div>
+   <div class="panel soft" style="margin-top:15px">
+    <h3>Перенести вопросы из прежней версии</h3><p>Импортируются тесты с одним правильным ответом. Оригинальные наборы останутся нетронутыми.</p>
+    <div class="grid2"><label>Прежний набор<select id="legacyQuizSelect"><option value="">Загрузка…</option></select></label><div style="align-self:end"><button type="button" class="btn" id="importQuiz">Импортировать</button></div></div>
+    <p id="importNotice" class="notice" role="status" aria-live="polite"></p>
+   </div>
+  </section>
+  <section id="roomTab" hidden>
+   <div id="createRoomPanel" class="panel">
+    <h2>Новая игра</h2><p>Один набор, одна комната, понятный маршрут от приглашения до результата.</p>
+    <form class="stack" id="createRoomForm"><label>Набор вопросов<select id="roomQuizSelect" required><option value="">Выберите набор</option></select></label>
+     <div class="grid2"><label>Название игры<input id="roomTitle" value="Командный квиз" maxlength="140" required></label><label>Команды<select id="roomTeamCount"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></label></div>
+     <button class="btn btn-dark" type="submit" id="createRoomButton">Создать комнату →</button>
+    </form><p id="createRoomNotice" class="notice" role="status" aria-live="polite"></p>
+   </div>
+   <div id="activeRoomPanel" hidden>
+    <div class="panel soft"><div class="row row-top"><div><div class="eyebrow" style="margin:0">Комната для игроков</div><div class="code" id="hostRoomCode">—</div><p>Поделитесь кодом или ссылкой. Подключившиеся автоматически попадут в команду.</p></div><div class="control-row"><button type="button" class="btn" id="copyInvite">Скопировать приглашение</button><button type="button" class="btn" id="refreshRoom">Обновить</button></div></div></div>
+    <div class="kpi-bar"><div class="kpi"><span>Игроков</span><strong id="hostPlayersCount">0</strong></div><div class="kpi"><span>Команд</span><strong id="hostTeamsCount">0</strong></div><div class="kpi"><span>Состояние</span><strong id="hostPhase">Ожидание</strong></div></div>
+    <div class="panel"><div class="row"><h2>Пульт ведущего</h2><span class="phase-label" id="hostRound">До начала</span></div>
+     <div id="hostQuestion" class="stage-question" hidden></div>
+     <div class="control-row" id="hostControls"><button class="btn btn-lime" id="hostStart" type="button">Начать игру</button><button class="btn btn-dark" id="hostReveal" type="button" hidden>Показать ответ</button><button class="btn btn-lime" id="hostNext" type="button" hidden>Следующий вопрос →</button><button class="btn btn-danger" id="hostFinish" type="button">Завершить</button></div>
+     <p id="hostNotice" class="notice" role="status" aria-live="polite"></p>
+    </div>
+    <div class="grid2" style="margin-top:14px">
+     <div class="panel"><h3>Команды и очки</h3><div id="hostTeams"></div></div>
+     <div class="panel"><div class="row"><h3>Участники</h3><span class="subtle">Перераспределение до начала</span></div><div id="hostPlayers"></div></div>
+    </div>
+   </div>
+  </section>
+  <section id="resultsTab" hidden><div class="panel"><h2>Итоги игры</h2><p id="resultIntro">Завершите игру, чтобы увидеть итоги.</p><div id="resultTeams"></div><div class="toolbar"><button class="btn" data-tab="room">Вернуться к игре</button><button class="btn" id="exportResults">Скачать CSV</button></div></div></section>
+ </div>
+</div>
+</section>
+<section id="gameView" class="view" hidden>
+ <div class="player-layout">
+  <div class="game-top"><div><div class="eyebrow" style="margin:0 0 8px">ORG / Командный квиз</div><div id="playerGameTitle" class="game-name">Подключение…</div><div id="playerTeamName" class="game-sub">Команда определяется</div></div><button class="btn btn-small" id="leaveGame" type="button">На главную</button></div>
+  <div id="gameContent" class="game-card" aria-live="polite"><div class="game-empty"><h1>Загрузка игры</h1><p>Получаем состояние комнаты.</p></div></div>
+  <div class="game-side"><div class="panel"><h3>Рейтинг команд</h3><div id="playerScoreboard"></div></div><div class="panel"><h3>Ваш статус</h3><p id="playerStatus">Ожидание первого вопроса.</p></div></div>
+  <p id="gameNotice" class="notice" role="status" aria-live="polite"></p>
+ </div>
+</section>
+</main>
+<footer class="footer"><div class="shell row"><span>ORG/PARTY © 2026 · Версия 2</span><span>Один процесс. Одна игра. Один результат.</span></div></footer>
+</body>
+</html>
