@@ -43,6 +43,7 @@ jobs:
           test -s next/profile.js
           test -s next/profile.css
           test -s next/assets/animals.svg
+          test -s next/migrations/qwiz_advance_variable_collision_fix.sql
           node --check next/workspace.js
           node --check next/profile.js
           node --check next/presenter.js
@@ -94,7 +95,7 @@ jobs:
                grep -q -- '--q-blue' /tmp/org-published-uipromax.css &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/index.html?release=$GITHUB_RUN_ID" -o /tmp/org-next-index.html &&
                grep -q 'QWIZ-PARTY — командный квиз' /tmp/org-next-index.html &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/app.js?v=8" -o /tmp/org-next-app.js &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/app.js?v=10" -o /tmp/org-next-app.js &&
                grep -q 'org_next_answer' /tmp/org-next-app.js &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/app.css?v=6" -o /tmp/org-next-style.css &&
                grep -q -- '--mint' /tmp/org-next-style.css &&
@@ -104,7 +105,7 @@ jobs:
                grep -q 'Сборки и раунды' /tmp/qwiz-workspace.html &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/profile.html" -o /tmp/qwiz-profile.html &&
                grep -q 'Мой профиль' /tmp/qwiz-profile.html &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/workspace.js?v=2" -o /tmp/qwiz-workspace.js &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/workspace.js?v=3" -o /tmp/qwiz-workspace.js &&
                grep -q 'qwiz_launch_build' /tmp/qwiz-workspace.js &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/assets/animals.svg" -o /tmp/qwiz-animals.svg &&
                grep -q 'id="fox"' /tmp/qwiz-animals.svg; then
