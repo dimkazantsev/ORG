@@ -1,0 +1,38 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f7f8f8"><title>QWIZ-PARTY — Мой профиль</title>
+<link rel="stylesheet" href="./profile.css?v=1">
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script defer src="./vendor/qrcode.min.js"></script>
+<script defer src="./profile.js?v=1"></script></head><body>
+<header class="top"><div class="top-inner"><a class="brand" href="./"><span class="brand-icon">Q</span><span>QWIZ-PARTY</span></a><a href="./" class="back">← К игре</a></div></header>
+<main class="profile-shell"><div class="page-head"><span class="eyebrow">ЛИЧНЫЙ КАБИНЕТ</span><h1>Мой профиль</h1><p>Ваши результаты и аватар доступны после входа на любом устройстве.</p></div>
+<div id="authPanel" class="auth-panel" hidden><div class="switch" role="tablist" aria-label="Профиль">
+ <button id="authLoginTab" class="active" type="button">Уже есть профиль</button><button id="authRegisterTab" type="button">Создать профиль</button></div>
+ <div id="loginPanel"><h2>Войти в профиль</h2><p>Введите придуманные ранее логин и пароль.</p>
+ <form id="studentLogin"><label>Логин<input id="studentLoginName" autocomplete="username" minlength="3" maxlength="25" required></label>
+ <label>Пароль<input id="studentLoginPassword" type="password" autocomplete="current-password" minlength="8" required></label>
+ <button type="submit" class="primary">Войти</button></form></div>
+ <div id="registerPanel" hidden><h2>Создать профиль</h2><p>Выберите собственный логин и пароль, чтобы сохранять результаты.</p>
+ <form id="studentRegister"><div class="grid2"><label>ФИО<input id="registerFullName" autocomplete="name" maxlength="100" required></label>
+ <label>Игровой ник<input id="registerNickname" maxlength="50" required></label></div>
+ <label>Логин (латиница, цифры, . _ -)<input id="registerLogin" autocomplete="username" pattern="[a-z0-9._-]{3,25}" maxlength="25" minlength="3" required></label>
+ <label>Пароль (8+ символов)<input id="registerPassword" type="password" autocomplete="new-password" minlength="8" required></label>
+ <label>Подтвердить пароль<input id="registerPasswordConfirm" type="password" autocomplete="new-password" minlength="8" required></label>
+ <div class="section-title"><h3>Выберите персонажа</h3></div><div class="avatar-picker" id="registerAvatars"></div>
+ <button type="submit" class="primary">Создать профиль</button></form></div>
+ <div class="scan-entry" id="pairEntry" hidden><h3>Вход по одноразовому QR</h3><p>Если вы получили QR-код на другом своём устройстве, откройте ссылку с этого устройства. Код больше нельзя использовать повторно.</p>
+ <button class="secondary" id="claimPair" type="button">Войти по одноразовому коду</button></div>
+ <p class="message" id="authMessage" role="status"></p></div>
+<div id="dashboard" hidden><div class="dashboard-grid"><section class="profile-card">
+<div class="profile-ident"><div class="big-avatar" id="myAvatar"></div><div><h2 id="myNickname"></h2><p id="myFullName"></p><span class="login-chip" id="myLogin"></span></div></div>
+<form id="changeProfile"><label>ФИО<input id="myNameInput" maxlength="100" required></label><label>Игровой ник<input id="myNicknameInput" maxlength="50" required></label>
+<div class="section-title"><h3>Ваш персонаж</h3></div><div class="avatar-picker" id="profileAvatars"></div>
+<button type="submit" class="primary">Сохранить профиль</button></form></section>
+<section class="results-card"><span class="eyebrow">МОИ РЕЗУЛЬТАТЫ</span><h2>Игровая статистика</h2>
+<div class="metric-grid"><div><strong id="statGames">0</strong><span>Игр</span></div><div><strong id="statAnswers">0</strong><span>Ответов</span></div><div><strong id="statCorrect">0</strong><span>Верных</span></div><div><strong id="statPoints">0</strong><span>Очков</span></div></div>
+<div class="qr-private"><h3>Войти на другом устройстве</h3><p>Одноразовый QR-код привяжет ваш планшет или телефон к этому профилю. Он доступен пять минут.</p>
+<button type="button" id="createPair" class="secondary">Создать QR для своего устройства</button><div id="pairQr" class="pair-qr" hidden></div><p id="pairClock" class="small" role="status"></p></div></section></div>
+<section class="security-card"><h2>Изменить пароль</h2><form id="passwordForm" class="security-form"><label>Текущий пароль<input id="oldPassword" type="password" autocomplete="current-password" required></label><label>Новый пароль<input id="newPassword" type="password" minlength="8" autocomplete="new-password" required></label><button type="submit" class="secondary">Обновить пароль</button></form></section>
+<p id="profileMessage" role="status" class="message"></p></div>
+</main><footer>QWIZ-PARTY · Данные профиля не публикуются на экране аудитории</footer></body></html>
