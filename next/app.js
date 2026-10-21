@@ -139,6 +139,15 @@ function attach(){q('#logoHome').addEventListener('click',home);
  $('qrDialog').addEventListener('click',e=>{if(e.target===$('qrDialog'))$('qrDialog').close()});
  $('openPresenter').onclick=openPresenterWindow;$('openPresenterSide').onclick=openPresenterWindow;
  $('rolePlayer').onclick=()=>setRole('player');$('roleHost').onclick=()=>setRole('host');
+ $('joinCode').addEventListener('input',e=>{e.target.value=e.target.value.replace(/[^a-f0-9]/gi,'').toUpperCase()});
+ const roles=$('#entryPanel .switch');
+ roles.addEventListener('keydown',event=>{
+  if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+  event.preventDefault();
+  const target=event.key==='ArrowLeft'||event.key==='Home'?'player':'host';
+  setRole(target);
+  $(target==='player'?'rolePlayer':'roleHost').focus();
+ });
  $('joinForm').addEventListener('submit',joinRoom);$('loginForm').addEventListener('submit',login);$('logoutButton').onclick=logout;
  document.addEventListener('click',event=>{
   const target=event.target.closest('[data-tab]');if(target&&ctx.mode==='studio')tab(target.dataset.tab);
@@ -172,13 +181,17 @@ function joinUrl(code=null){
  if(code)url.searchParams.set('room',String(code).toUpperCase());
  return url.toString();
 }
+const qrCache=new WeakMap();
 function writeQR(containerId,url,size){
  const container=$(containerId);if(!container)return;
+ const key=url+'|'+size;
+ if(qrCache.get(container)===key && container.querySelector('img'))return;
  container.replaceChildren();
  if(typeof QRCode!=='function'){container.textContent='Не удалось загрузить генератор QR';return}
  try{
   new QRCode(container,{text:url,width:size,height:size,
    colorDark:'#232626',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+  qrCache.set(container,key);
  }catch(error){container.textContent='QR-код временно недоступен'}
 }
 function renderQrPanels(){
