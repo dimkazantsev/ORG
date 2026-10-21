@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f7f9f7">
+<title>QWIZ-PARTY — экран аудитории</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./presenter.css?v=1">
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script defer src="./vendor/qrcode.min.js"></script>
+<script defer src="./presenter.js?v=1"></script>
+</head>
+<body>
+<div class="projection-shell" id="projectionShell">
+<header class="projection-header">
+ <div class="projection-brand"><span class="brand-square" aria-hidden="true">Q</span><span>QWIZ<span class="brand-dash">—</span>PARTY</span></div>
+ <div id="projectionRoom" class="projection-room"></div>
+</header>
+<main id="projectionMain" aria-live="polite" aria-atomic="true">
+<div class="projection-loading"><h1>Подключаем экран аудитории</h1><p>Ожидание состояния игры.</p></div>
+</main>
+<footer class="projection-footer">
+ <span>QWIZ-PARTY · Экран аудитории</span>
+ <button id="projectionFullscreen" type="button" class="fullscreen-control">⛶ На весь экран</button>
+</footer>
+<p id="projectionError" role="status" class="projection-error" hidden></p>
+</div>
+</body></html>
