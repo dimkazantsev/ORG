@@ -24,20 +24,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate modern UI and application
+      - name: Validate rebuilt studio UI and application
         shell: bash
         run: |
           set -euo pipefail
           node --check app.js
-          test -s theme-modern.css
-          grep -q 'class="modern-ui"' index.html
-          grep -q 'theme-modern.css?v=20261022-1' index.html
-          grep -q -- '--ui-radius' theme-modern.css
+          test -s studio-2026.css
+          grep -q 'class="studio-rebuild"' index.html
+          grep -q 'studio-2026.css?v=20261022-2' index.html
+          grep -q -- '--studio-radius' studio-2026.css
           grep -q 'id="teacherView"' index.html
           grep -q 'id="studentView"' index.html
           grep -q 'id="questionBank"' index.html
           grep -q 'id="answerOptions"' index.html
-          echo "Modern UI and existing game anchors verified"
+          grep -q 'id="homeAccess"' index.html
+          grep -q 'id="heroHost"' index.html
+          grep -q 'class="studio-flowbar"' index.html
+          ! grep -q 'theme-modern.css' index.html
+          ! grep -q 'theme-light.css' index.html
+          echo "Rebuilt UI and existing game anchors verified"
       
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -59,12 +64,12 @@ jobs:
           site="${PAGES_URL%/}"
           echo "Checking GitHub Pages at $site"
           for attempt in $(seq 1 12); do
-            if curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/index.html?release=20261022-1-$GITHUB_RUN_ID-$attempt" -o /tmp/org-published.html &&
-               grep -q 'data-build="20261022.1"' /tmp/org-published.html &&
+            if curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/index.html?release=20261022-2-$GITHUB_RUN_ID-$attempt" -o /tmp/org-published.html &&
+               grep -q 'data-build="20261022.2"' /tmp/org-published.html &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/app.js?v=20261009-qa6" -o /tmp/org-published.js &&
                grep -q 'org_quiz_archive_history' /tmp/org-published.js &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/theme-modern.css?v=20261022-1" -o /tmp/org-published-modern.css &&
-               grep -q -- '--ui-radius' /tmp/org-published-modern.css; then
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/studio-2026.css?v=20261022-2" -o /tmp/org-published-studio.css &&
+               grep -q -- '--studio-radius' /tmp/org-published-studio.css; then
               echo "Published HTML and JS both contain the new release."
               exit 0
             fi

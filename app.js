@@ -1954,3 +1954,16 @@ async function renderPreviewPractice(q){
    };
  };render();
 }
+
+
+/* Reuse existing role-switch logic for the home CTAs; no duplicate app state. */
+document.getElementById("heroJoin")?.addEventListener("click",()=>{
+  document.querySelector('[data-role-tab="participant"]')?.click();
+  document.getElementById("homeAccess")?.scrollIntoView({behavior:"smooth",block:"center"});
+  document.getElementById("joinCode")?.focus({preventScroll:true});
+});
+document.getElementById("heroHost")?.addEventListener("click",()=>{
+  document.querySelector('[data-role-tab="moderator"]')?.click();
+  document.getElementById("homeAccess")?.scrollIntoView({behavior:"smooth",block:"center"});
+  document.getElementById("openModerator")?.focus({preventScroll:true});
+});
