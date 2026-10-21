@@ -29,10 +29,10 @@ jobs:
         run: |
           set -euo pipefail
           node --check app.js
-          test -s theme-polygon.css
+          test -s theme-modern.css
           grep -q 'class="modern-ui"' index.html
           grep -q 'theme-modern.css?v=20261022-1' index.html
-          grep -q -- '--ui-radius' theme-polygon.css
+          grep -q -- '--ui-radius' theme-modern.css
           grep -q 'id="teacherView"' index.html
           grep -q 'id="studentView"' index.html
           grep -q 'id="questionBank"' index.html
