@@ -115,7 +115,7 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  }
  if(!question){el.innerHTML='<p class="placeholder">Ожидаем вопрос.</p>';return}
  const time=remaining(s.ends_at);
- const done=!!s.has_answer;const locked=s.phase!=='question'||done||time===0;
+ const done=!!s.has_answer;const eligible=s.eligible!==false;const locked=s.phase!=='question'||done||time===0||!eligible;
  const options=(question.options||[]).map((option,i)=>{
   let classes='option';if(s.phase==='result'&&i===Number(question.correct))classes+=' correct';
   return '<button type="button" class="'+classes+'" data-answer="'+i+'" '+(locked?'disabled':'')+'><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+esc(option)+'</span></button>';
@@ -126,7 +126,7 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  '<div class="meter"><span>'+(s.phase==='result'?'Время вышло':'Выберите один ответ')+'</span><strong>'+(s.phase==='question'?'<span id="playerTimer">'+time+'</span> сек.':'Разбор')+'</strong></div>'+
  '<div class="option-list">'+options+'</div>'+(s.phase==='result'?'<p class="notice success">Правильный ответ: '+esc((question.options||[])[Number(question.correct)]??'—')+'</p>'+(question.explanation?'<p>'+esc(question.explanation)+'</p>':''):
  done?'<p class="notice success">Ваш ответ принят. Ожидайте остальных участников.</p>':time===0?'<p class="notice">Приём ответов завершён.</p>':'');
- text('playerStatus',s.phase==='result'?'Результат открыт. Скоро следующий вопрос.':done?'Ответ записан на сервере.':'Ваш ответ ещё не отправлен.');
+ text('playerStatus',!eligible?'Этот раунд не назначен вашей команде или участнику.':s.phase==='result'?'Результат открыт. Скоро следующий вопрос.':done?'Ответ записан на сервере.':'Ваш ответ ещё не отправлен.');
 }
 async function advance(action){const s=ctx.room;if(!s)return;busy($('host'+({start:'Start',reveal:'Reveal',next:'Next',finish:'Finish'})[action]),true);notice('hostNotice','');
  try{if(action==='finish'&&!confirm('Завершить эту игру?'))return;
