@@ -32,6 +32,10 @@ jobs:
           test -s studio-2026.css
           test -s ui-ux-pro-max.css
           node --test next/test.mjs
+          test -s next/presenter.html
+          test -s next/presenter.css
+          test -s next/presenter.js
+          test -s next/vendor/qrcode.min.js
           grep -q 'class="studio-rebuild"' index.html
           grep -q 'studio-2026.css?v=20261022-4' index.html
           grep -q 'ui-ux-pro-max.css?v=20261022-5' index.html
@@ -79,11 +83,13 @@ jobs:
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/ui-ux-pro-max.css?v=20261022-5" -o /tmp/org-published-uipromax.css &&
                grep -q -- '--q-blue' /tmp/org-published-uipromax.css &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/index.html?release=$GITHUB_RUN_ID" -o /tmp/org-next-index.html &&
-               grep -q 'ORG/PARTY — командный квиз' /tmp/org-next-index.html &&
+               grep -q 'QWIZ-PARTY — командный квиз' /tmp/org-next-index.html &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/app.js?v=2" -o /tmp/org-next-app.js &&
                grep -q 'org_next_answer' /tmp/org-next-app.js &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/app.css?v=2" -o /tmp/org-next-style.css &&
-               grep -q -- '--lime' /tmp/org-next-style.css; then
+               grep -q -- '--lime' /tmp/org-next-style.css &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/presenter.html" -o /tmp/org-next-presenter.html &&
+               grep -q 'QWIZ-PARTY — экран аудитории' /tmp/org-next-presenter.html; then
               echo "Published HTML and JS both contain the new release."
               exit 0
             fi
