@@ -12,7 +12,7 @@ for(const width of [390,768,1440]){
  test('Home layout '+width,async({page})=>{
   await page.setViewportSize({width,height:920});
   await expect(page.locator('#homeView')).toBeVisible();
-  await expect(page.getByRole('button',{name:'Присоединиться ↗'})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Присоединиться'})).toBeVisible();
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
   expect(overflow).toBeLessThanOrEqual(2);
   await page.screenshot({path:'visual-artifacts/home-'+width+'.png',fullPage:true});
