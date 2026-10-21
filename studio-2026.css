@@ -470,3 +470,12 @@ body.studio-rebuild th{background:#f8fafc!important;color:#5b6d83!important}
  body.studio-rebuild *,body.studio-rebuild *::before,body.studio-rebuild *::after{
  animation-duration:.01ms!important;animation-iteration-count:1!important;
  transition-duration:.01ms!important;scroll-behavior:auto!important}}
+
+/* Visibility invariant: dynamic screen switching must outrank every grid/flex rule. */
+body.studio-rebuild .hidden,
+body.studio-rebuild .studio-shell.hidden,
+body.studio-rebuild .studio-flowbar.hidden,
+body.studio-rebuild .studio-main .hidden,
+body.studio-rebuild .hero-card.hidden,
+body.studio-rebuild .access-card.hidden,
+body.studio-rebuild .mode-disclosure.hidden{display:none!important}
