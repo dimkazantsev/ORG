@@ -1,0 +1,28 @@
+name: ORG Quiz v2 / QA
+on:
+  push:
+    branches:
+      - 'rebuild/**'
+  pull_request:
+    paths:
+      - 'next/**'
+      - '.github/workflows/next-qa.yml'
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate new app
+        run: node --test next/test.mjs
+      - name: Static asset checks
+        run: |
+          test -s next/index.html
+          test -s next/app.js
+          test -s next/app.css
+          test -s next/migration.sql
+          ! grep -q 'studio-2026.css' next/index.html
