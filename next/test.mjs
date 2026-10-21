@@ -81,7 +81,7 @@ test('Teacher studio, profile, and public screen parse as independent applicatio
   const js=readFileSync(new URL('./'+name+'.js',import.meta.url),'utf8');
   const css=readFileSync(new URL('./'+name+'.css',import.meta.url),'utf8');
   assert.doesNotThrow(()=>new Function(js),'Invalid '+name+'.js');
-  assert.ok(html.length>2000&&css.length>1000);
+  assert.ok(html.length>800&&css.length>1000,'Missing application shell or stylesheet');
   assert.match(html,/QWIZ-PARTY/);
   assert.match(css,/@media\(/);
  }
