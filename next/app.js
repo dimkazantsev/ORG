@@ -1,5 +1,5 @@
 'use strict';
-// ORG/PARTY 2 — no dependency on old app.js and no client-side answer checking.
+// QWIZ-PARTY 3 — no dependency on old app.js and no client-side answer checking.
 const URL_SUPABASE='https://bderfrcfuhnutuoyudje.supabase.co';
 const KEY_SUPABASE='sb_publishable_Hv7NgYuVsfKhFuhX_9pl0Q_qXWA2wOr';
 const $=id=>document.getElementById(id);
@@ -16,8 +16,8 @@ function tab(name){ctx.visibleTab=name;for(const id of ['library','room','result
 function busy(button,active){if(!button)return;button.disabled=active;button.setAttribute('aria-busy',String(active))}
 async function rpc(name,params={}){if(!ctx.client)throw Error('Нет соединения с Supabase. Проверьте загрузку библиотеки.');const {data,error}=await ctx.client.rpc(name,params);if(error)throw Error(error.message||'Ошибка запроса');return data}
 async function ensureAuth(){const {data:{session},error}=await ctx.client.auth.getSession();if(error)throw Error(error.message);if(session)return session;const r=await ctx.client.auth.signInAnonymously();if(r.error)throw Error(r.error.message);return r.data.session}
-function dataState(room){ctx.room=room; if(!room)return;connectRoom(room.code); if(ctx.mode==='studio'){renderRoom();renderResults()}else if(ctx.mode==='game')renderGame()}
-function cleanupRoom(){if(ctx.channel){ctx.client?.removeChannel(ctx.channel);ctx.channel=null}ctx.room=null;ctx.roomCode=null;storage.del('room');}
+function dataState(room){ctx.room=room; if(!room)return;renderQrPanels();connectRoom(room.code); if(ctx.mode==='studio'){renderRoom();renderResults()}else if(ctx.mode==='game')renderGame()}
+function cleanupRoom(){if(ctx.channel){ctx.client?.removeChannel(ctx.channel);ctx.channel=null}ctx.room=null;ctx.roomCode=null;storage.del('room');renderQrPanels();}
 function connectRoom(code){if(!ctx.client||!code)return;if(ctx.channel&&ctx.channel.topic==='realtime:org-next-'+code)return;if(ctx.channel)ctx.client.removeChannel(ctx.channel);
  ctx.channel=ctx.client.channel('org-next-'+code,{config:{broadcast:{ack:false}}})
  .on('broadcast',{event:'phase'},()=>scheduleRefresh(500))
@@ -25,7 +25,13 @@ function connectRoom(code){if(!ctx.client||!code)return;if(ctx.channel&&ctx.chan
  .on('broadcast',{event:'answer'},()=>{if(ctx.mode==='studio')scheduleRefresh(1300)})
  .subscribe();
 }
-function signal(event){ctx.channel?.send({type:'broadcast',event,payload:{changed:true}})?.catch(()=>{})}
+function signal(event){
+ ctx.channel?.send({type:'broadcast',event,payload:{changed:true}})?.catch(()=>{});
+ if(ctx.roomCode&&'BroadcastChannel' in window){
+   const channel=new BroadcastChannel('qwiz-projector-'+ctx.roomCode);
+   channel.postMessage({event,code:ctx.roomCode}); channel.close();
+ }
+}
 function scheduleRefresh(delay=800){if(ctx.refreshTimer)clearTimeout(ctx.refreshTimer);ctx.refreshTimer=setTimeout(()=>refreshRoom(false),delay)}
 async function refreshRoom(showError=true){if(!ctx.roomCode||ctx.refreshing||!ctx.client)return;
  ctx.refreshing=true;try{const data=await rpc('org_next_state',{p_code:ctx.roomCode});ctx.lastRefresh=Date.now();dataState(data);if(showError){notice('hostNotice','');notice('gameNotice','')}}catch(error){if(showError){notice('hostNotice',error.message,'error');notice('gameNotice',error.message,'error')}}finally{ctx.refreshing=false}}
@@ -45,7 +51,7 @@ async function login(event){event.preventDefault();busy($('loginButton'),true);n
 async function enterStudio(){showScreen('studio');tab('library');await loadCatalog();
  const code=storage.get('host-room');if(code){ctx.roomCode=code;await refreshRoom(false);if(ctx.room)tab('room')}}
 async function logout(){if(!ctx.client)return;await ctx.client.auth.signOut();cleanupRoom();storage.del('host-room');showScreen('home');setRole('host');notice('loginNotice','Вы вышли из кабинета.','success')}
-function home(){showScreen('home')}
+function home(){showScreen('home');renderQrPanels()}
 async function loadCatalog(){try{
  ctx.quizzes=await rpc('org_next_catalog');renderCatalog();await loadLegacy();
 }catch(e){notice('quizNotice',e.message,'error');$('quizList').innerHTML='<p class="placeholder">Не удалось загрузить наборы.</p>'}}
@@ -72,7 +78,7 @@ async function importQuiz(){busy($('importQuiz'),true);notice('importNotice','И
 async function createRoom(event){event.preventDefault();busy($('createRoomButton'),true);notice('createRoomNotice','Создание комнаты…');
  try{const quiz=$('roomQuizSelect').value;if(!quiz)throw Error('Выберите набор.');
  const code=await rpc('org_next_create_room',{p_quiz:quiz,p_title:$('roomTitle').value.trim(),p_teams:Number($('roomTeamCount').value)});
- ctx.roomCode=code;storage.set('host-room',code);await refreshRoom();renderRoom();notice('createRoomNotice','');
+ ctx.roomCode=code;storage.set('host-room',code);renderQrPanels();await refreshRoom();renderRoom();notice('createRoomNotice','');
  }catch(error){notice('createRoomNotice',error.message,'error')}finally{busy($('createRoomButton'),false)}}
 function phaseText(phase){return ({lobby:'Ожидание',question:'Вопрос',result:'Разбор',finished:'Завершена'})[phase]||phase}
 function remaining(date){if(!date)return 0;return Math.max(0,Math.ceil((Date.parse(date)-Date.now())/1000))}
@@ -117,7 +123,7 @@ async function submitAnswer(choice){if(ctx.mode!=='game'||!ctx.room||ctx.room.ph
  }catch(e){notice('gameNotice',e.message,'error');await refreshRoom(false)}finally{buttons.forEach(x=>busy(x,false))}}
 function exportResults(){const s=ctx.room;if(!s)return;const rows=[['Место','Команда','Игроков','Очков'],...s.teams.slice().sort((a,b)=>b.score-a.score).map((x,i)=>[i+1,x.name,x.players,x.score])];const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='org-party-'+s.code+'.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
-async function copyInvite(){if(!ctx.roomCode)return;const link=new URL(location.href);link.searchParams.set('room',ctx.roomCode);const invite=link.toString();try{await navigator.clipboard.writeText(invite);notice('hostNotice','Ссылка скопирована.','success')}catch{notice('hostNotice','Ссылка для приглашения: '+invite)}}
+async function copyInvite(){if(!ctx.roomCode)return;const invite=joinUrl(ctx.roomCode);try{await navigator.clipboard.writeText(invite);notice('hostNotice','Ссылка скопирована.','success')}catch{notice('hostNotice','Ссылка для приглашения: '+invite)}}
 function updateClocks(){if(ctx.room?.phase!=='question')return;const seconds=remaining(ctx.room.ends_at);text('playerTimer',seconds);text('hostTimer',seconds);if(seconds===0){for(const b of qa('#gameContent [data-answer]'))b.disabled=true}}
 async function restore(){if(!ctx.client)return;try{
  const data=await ctx.client.auth.getSession();if(!data.data.session)return;
@@ -126,6 +132,14 @@ async function restore(){if(!ctx.client)return;try{
  const isAdmin=await rpc('org_quiz_is_admin_check');if(isAdmin){await enterStudio()}else{showScreen('home')}
  }catch{showScreen('home')}}
 function attach(){q('#logoHome').addEventListener('click',home);
+ $('homeNavTop').onclick=()=>{home();window.scrollTo(0,0)};
+ $('homeNavJoin').onclick=()=>{setRole('player');$('entryPanel').scrollIntoView({behavior:'smooth'})};
+ $('homeNavHost').onclick=()=>{setRole('host');$('entryPanel').scrollIntoView({behavior:'smooth'})};
+ $('homeQrOpen').onclick=()=>openQrDialog();$('studioQrOpen').onclick=()=>openQrDialog(ctx.roomCode);
+ $('homeQrCopy').onclick=()=>copyQrLink();$('qrCopy').onclick=()=>copyQrLink(activeQrCode);
+ $('qrClose').onclick=()=>$('qrDialog').close();$('qrDone').onclick=()=>$('qrDialog').close();
+ $('qrDialog').addEventListener('click',e=>{if(e.target===$('qrDialog'))$('qrDialog').close()});
+ $('openPresenter').onclick=openPresenterWindow;$('openPresenterSide').onclick=openPresenterWindow;
  $('rolePlayer').onclick=()=>setRole('player');$('roleHost').onclick=()=>setRole('host');
  $('joinForm').addEventListener('submit',joinRoom);$('loginForm').addEventListener('submit',login);$('logoutButton').onclick=logout;
  document.addEventListener('click',event=>{
@@ -138,7 +152,7 @@ function attach(){q('#logoHome').addEventListener('click',home);
  $('closeQuizCreator').onclick=()=>{$('quizCreator').hidden=true};$('addQuestion').onclick=addQuestion;$('quizForm').addEventListener('submit',saveQuiz);
  $('refreshCatalog').onclick=loadCatalog;$('importQuiz').onclick=importQuiz;
  $('createRoomForm').addEventListener('submit',createRoom);
- $('hostStart').onclick=()=>advance('start');$('hostReveal').onclick=()=>advance('reveal');$('hostNext').onclick=()=>advance('next');$('hostFinish').onclick=()=>advance('finish');$('hostNewRoom').onclick=()=>{cleanupRoom();storage.del('host-room');renderRoom();tab('room')};
+ $('hostStart').onclick=()=>advance('start');$('hostReveal').onclick=()=>advance('reveal');$('hostNext').onclick=()=>advance('next');$('hostFinish').onclick=()=>advance('finish');$('hostNewRoom').onclick=()=>{cleanupRoom();storage.del('host-room');renderRoom();renderQrPanels();tab('room')};
  $('refreshRoom').onclick=()=>refreshRoom();$('copyInvite').onclick=copyInvite;
  $('exportResults').onclick=exportResults;
  $('hostPlayers').addEventListener('change',e=>{const input=e.target.closest('[data-team-for]');if(input)assign(input.dataset.teamFor,input.value)});
@@ -147,9 +161,96 @@ function attach(){q('#logoHome').addEventListener('click',home);
  addQuestion();
  setInterval(()=>{if(ctx.roomCode&&!document.hidden)refreshRoom(false)},30000);
  ctx.clock=setInterval(updateClocks,500);
+ renderQrPanels();
  const incoming=new URLSearchParams(location.search).get('room');
  if(incoming&&/^[A-F0-9]{8}$/i.test(incoming))$('joinCode').value=incoming.toUpperCase();
 }
+
+/* One locally generated QR code: room-specific after creation, general entry before that.
+   No join URL is sent to a third-party QR service. */
+let activeQrCode=null;
+function joinUrl(code=null){
+ const url=new URL('./',window.location.href);
+ if(code)url.searchParams.set('room',String(code).toUpperCase());
+ return url.toString();
+}
+function writeQR(containerId,url,size){
+ const container=$(containerId);if(!container)return;
+ container.replaceChildren();
+ if(typeof QRCode!=='function'){container.textContent='Не удалось загрузить генератор QR';return}
+ try{
+  new QRCode(container,{text:url,width:size,height:size,
+   colorDark:'#232626',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
+ }catch(error){container.textContent='QR-код временно недоступен'}
+}
+function renderQrPanels(){
+ const code=ctx.room?.code||storage.get('host-room')||null;
+ const homeCode=code||null;
+ text('homeQrCode',homeCode||'QWIZ-PARTY');
+ text('homeQrText',homeCode
+  ?'Отсканируйте код для входа в комнату '+homeCode+'.'
+  :'Отсканируйте код, чтобы открыть страницу QWIZ-PARTY на телефоне.');
+ writeQR('homeQr',joinUrl(homeCode),160);
+ const present=Boolean(ctx.roomCode&&ctx.room);
+ $('studioQrOpen').disabled=!present;
+ $('openPresenterSide').disabled=!present;
+ text('studioQrCode',present?ctx.roomCode:'Нет комнаты');
+ text('studioQrIntro',present
+  ?'Покажите код участникам. Нажмите на него, чтобы увеличить.'
+  :'Создайте комнату, и здесь появится код для подключения участников.');
+ if(present)writeQR('studioQr',joinUrl(ctx.roomCode),145);
+ else $('studioQr').replaceChildren();
+}
+function openQrDialog(code){
+ activeQrCode=code===undefined?(ctx.room?.code||storage.get('host-room')||null):code;
+ const room=Boolean(activeQrCode);
+ text('qrDialogTitle',room?'Вход в комнату':'Открыть QWIZ-PARTY');
+ text('qrDialogCode',room?activeQrCode:'QWIZ-PARTY');
+ writeQR('qrLarge',joinUrl(activeQrCode),320);
+ $('qrDialog').showModal();
+ $('qrClose').focus();
+}
+async function copyQrLink(code=ctx.room?.code||storage.get('host-room')||null){
+ const address=joinUrl(code);
+ try{await navigator.clipboard.writeText(address);
+  const target=ctx.mode==='studio'?'hostNotice':'joinNotice';
+  notice(target,'Ссылка скопирована.','success');
+ }catch{
+  window.prompt('Скопируйте ссылку для участников:',address);
+ }
+}
+/* Windows extended desktop: a separate projection-only browser window.
+   We request screen management on the actual click, with manual movement fallback. */
+async function openPresenterWindow(){
+ const code=ctx.room?.code||ctx.roomCode;
+ if(!code){notice('presenterNotice','Сначала создайте комнату.','error');return}
+ const url=new URL('./presenter.html',location.href);url.searchParams.set('room',code);
+ const popup=window.open(url.toString(),'qwiz_party_projector',
+  'popup=yes,width=1280,height=760,menubar=no,toolbar=no,location=no,status=no');
+ if(!popup){
+  notice('presenterNotice','Браузер заблокировал окно. Разрешите всплывающие окна для QWIZ-PARTY.','error');
+  return;
+ }
+ let onSecond=false;
+ if('getScreenDetails' in window){
+  try{
+   const screens=await window.getScreenDetails();
+   const secondary=screens.screens.find(s=>!s.isPrimary)
+    ||screens.screens.find(s=>s!==screens.currentScreen);
+   if(secondary){
+    popup.moveTo(secondary.availLeft,secondary.availTop);
+    popup.resizeTo(secondary.availWidth,secondary.availHeight);
+    onSecond=true;
+   }
+  }catch{}
+ }
+ popup.focus();
+ notice('presenterNotice',onSecond
+  ?'Окно проектора открыто на дополнительном дисплее. В нём включите полноэкранный режим.'
+  :'Окно проектора открыто. Если оно осталось на основном мониторе, перенесите его Win + Shift + → или ←, затем нажмите F11.',
+ 'success');
+}
+
 async function init(){attach();if(!window.supabase?.createClient){notice('joinNotice','Не удалось загрузить Supabase. Проверьте подключение к интернету.','error');notice('loginNotice','Не удалось загрузить Supabase.','error');return}
  ctx.client=window.supabase.createClient(URL_SUPABASE,KEY_SUPABASE);
  await restore();
