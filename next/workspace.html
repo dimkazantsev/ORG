@@ -73,6 +73,12 @@
 <aside class="context-panel"><div class="context-card"><span class="eyebrow">QWIZ-PARTY</span><h3>Как начать занятие</h3><p>Откройте сборку, создайте комнату и запустите на планшете пульт ведущего. На экран в аудитории выведите отдельное окно.</p></div>
 <div class="context-card lavender"><h3>Два экрана</h3><p>Компьютер показывает вопросы, телефон управляет тем же состоянием. Пароль преподавателя требуется только для пульта.</p><button type="button" id="showPublicScreen" class="secondary-button">Открыть публичный экран ↗</button></div></aside>
 </div>
+<dialog class="edit-dialog" id="topicDialog"><form id="topicForm" method="dialog">
+<div class="dialog-head"><div><span class="eyebrow">БИБЛИОТЕКА</span><h2>Новая тема</h2></div><button type="button" class="icon-btn" data-close="topicDialog">✕</button></div>
+<div class="dialog-body"><label>Название темы<input id="topicName" maxlength="90" minlength="2" required placeholder="Флаги, портреты, кино, наука…"></label>
+<label>Категория<select id="topicCategory"><option>Общие знания</option><option>География</option><option>История</option><option>Культура и искусство</option><option>Лица и биографии</option><option>Кино и музыка</option><option>Наука и техника</option><option>Логика</option><option>Спорт</option><option>Политика и общество</option></select></label></div>
+<div class="dialog-footer"><span class="message" id="topicNotice" role="status"></span><button type="button" class="secondary-button" data-close="topicDialog">Отмена</button><button type="submit" class="primary-button">Создать тему</button></div>
+</form></dialog>
 <dialog class="edit-dialog" id="questionDialog"><form id="questionForm" method="dialog"><div class="dialog-head"><div><span class="eyebrow">БАНК ВОПРОСОВ</span><h2 id="questionDialogTitle">Новый вопрос</h2></div><button type="button" class="icon-btn" data-close="questionDialog">✕</button></div>
  <div class="dialog-body"><label>Тип вопроса<select id="editKind"></select></label><label>Тема<select id="editTopic"><option value="">Без темы</option></select></label>
  <label>Текст вопроса<textarea id="editPrompt" rows="3" maxlength="3000" required></textarea></label>
