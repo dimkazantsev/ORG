@@ -21,7 +21,7 @@ test('Client never directly reads answer keys or core tables',()=>{
 test('Quiz has independently accessible mobile and host routes',()=>{
  for(const name of ['homeView','gameView','studioView','joinForm','loginForm','createRoomForm','quizForm','gameContent','hostControls'])
  assert.match(html,new RegExp('id="'+name+'"'));
- assert.match(css,/@media\s*\(max-width:570px\)/);
+ assert.match(css,/@media\s*\(max-width:540px\)/);
  assert.match(css,/:focus-visible/);
  assert.match(css,/prefers-reduced-motion/);
 });
@@ -61,4 +61,15 @@ test('QWIZ-PARTY brand, QR library, presenter-only route and 15 teams',()=>{
  assert.match(upgrade,/check\(position between 1 and 15\)/);
  assert.match(upgrade,/v_question := v_question - 'correct' - 'explanation'/);
  assert.match(upgrade,/for update/);
+});
+
+test('Entry refactor is a single CSS design system without duplicate selectors or remote font',()=>{
+ assert.doesNotMatch(html,/fonts\.googleapis\.com/);
+ assert.doesNotMatch(html,/homeNavTop|entry-visual|entry-landing/);
+ assert.match(html,/id="homeQr"/);
+ assert.match(html,/id="rolePlayer"/);
+ assert.match(html,/id="joinForm"/);
+ assert.match(css,/\.welcome-layout/);
+ assert.ok(Buffer.byteLength(css,'utf8')<23000,'CSS exceeds single sheet budget');
+ assert.match(js,/qrCache/);
 });

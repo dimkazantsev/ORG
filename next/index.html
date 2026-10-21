@@ -6,13 +6,10 @@
 <meta name="theme-color" content="#f7f8f4">
 <title>QWIZ-PARTY — командный квиз</title>
 <meta name="description" content="Командный квиз: вопросы, комнаты, игроки и результаты.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./app.css?v=4">
+<link rel="stylesheet" href="./app.css?v=5">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="./vendor/qrcode.min.js"></script>
-<script defer src="./app.js?v=4"></script>
+<script defer src="./app.js?v=5"></script>
 </head>
 <body>
 <header class="topbar">
@@ -26,83 +23,77 @@
 </header>
 <main class="shell">
 <section class="view" id="homeView">
-  <div class="entry-landing">
-    <div class="entry-visual">
-      <div class="entry-visual-top">
-        <div class="hero-brand"><span class="hero-brand-icon">Q</span> QWIZ-PARTY</div>
-        <span class="hero-chip"><span class="hero-dot"></span> КОМАНДНАЯ ИГРА</span>
-      </div>
-      <div class="entry-visual-center">
-        <p class="hero-kicker">ОБРАЗОВАНИЕ × СОРЕВНОВАНИЕ</p>
-        <h1>Когда<br>знания <span>играют<br>вместе.</span></h1>
-        <p class="hero-lead">Одна комната, живые вопросы и настоящая командная работа. Войти можно за несколько секунд.</p>
-      </div>
-      <div class="hero-steps" aria-label="Как проходит игра">
-        <div class="hero-step"><span>01</span><strong>Войти</strong><small>По коду комнаты</small></div>
-        <div class="hero-step"><span>02</span><strong>Ответить</strong><small>Вместе с командой</small></div>
-        <div class="hero-step"><span>03</span><strong>Узнать</strong><small>Итоговый результат</small></div>
-      </div>
-    </div>
-    <div class="entry-action">
+  <div class="welcome">
+    <header class="welcome-head">
+      <div class="welcome-kicker"><span class="welcome-kicker-dot"></span> КОМАНДНЫЙ КВИЗ</div>
+      <h1>Ваша игра начинается здесь.</h1>
+      <p>Участнику нужен код комнаты. Преподавателю — вход в кабинет.</p>
+    </header>
+    <div class="welcome-layout">
       <div class="entry" id="entryPanel">
-        <div class="entry-headerline"><span class="entry-small-label">НАЧНИТЕ ЗДЕСЬ</span><span class="entry-online"><span></span> Онлайн</span></div>
         <div class="switch" role="tablist" aria-label="Способ входа">
-          <button type="button" role="tab" id="rolePlayer" aria-selected="true" aria-controls="playerEntry">Я участник</button>
-          <button type="button" role="tab" id="roleHost" aria-selected="false" aria-controls="hostEntry">Я преподаватель</button>
+          <button type="button" role="tab" id="rolePlayer" aria-selected="true" aria-controls="playerEntry">Участник</button>
+          <button type="button" role="tab" id="roleHost" aria-selected="false" aria-controls="hostEntry">Преподаватель</button>
         </div>
         <div id="playerEntry" role="tabpanel" aria-labelledby="rolePlayer">
-          <h2>Присоединиться<br>к игре</h2>
-          <p class="entry-desc">Введите код, который покажет ведущий.</p>
+          <div class="entry-heading"><div><h2>Войти в комнату</h2><p class="entry-desc">Введите данные, чтобы присоединиться к команде.</p></div><span class="entry-step">01 / 02</span></div>
           <form class="stack" id="joinForm">
-            <label class="code-label">Код комнаты
-              <input id="joinCode" placeholder="Например, A1B2C3D4" maxlength="8" autocapitalize="characters" autocomplete="off" spellcheck="false" required>
+            <label class="code-label" for="joinCode">Код комнаты
+              <input id="joinCode" placeholder="A1B2C3D4" inputmode="text" maxlength="8" autocapitalize="characters" autocomplete="off" spellcheck="false" pattern="[a-fA-F0-9]{8}" title="Восемь символов: цифры и латинские буквы A–F" aria-describedby="codeHint" required>
             </label>
+            <p class="field-hint" id="codeHint">Восьмизначный код покажет преподаватель.</p>
             <div class="entry-person">
-              <label>Имя и фамилия
+              <label for="joinName">Имя и фамилия
                 <input id="joinName" autocomplete="name" placeholder="Иван Иванов" minlength="2" maxlength="100" required>
               </label>
-              <label>Учебная группа
+              <label for="joinGroup">Учебная группа <span class="optional">необязательно</span>
                 <input id="joinGroup" placeholder="Например, ПУ-231" maxlength="50">
               </label>
             </div>
-            <button class="btn btn-dark" type="submit" id="joinButton">Войти в игру <span aria-hidden="true">↗</span></button>
+            <button class="btn btn-dark entry-submit" type="submit" id="joinButton">Присоединиться к игре <span aria-hidden="true">↗</span></button>
           </form>
           <p id="joinNotice" class="notice" role="status" aria-live="polite"></p>
         </div>
         <div id="hostEntry" role="tabpanel" aria-labelledby="roleHost" hidden>
-          <h2>Провести<br>свою игру</h2>
-          <p class="entry-desc">Управляйте вопросами, командами и экраном проектора.</p>
+          <div class="entry-heading"><div><h2>Кабинет преподавателя</h2><p class="entry-desc">Управляйте комнатами, вопросами и трансляцией на проектор.</p></div></div>
           <form class="stack" id="loginForm">
-            <label>Электронная почта
-              <input type="email" id="loginEmail" autocomplete="username" required placeholder="Ваш email">
+            <label for="loginEmail">Электронная почта
+              <input type="email" id="loginEmail" autocomplete="username" required placeholder="name@example.com">
             </label>
-            <label>Пароль
-              <input type="password" id="loginPassword" autocomplete="current-password" required placeholder="Ваш пароль">
+            <label for="loginPassword">Пароль
+              <input type="password" id="loginPassword" autocomplete="current-password" required placeholder="Введите пароль">
             </label>
-            <button class="btn btn-dark" id="loginButton" type="submit">Открыть кабинет <span aria-hidden="true">↗</span></button>
+            <button class="btn btn-dark entry-submit" type="submit" id="loginButton">Открыть кабинет <span aria-hidden="true">↗</span></button>
           </form>
           <p id="loginNotice" class="notice" role="status" aria-live="polite"></p>
         </div>
-        <div class="entry-foot"><span class="entry-secure">✓</span><span>Без установки. Работает на любом устройстве.</span></div>
+        <div class="entry-foot"><span class="entry-foot-dot"></span><span>Регистрация участника не требуется</span></div>
       </div>
-      <div class="home-qr-column">
+      <aside class="home-qr-column" aria-label="Вход по QR-коду">
         <div class="qr-card" id="homeQrCard">
-          <div class="qr-info">
-            <span class="card-overline">БЫСТРЫЙ ВХОД</span>
-            <h2>Сканируйте<br>и играйте</h2>
-            <p id="homeQrText">Откройте камеру телефона и наведите на QR-код.</p>
+          <div class="qr-card-header">
+            <span class="qr-badge">АЛЬТЕРНАТИВНЫЙ ВХОД</span>
+            <span class="qr-symbol" aria-hidden="true">↗</span>
+          </div>
+          <h2>Войти с телефона</h2>
+          <p id="homeQrText">Отсканируйте QR-код камерой телефона, чтобы открыть страницу игры.</p>
+          <button type="button" class="qr-click" id="homeQrOpen" aria-label="Увеличить QR-код на весь экран">
+            <span id="homeQr" class="qr-render"></span>
+            <span class="qr-hint">Нажмите, чтобы увеличить</span>
+          </button>
+          <div class="qr-bottom">
             <span id="homeQrCode" class="qr-code-label">QWIZ-PARTY</span>
             <button type="button" class="qr-copy-link" id="homeQrCopy">Скопировать ссылку <span aria-hidden="true">↗</span></button>
           </div>
-          <button type="button" class="qr-click" id="homeQrOpen" aria-label="Увеличить QR-код на весь экран">
-            <span id="homeQr" class="qr-render"></span>
-            <span class="qr-hint">Увеличить ↗</span>
-          </button>
         </div>
-      </div>
+      </aside>
+    </div>
+    <div class="welcome-footer">
+      <span><span class="footer-tick">✓</span> До 15 команд</span>
+      <span><span class="footer-tick">✓</span> Телефон, планшет или ПК</span>
+      <span><span class="footer-tick">✓</span> Вопросы на втором экране</span>
     </div>
   </div>
-  <div class="entry-bottomline"><span>QWIZ-PARTY / ИНТЕЛЛЕКТУАЛЬНЫЕ ИГРЫ</span><span>Преподаватель и участники — в одной системе</span></div>
 </section>
 <section id="studioView" class="view" hidden>
 <div class="workspace">
