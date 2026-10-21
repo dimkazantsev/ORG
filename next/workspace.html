@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f6f8f9"><title>QWIZ-PARTY — Студия преподавателя</title>
+<link rel="stylesheet" href="./workspace.css?v=1">
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script defer src="./vendor/qrcode.min.js"></script><script defer src="./workspace.js?v=1"></script>
+</head><body>
+<header class="top"><div class="top-wrap"><a class="brand" href="./"><span class="brand-mark">Q</span><span>QWIZ<span class="brand-mid">-</span>PARTY<small>СТУДИЯ ПРЕПОДАВАТЕЛЯ</small></span></a>
+<div class="top-tools"><span class="connection" id="connText">Проверка подключения…</span><button type="button" class="small-button" id="refreshAll">↻ Обновить</button><button type="button" class="small-button" id="signOut">Выйти</button></div></div></header>
+<div class="layout">
+<aside class="nav"><div class="nav-title">РАБОЧЕЕ ПРОСТРАНСТВО</div>
+<button type="button" data-section="bank" class="nav-link selected"><span class="nav-symbol">▦</span> Вопросы <span class="nav-count" id="navQuestionCount">0</span></button>
+<button type="button" data-section="builder" class="nav-link"><span class="nav-symbol">◫</span> Сборки и раунды</button>
+<button type="button" data-section="rooms" class="nav-link"><span class="nav-symbol">▶</span> Проведение</button>
+<button type="button" data-section="insights" class="nav-link"><span class="nav-symbol">▥</span> Аналитика</button>
+<div class="nav-end"><div class="nav-hint">Один кабинет на любом устройстве. Комнаты синхронизируются через сервер.</div><a href="./presenter.html" target="_blank" rel="noopener" class="nav-project">Открыть экран аудитории ↗</a></div></aside>
+<main class="content">
+<section class="page" id="bankPage">
+ <div class="page-head"><div><span class="eyebrow">БИБЛИОТЕКА / 01</span><h1>Банк вопросов</h1><p>Темы, форматы, поиск и редактирование в одном месте.</p></div><button class="primary-button" id="newQuestion">+ Создать вопрос</button></div>
+ <div class="filter-panel"><label class="search-label">Поиск по вопросам<input id="bankSearch" type="search" placeholder="Введите слова из вопроса…" autocomplete="off"></label>
+ <label>Тема<select id="bankTopic"><option value="">Все темы</option></select></label>
+ <label>Тип<select id="bankKind"><option value="">Все типы</option></select></label>
+ <label>Сортировка<select id="bankSort"><option value="newest">Сначала новые</option><option value="oldest">Сначала старые</option><option value="difficulty">По сложности</option></select></label></div>
+ <div class="section-head"><h2>Темы</h2><button class="text-button" id="newTopic">+ Добавить тему</button></div>
+ <div class="topic-chips" id="topicChips"></div>
+ <div class="section-head"><h2>Вопросы <span class="subtle" id="questionsTotal"></span></h2><span class="small-help">Первые 100 результатов · фильтры применяются на сервере</span></div>
+ <div id="bankItems" class="question-list"><div class="empty">Загрузка вопросов…</div></div>
+ <p id="bankMessage" class="message" role="status"></p>
+</section>
+<section class="page" id="builderPage" hidden>
+ <div class="page-head"><div><span class="eyebrow">БИБЛИОТЕКА / 02</span><h1>Сборки и раунды</h1><p>Соберите программу игры из карточек в нужном порядке.</p></div><button class="primary-button" id="newBuild">+ Новая сборка</button></div>
+ <div class="saved-area"><div class="section-head"><h2>Сохранённые игры</h2><span class="small-help">Доступны на всех ваших устройствах</span></div><div id="savedBuilds" class="saved-builds"><div class="empty">Пока нет сохранённых сборок.</div></div></div>
+ <div class="composer" id="composer" hidden><div class="composer-head">
+ <label>Название сборки<input id="buildTitle" placeholder="Например, Большая игра: 7 раундов" maxlength="140"></label>
+ <div class="composer-actions"><button type="button" class="small-button" id="addCard">+ Карточка</button><button type="button" class="primary-button" id="saveBuild">Сохранить сборку</button></div></div>
+ <div class="card-library" id="cardPalette">
+ <button type="button" data-card="round">▦ Вопросы</button><button type="button" data-card="intro">◉ Вступление</button>
+ <button type="button" data-card="break">♫ Перерыв</button><button type="button" data-card="team_stats">▥ Команды</button>
+ <button type="button" data-card="player_stats">♙ Игроки</button><button type="button" data-card="bonus">✦ Бонус</button>
+ <button type="button" data-card="duel">⇄ Дуэль</button></div>
+ <div class="section-head"><h2>Последовательность карточек</h2><span class="small-help">Перетащите карточку или используйте стрелки. Финал всегда последний.</span></div>
+ <div id="roundCards" class="round-grid"></div><div class="composer-bottom"><button type="button" class="secondary-button" id="appendRound">+ Добавить раунд</button><span id="buildMessage" role="status" class="message"></span></div></div>
+</section>
+<section class="page" id="roomsPage" hidden>
+ <div class="page-head"><div><span class="eyebrow">ПРОВЕДЕНИЕ / 03</span><h1>Мои игры</h1><p>Выберите текущую игру на любом устройстве. Компьютер аудитории может показывать только вопросы.</p></div><button class="small-button" id="reloadRooms">Обновить комнаты</button></div>
+ <div class="launch-panel"><h2>Запустить сохранённую сборку</h2><div class="launch-fields">
+ <label>Сборка<select id="launchBuild"><option value="">Выберите игру</option></select></label>
+ <label>Название занятия<input id="launchTitle" placeholder="Например, Семинар № 4"></label>
+ <label>Команды<select id="launchTeams"></select></label>
+ <button type="button" class="primary-button" id="launchButton">Создать комнату</button></div>
+ <p class="small-help">Количество игроков в раундах по умолчанию не ограничено. До 15 команд на одну комнату.</p><p class="message" id="launchMessage" role="status"></p></div>
+ <div class="section-head"><h2>Последние комнаты</h2></div><div id="hostRoomList" class="rooms-list"><div class="empty">Загрузка комнат…</div></div>
+ <section id="liveConsole" class="live-console" hidden>
+ <div class="live-console-head"><div><div class="eyebrow">ПОДКЛЮЧЕННАЯ КОМНАТА</div><h2 id="activeRoomName"></h2><strong class="live-code" id="activeRoomCode"></strong></div>
+ <div class="console-actions"><button type="button" class="secondary-button" id="copyRoomUrl">Скопировать вход</button><button type="button" class="secondary-button" id="openScreen">◫ Экран аудитории</button></div></div>
+ <div class="live-metrics"><div><span>Участников</span><strong id="livePlayers">0</strong></div><div><span>Команд</span><strong id="liveTeams">0</strong></div><div><span>Этап</span><strong id="livePhase">—</strong></div><div><span>Ответов</span><strong id="liveAnswers">0</strong></div></div>
+ <div class="live-question" id="liveQuestion">Ожидание начала игры.</div>
+ <div class="live-actions"><button id="liveStart" class="primary-button">▶ Начать</button><button id="liveReveal" class="primary-button">Показать ответ</button><button id="liveNext" class="primary-button">Следующий вопрос →</button><button id="liveFinish" class="danger-button">Завершить</button></div>
+ <p class="message" id="liveMessage" role="status"></p>
+ <div class="live-columns"><div class="panel"><h3>Рейтинг команд</h3><div id="liveRanking"></div></div><div class="panel"><h3>Участники</h3><div id="liveRoster"></div></div></div>
+ </section>
+</section>
+<section class="page" id="insightsPage" hidden><div class="page-head"><div><span class="eyebrow">АНАЛИТИКА / 04</span><h1>Результаты студентов</h1><p>Достижения и ответы во всех ваших проведённых комнатах.</p></div><button class="small-button" id="reloadInsights">↻ Обновить</button></div>
+ <div class="metric-grid" id="insightMetrics"></div>
+ <div class="panel"><div class="section-head"><h2>Рейтинг участников</h2><label class="sort-label">Сортировка<select id="studentSort"><option value="score">По очкам</option><option value="correct">По правильным</option><option value="games">По играм</option><option value="answers">По ответам</option></select></label></div>
+ <div class="student-table-scroll"><table class="student-table"><thead><tr><th>№</th><th>Участник</th><th>Группа</th><th>Игр</th><th>Ответов</th><th>Верных</th><th>Баллы</th></tr></thead><tbody id="studentRows"></tbody></table></div></div>
+ <div class="panel"><h2>Достижения по ответам</h2><p class="small-help">Диаграмма строится по реальным суммарным значениям из завершённых и текущих комнат.</p><div id="studentChart" class="chart"></div></div>
+</section>
+</main>
+<aside class="context-panel"><div class="context-card"><span class="eyebrow">QWIZ-PARTY</span><h3>Как начать занятие</h3><p>Откройте сборку, создайте комнату и запустите на планшете пульт ведущего. На экран в аудитории выведите отдельное окно.</p></div>
+<div class="context-card lavender"><h3>Два экрана</h3><p>Компьютер показывает вопросы, телефон управляет тем же состоянием. Пароль преподавателя требуется только для пульта.</p><button type="button" id="showPublicScreen" class="secondary-button">Открыть публичный экран ↗</button></div></aside>
+</div>
+<dialog class="edit-dialog" id="questionDialog"><form id="questionForm" method="dialog"><div class="dialog-head"><div><span class="eyebrow">БАНК ВОПРОСОВ</span><h2 id="questionDialogTitle">Новый вопрос</h2></div><button type="button" class="icon-btn" data-close="questionDialog">✕</button></div>
+ <div class="dialog-body"><label>Тип вопроса<select id="editKind"></select></label><label>Тема<select id="editTopic"><option value="">Без темы</option></select></label>
+ <label>Текст вопроса<textarea id="editPrompt" rows="3" maxlength="3000" required></textarea></label>
+ <div id="answerEditor"></div><label>Пояснение после ответа<textarea id="editExplanation" rows="2" maxlength="3000" placeholder="Необязательно"></textarea></label>
+ <label>Сложность<select id="editDifficulty"><option value="1">1 · Лёгкая</option><option value="2" selected>2 · Обычная</option><option value="3">3 · Средняя</option><option value="4">4 · Сложная</option><option value="5">5 · Экспертная</option></select></label></div>
+ <div class="dialog-footer"><span id="questionSaveMessage" class="message" role="status"></span><button type="button" class="secondary-button" data-close="questionDialog">Отмена</button><button type="submit" class="primary-button" id="questionSubmit">Сохранить</button></div></form></dialog>
+<dialog class="edit-dialog" id="cardDialog"><form id="cardForm" method="dialog"><div class="dialog-head"><div><span class="eyebrow">РЕДАКТОР РАУНДА</span><h2>Настройка карточки</h2></div><button type="button" class="icon-btn" data-close="cardDialog">✕</button></div>
+ <div class="dialog-body"><label>Название карточки<input id="cardTitle" maxlength="120" required></label><label>Тема<select id="cardTopic"><option value="">Без темы</option></select></label>
+ <div class="two-inputs"><label>Вопросов<input id="cardCount" type="number" min="1" max="100" value="5"></label><label>Время на вопрос (сек.)<input id="cardSeconds" type="number" min="10" max="120" value="30"></label></div>
+ <div class="two-inputs"><label>Порядок<select id="cardOrder"><option value="random">Случайный</option><option value="sequential">По порядку</option><option value="reverse">С конца</option></select></label><label>Начать с номера<input id="cardOffset" type="number" min="1" value="1"></label></div>
+ <div class="two-inputs"><label>Лимит команд<input id="cardTeamCap" type="number" min="1" max="15" placeholder="Без ограничения"></label><label>Лимит игроков<input id="cardPlayerCap" type="number" min="1" placeholder="Без ограничения"></label></div>
+ <label>Звук запуска<select id="cardSound"><option value="fanfare">Фанфары</option><option value="synth">Синтезатор</option><option value="funny">Комический эффект</option><option value="none">Без звука</option></select></label>
+ <p class="small-help">Настройки сохраняются в сборке. Звуки, специальные раунды и лимиты не будут влиять на проведение, пока для них не появится серверная логика.</p>
+ </div><div class="dialog-footer"><button type="button" class="secondary-button" data-close="cardDialog">Отмена</button><button type="submit" class="primary-button">Применить</button></div></form></dialog>
+<footer class="footer">QWIZ-PARTY · Студия · Состояние игр хранится в Supabase</footer></body></html>
