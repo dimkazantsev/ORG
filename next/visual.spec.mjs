@@ -141,3 +141,59 @@ test('Entry fonts do not request Google Fonts on startup',async({page})=>{
  expect(loaded.some(url=>url.includes('fonts.googleapis.com'))).toBe(false);
  expect(loaded.some(url=>url.includes('fonts.gstatic.com'))).toBe(false);
 });
+
+
+test('Audience can open general link and enter a specific room without teacher login',async({page})=>{
+ await page.goto('http://127.0.0.1:8080/next/presenter.html');
+ await expect(page.getByRole('heading',{name:'Какая игра сегодня?'})).toBeVisible();
+ await expect(page.locator('#loginEmail')).toHaveCount(0);
+ await page.locator('#projectionCode').fill('abcdef12');
+ await expect(page.locator('#projectionCode')).toHaveValue('ABCDEF12');
+});
+test('Standalone teacher workspace is responsive and has two library sections',async({page})=>{
+ await page.goto('http://127.0.0.1:8080/next/workspace.html');
+ for(const width of [390,768,1440]){
+   await page.setViewportSize({width,height:900});
+   await expect(page.locator('#bankPage')).toBeVisible();
+   await expect(page.locator('#bankSearch')).toBeVisible();
+   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+   expect(overflow).toBeLessThanOrEqual(2);
+   if(width===390)await page.screenshot({path:'visual-artifacts/workspace-390.png',fullPage:true});
+   if(width===1440)await page.screenshot({path:'visual-artifacts/workspace-1440.png',fullPage:true});
+ }
+ await page.locator('[data-section="builder"]').click();
+ await page.locator('#newBuild').click();
+ await expect(page.locator('#roundCards .round-card')).toHaveCount(3);
+ await expect(page.locator('#roundCards .round-card').last()).toHaveAttribute('data-type','finale');
+ await page.locator('[data-card="team_stats"]').click();
+ await expect(page.locator('#roundCards .round-card')).toHaveCount(4);
+ await expect(page.locator('#roundCards .round-card').last()).toHaveAttribute('data-type','finale');
+});
+test('Studio question editor changes fields for boolean and correspondence',async({page})=>{
+ await page.goto('http://127.0.0.1:8080/next/workspace.html');
+ await page.locator('#newQuestion').click();
+ await expect(page.locator('#questionDialog')).toBeVisible();
+ await page.locator('#editKind').selectOption('boolean');
+ await expect(page.locator('#answerEditor [data-option]')).toHaveCount(2);
+ await page.locator('#editKind').selectOption('match');
+ await expect(page.locator('#genericItems')).toBeVisible();
+});
+test('Student can see registration and twelve animal avatars',async({page})=>{
+ await page.goto('http://127.0.0.1:8080/next/profile.html');
+ await expect(page.getByRole('heading',{name:'Мой профиль'})).toBeVisible();
+ await page.locator('#authRegisterTab').click();
+ await expect(page.locator('#registerPanel')).toBeVisible();
+ await expect(page.locator('#registerAvatars [data-avatar]')).toHaveCount(12);
+ await page.screenshot({path:'visual-artifacts/profile-390.png',fullPage:true});
+});
+test('Public display renders server countdown but no answers or admin controls',async({page})=>{
+ await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({
+  status:200,contentType:'application/javascript',
+  body:'window.supabase={createClient:()=>({rpc:async(name)=>({data:{code:"ABCDEF12",title:"Общая игра",phase:"countdown",index:0,total:7,ends_at:new Date(Date.now()+60000).toISOString(),question:null},error:null}),channel:()=>({on(){return this},subscribe(){return this}})})};'
+ }));
+ await page.goto('http://127.0.0.1:8080/next/presenter.html?room=ABCDEF12');
+ await expect(page.locator('.countdown-number')).toBeVisible();
+ await expect(page.locator('#hostControls')).toHaveCount(0);
+ await expect(page.locator('.projection-question')).toHaveCount(0);
+ await page.screenshot({path:'visual-artifacts/countdown-1440.png',fullPage:true});
+});
