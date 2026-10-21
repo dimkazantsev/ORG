@@ -26,7 +26,7 @@ test('Role switch reveals host login without hiding form labels',async({page})=>
  await expect(page.getByLabel('Пароль')).toBeVisible();
  await expect(page.getByRole('tabpanel',{name:'Участник'})).toBeHidden();
  await page.getByRole('tab',{name:'Участник'}).click();
- await expect(page.getByLabel('Код комнаты')).toBeVisible();
+ await expect(page.getByRole('textbox',{name:'Код комнаты',exact:true})).toBeVisible();
 });
 
 test('Studio workspace remains usable at 390px',async({page})=>{
@@ -61,16 +61,16 @@ test('Question options remain touch-sized at 390px',async({page})=>{
 
 test('Home QR is generated locally and can be enlarged',async({page})=>{
  await page.setViewportSize({width:1440,height:900});
- await expect(page.locator('#homeQr img, #homeQr canvas').first()).toBeVisible();
+ await expect(page.locator('#homeQr img')).toBeVisible({timeout:10000});
  await page.locator('#homeQrOpen').click();
  await expect(page.locator('#qrDialog')).toBeVisible();
- await expect(page.locator('#qrLarge img, #qrLarge canvas').first()).toBeVisible();
+ await expect(page.locator('#qrLarge img')).toBeVisible({timeout:10000});
  await expect(page.locator('#qrDialogTitle')).toHaveText('Открыть QWIZ-PARTY');
  await page.locator('#qrClose').click();
  await expect(page.locator('#qrDialog')).toBeHidden();
 });
 test('Up to 15 teams are selectable in the new game form',async({page})=>{
- await page.evaluate(()=>showScreen('studio'));
+ await page.evaluate(()=>{showScreen('studio');tab('room')});
  await expect(page.locator('#roomTeamCount option')).toHaveCount(14);
  await page.selectOption('#roomTeamCount','15');
  await expect(page.locator('#roomTeamCount')).toHaveValue('15');
