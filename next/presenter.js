@@ -65,6 +65,20 @@ function render(state){clearError();$('projectionRoom').textContent=state.code||
   $('projectionMain').innerHTML='<div class="countdown-scene"><span class="projection-eyebrow">СЛЕДУЮЩИЙ РАУНД</span><h1>Приготовьтесь!</h1><div class="countdown-number" id="countdownNumber">'+left+'</div><p>Вопрос появится после обратного отсчёта.</p></div>';
   return;
  }
+ if(state.phase==='intermission'){
+  const activity=state.activity||{};
+  const title=escapeText(activity.title||'Дополнительная активность');
+  const type=activity.type||'break';
+  if(ctx.previousQuestion!==-3){tone('end');ctx.previousQuestion=-3}
+  let extras='';
+  if(type==='team_stats')extras=ranking(state.teams||[],'name');
+  if(type==='player_stats')extras=ranking(state.players||[],'nickname');
+  const funny=type==='break'?'РАЗМИНАЕМ ИЗВИЛИНЫ':type==='intro'?'НАСТРОЙТЕСЬ НА ИГРУ':type==='bonus'?'ЛОВИТЕ БОНУС':type==='duel'?'ВРЕМЯ ДУЭЛИ':'ПРОМЕЖУТОЧНЫЕ РЕЗУЛЬТАТЫ';
+  $('projectionMain').innerHTML='<section class="projection-activity" data-type="'+escapeText(type)+'">'+
+   '<span class="projection-eyebrow">QWIZ-PARTY · '+funny+'</span><div class="activity-emblem" aria-hidden="true">✦</div>'+
+   '<h1>'+title+'</h1><p>Следующий этап запускает преподаватель.</p>'+extras+'</section>';
+  return;
+ }
  if(!state.question){$('projectionMain').innerHTML='<div class="projection-loading"><h1>Следующий раунд</h1><p>Смотрите на экран.</p></div>';return}
  const q=state.question,round=q.topic||'Раунд вопросов';
  if(ctx.previousQuestion!==state.index){tone('start');ctx.previousQuestion=state.index}
