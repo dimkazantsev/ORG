@@ -40,7 +40,7 @@ body:fullscreen .projection-shell{height:100dvh}
 .projection-setup-form{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:13px;align-items:end;background:#fff;padding:24px;border:1px solid #e2e8e4;border-radius:20px;text-align:left}
 .projection-setup-form label{font-size:12px;font-weight:800;color:#5c6c60;grid-column:1 / -1;margin-bottom:-7px}
 .projection-setup-form input{font:800 clamp(21px,2.2vw,34px) ui-monospace,Consolas,monospace;letter-spacing:.12em;min-height:64px;border-radius:12px;border:1px solid #cedbd0;padding:10px 20px;width:100%}
-.projection-setup-form button{background:#293b2f;color:#fff;font:750 15px Onest,Arial,sans-serif;padding:0 28px;min-height:64px;border:0;border-radius:12px}
+.projection-setup-form button{background:#293b2f;color:#fff;font:750 15px system-ui,Arial,sans-serif;padding:0 28px;min-height:64px;border:0;border-radius:12px}
 .projection-finale{width:min(1250px,100%);margin:35px auto}
 .projection-finale h1{font-size:clamp(42px,6vw,88px);letter-spacing:-.065em;margin:0 0 15px}
 .projection-finale p{color:#68756a;margin:0 0 30px;font-size:19px}
