@@ -6,7 +6,7 @@ const KEY='sb_publishable_Hv7NgYuVsfKhFuhX_9pl0Q_qXWA2wOr';
 let room=new URLSearchParams(location.search).get('room')?.trim().toUpperCase()||'';
 const $=id=>document.getElementById(id);
 const escapeText=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const ctx={client:null,last:null,channel:null,local:null,checking:false,timer:null,previousQuestion:-2,finalStep:0,finalTimer:null,sound:false,audio:null};
+const ctx={client:null,last:null,channel:null,local:null,checking:false,timer:null,previousQuestion:-2,finalStep:0,finalTimer:null,sound:false,audio:null,lastReleaseAttempt:0};
 const seconds=t=>Math.max(0,Math.ceil((Date.parse(t)-Date.now())/1000))||0;
 function showError(s){$('projectionError').textContent=s;$('projectionError').hidden=false}
 function clearError(){$('projectionError').hidden=true}
@@ -122,7 +122,7 @@ async function init(){
    if(ctx.last?.phase==='countdown'){
     const n=seconds(ctx.last.ends_at);
     if($('countdownNumber'))$('countdownNumber').textContent=n;
-    if(n===0)refresh();
+    if(n===0 && Date.now()-ctx.lastReleaseAttempt>3000){ctx.lastReleaseAttempt=Date.now();refresh()}
    }
  },250);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
