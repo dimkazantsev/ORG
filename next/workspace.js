@@ -55,8 +55,11 @@ function renderQuestions(){
   '<button class="small-button" data-edit-question="'+esc(q.id)+'">Изменить</button></article>').join(''):
   '<div class="empty">Вопросов пока нет. Выберите тему и добавьте первый вопрос.</div>';
 }
-async function saveTopic(){const name=prompt('Название новой темы:');if(!name)return;const category=prompt('Категория (например: География, Искусство, Наука):','Общие знания')||'Общие знания';
- try{await studio('topic_save',{name,category});await overview()}catch(e){msg('bankMessage',e.message,true)}}
+async function saveTopic(e){e.preventDefault();
+ try{const name=$('topicName').value.trim(),category=$('topicCategory').value;
+  await studio('topic_save',{name,category});$('topicDialog').close();$('topicForm').reset();await overview();
+ }catch(err){msg('topicNotice',err.message,true)}
+}
 function answerEditor(kind,question){
  const opts=question?.options||[];
  const one=supported.has(kind),four=['single','multi','flag','portrait','image'].includes(kind);
@@ -237,7 +240,7 @@ function wire(){
  $('bankSearch').oninput=()=>{clearTimeout(state.bankTimer);state.bankTimer=setTimeout(loadQuestions,350)};
  for(const id of ['bankTopic','bankKind','bankSort'])$(id).onchange=loadQuestions;
  $('topicChips').onclick=e=>{const b=e.target.closest('[data-topic]');if(!b)return;$('bankTopic').value=b.dataset.topic;loadQuestions()};
- $('newTopic').onclick=saveTopic;$('newQuestion').onclick=()=>editQuestion();
+ $('newTopic').onclick=()=>{$('topicDialog').showModal();$('topicName').focus()};$('topicForm').onsubmit=saveTopic;$('newQuestion').onclick=()=>editQuestion();
  $('bankItems').onclick=e=>{const b=e.target.closest('[data-edit-question]');if(b)editQuestion(b.dataset.editQuestion)};
  $('editKind').onchange=()=>answerEditor($('editKind').value,null);
  $('questionForm').onsubmit=saveQuestion;
