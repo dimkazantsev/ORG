@@ -70,7 +70,11 @@ function answerEditor(kind,question){
  Array.from({length:n},(_,i)=>'<label>'+String.fromCharCode(65+i)+'<input data-option="'+i+'" value="'+value(i)+'" required></label>').join('')+
  (kind==='multi'?'<label>Номера правильных вариантов через запятую (например 1,3)<input id="correctIndices" value="'+esc((question?.solution?.correct_indices||[]).map(x=>x+1).join(','))+'" required></label>':
  '<label>Правильный ответ<select id="correctAnswer">'+Array.from({length:n},(_,i)=>'<option value="'+i+'" '+(Number(question?.solution?.correct||0)===i?'selected':'')+'>'+String.fromCharCode(65+i)+'</option>').join('')+'</select></label>')+
- '<p class="small-help">'+(supported.has(kind)?'Поддерживается серверная проверка.':'Тип сохраняется в банке, но ещё не участвует в подсчёте очков.')+'</p></div>';return;
+ '<p class="small-help">'+(supported.has(kind)?'Поддерживается серверная проверка.':'Тип сохраняется в банке, но ещё не участвует в подсчёте очков.')+'</p></div>';
+ if(['flag','portrait','image'].includes(kind)){
+  $('answerEditor').insertAdjacentHTML('beforeend','<label>Изображение (HTTPS-ссылка)<input id="questionMediaUrl" type="url" placeholder="https://..." value="'+esc(question?.solution?.media_url||'')+'"></label>');
+ }
+ return;
  }
  if(kind==='match'||kind==='order'||kind==='sequence'){
  const values=opts.length?opts.map(String).join('\n'):'';
@@ -92,7 +96,14 @@ function editQuestion(id=null){const question=state.questions.find(q=>q.id===id)
 async function saveQuestion(event){event.preventDefault();const kind=$('editKind').value;
  const options=all('[data-option]',$('answerEditor')).map(x=>x.value.trim());
  let solution={};
- if(supported.has(kind))solution={correct:Number($('correctAnswer').value)};
+ if(supported.has(kind)){
+  solution={correct:Number($('correctAnswer').value)};
+  const mediaUrl=$('questionMediaUrl')?.value.trim()||'';
+  if(mediaUrl){
+    if(!/^https:\/\//i.test(mediaUrl)){msg('questionSaveMessage','Изображение должно использовать HTTPS.',true);return}
+    solution.media_url=mediaUrl;
+  }
+ }
  else if(kind==='multi'){solution={correct_indices:$('correctIndices').value.split(',').map(x=>Number(x)-1).filter(x=>Number.isInteger(x)&&x>=0)}}
  else{solution={answer:$('genericAnswer')?.value.trim()||''}}
  if(!options.length&&$('genericItems'))options.splice(0,0,...$('genericItems').value.split('\n').map(x=>x.trim()).filter(Boolean));
