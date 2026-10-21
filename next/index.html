@@ -4,27 +4,36 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#f7f8f4">
-<title>ORG/PARTY — командный квиз</title>
+<title>QWIZ-PARTY — командный квиз</title>
 <meta name="description" content="Командный квиз: вопросы, комнаты, игроки и результаты.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./app.css?v=2">
+<link rel="stylesheet" href="./app.css?v=3">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script defer src="./app.js?v=2"></script>
+<script defer src="./vendor/qrcode.min.js"></script>
+<script defer src="./app.js?v=3"></script>
 </head>
 <body>
 <header class="topbar">
  <div class="shell row">
   <button type="button" class="brand" id="logoHome" aria-label="Вернуться на главную">
-   <span class="brand-mark" aria-hidden="true">о.</span>
-   <span><span class="brand-name">ORG<span>/</span>PARTY</span><span class="brand-tag">ИНТЕЛЛЕКТУАЛЬНЫЕ ИГРЫ</span></span>
+   <span class="brand-mark" aria-hidden="true">Q</span>
+   <span><span class="brand-name">QWIZ<span>—</span>PARTY</span><span class="brand-tag">ИНТЕЛЛЕКТУАЛЬНЫЕ ИГРЫ</span></span>
   </button>
   <div class="header-end"><span class="header-caption"><i class="status-dot" aria-hidden="true"></i>Играй. Думай. Побеждай.</span></div>
  </div>
 </header>
 <main class="shell">
 <section class="view" id="homeView">
+<div class="home-dashboard">
+ <aside class="home-rail" aria-label="Навигация по главной странице">
+  <div class="rail-title">QWIZ-PARTY</div>
+  <button type="button" class="rail-link active" id="homeNavTop"><span>▦</span> Главная</button>
+  <button type="button" class="rail-link" id="homeNavJoin"><span>↗</span> Войти в игру</button>
+  <button type="button" class="rail-link" id="homeNavHost"><span>□</span> Преподавателю</button>
+  <div class="rail-foot"><span class="status-dot"></span> Платформа доступна</div>
+ </aside>
 <div class="home-grid">
  <div class="intro">
   <div class="eyebrow">Командный квиз в реальном времени</div>
@@ -59,19 +68,30 @@
   <div class="entry-foot"><span class="symbol">✓</span><span>Работает на компьютере, планшете и телефоне</span></div>
  </div>
 </div>
+<aside class="home-qr-column">
+ <div class="qr-card" id="homeQrCard">
+  <div class="card-overline">Быстрое подключение</div>
+  <h2>Войти с телефона</h2>
+  <p id="homeQrText">Наведите камеру на QR-код, чтобы открыть страницу игры.</p>
+  <button type="button" class="qr-click" id="homeQrOpen" aria-label="Увеличить QR-код на весь экран"><span id="homeQr" class="qr-render"></span><span class="qr-hint">Нажмите для увеличения ↗</span></button>
+  <div class="qr-meta"><span id="homeQrCode">QWIZ-PARTY</span><button type="button" class="btn btn-small" id="homeQrCopy">Скопировать ссылку</button></div>
+ </div>
+ <div class="tips-card"><div class="card-overline">Как это работает</div><strong>Три шага к игре</strong><p>Преподаватель создаёт комнату, участники входят по коду, ответы оцениваются автоматически.</p></div>
+</aside>
+</div>
 <div class="home-foot"><span><b>01.</b> Выберите игру</span><span><b>02.</b> Соберите команды</span><span><b>03.</b> Отвечайте и соревнуйтесь</span></div>
 </section>
 <section id="studioView" class="view" hidden>
 <div class="workspace">
  <aside class="sidebar" aria-label="Разделы преподавателя">
-  <p class="nav-caption">Рабочее пространство</p>
+  <div class="sidebar-profile"><span class="sidebar-avatar">Q</span><span><strong>QWIZ-PARTY</strong><small>Панель ведущего</small></span></div><p class="nav-caption">Рабочее пространство</p>
   <button type="button" class="side-btn" data-tab="library" aria-current="page"><b>01</b> Библиотека</button>
   <button type="button" class="side-btn" data-tab="room"><b>02</b> Провести игру</button>
   <button type="button" class="side-btn" data-tab="results"><b>03</b> Результаты</button>
   <div class="side-footer"><button class="btn btn-small" id="logoutButton" type="button">Выйти из кабинета</button></div>
  </aside>
- <div>
-  <div class="page-head"><div><div class="eyebrow" id="studioEyebrow">ORG / Студия</div><h1 id="studioHeading">Библиотека</h1><p id="studioDescription">Ваши вопросы и готовые наборы.</p></div></div>
+ <div class="workspace-main">
+  <div class="page-head"><div><div class="eyebrow" id="studioEyebrow">QWIZ / Студия</div><h1 id="studioHeading">Библиотека</h1><p id="studioDescription">Ваши вопросы и готовые наборы.</p></div></div>
   <section id="libraryTab">
    <div class="toolbar"><button type="button" class="btn btn-dark" id="createQuizToggle">+ Создать набор</button><button type="button" class="btn" id="refreshCatalog">Обновить</button><button type="button" class="btn" data-tab="room">К проведению →</button></div>
    <div id="quizCreator" class="panel" hidden>
@@ -91,14 +111,15 @@
   </section>
   <section id="roomTab" hidden>
    <div id="createRoomPanel" class="panel">
-    <h2>Новая игра</h2><p>Один набор, одна комната, понятный маршрут от приглашения до результата.</p>
+    <h2>Новая игра</h2><p>Выберите вопросы, сформируйте до 15 команд и откройте вход участникам.</p>
     <form class="stack" id="createRoomForm"><label>Набор вопросов<select id="roomQuizSelect" required><option value="">Выберите набор</option></select></label>
-     <div class="grid2"><label>Название игры<input id="roomTitle" value="Командный квиз" maxlength="140" required></label><label>Команды<select id="roomTeamCount"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option><option>8</option></select></label></div>
+     <div class="grid2"><label>Название игры<input id="roomTitle" value="Командный квиз" maxlength="140" required></label><label>Команды<select id="roomTeamCount"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option></select></label></div>
      <button class="btn btn-dark" type="submit" id="createRoomButton">Создать комнату →</button>
     </form><p id="createRoomNotice" class="notice" role="status" aria-live="polite"></p>
    </div>
    <div id="activeRoomPanel" hidden>
-    <div class="panel soft"><div class="row row-top"><div><div class="eyebrow" style="margin:0">Комната для игроков</div><div class="code" id="hostRoomCode">—</div><p>Поделитесь кодом или ссылкой. Подключившиеся автоматически попадут в команду.</p></div><div class="control-row"><button type="button" class="btn" id="copyInvite">Скопировать приглашение</button><button type="button" class="btn" id="refreshRoom">Обновить</button></div></div></div>
+    <div class="panel soft"><div class="row row-top"><div><div class="eyebrow" style="margin:0">Комната для игроков</div><div class="code" id="hostRoomCode">—</div><p>Поделитесь кодом или ссылкой. Подключившиеся автоматически попадут в команду.</p></div><div class="control-row"><button type="button" class="btn btn-lime" id="openPresenter">◫ На второй экран</button><button type="button" class="btn" id="copyInvite">Скопировать приглашение</button><button type="button" class="btn" id="refreshRoom">Обновить</button></div></div></div>
+    <p id="presenterNotice" class="notice" role="status" aria-live="polite"></p>
     <div class="kpi-bar"><div class="kpi"><span>Игроков</span><strong id="hostPlayersCount">0</strong></div><div class="kpi"><span>Команд</span><strong id="hostTeamsCount">0</strong></div><div class="kpi"><span>Состояние</span><strong id="hostPhase">Ожидание</strong></div></div>
     <div class="panel"><div class="row"><h2>Пульт ведущего</h2><span class="phase-label" id="hostRound">До начала</span></div>
      <div id="hostQuestion" class="stage-question" hidden></div>
@@ -113,6 +134,19 @@
   </section>
   <section id="resultsTab" hidden><div class="panel"><h2>Итоги игры</h2><p id="resultIntro">Завершите игру, чтобы увидеть итоги.</p><div id="resultTeams"></div><div class="toolbar"><button class="btn" data-tab="room">Вернуться к игре</button><button class="btn" id="exportResults">Скачать CSV</button></div></div></section>
  </div>
+<aside class="studio-sidepane">
+ <div class="sidepane-card mint-note">
+  <div class="card-overline">Подключение</div><h3>QR-код комнаты</h3>
+  <p id="studioQrIntro">Создайте комнату, и здесь появится код для подключения участников.</p>
+  <button type="button" class="qr-click" id="studioQrOpen" aria-label="Увеличить QR-код комнаты" disabled><span id="studioQr" class="qr-render"></span><span class="qr-hint">Увеличить ↗</span></button>
+  <div class="room-code-inline" id="studioQrCode">Нет комнаты</div>
+ </div>
+ <div class="sidepane-card lilac-note">
+  <div class="card-overline">Режим презентации</div><h3>Два экрана. Одна игра.</h3>
+  <p>Ведущий управляет игрой на основном мониторе, проектор показывает только задания.</p>
+  <button type="button" class="btn btn-small btn-white" id="openPresenterSide" disabled>◫ Открыть проектор</button>
+ </div>
+</aside>
 </div>
 </section>
 <section id="gameView" class="view" hidden>
@@ -124,6 +158,12 @@
  </div>
 </section>
 </main>
-<footer class="footer"><div class="shell row"><span>ORG/PARTY © 2026 · Версия 2</span><span>Один процесс. Одна игра. Один результат.</span></div></footer>
+<dialog id="qrDialog" class="qr-dialog" aria-labelledby="qrDialogTitle">
+ <div class="qr-dialog-head"><div><div class="card-overline">QWIZ-PARTY</div><h2 id="qrDialogTitle">QR-код для входа</h2></div><button type="button" class="btn btn-small" id="qrClose" aria-label="Закрыть QR-код">✕</button></div>
+ <div id="qrLarge" class="qr-large"></div>
+ <p id="qrDialogCode" class="qr-dialog-code"></p><p class="qr-dialog-hint">Откройте камеру телефона и наведите на код.</p>
+ <div class="control-row"><button type="button" class="btn" id="qrCopy">Скопировать ссылку</button><button type="button" class="btn btn-dark" id="qrDone">Закрыть</button></div>
+</dialog>
+<footer class="footer"><div class="shell row"><span>QWIZ-PARTY © 2026 · Версия 3</span><span>Один процесс. Одна игра. Один результат.</span></div></footer>
 </body>
 </html>
