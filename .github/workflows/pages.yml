@@ -30,8 +30,11 @@ jobs:
           set -euo pipefail
           node --check app.js
           test -s studio-2026.css
+          test -s ui-ux-pro-max.css
           grep -q 'class="studio-rebuild"' index.html
           grep -q 'studio-2026.css?v=20261022-4' index.html
+          grep -q 'ui-ux-pro-max.css?v=20261022-5' index.html
+          grep -q -- '--q-blue' ui-ux-pro-max.css
           grep -q -- '--studio-radius' studio-2026.css
           grep -q 'id="teacherView"' index.html
           grep -q 'id="studentView"' index.html
@@ -66,12 +69,14 @@ jobs:
           site="${PAGES_URL%/}"
           echo "Checking GitHub Pages at $site"
           for attempt in $(seq 1 12); do
-            if curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/index.html?release=20261022-4-$GITHUB_RUN_ID-$attempt" -o /tmp/org-published.html &&
-               grep -q 'data-build="20261022.4"' /tmp/org-published.html &&
+            if curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/index.html?release=20261022-5-$GITHUB_RUN_ID-$attempt" -o /tmp/org-published.html &&
+               grep -q 'data-build="20261022.5"' /tmp/org-published.html &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/app.js?v=20261009-qa6" -o /tmp/org-published.js &&
                grep -q 'org_quiz_archive_history' /tmp/org-published.js &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/studio-2026.css?v=20261022-4" -o /tmp/org-published-studio.css &&
-               grep -q -- '--studio-radius' /tmp/org-published-studio.css; then
+               grep -q -- '--studio-radius' /tmp/org-published-studio.css &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/ui-ux-pro-max.css?v=20261022-5" -o /tmp/org-published-uipromax.css &&
+               grep -q -- '--q-blue' /tmp/org-published-uipromax.css; then
               echo "Published HTML and JS both contain the new release."
               exit 0
             fi
