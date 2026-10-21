@@ -120,9 +120,9 @@ test('At narrow widths, the entry form appears before the optional welcome banne
 
 test('Keyboard focus and tabs remain accessible',async({page})=>{
  await page.setViewportSize({width:390,height:844});
- await page.getByRole('tab',{name:'Я преподаватель'}).click();
+ await page.getByRole('tab',{name:'Преподаватель'}).click();
  await expect(page.getByRole('textbox',{name:'Электронная почта'})).toBeVisible();
- await page.getByRole('tab',{name:'Я участник'}).click();
+ await page.getByRole('tab',{name:'Участник'}).click();
  await page.locator('#joinCode').focus();
  await expect(page.locator('#joinCode')).toBeFocused();
  await expect(page.getByRole('button',{name:'Присоединиться к игре'})).toBeVisible();
