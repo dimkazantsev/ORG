@@ -102,6 +102,11 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  if(s.phase==='lobby'){el.innerHTML='<div class="game-empty"><div class="eyebrow">Вы в комнате '+esc(s.code)+'</div><h1>Вы в игре.</h1><p>Преподаватель собирает участников. Игра начнётся на всех устройствах одновременно.</p><div class="phase-label">'+esc(myTeam?.name||'Ожидание команды')+'</div></div>';text('playerStatus','Подключён. Ожидайте начала.');return}
  if(s.phase==='finished'){el.innerHTML='<div class="game-empty"><div class="eyebrow">Игра завершена</div><h1>Финальный рейтинг</h1><p>Спасибо за участие. Результаты зафиксированы на сервере.</p>'+teamMarkup(s.teams)+'</div>';text('playerStatus','Игра завершена.');return}
  const question=s.question;
+ if(s.phase==='intermission'){
+   el.innerHTML='<div class="game-empty"><div class="eyebrow">ДОПОЛНИТЕЛЬНАЯ АКТИВНОСТЬ</div><h1>'+esc(s.activity?.title||'Перерыв')+'</h1><p>Следующий этап откроет преподаватель.</p></div>';
+   text('playerStatus','Ожидаем продолжения.');
+   return;
+ }
  if(s.phase==='countdown'){
    el.innerHTML='<div class="game-empty"><div class="eyebrow">НОВЫЙ РАУНД</div><h1>Скоро начнём!</h1><p>Вопрос откроется на всех устройствах через <strong id="playerCountdown">'+remaining(s.ends_at)+'</strong> сек.</p></div>';
    text('playerStatus','Общий обратный отсчёт перед раундом.');
