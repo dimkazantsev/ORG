@@ -1,0 +1,33 @@
+name: ORG Quiz v2 / Visual QA
+on:
+  push:
+    paths:
+      - 'next/**'
+      - '.github/workflows/next-visual.yml'
+  workflow_dispatch:
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser runner
+        run: |
+          npm install --no-save @playwright/test@1.56.1
+          npx playwright install chromium --with-deps
+      - name: Run browser checks
+        run: |
+          mkdir -p visual-artifacts
+          python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/org-http.log 2>&1 &
+          npx playwright test next/visual.spec.mjs --reporter=list --workers=1
+      - name: Preserve screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: org-v2-visual-review
+          path: visual-artifacts/
+          if-no-files-found: ignore
