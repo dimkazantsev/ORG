@@ -121,7 +121,9 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
   return '<button type="button" class="'+classes+'" data-answer="'+i+'" '+(locked?'disabled':'')+'><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+esc(option)+'</span></button>';
  }).join('');
  el.innerHTML='<div class="row"><span class="eyebrow" style="margin:0">Вопрос '+(s.index+1)+' / '+s.total+'</span><span class="phase-label">'+(s.phase==='result'?'Ответ открыт':'Вопрос открыт')+'</span></div>'+
- '<h1>'+esc(question.prompt)+'</h1><div class="meter"><span>'+(s.phase==='result'?'Время вышло':'Выберите один ответ')+'</span><strong>'+(s.phase==='question'?'<span id="playerTimer">'+time+'</span> сек.':'Разбор')+'</strong></div>'+
+ '<h1>'+esc(question.prompt)+'</h1>'+
+ (typeof question.media_url==='string'&&/^https:\/\//i.test(question.media_url)?'<div class="question-media"><img src="'+esc(question.media_url)+'" alt="Иллюстрация к вопросу" loading="lazy"></div>':'')+
+ '<div class="meter"><span>'+(s.phase==='result'?'Время вышло':'Выберите один ответ')+'</span><strong>'+(s.phase==='question'?'<span id="playerTimer">'+time+'</span> сек.':'Разбор')+'</strong></div>'+
  '<div class="option-list">'+options+'</div>'+(s.phase==='result'?'<p class="notice success">Правильный ответ: '+esc((question.options||[])[Number(question.correct)]??'—')+'</p>'+(question.explanation?'<p>'+esc(question.explanation)+'</p>':''):
  done?'<p class="notice success">Ваш ответ принят. Ожидайте остальных участников.</p>':time===0?'<p class="notice">Приём ответов завершён.</p>':'');
  text('playerStatus',s.phase==='result'?'Результат открыт. Скоро следующий вопрос.':done?'Ответ записан на сервере.':'Ваш ответ ещё не отправлен.');
