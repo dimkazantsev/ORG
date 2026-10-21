@@ -11,7 +11,7 @@
 <link rel="stylesheet" href="./presenter.css?v=1">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="./vendor/qrcode.min.js"></script>
-<script defer src="./presenter.js?v=1"></script>
+<script defer src="./presenter.js?v=4"></script>
 </head>
 <body>
 <div class="projection-shell" id="projectionShell">
@@ -24,6 +24,7 @@
 </main>
 <footer class="projection-footer">
  <span>QWIZ-PARTY · Экран аудитории</span>
+ <button id="projectionSound" type="button" class="fullscreen-control">♫ Включить звук</button>
  <button id="projectionFullscreen" type="button" class="fullscreen-control">⛶ На весь экран</button>
 </footer>
 <p id="projectionError" role="status" class="projection-error" hidden></p>
