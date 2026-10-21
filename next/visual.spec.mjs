@@ -58,3 +58,33 @@ test('Question options remain touch-sized at 390px',async({page})=>{
  expect(overflow).toBeLessThanOrEqual(2);
  await page.screenshot({path:'visual-artifacts/game-390.png',fullPage:true});
 });
+
+test('Home QR is generated locally and can be enlarged',async({page})=>{
+ await page.setViewportSize({width:1440,height:900});
+ await expect(page.locator('#homeQr img, #homeQr canvas').first()).toBeVisible();
+ await page.locator('#homeQrOpen').click();
+ await expect(page.locator('#qrDialog')).toBeVisible();
+ await expect(page.locator('#qrLarge img, #qrLarge canvas').first()).toBeVisible();
+ await expect(page.locator('#qrDialogTitle')).toHaveText('Открыть QWIZ-PARTY');
+ await page.locator('#qrClose').click();
+ await expect(page.locator('#qrDialog')).toBeHidden();
+});
+test('Up to 15 teams are selectable in the new game form',async({page})=>{
+ await page.evaluate(()=>showScreen('studio'));
+ await expect(page.locator('#roomTeamCount option')).toHaveCount(14);
+ await page.selectOption('#roomTeamCount','15');
+ await expect(page.locator('#roomTeamCount')).toHaveValue('15');
+});
+test('Projection screen only renders questions and never host controls',async({page})=>{
+ await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({
+  status:200,contentType:'application/javascript',
+  body: 'window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:{access_token:"fixture"}}})},rpc:async()=>({data:{code:"ABCDEF12",title:"История",phase:"question",index:0,total:2,ends_at:new Date(Date.now()+60000).toISOString(),question:{prompt:"Как называется столица России?",options:["Казань","Москва","Томск","Владивосток"]}},error:null}),channel:()=>({on(){return this},subscribe(){return this}})})};'
+ }));
+ await page.goto('http://127.0.0.1:8080/next/presenter.html?room=ABCDEF12');
+ await expect(page.locator('.projection-question h1')).toHaveText('Как называется столица России?');
+ await expect(page.locator('.projection-option')).toHaveCount(4);
+ await expect(page.locator('#hostControls')).toHaveCount(0);
+ await expect(page.locator('#hostTeams')).toHaveCount(0);
+ await expect(page.locator('#loginEmail')).toHaveCount(0);
+ await page.screenshot({path:'visual-artifacts/presenter-1440.png',fullPage:true});
+});
