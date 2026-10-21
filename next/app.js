@@ -48,7 +48,9 @@ async function login(event){event.preventDefault();busy($('loginButton'),true);n
   if(!isAdmin){await ctx.client.auth.signOut();throw Error('У этой учётной записи нет прав преподавателя.')}
   $('loginPassword').value='';await enterStudio();
  }catch(error){notice('loginNotice',error.message,'error')}finally{busy($('loginButton'),false)}}
-async function enterStudio(){showScreen('studio');tab('library');await loadCatalog();
+async function enterStudio(){location.assign(new URL('./workspace.html',location.href).toString());return;
+/* Legacy studio kept for compatibility; the v4 workspace handles the teacher's tasks. */
+showScreen('studio');tab('library');await loadCatalog();
  const code=storage.get('host-room');if(code){ctx.roomCode=code;await refreshRoom(false);if(ctx.room)tab('room')}}
 async function logout(){if(!ctx.client)return;await ctx.client.auth.signOut();cleanupRoom();storage.del('host-room');showScreen('home');setRole('host');notice('loginNotice','Вы вышли из кабинета.','success')}
 function home(){showScreen('home');renderQrPanels()}
