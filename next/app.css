@@ -274,3 +274,223 @@ input,select,textarea{border-color:#dde4de;border-radius:10px}
  .qr-large{min-height:260px}
  .qr-large :is(img,canvas){max-width:260px!important;max-height:260px!important}
 }
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   QWIZ-PARTY / ENTRY 4.0
+   Deliberate welcome layout, inspired by the user's EduWay reference.
+   Single interaction focus: join a room or log in as the host.
+   Keep projector and studio styles entirely independent.
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+#homeView {
+  --welcome-ink:#222729;
+  --welcome-mint:#b9edc3;
+  --welcome-lavender:#e8e0fa;
+  --welcome-border:#e7ebe8;
+  padding:24px 0 42px;
+}
+#homeView .entry-landing {
+  width:min(1220px,100%);
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:minmax(0,1.05fr) minmax(420px,.95fr);
+  gap:18px;
+  align-items:stretch;
+}
+#homeView .entry-visual {
+  border-radius:27px;
+  background:var(--welcome-mint);
+  border:1px solid #addfb8;
+  padding:36px clamp(28px,3.1vw,46px) 29px;
+  min-height:670px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  overflow:hidden;
+  position:relative;
+  isolation:isolate;
+  box-shadow:none;
+}
+#homeView .entry-visual:after {
+  content:"";
+  pointer-events:none;
+  position:absolute;
+  right:-150px;
+  top:160px;
+  width:365px;
+  height:365px;
+  border:1px solid rgba(255,255,255,.36);
+  border-radius:50%;
+  box-shadow:0 0 0 58px rgba(255,255,255,.045),0 0 0 115px rgba(255,255,255,.04);
+  z-index:-1;
+}
+#homeView .entry-visual-top {display:flex;align-items:center;justify-content:space-between;gap:13px}
+#homeView .hero-brand {display:flex;align-items:center;gap:10px;font-weight:800;font-size:13px;letter-spacing:-.025em}
+#homeView .hero-brand-icon {display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:#25352b;color:#b9edc3;font-size:21px;font-weight:800}
+#homeView .hero-chip {display:inline-flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid rgba(29,78,43,.19);border-radius:999px;font-size:9px;letter-spacing:.075em;font-weight:800;white-space:nowrap}
+#homeView .hero-dot {display:inline-block;width:6px;height:6px;border-radius:50%;background:#357a4d}
+#homeView .entry-visual-center {margin:35px 0}
+#homeView .hero-kicker {color:#3b6550;letter-spacing:.11em;font-size:10px;font-weight:800;margin-bottom:21px}
+#homeView .entry-visual h1 {
+ font-size:clamp(45px,4.8vw,73px);
+ letter-spacing:-.075em;
+ line-height:1.055;
+ font-weight:760;
+ margin:0 0 26px;
+ color:#21392b;
+ max-width:540px;
+}
+#homeView .entry-visual h1 span{color:#fff;text-shadow:0 1px 1px rgba(30,91,49,.07)}
+#homeView .hero-lead{font-size:15px;line-height:1.65;color:#3e624e;max-width:410px;margin:0}
+#homeView .hero-steps {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:13px;padding-top:23px;border-top:1px solid rgba(48,106,64,.22)}
+#homeView .hero-step{display:flex;flex-direction:column;align-items:flex-start;gap:5px}
+#homeView .hero-step>span{font-size:12px;font-weight:800;color:#39704f;margin-bottom:5px}
+#homeView .hero-step strong{font-size:14px;font-weight:750;color:#243d2c}
+#homeView .hero-step small{font-size:11px;line-height:1.45;color:#4a7457}
+#homeView .entry-action{min-width:0;display:grid;grid-template-rows:minmax(0,1fr) auto;gap:15px}
+#homeView .entry {
+  margin:0;
+  border:1px solid var(--welcome-border);
+  background:#fff;
+  border-radius:27px;
+  min-height:432px;
+  padding:clamp(28px,2.7vw,39px);
+  box-shadow:0 9px 28px rgba(29,40,35,.022);
+}
+#homeView .entry-headerline{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:26px}
+#homeView .entry-small-label{font-size:10px;letter-spacing:.11em;color:#819088;font-weight:800}
+#homeView .entry-online{font-size:11px;color:#528363;display:inline-flex;align-items:center;gap:8px;font-weight:650}
+#homeView .entry-online span{background:#71c989;width:7px;height:7px;border-radius:50%;display:inline-block}
+#homeView .switch {margin:0 0 24px;max-width:none;padding:5px;border-radius:12px;background:#f4f5f5;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
+#homeView .switch button{min-height:43px;font-size:13px;border-radius:9px;font-weight:670;color:#62716a;border:0;background:transparent;cursor:pointer}
+#homeView .switch button[aria-selected="true"]{color:#fff;background:#26302c;box-shadow:0 2px 6px rgba(23,34,29,.09)}
+#homeView .entry h2{font-size:clamp(29px,2.7vw,37px);line-height:1.13;letter-spacing:-.052em;margin:0 0 11px;font-weight:750}
+#homeView .entry-desc{font-size:13px;line-height:1.5;color:#7b867e;margin:0 0 24px}
+#homeView .stack{display:grid;grid-template-columns:1fr;gap:15px}
+#homeView .stack label{display:grid;gap:7px;font-size:12px;font-weight:700;color:#39443e;min-width:0}
+#homeView .stack .code-label{grid-column:auto}
+#homeView .stack input {
+ width:100%;height:49px;min-height:49px;
+ border:1px solid #e0e6e1;border-radius:11px;
+ background:#fbfcfb;color:#1f2a23;
+ padding:0 15px;box-shadow:none;
+ font-size:13px;font-weight:500;
+}
+#homeView .stack input::placeholder{color:#a2aca5;font-weight:400}
+#homeView .stack input:focus-visible{background:white}
+#homeView #joinCode{font:750 15px/1.2 "Onest",Inter,Arial,sans-serif;letter-spacing:.085em}
+#homeView .entry-person{display:grid;grid-template-columns:1fr 1fr;gap:12px;min-width:0}
+#homeView .entry-person label{min-width:0}
+#homeView .stack .btn{
+ grid-column:auto;
+ margin:3px 0 0;
+ width:100%;max-width:none;
+ justify-content:space-between;
+ min-height:53px;
+ font-size:14px;font-weight:720;
+ border-radius:11px;padding:0 19px;
+ background:#252a27;color:#fff;border-color:#252a27;
+}
+#homeView .stack .btn:hover:not(:disabled){background:#39473e;border-color:#39473e}
+#homeView .stack .btn span{font-size:21px;line-height:1}
+#homeView .entry-foot{padding-top:19px;margin-top:21px;border-top:1px solid #edf0ed;display:flex;align-items:center;gap:9px;font-size:11px;color:#8b968d}
+#homeView .entry-secure{background:#e4f6e6;color:#37784c;border-radius:8px;width:23px;height:23px;font-size:14px;display:grid;place-items:center;font-weight:800;flex-shrink:0}
+#homeView .home-qr-column{min-width:0;display:block;grid-column:auto}
+#homeView .qr-card {
+ border:1px solid #ded7f1;
+ background:var(--welcome-lavender);
+ border-radius:23px;
+ box-shadow:none;
+ display:grid;
+ grid-template-columns:minmax(0,1fr) 170px;
+ align-items:center;
+ gap:12px;
+ padding:22px 22px 22px 27px;
+ min-height:197px;
+}
+#homeView .qr-info{min-width:0}
+#homeView .qr-card .card-overline{font-size:10px;letter-spacing:.12em;font-weight:800;color:#7562a5;margin:0 0 9px}
+#homeView .qr-card h2{font-size:22px;line-height:1.12;letter-spacing:-.052em;font-weight:750;margin:0 0 9px;color:#302a40}
+#homeView .qr-card p{font-size:12px;line-height:1.45;color:#75688b;margin:0 0 9px;max-width:230px}
+#homeView .qr-code-label{font-size:11px;letter-spacing:.08em;font-weight:750;color:#574a76;display:block}
+#homeView .qr-copy-link{display:inline-flex;align-items:center;gap:8px;background:transparent;border:0;color:#53446e;padding:10px 0 0;min-height:34px;font-size:11px;font-weight:750;text-align:left}
+#homeView .qr-copy-link:hover{text-decoration:underline}
+#homeView .qr-click {
+ display:grid;
+ place-items:center;
+ gap:3px;
+ border:1px solid rgba(118,100,158,.12);
+ border-radius:14px;
+ background:#fff;
+ box-shadow:0 2px 14px rgba(38,28,57,.055);
+ padding:9px;
+ width:170px;
+ max-width:100%;
+ min-height:170px;
+ margin:0;
+}
+#homeView .qr-render{min-height:134px;min-width:134px}
+#homeView .qr-render :is(img,canvas){width:134px!important;height:134px!important}
+#homeView .qr-hint{font-size:9px;color:#817692}
+#homeView .qr-click:hover{background:#fff;border-color:#9f90bf;transform:translateY(-1px)}
+#homeView .entry-bottomline {
+ width:min(1220px,100%);margin:19px auto 0;
+ display:flex;justify-content:space-between;gap:15px;
+ font-size:10px;color:#969f99;font-weight:650;letter-spacing:.025em
+}
+@media(max-width:1080px){
+ #homeView .entry-landing{grid-template-columns:minmax(0,.95fr) minmax(395px,1.05fr)}
+ #homeView .entry-visual{padding:30px;min-height:670px}
+ #homeView .entry-visual h1{font-size:clamp(41px,5vw,56px)}
+ #homeView .hero-chip{font-size:8px;padding:7px}
+ #homeView .hero-step small{font-size:10px}
+ #homeView .qr-card{grid-template-columns:minmax(0,1fr) 150px;padding:17px}
+ #homeView .qr-click{width:150px;min-height:158px}
+}
+@media(max-width:830px){
+ #homeView .entry-landing{display:flex;flex-direction:column;gap:16px;width:min(660px,100%)}
+ #homeView .entry-action{order:1}
+ #homeView .entry-visual{order:2;min-height:430px;padding:34px}
+ #homeView .entry-visual-center{margin:44px 0}
+ #homeView .entry-visual h1{font-size:clamp(42px,7vw,60px)}
+ #homeView .entry{min-height:0;padding:31px}
+ #homeView .qr-card{grid-template-columns:1fr 165px}
+ #homeView .qr-click{width:165px}
+ #homeView .entry-bottomline{width:min(660px,100%);margin-top:16px}
+}
+@media(max-width:500px){
+ #homeView{padding:8px 0 32px}
+ #homeView .entry-landing{gap:12px}
+ #homeView .entry{padding:23px 20px 20px;border-radius:19px}
+ #homeView .entry-headerline{margin-bottom:20px}
+ #homeView .switch{margin-bottom:22px}
+ #homeView .switch button{font-size:12px}
+ #homeView .entry h2{font-size:31px}
+ #homeView .entry-desc{margin-bottom:19px}
+ #homeView .entry-person{grid-template-columns:1fr;gap:14px}
+ #homeView .stack{gap:14px}
+ #homeView .qr-card{grid-template-columns:minmax(0,1fr) 138px;gap:10px;padding:18px;border-radius:19px;min-height:171px}
+ #homeView .qr-card h2{font-size:19px}
+ #homeView .qr-card p{font-size:11px}
+ #homeView .qr-click{width:138px;min-height:146px;padding:5px}
+ #homeView .qr-render{min-width:117px;min-height:117px}
+ #homeView .qr-render :is(img,canvas){width:117px!important;height:117px!important}
+ #homeView .qr-hint{font-size:8px}
+ #homeView .qr-code-label{font-size:9px}
+ #homeView .qr-copy-link{font-size:10px}
+ #homeView .entry-visual{padding:25px 22px;min-height:430px;border-radius:19px}
+ #homeView .entry-visual h1{font-size:clamp(43px,11.3vw,57px)}
+ #homeView .entry-visual-top{gap:5px}
+ #homeView .hero-chip{display:none}
+ #homeView .hero-step strong{font-size:12px}
+ #homeView .hero-step small{font-size:10px}
+ #homeView .entry-bottomline{display:block;font-size:9px;text-align:center}
+ #homeView .entry-bottomline span+span{display:none}
+}
+@media(max-width:360px){
+ #homeView .qr-card{grid-template-columns:minmax(0,1fr) 119px;padding:13px;gap:7px}
+ #homeView .qr-click{width:119px}
+ #homeView .qr-render{min-width:107px;min-height:107px}
+ #homeView .qr-render :is(img,canvas){width:107px!important;height:107px!important}
+ #homeView .hero-steps{gap:7px}
+}
