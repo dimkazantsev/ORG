@@ -313,3 +313,7 @@ button.option:hover:not(:disabled){background:#f3fbf7;border-color:#8ac3ab}
 .header-link{font-size:12px;font-weight:750;color:#396d59;text-decoration:none;padding:10px 12px;border-radius:10px;border:1px solid #dcebe2;white-space:nowrap}
 .header-link:hover{background:#eef8f0}
 @media(max-width:540px){.header-link{font-size:10px;padding:7px 8px}}
+
+.question-media{max-width:610px;height:230px;margin:16px auto 24px;display:grid;place-items:center;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fff}
+.question-media img{width:100%;height:100%;object-fit:contain}
+@media(max-width:540px){.question-media{height:185px}}
