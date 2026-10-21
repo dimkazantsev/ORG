@@ -41,3 +41,24 @@ test('No client-side fabricated correct answers or scores',()=>{
  assert.match(js,/ctx\.client\.rpc\(name,params\)/);
  assert.match(js,/await rpc\('org_next_answer'/);
 });
+
+test('QWIZ-PARTY brand, QR library, presenter-only route and 15 teams',()=>{
+ assert.match(html,/QWIZ-PARTY/);
+ assert.match(html,/vendor\/qrcode\.min\.js/);
+ assert.match(html,/id="homeQr"/);
+ assert.match(html,/id="qrDialog"/);
+ assert.match(html,/id="openPresenter"/);
+ assert.match(html,/<option>15<\/option>/);
+ const presenterHtml=readFileSync(new URL('./presenter.html',import.meta.url),'utf8');
+ const presenterJs=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
+ const presenterCss=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
+ assert.doesNotThrow(()=>new Function(presenterJs));
+ assert.match(presenterJs,/org_next_presenter_state/);
+ assert.doesNotMatch(presenterHtml,/teacher|hostStart|hostReveal|hostFinish/);
+ assert.match(presenterCss,/projection-option/);
+ const upgrade=readFileSync(new URL('./migrations/20261022_qwiz_party_projection.sql',import.meta.url),'utf8');
+ assert.match(upgrade,/p_teams not between 1 and 15/);
+ assert.match(upgrade,/check\(position between 1 and 15\)/);
+ assert.match(upgrade,/v_question := v_question - 'correct' - 'explanation'/);
+ assert.match(upgrade,/for update/);
+});
