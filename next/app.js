@@ -7,7 +7,7 @@ const q=(selector,root=document)=>root.querySelector(selector);
 const qa=(selector,root=document)=>[...root.querySelectorAll(selector)];
 const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const storage={get(k){try{return sessionStorage.getItem('org2:'+k)}catch{return null}},set(k,v){try{sessionStorage.setItem('org2:'+k,v)}catch{}},del(k){try{sessionStorage.removeItem('org2:'+k)}catch{}}};
-const ctx={client:null,role:'player',roomCode:null,room:null,quizzes:[],channel:null,refreshing:false,lastRefresh:0,refreshTimer:null,clock:null,mode:'home',visibleTab:'library'};
+const ctx={client:null,role:'player',roomCode:null,room:null,quizzes:[],channel:null,refreshing:false,lastRefresh:0,releaseAttemptAt:0,refreshTimer:null,clock:null,mode:'home',visibleTab:'library'};
 function text(id,value){if($(id))$(id).textContent=value==null?'':String(value)}
 function notice(id,value,type=''){const el=$(id);if(!el)return;el.textContent=value||'';el.classList.toggle('error',type==='error');el.classList.toggle('success',type==='success')}
 function showScreen(name){ctx.mode=name;for(const id of ['home','studio','game'])$(id+'View').hidden=id!==name;window.scrollTo({top:0,behavior:'auto'})}
@@ -141,7 +141,8 @@ function exportResults(){const s=ctx.room;if(!s)return;const rows=[['Место'
 async function copyInvite(){if(!ctx.roomCode)return;const invite=joinUrl(ctx.roomCode);try{await navigator.clipboard.writeText(invite);notice('hostNotice','Ссылка скопирована.','success')}catch{notice('hostNotice','Ссылка для приглашения: '+invite)}}
 function updateClocks(){if(ctx.room?.phase==='countdown'){
    const n=remaining(ctx.room.ends_at);text('playerCountdown',n);
-   if(n===0 && Date.now()-ctx.lastRefresh>1000){
+   if(n===0 && Date.now()-ctx.releaseAttemptAt>3000){
+    ctx.releaseAttemptAt=Date.now();
     rpc('qwiz_release_countdown',{p_code:ctx.roomCode}).then(()=>scheduleRefresh(300)).catch(()=>{});
    }
    return;
