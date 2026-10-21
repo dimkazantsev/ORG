@@ -175,11 +175,14 @@ async function refreshLive(){if(!state.roomCode||state.roomBusy)return;state.roo
  catch(e){msg('liveMessage',e.message,true)}finally{state.roomBusy=false}}
 function renderLive(s){$('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  $('livePlayers').textContent=(s.players||[]).length;$('liveTeams').textContent=(s.teams||[]).length;
- $('livePhase').textContent=({lobby:'Ожидание',question:'Вопрос',result:'Разбор',finished:'Финал'})[s.phase]||s.phase;
+ $('livePhase').textContent=({lobby:'Ожидание',question:'Вопрос',result:'Разбор',finished:'Финал',countdown:'5…4…3…',intermission:'Активность'})[s.phase]||s.phase;
  $('liveAnswers').textContent=s.answers_count||0;
  $('liveStart').hidden=s.phase!=='lobby';$('liveReveal').hidden=s.phase!=='question';
- $('liveNext').hidden=s.phase!=='result';$('liveFinish').hidden=s.phase==='finished';
- $('liveQuestion').textContent=s.question?s.question.prompt+' · '+(s.index+1)+' / '+s.total:
+ $('liveNext').hidden=!['result','intermission'].includes(s.phase);$('liveFinish').hidden=s.phase==='finished';
+ $('liveQuestion').textContent=s.phase==='intermission'?(s.activity?.title||'Дополнительная активность')+
+  ' · нажмите «Следующий вопрос», чтобы продолжить':
+  s.phase==='countdown'?'Серверный обратный отсчёт: 5 секунд':
+  s.question?s.question.prompt+' · '+(s.index+1)+' / '+s.total:
   s.phase==='finished'?'Игра завершена. Итоги на экране аудитории.':'Ожидание начала игры.';
  $('liveRanking').innerHTML=(s.teams||[]).slice().sort((a,b)=>b.score-a.score).map((t,i)=>
   '<div class="live-line"><span>'+ (i+1)+'. '+esc(t.name)+'</span><strong>'+esc(t.score)+'</strong></div>').join('');
