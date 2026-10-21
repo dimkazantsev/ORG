@@ -60,6 +60,11 @@ function render(state){clearError();$('projectionRoom').textContent=state.code||
   return;
  }
  if(ctx.finalTimer){clearInterval(ctx.finalTimer);ctx.finalTimer=null}
+ if(state.phase==='countdown'){
+  const left=seconds(state.ends_at);
+  $('projectionMain').innerHTML='<div class="countdown-scene"><span class="projection-eyebrow">СЛЕДУЮЩИЙ РАУНД</span><h1>Приготовьтесь!</h1><div class="countdown-number" id="countdownNumber">'+left+'</div><p>Вопрос появится после обратного отсчёта.</p></div>';
+  return;
+ }
  if(!state.question){$('projectionMain').innerHTML='<div class="projection-loading"><h1>Следующий раунд</h1><p>Смотрите на экран.</p></div>';return}
  const q=state.question,round=q.topic||'Раунд вопросов';
  if(ctx.previousQuestion!==state.index){tone('start');ctx.previousQuestion=state.index}
@@ -71,7 +76,11 @@ function render(state){clearError();$('projectionRoom').textContent=state.code||
 }
 async function refresh(){if(!ctx.client||!room||ctx.checking)return;ctx.checking=true;
  try{const {data,error}=await ctx.client.rpc('qwiz_public_screen',{p_code:room});if(error)throw Error(error.message);
-  if(JSON.stringify(ctx.last)!==JSON.stringify(data)){ctx.last=data;render(data)}
+  if(data.phase==='countdown' && seconds(data.ends_at)===0){
+    await ctx.client.rpc('qwiz_release_countdown',{p_code:room});
+    const fresh=await ctx.client.rpc('qwiz_public_screen',{p_code:room});
+    if(!fresh.error && fresh.data){ctx.last=fresh.data;render(fresh.data)}
+   } else if(JSON.stringify(ctx.last)!==JSON.stringify(data)){ctx.last=data;render(data)}
   clearError();
  }catch(e){showError('Нет доступа к экрану игры: '+e.message)}finally{ctx.checking=false}}
 function subscribe(){if(ctx.channel)ctx.client.removeChannel(ctx.channel);
@@ -92,7 +101,14 @@ async function init(){
  ctx.client=window.supabase.createClient(SUPABASE_URL,KEY);
  subscribe();await refresh();
  setInterval(()=>{if(!document.hidden)refresh()},7000);
- setInterval(()=>{if(ctx.last?.phase==='question'&&$('projectionTimer'))$('projectionTimer').textContent=seconds(ctx.last.ends_at)+' сек.'},250);
+ setInterval(()=>{
+   if(ctx.last?.phase==='question'&&$('projectionTimer'))$('projectionTimer').textContent=seconds(ctx.last.ends_at)+' сек.';
+   if(ctx.last?.phase==='countdown'){
+    const n=seconds(ctx.last.ends_at);
+    if($('countdownNumber'))$('countdownNumber').textContent=n;
+    if(n===0)refresh();
+   }
+ },250);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
 }
 window.addEventListener('DOMContentLoaded',init);
