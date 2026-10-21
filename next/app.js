@@ -149,7 +149,19 @@ function updateClocks(){if(ctx.room?.phase==='countdown'){
  if(ctx.room?.phase!=='question')return;const seconds=remaining(ctx.room.ends_at);text('playerTimer',seconds);text('hostTimer',seconds);if(seconds===0){for(const b of qa('#gameContent [data-answer]'))b.disabled=true}}
 async function restore(){if(!ctx.client)return;try{
  const data=await ctx.client.auth.getSession();if(!data.data.session)return;
- const incoming=new URLSearchParams(location.search).get('room');if(incoming&&/^[A-F0-9]{8}$/i.test(incoming)){$('joinCode').value=incoming.toUpperCase()}
+ const incoming=new URLSearchParams(location.search).get('room');
+ if(incoming&&/^[A-F0-9]{8}$/i.test(incoming)){
+   const code=incoming.toUpperCase();$('joinCode').value=code;
+   try{
+     const profile=await rpc('qwiz_student_identity',{p_action:'me',p_data:{}});
+     if(profile?.registered){
+       $('joinName').value=profile.full_name;
+       await rpc('org_next_join',{p_code:code,p_name:profile.full_name,p_group:''});
+       ctx.roomCode=code;storage.set('room',code);showScreen('game');await refreshRoom(false);
+       if(ctx.room)return;
+     }
+   }catch(error){notice('joinNotice','Комната готова к подключению. Подтвердите вход.');}
+ }
  const code=storage.get('room');if(code){ctx.roomCode=code;showScreen('game');await refreshRoom(false);if(ctx.room)return;cleanupRoom()}
  const isAdmin=await rpc('org_quiz_is_admin_check');if(isAdmin){await enterStudio()}else{showScreen('home')}
  }catch{showScreen('home')}}
