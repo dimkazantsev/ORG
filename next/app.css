@@ -309,3 +309,7 @@ button.option:hover:not(:disabled){background:#f3fbf7;border-color:#8ac3ab}
 @media(prefers-reduced-motion:reduce){
  *,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}
 }
+/* Compact public screen link; not a second primary action. */
+.header-link{font-size:12px;font-weight:750;color:#396d59;text-decoration:none;padding:10px 12px;border-radius:10px;border:1px solid #dcebe2;white-space:nowrap}
+.header-link:hover{background:#eef8f0}
+@media(max-width:540px){.header-link{font-size:10px;padding:7px 8px}}
