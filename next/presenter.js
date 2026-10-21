@@ -85,7 +85,9 @@ function render(state){clearError();$('projectionRoom').textContent=state.code||
  $('projectionMain').innerHTML='<section class="projection-question"><div class="projection-topline"><span class="projection-count">'+
  escapeText(round.toUpperCase())+' · ВОПРОС '+(state.index+1)+' / '+state.total+'</span>'+
  '<span class="projection-timer" id="projectionTimer">'+(state.phase==='question'?seconds(state.ends_at)+' сек.':'Ответы приняты')+'</span></div>'+
- '<h1>'+escapeText(q.prompt)+'</h1><div class="projection-options">'+(Array.isArray(q.options)?q.options:[]).map((v,i)=>
+ '<h1>'+escapeText(q.prompt)+'</h1>'+
+ (typeof q.media_url==='string'&&/^https:\/\//i.test(q.media_url)?'<div class="projection-media"><img src="'+escapeText(q.media_url)+'" alt="Иллюстрация к вопросу"></div>':'')+
+ '<div class="projection-options">'+(Array.isArray(q.options)?q.options:[]).map((v,i)=>
  '<div class="projection-option"><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+escapeText(v)+'</span></div>').join('')+'</div></section>';
 }
 async function refresh(){if(!ctx.client||!room||ctx.checking)return;ctx.checking=true;
