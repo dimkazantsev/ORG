@@ -102,6 +102,12 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  if(s.phase==='lobby'){el.innerHTML='<div class="game-empty"><div class="eyebrow">Вы в комнате '+esc(s.code)+'</div><h1>Вы в игре.</h1><p>Преподаватель собирает участников. Игра начнётся на всех устройствах одновременно.</p><div class="phase-label">'+esc(myTeam?.name||'Ожидание команды')+'</div></div>';text('playerStatus','Подключён. Ожидайте начала.');return}
  if(s.phase==='finished'){el.innerHTML='<div class="game-empty"><div class="eyebrow">Игра завершена</div><h1>Финальный рейтинг</h1><p>Спасибо за участие. Результаты зафиксированы на сервере.</p>'+teamMarkup(s.teams)+'</div>';text('playerStatus','Игра завершена.');return}
  const question=s.question;
+ if(s.phase==='countdown'){
+   el.innerHTML='<div class="game-empty"><div class="eyebrow">НОВЫЙ РАУНД</div><h1>Скоро начнём!</h1><p>Вопрос откроется на всех устройствах через <strong id="playerCountdown">'+remaining(s.ends_at)+'</strong> сек.</p></div>';
+   text('playerStatus','Общий обратный отсчёт перед раундом.');
+   if(remaining(s.ends_at)===0)rpc('qwiz_release_countdown',{p_code:s.code}).then(()=>scheduleRefresh(350)).catch(()=>{});
+   return;
+ }
  if(!question){el.innerHTML='<p class="placeholder">Ожидаем вопрос.</p>';return}
  const time=remaining(s.ends_at);
  const done=!!s.has_answer;const locked=s.phase!=='question'||done||time===0;
@@ -126,7 +132,14 @@ async function submitAnswer(choice){if(ctx.mode!=='game'||!ctx.room||ctx.room.ph
 function exportResults(){const s=ctx.room;if(!s)return;const rows=[['Место','Команда','Игроков','Очков'],...s.teams.slice().sort((a,b)=>b.score-a.score).map((x,i)=>[i+1,x.name,x.players,x.score])];const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='org-party-'+s.code+'.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 async function copyInvite(){if(!ctx.roomCode)return;const invite=joinUrl(ctx.roomCode);try{await navigator.clipboard.writeText(invite);notice('hostNotice','Ссылка скопирована.','success')}catch{notice('hostNotice','Ссылка для приглашения: '+invite)}}
-function updateClocks(){if(ctx.room?.phase!=='question')return;const seconds=remaining(ctx.room.ends_at);text('playerTimer',seconds);text('hostTimer',seconds);if(seconds===0){for(const b of qa('#gameContent [data-answer]'))b.disabled=true}}
+function updateClocks(){if(ctx.room?.phase==='countdown'){
+   const n=remaining(ctx.room.ends_at);text('playerCountdown',n);
+   if(n===0 && Date.now()-ctx.lastRefresh>1000){
+    rpc('qwiz_release_countdown',{p_code:ctx.roomCode}).then(()=>scheduleRefresh(300)).catch(()=>{});
+   }
+   return;
+ }
+ if(ctx.room?.phase!=='question')return;const seconds=remaining(ctx.room.ends_at);text('playerTimer',seconds);text('hostTimer',seconds);if(seconds===0){for(const b of qa('#gameContent [data-answer]'))b.disabled=true}}
 async function restore(){if(!ctx.client)return;try{
  const data=await ctx.client.auth.getSession();if(!data.data.session)return;
  const incoming=new URLSearchParams(location.search).get('room');if(incoming&&/^[A-F0-9]{8}$/i.test(incoming)){$('joinCode').value=incoming.toUpperCase()}
@@ -168,7 +181,7 @@ function attach(){q('#logoHome').addEventListener('click',home);
  $('leaveGame').onclick=()=>{cleanupRoom();home()};
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ctx.roomCode)scheduleRefresh(200)});
  addQuestion();
- setInterval(()=>{if(ctx.roomCode&&!document.hidden)refreshRoom(false)},30000);
+ setInterval(()=>{if(ctx.roomCode&&!document.hidden)refreshRoom(false)},12000);
  ctx.clock=setInterval(updateClocks,500);
  renderQrPanels();
  const incoming=new URLSearchParams(location.search).get('room');
