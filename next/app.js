@@ -132,9 +132,7 @@ async function restore(){if(!ctx.client)return;try{
  const isAdmin=await rpc('org_quiz_is_admin_check');if(isAdmin){await enterStudio()}else{showScreen('home')}
  }catch{showScreen('home')}}
 function attach(){q('#logoHome').addEventListener('click',home);
- $('homeNavTop').onclick=()=>{home();window.scrollTo(0,0)};
- $('homeNavJoin').onclick=()=>{setRole('player');$('entryPanel').scrollIntoView({behavior:'smooth'})};
- $('homeNavHost').onclick=()=>{setRole('host');$('entryPanel').scrollIntoView({behavior:'smooth'})};
+ // The welcome page now has no redundant left-hand navigation.
  $('homeQrOpen').onclick=()=>openQrDialog();$('studioQrOpen').onclick=()=>openQrDialog(ctx.roomCode);
  $('homeQrCopy').onclick=()=>copyQrLink();$('qrCopy').onclick=()=>copyQrLink(activeQrCode);
  $('qrClose').onclick=()=>$('qrDialog').close();$('qrDone').onclick=()=>$('qrDialog').close();
