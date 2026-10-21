@@ -1,0 +1,459 @@
+/* ORG/PARTY — UI UX Pro Max application layer.
+   Educational competitive quiz; light, energetic, information-first.
+   This stylesheet has no game-state or data side effects. */
+:root {
+  color-scheme: light;
+  --q-ink:#14233A; --q-muted:#5E6D82; --q-dim:#74829A;
+  --q-blue:#2458ED; --q-blue-hover:#1647CF; --q-blue-soft:#ECF2FF;
+  --q-bg:#F5F7FB; --q-surface:#FFFFFF; --q-line:#DDE5F0;
+  --q-gold:#F3BD45; --q-mint:#DDF8EB; --q-success:#11805B;
+  --q-error:#C1374B; --q-radius:18px;
+  --bg:var(--q-bg); --surface:var(--q-surface); --surface-2:#EEF2F8;
+  --text:var(--q-ink); --muted:var(--q-muted); --line:var(--q-line);
+  --accent:var(--q-blue); --accent-strong:var(--q-blue-hover);
+  --accent-soft:var(--q-blue-soft); --success:var(--q-success);
+  --danger:var(--q-error); --sidebar:#FFFFFF;
+}
+html { background:var(--q-bg)!important; }
+body.studio-rebuild {
+  background:var(--q-bg)!important; color:var(--q-ink)!important;
+  font:16px/1.55 "Manrope","Inter",system-ui,sans-serif!important;
+}
+body.studio-rebuild :is(h1,h2,h3,h4,h5,strong,b) { color:var(--q-ink)!important; }
+body.studio-rebuild :is(h1,h2,h3,h4) {
+  letter-spacing:-.048em!important; text-wrap:balance;
+}
+body.studio-rebuild :is(p,small) { line-height:1.55; }
+body.studio-rebuild :is(.hero-card>p,.access-intro,.section-toolbar p,.setup-panel p,.question-helper,.drawer-copy,.subcopy,.game-pack-copy p) {
+  color:var(--q-muted)!important;
+}
+body.studio-rebuild :is(button,input,select,textarea) { font:inherit; }
+body.studio-rebuild :is(button,a,summary) { -webkit-tap-highlight-color:transparent; }
+body.studio-rebuild :is(button,input,select,textarea,summary,a,[tabindex]):focus-visible {
+  outline:3px solid var(--q-blue)!important;outline-offset:3px!important;
+}
+body.studio-rebuild :is(button,input,select,textarea) { min-width:0; }
+body.studio-rebuild input,body.studio-rebuild select,body.studio-rebuild textarea {
+  border:1px solid #CDD8E8!important;border-radius:12px!important;
+  background:#fff!important;color:var(--q-ink)!important;
+  font-size:15px!important;
+}
+body.studio-rebuild input::placeholder,body.studio-rebuild textarea::placeholder { color:#8391A4!important;opacity:1; }
+body.studio-rebuild :is(input,select,textarea):focus { border-color:var(--q-blue)!important;box-shadow:0 0 0 4px rgba(36,88,237,.1)!important; }
+body.studio-rebuild :is(button,.role-tab) { transition:background-color .18s ease,color .18s ease,border-color .18s ease,box-shadow .18s ease,transform .18s ease!important; }
+body.studio-rebuild :is(.primary,.button-primary,.primary-action,.big-btn,.generator-submit,.preview-check) {
+  min-height:48px!important;border-radius:12px!important;
+  background:var(--q-blue)!important;border:1px solid var(--q-blue)!important;
+  color:#fff!important;box-shadow:0 4px 0 #163CB1!important;
+  font-size:14px!important;font-weight:800!important;
+}
+body.studio-rebuild :is(.primary,.button-primary,.primary-action,.big-btn,.generator-submit,.preview-check):hover:not(:disabled) {
+  background:var(--q-blue-hover)!important;border-color:var(--q-blue-hover)!important;
+  color:#fff!important;box-shadow:0 4px 0 #12389B!important;
+  transform:translateY(-1px)!important;
+}
+body.studio-rebuild :is(.primary,.button-primary,.primary-action,.big-btn,.generator-submit,.preview-check):active:not(:disabled) {
+  box-shadow:0 1px 0 #12389B!important;transform:translateY(2px)!important;
+}
+body.studio-rebuild :is(.button-secondary,.soft-btn,.icon-btn,.question-action,.library-clear,.sidebar-action,.drawer-close) {
+  min-height:44px!important;border-radius:12px!important;
+  border:1px solid var(--q-line)!important;background:#fff!important;
+  color:var(--q-ink)!important;box-shadow:none!important;
+  font-size:14px!important;font-weight:750!important;
+}
+body.studio-rebuild :is(.button-secondary,.soft-btn,.icon-btn,.question-action,.library-clear,.sidebar-action,.drawer-close):hover:not(:disabled) {
+  border-color:#AFC2E3!important;background:#F3F6FE!important;transform:translateY(-1px)!important;
+}
+body.studio-rebuild .button-danger { background:#FFF3F3!important;color:var(--q-error)!important;border:1px solid #F1CDD1!important; }
+body.studio-rebuild button:disabled { opacity:.54!important;cursor:not-allowed!important;box-shadow:none!important;transform:none!important; }
+body.studio-rebuild :is(.hero-card,.access-card,.question-stage,.mini-card,.workspace-card,.setup-panel,.ready-card,.generator-card,.game-pack-section,.game-pack-card,.question-tile,.metric-card,.analytics-metrics article,.live-metrics article,.auth-card,.panel,.phase-overlay-card,.party-event-inner,.duel-shell,.duel-builder,.media-item,.mode-card,.presenter-stage,.game-header) {
+  border:1px solid var(--q-line)!important;border-radius:var(--q-radius)!important;
+  box-shadow:0 7px 28px rgba(24,41,74,.034)!important;
+}
+body.studio-rebuild .topbar {
+  height:76px!important;padding:0 max(24px,calc((100vw - 1410px)/2))!important;
+  border-bottom:1px solid var(--q-line)!important;
+  background:rgba(255,255,255,.95)!important;backdrop-filter:blur(15px)!important;
+}
+body.studio-rebuild .brand { gap:11px!important; }
+body.studio-rebuild .brand-sigil {
+  width:43px!important;height:43px!important;background:var(--q-blue)!important;
+  border-radius:13px!important;box-shadow:0 4px 0 #173EAF!important;
+}
+body.studio-rebuild .brand-copy strong {font-size:19px!important;letter-spacing:-.065em!important;color:var(--q-ink)!important;}
+body.studio-rebuild .brand-copy small {font-size:10px!important;font-weight:650!important;color:var(--q-muted)!important;letter-spacing:0!important;}
+body.studio-rebuild .brand-slash { color:var(--q-blue)!important; }
+body.studio-rebuild .top-actions .live-chip {
+  background:var(--q-blue-soft)!important;border:1px solid #D8E4FF!important;color:var(--q-blue)!important;
+  padding:0 14px!important;font-size:11px!important;letter-spacing:.02em!important;
+}
+body.studio-rebuild .top-actions .live-chip i {background:var(--q-success)!important;}
+body.studio-rebuild .top-actions .soft-btn {color:var(--q-blue)!important;border-color:#D2DFFA!important;}
+body.studio-rebuild .top-actions .release-version {color:#77849A!important;}
+body.studio-rebuild .shell {max-width:1440px!important;padding:30px 26px 88px!important;}
+
+/* 01 — An editorial landing page, not a fake game screenshot. */
+body.studio-rebuild .landing-grid {
+  display:grid!important;grid-template-columns:minmax(0,1.18fr) minmax(340px,.82fr)!important;
+  gap:18px!important;align-items:stretch!important;
+}
+body.studio-rebuild .hero-card {
+  min-height:624px!important;padding:clamp(38px,4.1vw,64px)!important;
+  border:1px solid #E4E9F2!important;background:#fff!important;
+  display:flex!important;flex-direction:column!important;justify-content:flex-start!important;
+  border-radius:24px!important;position:relative!important;overflow:hidden;
+}
+body.studio-rebuild .hero-card::before {
+  content:"";display:block!important;position:absolute;right:-80px;top:-136px;
+  width:270px;height:270px;border-radius:50%;
+  border:48px solid #EEF3FF;opacity:.75;pointer-events:none;
+}
+body.studio-rebuild .hero-card::after {display:none!important;}
+body.studio-rebuild .hero-eyebrow {
+  position:relative;z-index:2;font-size:11px!important;
+  font-weight:800!important;letter-spacing:.085em!important;color:var(--q-blue)!important;
+}
+body.studio-rebuild .hero-eyebrow-line {background:var(--q-blue)!important;width:23px!important;height:3px!important;}
+body.studio-rebuild .hero-card h1 {
+  margin:40px 0 25px!important;max-width:800px!important;
+  font-size:clamp(52px,5.2vw,82px)!important;line-height:1.04!important;
+  font-weight:850!important;color:var(--q-ink)!important;letter-spacing:-.071em!important;
+  position:relative;z-index:2;
+}
+body.studio-rebuild .hero-card h1 em {
+  font-style:normal!important;color:var(--q-blue)!important;
+  background:transparent!important;-webkit-text-fill-color:currentColor!important;
+}
+body.studio-rebuild .hero-card>p {
+  max-width:510px!important;margin:0!important;font-size:17px!important;
+  line-height:1.64!important;color:#4D5F78!important;position:relative;z-index:2;
+}
+body.studio-rebuild .home-hero-actions {gap:12px!important;margin-top:35px!important;position:relative;z-index:2;}
+body.studio-rebuild .home-hero-actions button {min-height:54px!important;padding:0 22px!important;font-size:14px!important;}
+body.studio-rebuild .home-hero-actions .button-secondary {color:var(--q-ink)!important;background:#F2F5FA!important;border-color:var(--q-line)!important;}
+body.studio-rebuild .home-hero-bottom {
+  padding:22px 0 0!important;margin-top:auto!important;
+  border-top:1px solid #E8EDF5!important;gap:18px!important;
+  font-size:10px!important;letter-spacing:.03em!important;color:#66778E!important;
+}
+body.studio-rebuild .home-hero-dot {background:var(--q-success)!important;}
+body.studio-rebuild .home-illustration {display:none!important;}
+body.studio-rebuild .access-card {
+  background:#EAF1FF!important;padding:clamp(27px,3vw,41px)!important;
+  border:1px solid #DCE7FF!important;border-radius:24px!important;box-shadow:none!important;
+}
+body.studio-rebuild .home-access-eyebrow {color:var(--q-blue)!important;font-weight:850!important;font-size:11px!important;margin-bottom:22px!important;}
+body.studio-rebuild .role-switch {padding:5px!important;gap:5px!important;border:1px solid #D9E4F7!important;background:#DFE9FB!important;border-radius:13px!important;margin-bottom:37px!important;}
+body.studio-rebuild .role-tab {min-height:45px!important;font-size:13px!important;border-radius:10px!important;color:#4D6284!important;}
+body.studio-rebuild .role-tab.active {background:var(--q-blue)!important;color:#fff!important;box-shadow:0 2px 6px rgba(33,74,161,.17)!important;}
+body.studio-rebuild .access-heading h2 {font-size:clamp(31px,3.3vw,46px)!important;line-height:1.12!important;margin:10px 0!important;}
+body.studio-rebuild .access-card .stack {gap:13px!important;}
+body.studio-rebuild .access-card :is(label,.stack label) {color:#263A55!important;font-size:12px!important;font-weight:800!important;}
+body.studio-rebuild .access-card .stack input {height:50px!important;background:#fff!important;border-color:#CAD8F2!important;}
+body.studio-rebuild .access-card .big-btn {min-height:54px!important;margin-top:12px!important;}
+body.studio-rebuild .access-intro {font-size:13px!important;color:#596D88!important;}
+body.studio-rebuild .access-support {margin-top:24px!important;border-top:1px solid #D5E1F6!important;padding-top:20px!important;color:#566985!important;font-size:11px!important;}
+body.studio-rebuild .home-value-grid {
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:14px!important;margin-top:16px!important;
+}
+body.studio-rebuild .home-value-grid>div {
+  padding:25px 28px!important;min-height:140px!important;
+  background:#fff!important;border:1px solid var(--q-line)!important;
+  border-radius:17px!important;display:grid!important;align-content:start!important;
+  box-shadow:none!important;
+}
+body.studio-rebuild .value-index {display:inline-flex!important;color:var(--q-blue)!important;font-size:12px!important;font-weight:850!important;margin-bottom:12px!important;}
+body.studio-rebuild .home-value-grid strong {font-size:19px!important;color:var(--q-ink)!important;}
+body.studio-rebuild .home-value-grid p {font-size:13px!important;color:var(--q-muted)!important;margin-top:5px!important;}
+body.studio-rebuild .mode-disclosure {margin-top:20px!important;}
+body.studio-rebuild .mode-disclosure>summary {font-size:14px!important;font-weight:800!important;color:var(--q-blue)!important;}
+body.studio-rebuild .mode-card {background:#fff!important;border:1px solid var(--q-line)!important;border-radius:15px!important;min-height:154px!important;}
+body.studio-rebuild .mode-card svg {stroke:var(--q-blue)!important;}
+body.studio-rebuild .mode-card h3 {font-size:17px!important;}
+body.studio-rebuild .mode-card p {font-size:12px!important;color:var(--q-muted)!important;}
+
+/* 02 — Teacher's workspace: readable navigation, clear live control. */
+body.studio-rebuild .studio-shell {
+  background:transparent!important;grid-template-columns:236px minmax(0,1fr)!important;gap:22px!important;
+}
+body.studio-rebuild .studio-flowbar {
+  border:1px solid var(--q-line)!important;border-radius:19px!important;
+  background:#fff!important;box-shadow:none!important;padding:19px 13px!important;
+}
+body.studio-rebuild .flowbar-brand {padding:5px 10px 20px!important;border-bottom:1px solid var(--q-line)!important;}
+body.studio-rebuild .studio-mark {background:#EAF1FF!important;color:var(--q-blue)!important;border-radius:12px!important;}
+body.studio-rebuild .flowbar-brand strong {color:var(--q-ink)!important;font-size:14px!important;}
+body.studio-rebuild .flowbar-brand small {color:var(--q-muted)!important;}
+body.studio-rebuild .flow-steps {gap:6px!important;padding:20px 0!important;}
+body.studio-rebuild .flow-step {
+  min-height:66px!important;border-radius:12px!important;border:1px solid transparent!important;
+  color:#53657D!important;background:transparent!important;padding:12px!important;
+  text-align:left!important;
+}
+body.studio-rebuild .flow-step>span {
+  color:#6F83A1!important;background:#F0F4FB!important;border:0!important;
+  border-radius:9px!important;min-width:32px;min-height:32px;
+}
+body.studio-rebuild .flow-step b {color:#31425D!important;font-size:13px!important;}
+body.studio-rebuild .flow-step small {font-size:10px!important;color:#8491A3!important;}
+body.studio-rebuild .flow-step:hover {background:#F3F6FC!important;}
+body.studio-rebuild .flow-step.active {
+  background:#EAF1FF!important;border:1px solid #C8D9FB!important;
+  box-shadow:inset 3px 0 0 var(--q-blue)!important;
+}
+body.studio-rebuild .flow-step.active b {color:var(--q-blue)!important;}
+body.studio-rebuild .flow-step.active>span {background:var(--q-blue)!important;color:#fff!important;}
+body.studio-rebuild .flowbar-actions {border-top:1px solid var(--q-line)!important;padding-top:17px!important;}
+body.studio-rebuild .studio-main {padding:11px 0 64px!important;min-width:0!important;}
+body.studio-rebuild .studio-topbar {padding:8px 4px 18px!important;border-bottom:1px solid var(--q-line)!important;margin-bottom:22px!important;}
+body.studio-rebuild .studio-topbar h1 {font-size:clamp(29px,3vw,41px)!important;line-height:1.15!important;margin-top:8px!important;}
+body.studio-rebuild .section-toolbar {gap:16px!important;margin-bottom:22px!important;}
+body.studio-rebuild .section-toolbar h2 {font-size:clamp(27px,3vw,37px)!important;line-height:1.15!important;margin:6px 0 9px!important;}
+body.studio-rebuild .section-toolbar p {font-size:13px!important;}
+body.studio-rebuild .toolbar-actions {gap:9px!important;}
+body.studio-rebuild .toolbar-actions :is(button,.button-primary,.button-secondary) {min-height:46px!important;}
+body.studio-rebuild :is(.generator-disclosure,.pack-disclosure,.host-extras) {
+  background:#fff!important;border:1px solid var(--q-line)!important;border-radius:16px!important;
+}
+body.studio-rebuild :is(.generator-disclosure,.pack-disclosure,.host-extras)>summary {
+  padding:20px 24px!important;min-height:72px!important;
+  font-size:14px!important;color:var(--q-ink)!important;
+}
+body.studio-rebuild .library-head {margin:27px 0 18px!important;border-bottom-color:var(--q-line)!important;}
+body.studio-rebuild .library-head h3 {font-size:25px!important;}
+body.studio-rebuild .filter-bar {gap:10px!important;}
+body.studio-rebuild .filter-bar :is(input,select) {min-height:46px!important;}
+body.studio-rebuild .library-controls {gap:8px!important;}
+body.studio-rebuild .library-check {padding:9px 12px!important;background:#fff!important;border:1px solid #E0E7F1!important;border-radius:10px!important;font-size:12px!important;}
+body.studio-rebuild .library-clear {font-size:12px!important;}
+body.studio-rebuild .question-library {gap:12px!important;}
+body.studio-rebuild .question-tile {
+  border:1px solid var(--q-line)!important;background:#fff!important;border-radius:16px!important;
+  box-shadow:none!important;transition:border-color .18s,box-shadow .18s,transform .18s!important;
+}
+body.studio-rebuild .question-tile:hover {border-color:#B4C9F3!important;box-shadow:0 6px 23px rgba(36,88,237,.07)!important;transform:translateY(-2px)!important;}
+body.studio-rebuild .question-tile-body h3 {font-size:15px!important;font-weight:800!important;line-height:1.43!important;}
+body.studio-rebuild .game-pack-grid {gap:13px!important;}
+body.studio-rebuild .game-pack-card {border-color:var(--q-line)!important;border-radius:16px!important;box-shadow:none!important;}
+body.studio-rebuild .game-pack-visual {background:#EDF3FF!important;border-radius:12px!important;}
+body.studio-rebuild .game-pack-visual svg {stroke:var(--q-blue)!important;}
+body.studio-rebuild .game-pack-copy h4 {font-size:15px!important;}
+
+/* Session stepper and teacher scene share the same design language. */
+body.studio-rebuild .session-stepper {gap:10px!important;}
+body.studio-rebuild .session-step {min-height:72px!important;border:1px solid var(--q-line)!important;background:#fff!important;border-radius:14px!important;}
+body.studio-rebuild .session-step.active {background:#EAF1FF!important;border-color:#B7CEF9!important;box-shadow:inset 0 -3px 0 var(--q-blue)!important;}
+body.studio-rebuild .session-step span {color:var(--q-blue)!important;background:#EAF1FF!important;}
+body.studio-rebuild .live-metrics {gap:10px!important;}
+body.studio-rebuild .live-metrics article {padding:17px 20px!important;}
+body.studio-rebuild .live-metrics article span {font-size:11px!important;color:var(--q-muted)!important;}
+body.studio-rebuild .live-metrics article strong {font-size:27px!important;color:var(--q-ink)!important;}
+body.studio-rebuild .setup-panel {padding:clamp(20px,2.7vw,34px)!important;background:#fff!important;}
+body.studio-rebuild .setup-panel h3 {font-size:26px!important;}
+body.studio-rebuild .setup-panel-head p {max-width:670px!important;line-height:1.6!important;}
+body.studio-rebuild .setup-form {gap:12px!important;}
+body.studio-rebuild .setup-form :is(input,select) {min-height:50px!important;}
+body.studio-rebuild .director-controls {gap:8px!important;flex-wrap:wrap!important;}
+body.studio-rebuild .director-controls button {min-height:46px!important;}
+body.studio-rebuild .stage-card {padding:20px!important;}
+body.studio-rebuild .presenter-stage {background:#F6F8FC!important;border:1px solid var(--q-line)!important;min-height:390px!important;padding:clamp(22px,3.5vw,46px)!important;}
+body.studio-rebuild .presenter-stage:fullscreen {background:#fff!important;border-radius:0!important;min-height:100dvh!important;}
+body.studio-rebuild .presenter-stage h2 {font-size:clamp(31px,4.1vw,56px)!important;line-height:1.15!important;}
+body.studio-rebuild :is(.presenter-option,.answer,.vote-card) {
+  background:#fff!important;border:1.5px solid #D4DDEA!important;border-radius:14px!important;
+  min-height:76px!important;padding:19px 21px!important;font-size:15px!important;
+  color:var(--q-ink)!important;box-shadow:none!important;
+}
+body.studio-rebuild :is(.answer,.vote-card):hover:not(:disabled) {
+  border-color:var(--q-blue)!important;background:#F0F5FF!important;transform:translateY(-1px)!important;
+}
+body.studio-rebuild .leaderboard .leader-row {padding:13px 0!important;}
+body.studio-rebuild .leaderboard .rank {background:#FFF1CC!important;color:#82580B!important;border-radius:9px!important;}
+body.studio-rebuild .metric-card strong {font-size:28px!important;}
+body.studio-rebuild .drawer-panel {background:#fff!important;}
+body.studio-rebuild .drawer-head {border-bottom-color:var(--q-line)!important;}
+body.studio-rebuild .editor-hint {background:#EAF1FF!important;color:#3A5D9A!important;border:1px solid #D5E2FF!important;}
+body.studio-rebuild .form-message:not(:empty),body.studio-rebuild .message:not(:empty) {font-size:13px!important;line-height:1.5!important;}
+
+/* Player: question and timer are first, competitive tools second. */
+body.studio-rebuild .game-layout {grid-template-columns:minmax(0,1fr) 292px!important;gap:17px!important;}
+body.studio-rebuild .game-header {padding:19px 23px!important;margin-bottom:15px!important;background:#fff!important;}
+body.studio-rebuild .player-profile h2 {font-size:22px!important;}
+body.studio-rebuild .player-statuses {flex-wrap:wrap!important;gap:7px!important;}
+body.studio-rebuild .question-stage {padding:clamp(23px,3.4vw,47px)!important;min-height:610px!important;background:#fff!important;}
+body.studio-rebuild .question-stage h1 {font-size:clamp(30px,4.4vw,57px)!important;line-height:1.12!important;max-width:920px!important;margin:25px 0 14px!important;}
+body.studio-rebuild .question-topline {gap:9px!important;}
+body.studio-rebuild .timer-chip {background:#FFF0CC!important;border-color:#F0DA9D!important;color:#784D00!important;padding:9px 14px!important;}
+body.studio-rebuild .question-helper {font-size:15px!important;margin-bottom:23px!important;}
+body.studio-rebuild .answer-grid {gap:12px!important;}
+body.studio-rebuild .side-stack {gap:13px!important;}
+body.studio-rebuild .mini-card {padding:21px!important;background:#fff!important;}
+body.studio-rebuild .power-bank-card {background:#F0F5FF!important;}
+body.studio-rebuild .power-meter {background:#D8E5FF!important;}
+body.studio-rebuild .power-meter span {background:var(--q-blue)!important;}
+body.studio-rebuild .power-actions button {border:1px solid #CAD8F1!important;border-radius:11px!important;background:#fff!important;min-height:48px!important;color:var(--q-ink)!important;}
+body.studio-rebuild .power-actions button:disabled {background:#E9EFF9!important;}
+body.studio-rebuild .mini-card .kicker {color:var(--q-blue)!important;}
+
+/* Responsive: no hidden primary actions, mobile-friendly gameplay. */
+@media (max-width:1190px) {
+  body.studio-rebuild .landing-grid {grid-template-columns:minmax(0,1fr) minmax(315px,.85fr)!important;}
+  body.studio-rebuild .hero-card h1 {font-size:clamp(48px,5vw,66px)!important;}
+  body.studio-rebuild .studio-shell {grid-template-columns:207px minmax(0,1fr)!important;gap:16px!important;}
+  body.studio-rebuild .game-layout {grid-template-columns:1fr!important;}
+  body.studio-rebuild .side-stack {grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+}
+@media (max-width:850px) {
+  body.studio-rebuild .shell {padding:18px 18px 65px!important;}
+  body.studio-rebuild .landing-grid {grid-template-columns:1fr!important;}
+  body.studio-rebuild .hero-card {min-height:0!important;padding:38px!important;}
+  body.studio-rebuild .hero-card h1 {max-width:690px!important;}
+  body.studio-rebuild .home-hero-bottom {margin-top:34px!important;}
+  body.studio-rebuild .access-card {padding:30px!important;}
+  body.studio-rebuild .home-value-grid {grid-template-columns:repeat(3,minmax(0,1fr))!important;}
+  body.studio-rebuild .studio-shell {display:block!important;}
+  body.studio-rebuild .studio-shell.hidden {display:none!important;}
+  body.studio-rebuild .studio-flowbar {
+    position:sticky!important;top:76px!important;z-index:36!important;
+    border-radius:14px!important;padding:10px!important;margin-bottom:16px!important;
+  }
+  body.studio-rebuild .flowbar-brand,body.studio-rebuild .flowbar-actions {display:none!important;}
+  body.studio-rebuild .flow-steps {display:flex!important;flex-wrap:nowrap!important;overflow-x:auto!important;gap:7px!important;padding:0!important;}
+  body.studio-rebuild .flow-step {min-width:148px!important;max-width:none!important;min-height:47px!important;padding:9px 13px!important;}
+  body.studio-rebuild .flow-step>span {display:none!important;}
+  body.studio-rebuild .flow-step small {display:none!important;}
+  body.studio-rebuild .studio-main {padding:10px 0 45px!important;}
+  body.studio-rebuild .game-pack-grid {grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+}
+@media (max-width:620px) {
+  body.studio-rebuild .topbar {height:65px!important;padding:0 13px!important;}
+  body.studio-rebuild .brand-sigil {width:37px!important;height:37px!important;}
+  body.studio-rebuild .brand-copy strong {font-size:16px!important;}
+  body.studio-rebuild .top-actions .live-chip,body.studio-rebuild .top-actions .release-version {display:none!important;}
+  body.studio-rebuild .top-actions .soft-btn {padding:0 11px!important;font-size:12px!important;}
+  body.studio-rebuild .shell {padding:13px 12px 60px!important;}
+  body.studio-rebuild .hero-card {padding:31px 25px!important;border-radius:19px!important;}
+  body.studio-rebuild .hero-card::before {width:150px;height:150px;right:-70px;top:-85px;border-width:25px;}
+  body.studio-rebuild .hero-card h1 {font-size:clamp(39px,11vw,57px)!important;line-height:1.08!important;margin:27px 0 20px!important;}
+  body.studio-rebuild .hero-card>p {font-size:15px!important;}
+  body.studio-rebuild .home-hero-actions {display:grid!important;grid-template-columns:1fr!important;width:100%;gap:11px!important;margin-top:27px!important;}
+  body.studio-rebuild .home-hero-actions button {width:100%!important;}
+  body.studio-rebuild .home-hero-bottom {display:flex!important;gap:10px 15px!important;margin-top:28px!important;padding-top:18px!important;}
+  body.studio-rebuild .access-card {padding:26px 22px!important;border-radius:19px!important;}
+  body.studio-rebuild .role-switch {margin-bottom:22px!important;}
+  body.studio-rebuild .home-value-grid {grid-template-columns:1fr!important;gap:10px!important;}
+  body.studio-rebuild .home-value-grid>div {min-height:auto!important;padding:17px 20px!important;}
+  body.studio-rebuild .mode-grid {grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  body.studio-rebuild .studio-flowbar {top:65px!important;margin-bottom:14px!important;}
+  body.studio-rebuild .flow-step {min-width:130px!important;}
+  body.studio-rebuild .studio-topbar h1 {font-size:29px!important;}
+  body.studio-rebuild .section-toolbar {align-items:stretch!important;flex-direction:column!important;}
+  body.studio-rebuild .section-toolbar h2 {font-size:27px!important;}
+  body.studio-rebuild .toolbar-actions {display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  body.studio-rebuild .toolbar-actions button:last-child {grid-column:1/-1;}
+  body.studio-rebuild .filter-bar {grid-template-columns:1fr!important;}
+  body.studio-rebuild .game-pack-grid,body.studio-rebuild .question-library {grid-template-columns:1fr!important;}
+  body.studio-rebuild .question-tile {grid-template-columns:76px minmax(0,1fr)!important;}
+  body.studio-rebuild .question-visual {min-width:76px!important;min-height:130px!important;}
+  body.studio-rebuild .question-tile-body h3 {font-size:13px!important;}
+  body.studio-rebuild .session-stepper {gap:6px!important;overflow-x:auto!important;}
+  body.studio-rebuild .session-step {min-width:112px!important;padding:9px!important;}
+  body.studio-rebuild .live-metrics {grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  body.studio-rebuild .game-header {padding:17px!important;}
+  body.studio-rebuild .question-stage {min-height:420px!important;padding:26px 18px!important;}
+  body.studio-rebuild .question-stage h1 {font-size:clamp(28px,8vw,38px)!important;}
+  body.studio-rebuild .side-stack {grid-template-columns:1fr!important;}
+  body.studio-rebuild :is(.answer-grid,.presenter-options,.vote-grid,.two-workspace) {grid-template-columns:1fr!important;}
+  body.studio-rebuild .drawer-panel {max-width:100vw!important;width:100vw!important;padding:17px!important;}
+}
+@media (prefers-reduced-motion:reduce) {
+  body.studio-rebuild *,body.studio-rebuild *::before,body.studio-rebuild *::after {
+    animation-duration:.01ms!important;transition-duration:.01ms!important;
+    animation-iteration-count:1!important;scroll-behavior:auto!important;
+  }
+}
+/* Do not override the application's state machine with CSS. */
+body.studio-rebuild .hidden,body.studio-rebuild .studio-shell.hidden,body.studio-rebuild .studio-flowbar.hidden,
+body.studio-rebuild .studio-main .hidden,body.studio-rebuild #moderatorAccess.hidden,
+body.studio-rebuild #participantAccess.hidden {display:none!important;}
+
+
+/* Visual architecture v2: horizontal join studio — a deliberate break from the old two-card landing. */
+@media (min-width:901px) {
+  body.studio-rebuild .landing-grid {
+    grid-template-columns:minmax(0,1fr)!important;gap:15px!important;
+  }
+  body.studio-rebuild .hero-card {
+    min-height:438px!important;
+    padding:clamp(40px,4.8vw,69px)!important;
+    background:#F0F4FF!important;
+    border:1px solid #E0E8FC!important;
+  }
+  body.studio-rebuild .hero-card::before {
+    width:470px!important;height:470px!important;
+    right:-95px!important;top:-166px!important;
+    border:96px solid rgba(255,255,255,.55)!important;opacity:1!important;
+  }
+  body.studio-rebuild .hero-card h1 {
+    margin:25px 0 15px!important;
+    font-size:clamp(56px,5.5vw,86px)!important;
+    max-width:940px!important;
+  }
+  body.studio-rebuild .hero-card>p {max-width:660px!important;font-size:16px!important;}
+  body.studio-rebuild .home-hero-actions {margin-top:27px!important;}
+  body.studio-rebuild .home-hero-bottom {
+    margin-top:27px!important;padding-top:16px!important;border:0!important;
+  }
+  body.studio-rebuild .access-card {
+    background:#fff!important;border:1px solid #DFE7F3!important;
+    display:grid!important;
+    grid-template-columns:minmax(215px,.36fr) minmax(0,1fr)!important;
+    grid-template-rows:auto auto 1fr!important;
+    column-gap:clamp(28px,4vw,65px)!important;
+    align-items:start!important;min-height:318px!important;
+    padding:clamp(28px,3vw,39px)!important;
+  }
+  body.studio-rebuild .home-access-eyebrow {grid-column:1;grid-row:1;margin:0 0 14px!important;}
+  body.studio-rebuild .role-switch {
+    grid-column:1;grid-row:2;display:grid!important;grid-template-columns:1fr!important;
+    background:#EFF3FA!important;padding:5px!important;
+    margin:0!important;max-width:220px!important;
+  }
+  body.studio-rebuild .role-tab {width:100%;text-align:left!important;padding:0 16px!important;}
+  body.studio-rebuild .access-support {
+    grid-column:1;grid-row:3;align-self:end!important;
+    margin-top:26px!important;line-height:1.55!important;
+  }
+  body.studio-rebuild #participantAccess,body.studio-rebuild #moderatorAccess {
+    grid-column:2;grid-row:1 / 4;min-width:0;
+  }
+  body.studio-rebuild .access-heading h2 {
+    font-size:clamp(31px,3vw,43px)!important;line-height:1.12!important;margin:5px 0 6px!important;
+  }
+  body.studio-rebuild .access-heading h2 br {display:none!important;}
+  body.studio-rebuild .access-intro {margin-bottom:19px!important;}
+  body.studio-rebuild .access-card .stack {
+    display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:12px!important;align-items:end!important;
+  }
+  body.studio-rebuild .access-card .stack label {min-width:0!important;}
+  body.studio-rebuild .access-card .stack input {width:100%!important;}
+  body.studio-rebuild .access-card .big-btn {
+    grid-column:1/3!important;justify-self:start!important;min-width:260px!important;
+    padding:0 24px!important;margin-top:4px!important;
+  }
+  body.studio-rebuild .access-card #joinMessage {grid-column:3;align-self:center;margin:0!important;}
+  body.studio-rebuild #moderatorAccess {padding-top:15px!important;}
+  body.studio-rebuild #moderatorAccess .big-btn {margin-top:20px!important;}
+}
+@media (min-width:621px) and (max-width:900px) {
+  body.studio-rebuild .landing-grid {grid-template-columns:1fr!important;}
+  body.studio-rebuild .hero-card {min-height:0!important;}
+  body.studio-rebuild .home-value-grid {grid-template-columns:repeat(3,minmax(0,1fr))!important;}
+}
+@media (max-width:620px) {
+  body.studio-rebuild .access-card {display:block!important;}
+  body.studio-rebuild .access-card .stack {display:grid!important;grid-template-columns:1fr!important;}
+  body.studio-rebuild .access-card .stack .big-btn,body.studio-rebuild .access-card #joinMessage {grid-column:1!important;}
+}
