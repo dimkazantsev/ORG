@@ -20,7 +20,7 @@
 <div class="projection-shell" id="projectionShell">
 <header class="projection-header">
  <div class="projection-brand"><span class="brand-square" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M24 15.5a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0Z" stroke="currentColor" stroke-width="3.5"/><path d="m19.5 20 5 5" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span><span>QWIZ<span class="brand-dash">-</span>PARTY</span></div>
- <div id="projectionRoom" class="projection-room"></div>
+ <div id="projectionRoom" class="projection-room"></div><button type="button" id="projectionJoinQr" class="projection-join-qr" aria-label="Увеличить QR-код входа в текущую игру" hidden><span id="projectionJoinQrImage"></span><span>СКАНИРУЙТЕ ДЛЯ ВХОДА</span></button><span id="projectionPaused" class="projection-paused" hidden>⏸ Игра на паузе</span>
  <a id="projectionPlay" class="fullscreen-control" href="./" hidden>Играть на этом устройстве →</a>
 </header>
 <main id="projectionMain" >
@@ -32,5 +32,5 @@
  <button id="projectionFullscreen" type="button" class="fullscreen-control">⛶ На весь экран</button>
 </footer>
 <p id="projectionError" role="status" class="projection-error" hidden></p>
-</div>
+<dialog id="projectionQrDialog" class="projection-qr-dialog"><button type="button" id="projectionQrClose">Закрыть ✕</button><div id="projectionQrZoom"></div><p>QR-код текущей игры</p></dialog></div>
 </body></html>
