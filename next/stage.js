@@ -67,6 +67,14 @@ window.QwizStage=(()=>{
   const clock=root.querySelector('.stage-clock');if(clock){clock.classList.toggle('is-urgent',s.phase==='question'&&left<=10);const bar=clock.querySelector('.clock-track');bar?.setAttribute('aria-valuenow',String(Math.min(total,left)));if(bar?.firstElementChild)bar.firstElementChild.style.transform='scaleX('+Math.min(1,ms/(total*1000))+')';const label=clock.querySelector('.clock-warning');if(label)label.textContent=s.phase==='question'&&left<=10?(left?'Осталось '+left+' сек.':'Время вышло'):''}
   if(withSound)audio.countdown(s,left);return left;
  }
+ function stripeOption(value){
+  if(!value||!Array.isArray(value.stripes)||![2,3,4].includes(value.stripes.length)
+   ||!value.stripes.every(v=>typeof v==='string'&&/^#[a-fA-F0-9]{6}$/.test(v))
+   ||!['horizontal','vertical'].includes(value.orientation))return '';
+  const vertical=value.orientation==='vertical';
+  return '<span class="flag-stripe-art '+(vertical?'vertical':'horizontal')+'" role="img" aria-label="Полосы флага">'+
+    value.stripes.map(color=>'<span style="background:'+esc(color)+'"></span>').join('')+'</span>';
+ }
  function questionStats(rows){
   const scored=(rows||[]).filter(x=>x.participants>0&&x.correct_rate!=null);
   const items=(list,errors=false)=>list.map(x=>'<li><span class="insight-question-number">'+(Number(x.index)+1)+'</span><div><strong>'+esc(x.prompt)+'</strong><small>'+x.correct+' из '+x.participants+' верно · '+x.incorrect+' ошибок · '+x.unanswered+' без ответа</small></div><b title="'+(errors?'Доля ошибочных ответов':'Доля правильных ответов')+'">'+fmt(errors?(x.incorrect_rate??100-x.correct_rate):x.correct_rate)+'%</b></li>').join('');
@@ -74,5 +82,5 @@ window.QwizStage=(()=>{
   const hardest=scored.filter(x=>x.answered>0).sort((a,b)=>(b.incorrect_rate??100-b.correct_rate)-(a.incorrect_rate??100-a.correct_rate)||b.incorrect-a.incorrect||a.index-b.index).slice(0,3);
   return '<div class="question-insights"><section><h2>Знаем лучше всего</h2><p>Три вопроса с наибольшей долей верных ответов.</p><ol>'+items(best)+'</ol></section><section><h2>Чаще ошибались</h2><p>Три вопроса с наибольшей долей ошибок. Пропуски считаются отдельно.</p><ol>'+items(hardest,true)+'</ol></section></div><details class="all-question-stats"><summary>Все вопросы · '+rows.length+'</summary><ol>'+items(rows)+'</ol></details>';
  }
- return{esc,fmt,habitats,icon,teamTile,teams,patchTeams,progress,leaderboard,illustration,hydrateIllustrations,clockMarkup,updateClock,audio,questionStats};
+ return{esc,fmt,habitats,icon,teamTile,teams,patchTeams,progress,leaderboard,illustration,hydrateIllustrations,clockMarkup,updateClock,audio,questionStats,stripeOption};
 })();
