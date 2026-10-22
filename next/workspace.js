@@ -428,7 +428,7 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  $('liveRanking').innerHTML=(s.teams||[]).slice().sort((a,b)=>b.score-a.score).map((t,i)=>
   '<div class="live-line"><span>'+ (i+1)+'. '+esc(t.name)+'</span><strong>'+esc(t.score)+'</strong></div>').join('');
  $('liveRoster').innerHTML=(s.players||[]).map(p=>'<div class="live-line"><span>'+esc(p.name)+'</span><small>'+
- esc(s.teams.find(t=>t.id===p.team_id)?.name||'Ожидает распределения')+'</small></div>').join('');renderTeamManager(s);}
+ esc(s.teams.find(t=>t.id===p.team_id)?.name||'Ожидает распределения')+'</small></div>').join('');renderTeamManager(s);window.QwizArcade?.mountHost($('arcadeHostPanel'),s,state.db);}
 async function control(action){if(!state.room)return;for(const id of ['liveStart','liveReveal','liveNext','liveFinish'])disable(id,true);
  try{if(action==='finish'&&!confirm('Завершить игру?'))return;
  await rpc('org_next_advance',{p_room:state.room.room_id,p_action:action});
