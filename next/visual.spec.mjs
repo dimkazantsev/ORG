@@ -242,12 +242,12 @@ test('Standalone teacher workspace is responsive and has two library sections',a
  await expect(page.locator('#roundCards .round-card')).toHaveCount(4);
  await expect(page.locator('#roundCards .round-card').last()).toHaveAttribute('data-type','finale');
 });
-test('Flag studio shows two working formats, without old question types',async({page})=>{
+test('Flag studio shows three working formats, without old question types',async({page})=>{
  await page.goto('http://127.0.0.1:8080/next/workspace.html');
  await page.locator('#newQuestion').click();
  await expect(page.locator('#questionDialog')).toBeVisible();
  await expect(page.locator('#editKind option')).toHaveCount(12);
- await expect(page.locator('#editKind option:disabled')).toHaveCount(10);
+ await expect(page.locator('#editKind option:disabled')).toHaveCount(9);
  await expect(page.locator('#editKind')).toHaveValue('country');
  await expect(page.locator('#answerEditor [data-option]')).toHaveCount(4);
  await expect(page.locator('#questionMediaUrl')).toBeVisible();
