@@ -60,3 +60,6 @@
 .flag-choice-art{display:block;max-width:100%;width:min(170px,100%);height:86px;object-fit:contain;background:white;border:1px solid var(--line,#e8e3f0);border-radius:10px;padding:5px}
 .option-list .option:has(.flag-choice-art){min-height:112px;justify-content:flex-start}
 @media(max-width:620px){.flag-choice-art{width:min(140px,100%);height:72px}}
+
+/* Shared flags: compact vector color bands. */
+.flag-stripe-art{display:flex;overflow:hidden;width:min(100%,230px);height:100px;margin:0 auto;border:1px solid #dbd3e6;border-radius:5px;box-shadow:0 1px 3px #2215311a;flex-shrink:0}.flag-stripe-art.horizontal{flex-direction:column}.flag-stripe-art.vertical{flex-direction:row}.flag-stripe-art>span{flex:1;min-height:0;min-width:0}
