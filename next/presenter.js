@@ -54,12 +54,13 @@ function render(state){
  clearError();$('projectionRoom').textContent=state.code||'';
  const key=[state.code,state.phase,state.index,state.activity?.title,state.activity?.type].join(':');
  if(key===ctx.renderKey){
+  if(state.phase==='lobby')QwizTeams.board($('projectionTeamBoard'),state.lobby_teams||[],state.code);
   if(state.phase==='question'){QwizStage.patchTeams($('projectionMain'),state.teams);if($('teamAnswerCount'))$('teamAnswerCount').textContent=(state.teams||[]).reduce((a,t)=>a+Number(t.answered||0),0)}
   QwizStage.updateClock(state,ctx.offset);return;
  }
  ctx.renderKey=key;const previous=ctx.lastPhase;ctx.lastPhase=state.phase;
  if(state.phase==='lobby'){
-  $('projectionMain').innerHTML='<section class="projection-lobby"><div><div class="projection-eyebrow">КОМНАТА ОТКРЫТА</div><h1>Присоединяйтесь!</h1><p>Наведите камеру на QR-код или введите код комнаты на телефоне.</p><strong class="projection-code">'+escapeText(state.code)+'</strong></div><div class="projection-qr" id="projectionQr"></div></section>';qr($('projectionQr'),link(state.code));return;
+  $('projectionMain').innerHTML='<section class="projection-lobby has-team-entry"><div><div class="projection-eyebrow">КОМНАТА ОТКРЫТА</div><h1>Присоединяйтесь!</h1><p>Наведите камеру на QR-код или введите код комнаты на телефоне.</p><strong class="projection-code">'+escapeText(state.code)+'</strong></div><div class="projection-qr" id="projectionQr"></div></section><section class="projection-team-entry"><h2>Выберите свою команду</h2><p>Сканируйте QR под её иконкой. Нажмите на карточку, чтобы увеличить код.</p><div class="team-board" id="projectionTeamBoard"></div></section>';qr($('projectionQr'),link(state.code));QwizTeams.board($('projectionTeamBoard'),state.lobby_teams||[],state.code);return;
  }
  if(state.phase==='finished'){tone(state.activity?.sound||'fanfare');finalShow(state);return}
  if(state.phase==='countdown'){tone(state.round_sound||'fanfare');$('projectionMain').innerHTML='<div class="countdown-scene"><span class="projection-eyebrow">СЛЕДУЮЩИЙ РАУНД</span><h1>Приготовьтесь!</h1><div class="countdown-number" id="countdownNumber">'+seconds(state.ends_at)+'</div><p>Вопрос появится после обратного отсчёта.</p></div>';return}

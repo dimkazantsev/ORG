@@ -224,8 +224,8 @@ async function loadRooms(){try{const list=await rpc('qwiz_host_rooms');$('hostRo
  }catch(e){msg('launchMessage',e.message,true)}}
 async function launch(){disable('launchButton',true);msg('launchMessage','');
  try{if(!$('launchBuild').value)throw Error('Выберите сборку.');
- const created=await rpc('qwiz_launch_build',{p_build:$('launchBuild').value,p_title:$('launchTitle').value.trim()||null,p_teams:Number($('launchTeams').value)});
- msg('launchMessage','Комната '+created.code+' создана. Вопросов: '+created.total_questions);
+ const created=await rpc('qwiz_prepare_room',{p_build:$('launchBuild').value,p_title:$('launchTitle').value.trim()||null,p_teams:Number($('launchTeams').value)});
+ msg('launchMessage','Комната '+created.code+' создана. '+(created.issues?.length?'Можно собирать команды; вопросы добавьте перед началом.':'Вопросов: '+created.total_questions));
  await loadRooms();await selectRoom(created.code)}
  catch(e){msg('launchMessage',e.message,true)}finally{disable('launchButton',false)}}
 function subscribeRoom(code){if(state.channel){state.db.removeChannel(state.channel);state.channel=null}
@@ -258,13 +258,13 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  $('liveRanking').innerHTML=(s.teams||[]).slice().sort((a,b)=>b.score-a.score).map((t,i)=>
   '<div class="live-line"><span>'+ (i+1)+'. '+esc(t.name)+'</span><strong>'+esc(t.score)+'</strong></div>').join('');
  $('liveRoster').innerHTML=(s.players||[]).map(p=>'<div class="live-line"><span>'+esc(p.name)+'</span><small>'+
- esc(s.teams.find(t=>t.id===p.team_id)?.name||'—')+'</small></div>').join('')}
+ esc(s.teams.find(t=>t.id===p.team_id)?.name||'Ожидает распределения')+'</small></div>').join('');renderTeamManager(s);}
 async function control(action){if(!state.room)return;for(const id of ['liveStart','liveReveal','liveNext','liveFinish'])disable(id,true);
  try{if(action==='finish'&&!confirm('Завершить игру?'))return;
  await rpc('org_next_advance',{p_room:state.room.room_id,p_action:action});
  state.channel?.send({type:'broadcast',event:'phase',payload:{room:state.roomCode}})?.catch(()=>{});
  await refreshLive()}catch(e){msg('liveMessage',e.message,true)}
- finally{for(const id of ['liveStart','liveReveal','liveNext','liveFinish'])disable(id,false)}}
+ finally{for(const id of ['liveStart','liveReveal','liveNext','liveFinish'])disable(id,false);if(state.room)roomReadiness(state.room);}}
 function projection(){const u=new URL('./presenter.html',location.href);if(state.roomCode)u.searchParams.set('room',state.roomCode);
  window.open(u.toString(),'qwiz_party_public_screen','noopener,width=1280,height=760')}
 async function copyRoom(){const u=new URL('./',location.href);u.searchParams.set('room',state.roomCode);

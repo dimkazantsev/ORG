@@ -50,6 +50,9 @@ jobs:
           node --check next/workspace.js
           node --check next/profile.js
           node --check next/stage.js
+          node --check next/teams.js
+          node --check next/workspace-teams.js
+          test -s next/teams.css
           test -s next/stage.css
           test -s next/assets/habitats.svg
           test -s next/migrations/20261022_question_stage.sql
