@@ -368,8 +368,3 @@ button.option:hover:not(:disabled){background:var(--accent-soft);border-color:va
 .game-card .option{font-size:15px}}
 
 @media(max-width:380px){.header-link span{display:none}.profile-link,.header-link{min-width:44px;min-height:44px}.header-end{gap:4px}}
-
-/* Flag image answer choices: preserve native flag proportions. */
-.flag-choice-art{display:block;max-width:100%;width:min(170px,100%);height:86px;object-fit:contain;background:#fff;border:1px solid var(--line,#e8e3f0);border-radius:10px;padding:5px}
-.option-list .option:has(.flag-choice-art){min-height:112px;justify-content:flex-start}
-@media(max-width:620px){.flag-choice-art{width:min(140px,100%);height:72px}}
