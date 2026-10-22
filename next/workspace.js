@@ -238,9 +238,9 @@ function subscribeRoom(code){if(state.channel){state.db.removeChannel(state.chan
 async function selectRoom(code){state.roomCode=code;sessionStorage.setItem('qwiz-host-room',code);
  $('liveConsole').hidden=false;subscribeRoom(code);await refreshLive();
  $('liveConsole').scrollIntoView({behavior:'smooth',block:'start'})}
-async function refreshLive(){if(!state.roomCode||state.roomBusy)return;state.roomBusy=true;
- try{const s=await rpc('org_next_state',{p_code:state.roomCode});if(s.server_now)state.clockOffset=Date.parse(s.server_now)-Date.now();state.room=s;renderLive(s);msg('liveMessage','')}
- catch(e){msg('liveMessage',e.message,true)}finally{state.roomBusy=false}}
+async function refreshLive(){if(!state.roomCode)return;if(state.roomBusy){state.roomRefreshQueued=true;return;}state.roomBusy=true;const code=state.roomCode;
+ try{const s=await rpc('org_next_state',{p_code:code});if(code!==state.roomCode)return;if(s.server_now)state.clockOffset=Date.parse(s.server_now)-Date.now();state.room=s;renderLive(s);msg('liveMessage','')}
+ catch(e){msg('liveMessage',e.message,true)}finally{state.roomBusy=false;if(state.roomRefreshQueued){state.roomRefreshQueued=false;queueMicrotask(refreshLive);}}}
 function renderLive(s){
  const key=s.phase+':'+s.index;if(key!==state.liveKey){state.liveKey=key;if(s.phase==='result')QwizStage.audio.play('reveal');else if(s.phase==='finished')QwizStage.audio.play(s.activity?.sound||'fanfare')}
  $('liveClock').innerHTML=['question','result'].includes(s.phase)?QwizStage.clockMarkup(s,'liveTimer'):'';QwizStage.updateClock(s,state.clockOffset,document,'liveTimer',false);

@@ -259,7 +259,7 @@ async function restore(){if(!ctx.client)return;try{
        ctx.roomCode=code;storage.set('room',code);showScreen('game');await refreshRoom(false);signal('team');
        if(ctx.room)return;
      }
-   }catch(error){notice('joinNotice','Комната готова к подключению. Подтвердите вход.');}
+   }catch(error){notice('joinNotice',error.message||'Не удалось принять приглашение. Подтвердите вход.','error');}
  }
  resumeOffer();
  const isAdmin=await rpc('org_quiz_is_admin_check');teacherSession(isAdmin?session:null);
