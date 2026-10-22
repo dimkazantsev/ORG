@@ -1,0 +1,291 @@
+{
+  "catalog": "Флаги мира",
+  "target_countries": 195,
+  "source_repository": "https://github.com/hampusborgos/country-flags",
+  "source_commit": "c09927e63705529bbf59ca6684cd9b23225dddad",
+  "pilot_countries": 40,
+  "remaining_countries": 155,
+  "assets": "static GitHub Pages SVG; not Supabase storage",
+  "countries": [
+    {
+      "iso2": "RU",
+      "name_ru": "Россия",
+      "svg": "./ru.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "FR",
+      "name_ru": "Франция",
+      "svg": "./fr.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "DE",
+      "name_ru": "Германия",
+      "svg": "./de.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "IT",
+      "name_ru": "Италия",
+      "svg": "./it.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "JP",
+      "name_ru": "Япония",
+      "svg": "./jp.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "CA",
+      "name_ru": "Канада",
+      "svg": "./ca.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "BR",
+      "name_ru": "Бразилия",
+      "svg": "./br.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "IN",
+      "name_ru": "Индия",
+      "svg": "./in.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "CN",
+      "name_ru": "Китай",
+      "svg": "./cn.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "US",
+      "name_ru": "США",
+      "svg": "./us.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "GB",
+      "name_ru": "Великобритания",
+      "svg": "./gb.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "ES",
+      "name_ru": "Испания",
+      "svg": "./es.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "PT",
+      "name_ru": "Португалия",
+      "svg": "./pt.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "AU",
+      "name_ru": "Австралия",
+      "svg": "./au.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "NZ",
+      "name_ru": "Новая Зеландия",
+      "svg": "./nz.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "ZA",
+      "name_ru": "ЮАР",
+      "svg": "./za.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "KR",
+      "name_ru": "Южная Корея",
+      "svg": "./kr.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "AR",
+      "name_ru": "Аргентина",
+      "svg": "./ar.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "MX",
+      "name_ru": "Мексика",
+      "svg": "./mx.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "EG",
+      "name_ru": "Египет",
+      "svg": "./eg.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "TR",
+      "name_ru": "Турция",
+      "svg": "./tr.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "SE",
+      "name_ru": "Швеция",
+      "svg": "./se.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "NO",
+      "name_ru": "Норвегия",
+      "svg": "./no.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "FI",
+      "name_ru": "Финляндия",
+      "svg": "./fi.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "DK",
+      "name_ru": "Дания",
+      "svg": "./dk.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "IS",
+      "name_ru": "Исландия",
+      "svg": "./is.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "CH",
+      "name_ru": "Швейцария",
+      "svg": "./ch.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "AT",
+      "name_ru": "Австрия",
+      "svg": "./at.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "BE",
+      "name_ru": "Бельгия",
+      "svg": "./be.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "NL",
+      "name_ru": "Нидерланды",
+      "svg": "./nl.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "PL",
+      "name_ru": "Польша",
+      "svg": "./pl.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "UA",
+      "name_ru": "Украина",
+      "svg": "./ua.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "GR",
+      "name_ru": "Греция",
+      "svg": "./gr.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "IE",
+      "name_ru": "Ирландия",
+      "svg": "./ie.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "CZ",
+      "name_ru": "Чехия",
+      "svg": "./cz.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "HU",
+      "name_ru": "Венгрия",
+      "svg": "./hu.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "RO",
+      "name_ru": "Румыния",
+      "svg": "./ro.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "IL",
+      "name_ru": "Израиль",
+      "svg": "./il.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "SA",
+      "name_ru": "Саудовская Аравия",
+      "svg": "./sa.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    },
+    {
+      "iso2": "TH",
+      "name_ru": "Таиланд",
+      "svg": "./th.svg",
+      "un_member": true,
+      "review": "pilot_checked"
+    }
+  ]
+}
