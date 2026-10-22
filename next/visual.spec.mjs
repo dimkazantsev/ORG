@@ -3,7 +3,7 @@ import {test,expect} from '@playwright/test';
 test.beforeEach(async({page})=>{
  await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({
   status:200,contentType:'application/javascript',
-  body:'window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}})}})};'
+  body:'window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}}),signInAnonymously:async()=>({data:{session:{}},error:null})},rpc:async()=>({data:{registered:false},error:null})})};'
  }));
  await page.goto('http://127.0.0.1:8080/next/',{waitUntil:'domcontentloaded'});
 });
@@ -183,7 +183,35 @@ test('Classic entry retains its form and new studio link',async({page})=>{
   expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
  }
  await expect(page.getByRole('link',{name:'QWIZ-PARTY'})).toHaveAttribute('href','./next/');
+ const hero=await page.locator('.hero-card').boundingBox(),form=await page.locator('#homeAccess').boundingBox();
+ expect(form.x).toBeGreaterThan(hero.x+hero.width);
+ expect(Math.abs(form.y-hero.y)).toBeLessThan(5);
  await page.screenshot({path:'visual-artifacts/classic-lavender-1440.png',fullPage:true});
+});
+
+test('Bank renders realistic long questions without overflowing on phones',async({page})=>{
+ await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:`
+ window.supabase={createClient:()=>({
+  auth:{getSession:async()=>({data:{session:{access_token:'visual-fixture'}}})},
+  rpc:async(name,args)=>{
+   if(name==='org_quiz_is_admin_check')return {data:true,error:null};
+   if(name==='qwiz_host_rooms')return {data:[],error:null};
+   if(name==='qwiz_studio'&&args.p_action==='overview')return {data:{topics:[{id:'geo',name:'География'},{id:'history',name:'История и культура'},{id:'logic',name:'Логика'}],builds:[]},error:null};
+   if(name==='qwiz_studio'&&args.p_action==='questions')return {data:{total:3,items:[
+    {id:'visual-1',kind:'single',topic_id:'geo',difficulty:2,prompt:'Демонстрационный вопрос: какой из перечисленных городов расположен ближе к Северному полярному кругу?'},
+    {id:'visual-2',kind:'match',topic_id:'history',difficulty:3,prompt:'Демонстрационное задание: найдите соответствия между историческими событиями и датами.'},
+    {id:'visual-3',kind:'boolean',topic_id:'logic',difficulty:1,prompt:'Демонстрационное утверждение для ответа да или нет.'}
+   ]},error:null};
+   return {data:[],error:null};
+  }
+ })};`}));
+ await page.goto('http://127.0.0.1:8080/next/workspace.html');
+ await expect(page.locator('.question-row')).toHaveCount(3);
+ for(const width of [375,1440]){
+  await page.setViewportSize({width,height:920});
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
+  await page.screenshot({path:'visual-artifacts/bank-fixture-'+width+'.png',fullPage:true});
+ }
 });
 
 

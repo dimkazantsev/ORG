@@ -451,86 +451,6 @@ body.studio-rebuild .studio-main .hidden,body.studio-rebuild #moderatorAccess.hi
 body.studio-rebuild #participantAccess.hidden {display:none!important;}
 
 
-/* Visual architecture v2: horizontal join studio — a deliberate break from the old two-card landing. */
-@media (min-width:901px) {
-  body.studio-rebuild .landing-grid {
-    grid-template-columns:minmax(0,1fr)!important;gap:15px!important;
-  }
-  body.studio-rebuild .hero-card {
-    min-height:438px!important;
-    padding:clamp(40px,4.8vw,69px)!important;
-    background:#faf9fd!important;
-    border:1px solid #f0e9ff!important;
-  }
-  body.studio-rebuild .hero-card::before {
-    width:470px!important;height:470px!important;
-    right:-95px!important;top:-166px!important;
-    border:96px solid rgba(255,255,255,.55)!important;opacity:1!important;
-  }
-  body.studio-rebuild .hero-card h1 {
-    margin:25px 0 15px!important;
-    font-size:clamp(56px,5.5vw,86px)!important;
-    max-width:940px!important;
-  }
-  body.studio-rebuild .hero-card>p {max-width:660px!important;font-size:16px!important;}
-  body.studio-rebuild .home-hero-actions {margin-top:27px!important;}
-  body.studio-rebuild .home-hero-bottom {
-    margin-top:27px!important;padding-top:16px!important;border:0!important;
-  }
-  body.studio-rebuild .access-card {
-    background:#fff!important;border:1px solid #f0e9ff!important;
-    display:grid!important;
-    grid-template-columns:minmax(215px,.36fr) minmax(0,1fr)!important;
-    grid-template-rows:auto auto 1fr!important;
-    column-gap:clamp(28px,4vw,65px)!important;
-    align-items:start!important;min-height:318px!important;
-    padding:clamp(28px,3vw,39px)!important;
-  }
-  body.studio-rebuild .home-access-eyebrow {grid-column:1;grid-row:1;margin:0 0 14px!important;}
-  body.studio-rebuild .role-switch {
-    grid-column:1;grid-row:2;display:grid!important;grid-template-columns:1fr!important;
-    background:#faf9fd!important;padding:5px!important;
-    margin:0!important;max-width:220px!important;
-  }
-  body.studio-rebuild .role-tab {width:100%;text-align:left!important;padding:0 16px!important;}
-  body.studio-rebuild .access-support {
-    grid-column:1;grid-row:3;align-self:end!important;
-    margin-top:26px!important;line-height:1.55!important;
-  }
-  body.studio-rebuild #participantAccess,body.studio-rebuild #moderatorAccess {
-    grid-column:2;grid-row:1 / 4;min-width:0;
-  }
-  body.studio-rebuild .access-heading h2 {
-    font-size:clamp(31px,3vw,43px)!important;line-height:1.12!important;margin:5px 0 6px!important;
-  }
-  body.studio-rebuild .access-heading h2 br {display:none!important;}
-  body.studio-rebuild .access-intro {margin-bottom:19px!important;}
-  body.studio-rebuild .access-card .stack {
-    display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
-    gap:12px!important;align-items:end!important;
-  }
-  body.studio-rebuild .access-card .stack label {min-width:0!important;}
-  body.studio-rebuild .access-card .stack input {width:100%!important;}
-  body.studio-rebuild .access-card .big-btn {
-    grid-column:1/3!important;justify-self:start!important;min-width:260px!important;
-    padding:0 24px!important;margin-top:4px!important;
-  }
-  body.studio-rebuild .access-card #joinMessage {grid-column:3;align-self:center;margin:0!important;}
-  body.studio-rebuild #moderatorAccess {padding-top:15px!important;}
-  body.studio-rebuild #moderatorAccess .big-btn {margin-top:20px!important;}
-}
-@media (min-width:621px) and (max-width:900px) {
-  body.studio-rebuild .landing-grid {grid-template-columns:1fr!important;}
-  body.studio-rebuild .hero-card {min-height:0!important;}
-  body.studio-rebuild .home-value-grid {grid-template-columns:repeat(3,minmax(0,1fr))!important;}
-}
-@media (max-width:620px) {
-  body.studio-rebuild .access-card {display:block!important;}
-  body.studio-rebuild .access-card .stack {display:grid!important;grid-template-columns:1fr!important;}
-  body.studio-rebuild .access-card .stack .big-btn,body.studio-rebuild .access-card #joinMessage {grid-column:1!important;}
-}
-
-
 /* Classic room links retain their existing data and controls. */
 body.studio-rebuild .access-kicker{font-size:9px!important;font-weight:700!important;color:var(--q-blue)!important}
 body.studio-rebuild .access-heading h2 br{display:none}
@@ -543,3 +463,5 @@ body.studio-rebuild .new-studio-link{display:inline-flex;align-items:center;min-
 @media(max-width:420px){body.studio-rebuild .shell{padding:26px 16px 40px!important}body.studio-rebuild .access-card{padding:22px!important}body.studio-rebuild .access-heading h2{font-size:26px!important}body.studio-rebuild .hero-eyebrow{font-size:8px!important}body.studio-rebuild .new-studio-link{display:none}}
 
 body.studio-rebuild :is(input,select,textarea){border-color:var(--control-border)!important}
+
+body.studio-rebuild #homeView :is(.primary,.big-btn,.button-primary){background:var(--q-blue)!important;border-color:var(--q-blue)!important;box-shadow:none!important;color:white!important}

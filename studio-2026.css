@@ -1,8 +1,8 @@
 /* ORG Studio — comprehensive rebuild, 2026-10-22.
   One new layer above styles.css. No old theme dependency. */
 :root{color-scheme:light;--bg:#f7f8fa;--surface:#fff;--surface-2:#f5f7fa;
- --text:#161b26;--muted:#707c8d;--line:#e7eaf0;--accent:#245dd0;
- --accent-strong:#1547ae;--accent-soft:#ecf2ff;--success:#168466;--danger:#c64f61;
+ --text:#161b26;--muted:#707c8d;--line:#e7eaf0;--accent:#7040db;
+ --accent-strong:#5b2bc2;--accent-soft:#f0e9ff;--success:#168466;--danger:#c64f61;
  --sidebar:#fff;--shadow-sm:0 1px 2px rgba(23,36,57,.03);
  --shadow-md:0 14px 46px rgba(23,36,57,.07);--studio-radius:16px}
 html{background:#f7f8fa!important;scroll-behavior:smooth}
@@ -17,17 +17,17 @@ body.studio-rebuild :is(h1,h2,h3,h4){font-family:Manrope,Inter,system-ui,sans-se
 body.studio-rebuild :is(.kicker,.section-kicker,.hero-eyebrow,.access-kicker){color:#8691a1!important;
  text-transform:uppercase;font-size:10px!important;letter-spacing:.075em!important;font-weight:800!important}
 body.studio-rebuild :is(p,small){line-height:1.58}
-body.studio-rebuild a{color:#245dd0}
+body.studio-rebuild a{color:#7040db}
 body.studio-rebuild :is(button,input,select,textarea,summary,a,[tabindex]):focus-visible{
- outline:2px solid #245dd0!important;outline-offset:3px!important}
+ outline:2px solid #7040db!important;outline-offset:3px!important}
 body.studio-rebuild button:disabled{opacity:.5!important;cursor:not-allowed!important}
 body.studio-rebuild button{font-family:inherit;transition:background-color .16s,border-color .16s,color .16s,box-shadow .16s!important}
 body.studio-rebuild .button-danger{color:#bb4255!important;background:#fff6f7!important;
  border:1px solid #f2d8df!important}
 body.studio-rebuild :is(.primary,.button-primary,.primary-action,.big-btn,.generator-submit,
  .duel-actions .duel-primary,.preview-check){
-  min-height:44px!important;background:#245dd0!important;color:white!important;
-  border:1px solid #245dd0!important;border-radius:11px!important;
+  min-height:44px!important;background:#7040db!important;color:white!important;
+  border:1px solid #7040db!important;border-radius:11px!important;
   box-shadow:none!important;font-weight:800!important;clip-path:none!important}
 body.studio-rebuild :is(.primary,.button-primary,.primary-action,.big-btn,.generator-submit,
  .duel-actions .duel-primary,.preview-check):hover:not(:disabled){
@@ -60,11 +60,11 @@ body.studio-rebuild .topbar{
 }
 body.studio-rebuild .brand{display:flex;gap:12px;align-items:center;color:#111827!important}
 body.studio-rebuild .brand-sigil{height:40px!important;width:40px!important;
- background:#245dd0!important;color:white!important;border-radius:12px!important;clip-path:none!important}
+ background:#7040db!important;color:white!important;border-radius:12px!important;clip-path:none!important}
 body.studio-rebuild .brand-sigil svg{height:27px;width:27px;stroke:white!important}
 body.studio-rebuild .brand-copy strong{font-size:18px!important;font-weight:850!important;color:#151d2a!important}
 body.studio-rebuild .brand-copy small{font-size:9px!important;letter-spacing:.03em!important;color:#8b96a5!important}
-body.studio-rebuild .brand-slash{color:#245dd0!important}
+body.studio-rebuild .brand-slash{color:#7040db!important}
 body.studio-rebuild .top-actions{display:flex!important;gap:8px!important;align-items:center!important}
 body.studio-rebuild .top-actions>:is(.icon-btn,.soft-btn,.live-chip,.release-version){
   height:40px!important;min-height:40px!important;display:inline-flex!important;
@@ -90,12 +90,12 @@ body.studio-rebuild .hero-card::before,body.studio-rebuild .hero-card::after{dis
 body.studio-rebuild .hero-card h1{font-size:clamp(45px,5.4vw,78px)!important;
  line-height:1.06!important;letter-spacing:-.07em!important;font-weight:850!important;
  margin:24px 0 21px!important;max-width:850px;color:#111b2a!important;position:relative;z-index:2}
-body.studio-rebuild .hero-card h1 em{font-style:normal;color:#245dd0!important}
+body.studio-rebuild .hero-card h1 em{font-style:normal;color:#7040db!important}
 body.studio-rebuild .hero-card>p{max-width:540px!important;position:relative;z-index:2;
  font-size:16px!important;line-height:1.75!important;color:#5e6c7f!important}
 body.studio-rebuild .hero-eyebrow{display:flex;align-items:center;gap:10px;position:relative;z-index:2;
  color:#527297!important}
-body.studio-rebuild .hero-eyebrow-line{width:23px;height:2px;background:#245dd0}
+body.studio-rebuild .hero-eyebrow-line{width:23px;height:2px;background:#7040db}
 body.studio-rebuild .home-hero-actions{display:flex;align-items:center;flex-wrap:wrap;
  gap:10px;margin-top:27px;position:relative;z-index:2}
 body.studio-rebuild .home-hero-actions button{padding:0 20px;min-height:50px!important}
@@ -111,7 +111,7 @@ body.studio-rebuild .illustration-window{width:100%;height:190px;border-radius:1
  overflow:hidden;transform:rotate(-6deg)}
 body.studio-rebuild .illustration-toolbar{height:37px;display:flex;align-items:center;gap:9px;
  border-bottom:1px solid #edf0f5;padding:0 13px}
-body.studio-rebuild .illustration-logo{width:16px;height:16px;background:#245dd0;border-radius:5px}
+body.studio-rebuild .illustration-logo{width:16px;height:16px;background:#7040db;border-radius:5px}
 body.studio-rebuild .illustration-lines{display:flex;gap:6px;flex:1}
 body.studio-rebuild .illustration-lines i{width:32px;height:5px;background:#e8eef6;border-radius:5px}
 body.studio-rebuild .illustration-lines i:last-child{width:23px}
@@ -123,12 +123,12 @@ body.studio-rebuild .illustration-title i{height:9px;width:73%;border-radius:6px
 body.studio-rebuild .illustration-title i:last-child{width:48%;background:#c3ccda}
 body.studio-rebuild .illustration-options{display:grid;grid-template-columns:1fr 1fr;gap:7px}
 body.studio-rebuild .illustration-options>span{display:flex;align-items:center;gap:8px;height:30px;border:1px solid #e9edf4;border-radius:7px;padding:6px}
-body.studio-rebuild .illustration-options b{font-size:9px!important;color:#245dd0!important}
+body.studio-rebuild .illustration-options b{font-size:9px!important;color:#7040db!important}
 body.studio-rebuild .illustration-options i{height:5px;width:53%;background:#e1e7ef;border-radius:6px}
 body.studio-rebuild .illustration-progress{height:4px;border-radius:10px;background:#e8edf5;margin-top:13px}
-body.studio-rebuild .illustration-progress span{display:block;height:100%;width:38%;background:#245dd0;border-radius:10px}
+body.studio-rebuild .illustration-progress span{display:block;height:100%;width:38%;background:#7040db;border-radius:10px}
 body.studio-rebuild .illustration-stamp{position:absolute;right:-9px;bottom:-1px;
- width:92px;height:92px;border-radius:20px;background:#245dd0;color:white;display:flex;
+ width:92px;height:92px;border-radius:20px;background:#7040db;color:white;display:flex;
  flex-direction:column;align-items:center;justify-content:center;transform:rotate(9deg);
  box-shadow:0 12px 25px rgba(30,79,175,.22)}
 body.studio-rebuild .illustration-stamp span{font-size:13px;font-weight:600;letter-spacing:.08em}
@@ -157,7 +157,7 @@ body.studio-rebuild .home-value-grid{display:grid;grid-template-columns:repeat(3
  gap:16px;margin:26px 0 31px}
 body.studio-rebuild .home-value-grid>div{display:grid;grid-template-columns:40px 1fr;
  gap:3px 12px;padding:16px 0;border-top:1px solid #dfe5eb}
-body.studio-rebuild .home-value-grid .value-index{grid-row:1/3;color:#245dd0;font-size:17px;font-weight:800}
+body.studio-rebuild .home-value-grid .value-index{grid-row:1/3;color:#7040db;font-size:17px;font-weight:800}
 body.studio-rebuild .home-value-grid strong{font-size:14px;color:#192334}
 body.studio-rebuild .home-value-grid p{margin:0;color:#7a8796;font-size:12px}
 body.studio-rebuild .mode-disclosure{border:1px solid #e7eaf0!important;border-radius:17px!important;background:#fff!important;margin-top:9px!important}
@@ -166,7 +166,7 @@ body.studio-rebuild .mode-disclosure[open]>summary{background:#fafdff!important}
 body.studio-rebuild .mode-grid{gap:11px!important}
 body.studio-rebuild .mode-card{padding:20px!important;min-height:155px!important;border-radius:13px!important}
 body.studio-rebuild .mode-card>span{display:grid;place-items:center;height:45px;width:45px;
- background:#eef3ff!important;color:#245dd0!important;border-radius:12px!important}
+ background:#eef3ff!important;color:#7040db!important;border-radius:12px!important}
 body.studio-rebuild .mode-card h3{font-size:15px;margin:14px 0 4px;color:#192435!important}
 body.studio-rebuild .mode-card p{font-size:12px;color:#7d8898!important}
 /* Structural redesign: sidebar / content */
@@ -180,7 +180,7 @@ body.studio-rebuild .studio-flowbar{display:flex!important;flex-direction:column
  box-shadow:none!important}
 body.studio-rebuild .flowbar-brand{display:flex!important;align-items:center!important;gap:11px!important;
  padding:6px 8px 23px!important;margin:0 0 16px;border-bottom:1px solid #edf0f3}
-body.studio-rebuild .studio-mark{display:grid;place-items:center;background:#245dd0!important;
+body.studio-rebuild .studio-mark{display:grid;place-items:center;background:#7040db!important;
  border-radius:12px!important;height:38px!important;width:38px!important;color:white!important;font-size:19px}
 body.studio-rebuild .flowbar-brand strong{font-size:14px!important;font-weight:850;color:#142137!important}
 body.studio-rebuild .flowbar-brand small{display:block;color:#8d97a6!important;font-size:10px!important}
@@ -191,10 +191,10 @@ body.studio-rebuild .flow-step{display:flex!important;flex:0 0 auto!important;ma
  padding:10px 12px!important;background:transparent!important;border:1px solid transparent!important;
  color:#586779!important;text-align:left!important;border-radius:11px!important}
 body.studio-rebuild .flow-step:hover{background:#f6f8fb!important}
-body.studio-rebuild .flow-step.active{color:#245dd0!important;background:#edf3ff!important;border-color:#e6efff!important}
+body.studio-rebuild .flow-step.active{color:#7040db!important;background:#f0e9ff!important;border-color:#e6efff!important}
 body.studio-rebuild .flow-step>span{font-size:11px;font-weight:850;color:#9ca8b6!important;
  display:grid;place-items:center;height:29px;width:29px;border:1px solid #e7ebf1;border-radius:9px;background:#fff!important}
-body.studio-rebuild .flow-step.active>span{background:#245dd0!important;border-color:#245dd0!important;color:white!important}
+body.studio-rebuild .flow-step.active>span{background:#7040db!important;border-color:#7040db!important;color:white!important}
 body.studio-rebuild .flow-step b{font-size:12px;color:inherit!important}
 body.studio-rebuild .flow-step small{display:block;color:#94a0ae!important;font-size:10px!important}
 body.studio-rebuild .flowbar-actions{display:flex;flex-direction:column;margin-top:auto!important;
@@ -231,10 +231,10 @@ body.studio-rebuild .game-pack-card{display:grid!important;grid-template-columns
  padding:19px!important;overflow:hidden;transition:border-color .15s,box-shadow .15s!important}
 body.studio-rebuild .game-pack-card:hover{border-color:#c6d1df!important;box-shadow:0 7px 24px rgba(20,41,77,.045)!important;transform:none!important}
 body.studio-rebuild .game-pack-visual{grid-column:1!important;grid-row:1/3!important;width:76px;height:76px;min-height:76px!important;
- display:grid;place-items:center;background:#edf3ff!important;border-radius:15px!important;overflow:hidden}
+ display:grid;place-items:center;background:#f0e9ff!important;border-radius:15px!important;overflow:hidden}
 body.studio-rebuild .game-pack-visual::before,body.studio-rebuild .game-pack-visual::after{display:none!important}
 body.studio-rebuild .game-pack-visual>span{display:grid!important;place-items:center!important;height:76px;width:76px}
-body.studio-rebuild .game-pack-visual svg{width:33px!important;height:33px!important;stroke:#245dd0!important;filter:none!important}
+body.studio-rebuild .game-pack-visual svg{width:33px!important;height:33px!important;stroke:#7040db!important;filter:none!important}
 body.studio-rebuild .game-pack-card:nth-child(3n+2) .game-pack-visual{background:#eef8f4!important}
 body.studio-rebuild .game-pack-card:nth-child(3n+2) .game-pack-visual svg{stroke:#269478!important}
 body.studio-rebuild .game-pack-card:nth-child(3n+3) .game-pack-visual{background:#f5f1ff!important}
@@ -253,8 +253,8 @@ body.studio-rebuild .game-pack-footer{grid-column:2!important;grid-row:2!importa
 body.studio-rebuild .game-pack-footer>div{display:flex;gap:4px;align-items:baseline}
 body.studio-rebuild .game-pack-footer strong{font-size:18px!important;color:#1b2c43!important}
 body.studio-rebuild .game-pack-footer span{font-size:11px;color:#8c98a6!important}
-body.studio-rebuild .game-pack-open{min-height:34px!important;border:0!important;background:#edf3ff!important;
- padding:0 12px!important;font-size:11px!important;color:#245dd0!important;border-radius:8px!important}
+body.studio-rebuild .game-pack-open{min-height:34px!important;border:0!important;background:#f0e9ff!important;
+ padding:0 12px!important;font-size:11px!important;color:#7040db!important;border-radius:8px!important}
 body.studio-rebuild .game-pack-open:hover{background:#ddeaff!important}
 body.studio-rebuild .pack-draft{background:#f1f3f6!important;color:#778699!important;
  border:0!important;border-radius:6px!important;font-size:9px!important}
@@ -265,7 +265,7 @@ body.studio-rebuild .question-tile{display:grid!important;grid-template-columns:
  border:1px solid #e7eaf0!important;border-radius:13px!important;background:#fff!important;
  overflow:hidden;box-shadow:none!important;transition:border-color .15s!important}
 body.studio-rebuild .question-tile:hover{border-color:#becce0!important;transform:none!important;box-shadow:none!important}
-body.studio-rebuild .question-tile.selected-row{border-color:#245dd0!important;outline:2px solid #dce9ff!important}
+body.studio-rebuild .question-tile.selected-row{border-color:#7040db!important;outline:2px solid #dce9ff!important}
 body.studio-rebuild .question-tile-check{position:absolute!important;top:14px!important;left:15px!important;z-index:6}
 body.studio-rebuild .question-tile-check label{background:#fff!important;height:28px!important;width:28px!important;
  border:1px solid #e4e9f0!important;border-radius:8px!important}
@@ -295,8 +295,8 @@ body.studio-rebuild .question-tile .question-actions{display:flex!important;gap:
  padding:0!important;border:0!important;background:transparent!important}
 body.studio-rebuild .question-tile .question-actions button{min-height:33px!important;
  font-size:11px!important;border-radius:8px!important;padding:5px 11px!important}
-body.studio-rebuild .question-tile .question-actions .primary-mini{background:#245dd0!important;
- border-color:#245dd0!important;color:white!important}
+body.studio-rebuild .question-tile .question-actions .primary-mini{background:#7040db!important;
+ border-color:#7040db!important;color:white!important}
 /* Filters, cards and forms */
 body.studio-rebuild :is(.filter-bar,.library-controls,.composer-toolbar,.history-actions,.tool-strip){
  background:#fff!important;border:1px solid #e7eaf0!important;border-radius:12px!important}
@@ -308,7 +308,7 @@ body.studio-rebuild :is(input,textarea)::placeholder{color:#9ca7b5!important}
 body.studio-rebuild :is(input,select,textarea):focus{border-color:#8caeeb!important;
  box-shadow:0 0 0 3px rgba(36,93,208,.09)!important}
 body.studio-rebuild select option{color:#243347!important;background:#fff!important}
-body.studio-rebuild :is(input[type="checkbox"],input[type="radio"],input[type="range"]){accent-color:#245dd0!important}
+body.studio-rebuild :is(input[type="checkbox"],input[type="radio"],input[type="range"]){accent-color:#7040db!important}
 body.studio-rebuild :is(label,.form-stack label,.drawer-panel label,.generator-form label){color:#4d5d71!important}
 body.studio-rebuild .library-check{background:#f7f9fb!important;color:#65758a!important;border-radius:8px!important}
 body.studio-rebuild :is(.info-badge,.type-badge,.timer-chip,.team-pill,.life-badge,.combo-badge,.preview-meta>span){
@@ -319,7 +319,7 @@ body.studio-rebuild .timer-chip.timer-danger{background:#fff1f3!important;color:
 body.studio-rebuild :is(.bank-choice,.generator-banks,.composer-list,.set-order-list){background:#f8fafc!important;border-color:#e7eaf0!important}
 /* Player game / moderator content */
 body.studio-rebuild .game-header{padding:17px 22px!important;margin-bottom:14px!important}
-body.studio-rebuild .avatar{background:#245dd0!important;color:white!important;border-radius:11px!important}
+body.studio-rebuild .avatar{background:#7040db!important;color:white!important;border-radius:11px!important}
 body.studio-rebuild .game-layout{gap:14px!important}
 body.studio-rebuild .question-stage{min-height:480px!important;padding:clamp(22px,3.2vw,40px)!important}
 body.studio-rebuild .question-topline{padding-bottom:15px!important;border-bottom:1px solid #edf0f4!important}
@@ -334,25 +334,25 @@ body.studio-rebuild :is(.answer-grid .answer,.presenter-option,.vote-grid .vote-
  .power-actions button,.duel-options button,.duel-actions button,.preview-options .preview-choice):hover:not(:disabled){
  background:#f9fbfe!important;border-color:#9ab9e9!important;transform:none!important}
 body.studio-rebuild .answer.selected,body.studio-rebuild .preview-choice.is-selected{
- background:#edf3ff!important;border-color:#7c9fdf!important}
+ background:#f0e9ff!important;border-color:#7c9fdf!important}
 body.studio-rebuild :is(.leader-row,.history-row,.qa-row,.team-person,.team-column,.team-dropzone,
  .live-power-row,.rescue-row,.mechanic-chip,.quick-card){
  background:#f8fafc!important;color:#37465b!important;border:1px solid #e8ecf1!important;
  border-radius:10px!important;box-shadow:none!important}
-body.studio-rebuild .rank{background:#eaf1ff!important;color:#245dd0!important;border-radius:8px!important}
+body.studio-rebuild .rank{background:#eee7fd!important;color:#7040db!important;border-radius:8px!important}
 body.studio-rebuild .power-meter,body.studio-rebuild .live-power-meter{background:#e9eef4!important}
-body.studio-rebuild .power-meter>span,body.studio-rebuild .live-power-meter span{background:#245dd0!important}
+body.studio-rebuild .power-meter>span,body.studio-rebuild .live-power-meter span{background:#7040db!important}
 body.studio-rebuild .presenter-stage{background:#fff!important;border-radius:16px!important}
 /* Duel */
 body.studio-rebuild .duel-shell{background:white!important;border-color:#e5e9ef!important}
 body.studio-rebuild :is(.duel-header h2,.duel-question,.duel-versus strong){color:#172033!important}
-body.studio-rebuild .duel-medal{background:#edf3ff!important;color:#245dd0!important;border-radius:11px!important}
+body.studio-rebuild .duel-medal{background:#f0e9ff!important;color:#7040db!important;border-radius:11px!important}
 body.studio-rebuild :is(.duel-versus,.duel-vote-grid>div,.duel-podium-place){
  background:#f8fafc!important;border-color:#e8ecf1!important;border-radius:12px!important;clip-path:none!important}
-body.studio-rebuild .duel-versus b,body.studio-rebuild .duel-vote-grid strong{color:#245dd0!important}
+body.studio-rebuild .duel-versus b,body.studio-rebuild .duel-vote-grid strong{color:#7040db!important}
 body.studio-rebuild .duel-podium-place.place-1{background:#fffaf0!important;border-color:#f2e6cd!important}
 body.studio-rebuild .duel-steps span{background:#eef2f7!important;color:#66778c!important;border-radius:8px!important}
-body.studio-rebuild .duel-steps span.active{background:#e9f0ff!important;color:#245dd0!important}
+body.studio-rebuild .duel-steps span.active{background:#f0e9ff!important;color:#7040db!important}
 /* Map and preview: preserve actual SVG interactions */
 body.studio-rebuild .russia-map-wrap{background:#fff!important;border-color:#e7eaf0!important;
  border-radius:14px!important;clip-path:none!important}
@@ -365,7 +365,7 @@ body.studio-rebuild .map-country-outline,body.studio-rebuild .map-outline path{
 body.studio-rebuild .map-region{fill:#d3dfec!important;stroke:white!important;outline:none!important;box-shadow:none!important}
 body.studio-rebuild .map-region:hover{fill:#afc4de!important}
 body.studio-rebuild .map-region.selected{fill:#608acb!important;stroke:#fff!important}
-body.studio-rebuild .map-region:focus-visible{outline:none!important;stroke:#245dd0!important}
+body.studio-rebuild .map-region:focus-visible{outline:none!important;stroke:#7040db!important}
 /* Drawers, dialogs, analytics */
 body.studio-rebuild .drawer-backdrop{background:rgba(23,34,53,.34)!important;backdrop-filter:blur(4px)!important}
 body.studio-rebuild .drawer-panel{background:#fff!important;color:#1c293b!important;
@@ -493,17 +493,17 @@ body.studio-rebuild .duel-builder-body{padding:0 21px 23px}
 body.studio-rebuild .duel-builder-body p{font-size:12px;color:#718096}
 body.studio-rebuild .duel-builder fieldset{border:1px solid #e7eaf0;border-radius:12px;
  padding:15px;margin:14px 0;min-width:0}
-body.studio-rebuild .duel-builder legend{padding:0 9px;color:#245dd0;font-weight:800}
+body.studio-rebuild .duel-builder legend{padding:0 9px;color:#7040db;font-weight:800}
 body.studio-rebuild .duel-builder label{display:flex;flex-direction:column;gap:6px;
  margin:10px 0;font-size:12px;font-weight:700;color:#4e5d71}
 body.studio-rebuild .duel-editor-options{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
 body.studio-rebuild .duel-shell{position:relative;overflow:hidden;padding:clamp(20px,2.6vw,32px);
  margin:18px 0}
 body.studio-rebuild .duel-header{display:flex;justify-content:space-between;align-items:center;gap:12px}
-body.studio-rebuild .duel-eyebrow{font-size:10px;letter-spacing:.12em;font-weight:850;color:#245dd0}
+body.studio-rebuild .duel-eyebrow{font-size:10px;letter-spacing:.12em;font-weight:850;color:#7040db}
 body.studio-rebuild .duel-header h2{margin:6px 0;font-size:clamp(25px,3vw,36px);line-height:1.2}
 body.studio-rebuild .duel-medal{display:grid;place-items:center;height:50px;width:50px;
- border-radius:13px;background:#edf3ff;color:#245dd0;font-size:30px}
+ border-radius:13px;background:#f0e9ff;color:#7040db;font-size:30px}
 body.studio-rebuild .duel-versus{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
  align-items:center;gap:14px;background:#f8fafc;border:1px solid #e7eaf0;border-radius:12px;
  padding:18px;margin:20px 0}
@@ -512,13 +512,13 @@ body.studio-rebuild .duel-versus>div:last-child{text-align:right}
 body.studio-rebuild .duel-versus small,body.studio-rebuild .duel-podium small{
  font-size:10px;font-weight:800;letter-spacing:.045em;text-transform:uppercase;color:#8b98a9}
 body.studio-rebuild .duel-versus strong{font-size:clamp(14px,2vw,20px);overflow-wrap:anywhere}
-body.studio-rebuild .duel-versus b,body.studio-rebuild .duel-podium b{color:#245dd0}
+body.studio-rebuild .duel-versus b,body.studio-rebuild .duel-podium b{color:#7040db}
 body.studio-rebuild .duel-versus>span{font-size:12px;font-weight:900;color:#9ba7b6}
 body.studio-rebuild .duel-vote-grid,body.studio-rebuild .duel-podium{
  display:grid;grid-template-columns:1fr 1fr;gap:12px}
 body.studio-rebuild .duel-vote-grid>div{display:flex;flex-direction:column;gap:6px;
  padding:18px;border:1px solid #e7eaf0;border-radius:12px;background:#fafbfd}
-body.studio-rebuild .duel-vote-grid strong{font-size:29px;color:#245dd0}
+body.studio-rebuild .duel-vote-grid strong{font-size:29px;color:#7040db}
 body.studio-rebuild .duel-vote-grid small{color:#8693a5}
 body.studio-rebuild .duel-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
 body.studio-rebuild .duel-actions button,body.studio-rebuild .duel-options button{
@@ -526,7 +526,7 @@ body.studio-rebuild .duel-actions button,body.studio-rebuild .duel-options butto
 body.studio-rebuild .duel-steps{display:flex;gap:8px;flex-wrap:wrap}
 body.studio-rebuild .duel-steps span{padding:7px 12px;border-radius:8px;
  background:#eef2f8;color:#68788f;font-size:11px;font-weight:800}
-body.studio-rebuild .duel-steps span.active{background:#245dd0;color:white}
+body.studio-rebuild .duel-steps span.active{background:#7040db;color:white}
 body.studio-rebuild .duel-question{font-size:clamp(20px,2.5vw,30px);line-height:1.3;margin:22px 0 17px}
 body.studio-rebuild .duel-options{display:grid;grid-template-columns:1fr 1fr;gap:11px}
 body.studio-rebuild .duel-responses{display:flex;gap:8px;flex-wrap:wrap}
@@ -553,7 +553,7 @@ body.studio-rebuild .preview-play-feedback[data-result="incorrect"]{color:#c64f6
 body.studio-rebuild .preview-try-controls{display:flex;flex-wrap:wrap;gap:9px;margin:14px 0}
 body.studio-rebuild .preview-try-controls button{padding:9px 14px;border-radius:9px;
  border:1px solid #dce4ee;background:white;color:#40536b;font-size:12px;font-weight:800;min-height:40px}
-body.studio-rebuild .preview-try-controls .preview-check{background:#245dd0;color:white;border-color:#245dd0}
+body.studio-rebuild .preview-try-controls .preview-check{background:#7040db;color:white;border-color:#7040db}
 body.studio-rebuild .preview-order-item,body.studio-rebuild .preview-match{
  display:flex;align-items:center;justify-content:space-between;gap:10px;
  border-bottom:1px solid #e7ebf1;padding:10px}
@@ -587,4 +587,5 @@ body.studio-rebuild .game-pack-visual svg,body.studio-rebuild .mode-card svg{
  fill:none!important;stroke-width:1.75!important;stroke-linecap:round!important;
  stroke-linejoin:round!important;overflow:visible
 }
-body.studio-rebuild .mode-card svg{width:23px;height:23px;stroke:#245dd0}
+body.studio-rebuild .mode-card svg{width:23px;height:23px;stroke:#7040db}
+
