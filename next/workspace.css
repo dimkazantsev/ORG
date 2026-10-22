@@ -414,3 +414,15 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 /* Library actions and curated color question editor */
 .question-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.saved-build-wrap{display:flex;align-items:center;gap:9px;min-width:0}.saved-build-wrap>.saved-build{flex:1;min-width:0}.delete-small{color:#94516c!important;white-space:nowrap}.delete-small:hover{background:#fff1f5!important;border-color:#e0a9bd!important}.room-row-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.color-answer-row{padding:14px;border:1px solid var(--line);border-radius:13px;display:grid;gap:9px;background:var(--bg)}.color-answer-row strong{font-size:13px}.color-chip-inputs{display:flex;gap:9px}.color-chip-inputs label{font-size:11px;display:grid;gap:5px;flex:1}.color-chip-inputs input[type=color]{height:40px;width:100%;border:1px solid var(--line);border-radius:9px;padding:3px;background:white}.card-library button svg,.round-icon svg{width:20px;height:20px;stroke-width:1.8;fill:none;stroke:currentColor;stroke-linecap:round;stroke-linejoin:round}.card-library button{display:inline-flex;gap:8px;align-items:center}.round-icon svg{width:24px;height:24px}.round-icon{display:grid;place-items:center}
 @media(max-width:650px){.saved-build-wrap{flex-wrap:wrap}.room-row-actions{justify-content:flex-start}}
+
+/* QWIZ: a consistent, accessible inline trash action on each card, not a second detached button. */
+.saved-build-wrap{display:block;position:relative;min-width:0}
+.saved-build-wrap .saved-build{display:flex;width:100%;padding-right:58px;min-height:124px;text-align:left}
+.room-row{position:relative;padding-right:66px}
+.round-card{position:relative;padding-top:46px}
+.card-trash{position:absolute;right:12px;top:12px;width:44px;height:44px;border:1px solid transparent;background:transparent;border-radius:12px;display:inline-grid;place-items:center;cursor:pointer;color:#a05f76;z-index:2;transition:background .15s,border-color .15s,color .15s}
+.card-trash:hover{color:#a4234f;background:#fff0f5;border-color:#e7bbcc}
+.card-trash:focus-visible{outline:3px solid #aa8ae7;outline-offset:2px}
+.card-trash svg{width:20px;height:20px;pointer-events:none}
+.round-trash{top:9px;right:10px}
+@media(max-width:600px){.saved-build-wrap{display:block}.room-row{padding-right:60px}.card-trash{width:44px;height:44px}}
