@@ -75,7 +75,7 @@ async function refreshWorkspace(){
  finally{button.disabled=false;button.setAttribute('aria-busy','false')}
 }
 const resumeKey='qwiz-studio-position-v3';
-let restoringView=false,restoreScrollQueued=false;
+let restoringView=true,restoreScrollQueued=false; // Lock persistence during initial render; F5 must not overwrite saved section.
 function savePosition(){
  if(restoringView)return;
  try{sessionStorage.setItem(resumeKey,JSON.stringify({
@@ -90,8 +90,8 @@ function readPosition(){
   return x&&['bank','builder','rooms','insights'].includes(x.section)?x:null
  }catch{return null}
 }
-async function restorePosition(){
- const last=readPosition();if(!last)return;
+async function restorePosition(last=readPosition()){
+ if(!last)return;
  restoringView=true;
  try{
   if(typeof last.search==='string')$('bankSearch').value=last.search.slice(0,90);
@@ -105,13 +105,15 @@ async function restorePosition(){
   const target=Math.max(0,Number(last.scrollY)||0);
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   window.scrollTo({top:target,behavior:'instant'});
+  // Restore a second time after layout, fonts and asynchronous cards have settled.
+  requestAnimationFrame(()=>window.scrollTo({top:target,behavior:'instant'}));
  }finally{restoringView=false;savePosition()}
 }
 function section(section){state.activePage=section;for(const id of ['bank','builder','rooms','insights'])$(id+'Page').hidden=id!==section;
  for(const n of all('[data-section]')){const selected=n.dataset.section===section;n.classList.toggle('selected',selected);if(selected)n.setAttribute('aria-current','page');else n.removeAttribute('aria-current')}
  animatePage($(section+'Page'));
  if(section==='rooms')loadRooms();if(section==='insights')loadInsights();
- window.scrollTo({top:0,behavior:'instant'});savePosition()}
+ window.scrollTo({top:0,behavior:'instant'});if(!restoringView)history.replaceState(null,'','#'+section);savePosition()}
 function createOption(value,label){const n=document.createElement('option');n.value=value;n.textContent=label;return n}
 function fillSelect(select,options,placeholder,selected=''){select.replaceChildren();if(placeholder!==null)select.add(createOption('',placeholder));for(const [value,title]of options)select.add(createOption(value,title));select.value=selected}
 function nameTopic(id){return state.topics.find(t=>t.id===id)?.name||'Все темы'}
@@ -477,8 +479,11 @@ function wire(){
  $('questionForm').onsubmit=saveQuestion;
  $('newBuild').onclick=newBuild;$('generalSettings').onclick=generalSettings;$('generalForm').onsubmit=saveGeneralSettings;
  $('generalApplyCount').onchange=e=>{$('generalCount').disabled=!e.target.checked};$('generalApplySound').onchange=e=>{$('generalSound').disabled=!e.target.checked};
- $('studioSound').onclick=async()=>{const enabled=await QwizStage.audio.toggle();$('studioSound').setAttribute('aria-pressed',String(enabled));$('studioSound').textContent=enabled?'♫ Звук включён':'♫ Звук'};
- $('cardSoundPreview').onclick=async()=>{if(!QwizStage.audio.enabled)await QwizStage.audio.toggle();QwizStage.audio.play($('cardSound').value)};
+ QwizStage.decorateControls();
+ QwizStage.iconLabel($('studioSound'),QwizStage.audio.enabled?'Звук включён':'Звук выключен',QwizStage.audio.enabled?'volume':'muted');
+ $('studioSound').setAttribute('aria-pressed',String(QwizStage.audio.enabled));
+ $('studioSound').onclick=async()=>{const enabled=await QwizStage.audio.toggle();$('studioSound').setAttribute('aria-pressed',String(enabled));QwizStage.iconLabel($('studioSound'),enabled?'Звук включён':'Звук выключен',enabled?'volume':'muted')};
+ $('cardSoundPreview').onclick=async()=>{if(!QwizStage.audio.enabled)await QwizStage.audio.toggle();await QwizStage.audio.unlock();QwizStage.audio.play($('cardSound').value)};
  $('addCard').onclick=()=>appendCard('round');$('appendRound').onclick=()=>appendCard('round');
  $('cardPalette').onclick=e=>{const b=e.target.closest('[data-card]');if(b)appendCard(b.dataset.card)};
  $('roundCards').onclick=e=>{
@@ -510,6 +515,10 @@ function wire(){
  for(const dialog of all('dialog'))dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()});
 }
 async function init(){
+ // Read before wiring listeners or awaiting Supabase. The previous code overwrote
+ // sessionStorage with the default 'bank' state during initial scroll/layout.
+ const savedBeforeBoot=readPosition();
+ restoringView=true;
  wire();animatePage($('bankPage'));
  fillSelect($('bankMode'),flagModes.map(([id,title])=>[id,title]),'Все механики');
  const select=$('editKind');
@@ -527,10 +536,17 @@ async function init(){
   if(!await rpc('org_quiz_is_admin_check'))throw Error('У вас нет прав преподавателя.');
   connection('ready','Кабинет подключён');
   await overview();await loadRooms();
-  const previous=readPosition();if(previous){await restorePosition()}else{const code=sessionStorage.getItem('qwiz-host-room');if(code){section('rooms');await selectRoom(code)}}
+  if(savedBeforeBoot){await restorePosition(savedBeforeBoot)}
+  else{
+   const hash=location.hash.slice(1);
+   const code=sessionStorage.getItem('qwiz-host-room');
+   if(code){section('rooms');await selectRoom(code)}
+   else if(['bank','builder','rooms','insights'].includes(hash))section(hash);
+   restoringView=false;savePosition();
+  }
   state.roomTimer=setInterval(()=>{if(state.roomCode&&!document.hidden)refreshLive()},8000);
   setInterval(()=>{if(!state.room||document.hidden)return;const s=state.room;if(['question','result'].includes(s.phase)){const left=QwizStage.updateClock(s,state.clockOffset,document,'liveTimer');if(left===0&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}}else if(s.phase==='countdown'&&Date.parse(s.ends_at)<=Date.now()+state.clockOffset&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}},250);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.roomCode)refreshLive()});
- }catch(e){connection('error',e.message);$('bankItems').innerHTML='<div class="empty">'+esc(e.message)+' <a href="./">Вернуться ко входу</a></div>'}
+ }catch(e){restoringView=false;connection('error',e.message);$('bankItems').innerHTML='<div class="empty">'+esc(e.message)+' <a href="./">Вернуться ко входу</a></div>'}
 }
 window.addEventListener('DOMContentLoaded',init);
