@@ -2,7 +2,7 @@
 :root{--motion-fast:160ms;--motion-ui:240ms;--motion-enter:520ms;--ease-out:cubic-bezier(.16,1,.3,1)}
 @keyframes qwiz-enter{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @keyframes qwiz-panel{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
-@keyframes qwiz-spark{from{opacity:0;transform:rotate(-24deg) scale(.72)}to{opacity:1;transform:rotate(12deg) scale(1)}}
+@keyframes qwiz-spark{0%{opacity:0;transform:rotate(-70deg) scale(.6)}45%{opacity:1;transform:rotate(30deg) scale(1.12)}75%{transform:rotate(3deg) scale(.98)}100%{opacity:1;transform:rotate(12deg) scale(1)}}
 @keyframes qwiz-dialog{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
 @keyframes qwiz-spin{to{transform:rotate(360deg)}}
 :where(.btn,.primary-button,.small-button,.primary,.primary-action,.soft-btn,.button-secondary,.nav-link,.topic-chip,.option,.rich-choice,.qr-click,.header-link,.profile-link){
@@ -21,7 +21,7 @@
 .welcome-kicker{padding:8px 12px;border:1px solid #dfd1f6;background:#f4efff;border-radius:999px;letter-spacing:.09em}
 .welcome-features{gap:10px}
 .welcome-features>span{padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:#ffffffa6}
-.hero-spark{color:#b496eb;animation:qwiz-spark 900ms 160ms var(--ease-out) both}
+.hero-spark{color:#b496eb;animation:qwiz-spark 1800ms 160ms var(--ease-out) both}
 .switch{position:relative;isolation:isolate}
 .switch::before{content:"";position:absolute;inset:5px auto 5px 5px;width:calc(50% - 7.5px);border-radius:11px;background:var(--accent);box-shadow:0 4px 12px #7040db20;transition:transform var(--motion-ui) var(--ease-out);z-index:-1}
 .switch:has(#roleHost[aria-selected="true"])::before{transform:translateX(calc(100% + 5px))}

@@ -487,3 +487,89 @@ test('Entrance motion ends in a stable layout and keeps role controls available'
  await expect(page.getByLabel('Пароль',{exact:true})).toBeVisible();
  await expect(page.getByRole('tab',{name:'Преподаватель'})).toBeFocused();
 });
+
+
+test('Studio header places live connection before home at all screen sizes',async({page})=>{
+ await authFixture(page);
+ await page.goto('http://127.0.0.1:8080/next/workspace.html');
+ await expect(page.locator('#connText')).toHaveAttribute('data-state','ready');
+ for(const width of [320,375,768,1440]){
+  await page.setViewportSize({width,height:960});
+  const order=await page.locator('.top-tools').evaluate(el=>{
+   const status=el.querySelector('#connText').getBoundingClientRect(),home=el.querySelector('.home-button').getBoundingClientRect();
+   return {correct:status.x+status.width<=home.x,adjacent:el.querySelector('#connText').nextElementSibling.classList.contains('home-button')};
+  });
+  expect(order.correct).toBe(true);expect(order.adjacent).toBe(true);
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
+  const refresh=await page.locator('#refreshAll').boundingBox();
+  expect(refresh.width).toBeGreaterThanOrEqual(44);expect(refresh.height).toBeGreaterThanOrEqual(44);
+ }
+ await page.screenshot({path:'visual-artifacts/studio-polish-header-1440.png',fullPage:true,animations:'disabled'});
+});
+test('Refresh animates while pending and confirms completion without duplicate clicks',async({page})=>{
+ await authFixture(page);await page.goto('http://127.0.0.1:8080/next/workspace.html');
+ await expect(page.locator('#connText')).toHaveAttribute('data-state','ready');
+ await page.evaluate(()=>{const original=state.db.rpc;state.db.rpc=async(...args)=>{await new Promise(resolve=>setTimeout(resolve,180));return original(...args)}});
+ await page.locator('#refreshAll').click();
+ await expect(page.locator('#refreshAll')).toHaveAttribute('aria-busy','true');
+ await expect(page.locator('#refreshAll')).toBeDisabled();
+ expect(await page.locator('.refresh-icon').evaluate(el=>getComputedStyle(el).animationName)).toBe('qwiz-spin');
+ await expect(page.locator('#refreshAll')).toHaveAttribute('data-state','done');
+ await expect(page.locator('#refreshAll')).toHaveAttribute('aria-busy','false');
+ await expect(page.locator('.refresh-check')).toBeVisible();
+ await expect(page.locator('#refreshLabel')).toHaveText('Готово');
+ await expect(page.locator('#refreshAll')).toBeEnabled();
+});
+test('Refresh failures leave a usable retry action and show an error state',async({page})=>{
+ await authFixture(page);await page.goto('http://127.0.0.1:8080/next/workspace.html');
+ await expect(page.locator('#connText')).toHaveAttribute('data-state','ready');
+ await page.evaluate(()=>{window.qaOriginalRpc=state.db.rpc;state.db.rpc=async()=>({data:null,error:{message:'Проверка ошибки соединения'}})});
+ await page.locator('#refreshAll').click();
+ await expect(page.locator('#refreshAll')).toHaveAttribute('data-state','error');
+ await expect(page.locator('#refreshAll')).toBeEnabled();
+ await expect(page.locator('#connText')).toHaveAttribute('data-state','error');
+ await expect(page.locator('#bankMessage')).toContainText('Проверка ошибки соединения');
+ await page.evaluate(()=>{state.db.rpc=window.qaOriginalRpc});
+ await page.locator('#refreshAll').click();
+ await expect(page.locator('#refreshAll')).toHaveAttribute('data-state','done');
+ await expect(page.locator('#connText')).toHaveAttribute('data-state','ready');
+});
+test('Studio navigation visibly animates without losing filters on rapid changes',async({page})=>{
+ await authFixture(page);await page.goto('http://127.0.0.1:8080/next/workspace.html');
+ await expect(page.locator('#connText')).toHaveAttribute('data-state','ready');
+ await page.locator('#bankSearch').fill('Сохранённый поиск');
+ await page.locator('[data-section="builder"]').click();
+ expect(await page.locator('#builderPage').evaluate(el=>el.getAnimations().some(a=>a.playState==='running'))).toBe(true);
+ await page.locator('[data-section="rooms"]').click();
+ await page.locator('[data-section="bank"]').click();
+ await expect(page.locator('#bankPage')).toBeVisible();
+ await expect(page.locator('#builderPage')).toBeHidden();
+ await expect(page.locator('#roomsPage')).toBeHidden();
+ await expect(page.locator('#bankSearch')).toHaveValue('Сохранённый поиск');
+ await expect(page.locator('[data-section="bank"]')).toHaveAttribute('aria-current','page');
+});
+test('Search shortcut respects typing and dialogs',async({page})=>{
+ await authFixture(page);await page.goto('http://127.0.0.1:8080/next/workspace.html');
+ await page.keyboard.press('/');
+ await expect(page.locator('#bankSearch')).toBeFocused();
+ await page.locator('#bankSearch').fill('История');
+ await page.keyboard.press('/');
+ await expect(page.locator('#bankSearch')).toHaveValue('История/');
+ await page.locator('#newQuestion').click();
+ await expect(page.locator('#questionDialog')).toBeVisible();
+ await page.keyboard.press('/');
+ await expect(page.locator('#bankSearch')).not.toBeFocused();
+ await page.keyboard.press('Escape');
+});
+test('Studio native animations respect reduced motion while controls still work',async({page})=>{
+ await page.emulateMedia({reducedMotion:'reduce'});await authFixture(page);
+ await page.goto('http://127.0.0.1:8080/next/workspace.html');
+ await expect(page.locator('#connText')).toHaveAttribute('data-state','ready');
+ await page.locator('[data-section="builder"]').click();
+ expect(await page.locator('#builderPage').evaluate(el=>el.getAnimations().length)).toBe(0);
+ await page.locator('[data-section="bank"]').click();
+ await expect(page.locator('#bankPage')).toBeVisible();
+ await page.locator('#refreshAll').click();
+ await expect(page.locator('#refreshAll')).toHaveAttribute('data-state','done');
+ expect(await page.locator('.refresh-check').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
+});

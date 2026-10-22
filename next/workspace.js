@@ -24,8 +24,32 @@ function disable(id,value){const el=$(id);if(el)el.disabled=value}
 function fmt(x){return Number(x||0).toLocaleString('ru-RU')}
 async function rpc(method,args={}){const {data,error}=await state.db.rpc(method,args);if(error)throw new Error(error.message||'Ошибка базы данных');return data}
 async function studio(action,p_input={}){return rpc('qwiz_studio',{p_action:action,p_input})}
+const motionPreference=window.matchMedia('(prefers-reduced-motion: reduce)');
+const runningMotion=new Map();
+function animateView(element,frames,options={}){
+ if(!element||!element.animate||motionPreference.matches||element.hidden)return;
+ runningMotion.get(element)?.cancel();
+ const animation=element.animate(frames,{duration:480,easing:'cubic-bezier(.16,1,.3,1)',...options});
+ runningMotion.set(element,animation);
+ const clear=()=>{if(runningMotion.get(element)===animation)runningMotion.delete(element)};
+ animation.finished.then(clear,clear);
+}
+motionPreference.addEventListener?.('change',event=>{if(event.matches)for(const animation of runningMotion.values())animation.cancel()});
+function animatePage(element){animateView(element,[{opacity:.25,transform:'translateY(18px)'},{opacity:1,transform:'translateY(0)'}])}
+function connection(status,text){const el=$('connText');el.dataset.state=status;el.textContent=text;el.title=text;el.setAttribute('aria-label',text)}
+let refreshFeedbackTimer;
+async function refreshWorkspace(){
+ const button=$('refreshAll');if(button.disabled)return;
+ clearTimeout(refreshFeedbackTimer);button.disabled=true;button.setAttribute('aria-busy','true');button.dataset.state='loading';$('refreshLabel').textContent='Обновляем';
+ try{await overview();await loadRooms();if(state.roomCode)await refreshLive();
+  button.dataset.state='done';$('refreshLabel').textContent='Готово';connection('ready','Кабинет подключён');
+  refreshFeedbackTimer=setTimeout(()=>{delete button.dataset.state;$('refreshLabel').textContent='Обновить'},1600);
+ }catch(error){button.dataset.state='error';$('refreshLabel').textContent='Повторить';msg('bankMessage',error.message,true);connection('error','Не удалось обновить кабинет')}
+ finally{button.disabled=false;button.setAttribute('aria-busy','false')}
+}
 function section(section){state.activePage=section;for(const id of ['bank','builder','rooms','insights'])$(id+'Page').hidden=id!==section;
- for(const n of all('[data-section]'))n.classList.toggle('selected',n.dataset.section===section);
+ for(const n of all('[data-section]')){const selected=n.dataset.section===section;n.classList.toggle('selected',selected);if(selected)n.setAttribute('aria-current','page');else n.removeAttribute('aria-current')}
+ animatePage($(section+'Page'));
  if(section==='rooms')loadRooms();if(section==='insights')loadInsights();
  window.scrollTo({top:0,behavior:'instant'})}
 function createOption(value,label){const n=document.createElement('option');n.value=value;n.textContent=label;return n}
@@ -58,6 +82,7 @@ function renderQuestions(){
   '<h3>'+esc(q.prompt)+'</h3><p>'+(supported.has(q.kind)?'Доступен для обычной игры':'В банке · игровой обработчик ещё не подключён')+'</p></div>'+
   '<button class="small-button" data-edit-question="'+esc(q.id)+'">Изменить</button></article>').join(''):
   '<div class="empty">Вопросов пока нет. Выберите тему и добавьте первый вопрос.</div>';
+ if(state.activePage==='bank')animateView($('bankItems'),[{opacity:.35,transform:'translateY(12px)'},{opacity:1,transform:'translateY(0)'}],{duration:420});
 }
 async function saveTopic(e){e.preventDefault();
  try{const name=$('topicName').value.trim(),category=$('topicCategory').value;
@@ -252,7 +277,8 @@ async function signOut(){await state.db.auth.signOut();location.replace('./')}
 function wire(){
  for(const b of all('[data-section]'))b.onclick=()=>section(b.dataset.section);
  $('signOut').onclick=signOut;
- $('refreshAll').onclick=async()=>{await overview();await loadRooms();if(state.roomCode)await refreshLive()};
+ $('refreshAll').onclick=refreshWorkspace;
+ document.addEventListener('keydown',event=>{if(event.key!=='/'||event.ctrlKey||event.metaKey||event.altKey||event.target.closest('input,textarea,select,[contenteditable="true"]')||document.querySelector('dialog[open]')||state.activePage!=='bank')return;event.preventDefault();$('bankSearch').focus()});
  $('bankSearch').oninput=()=>{clearTimeout(state.bankTimer);state.bankOffset=0;state.bankTimer=setTimeout(loadQuestions,350)};
  for(const id of ['bankTopic','bankKind','bankSort'])$(id).onchange=()=>{state.bankOffset=0;loadQuestions()};
  $('topicChips').onclick=e=>{const b=e.target.closest('[data-topic]');if(!b)return;$('bankTopic').value=b.dataset.topic;state.bankOffset=0;loadQuestions()};
@@ -289,18 +315,18 @@ function wire(){
  for(const dialog of all('dialog'))dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()});
 }
 async function init(){
- wire();fillSelect($('bankKind'),kinds,'Все типы');fillSelect($('editKind'),kinds,null,'single');
+ wire();animatePage($('bankPage'));fillSelect($('bankKind'),kinds,'Все типы');fillSelect($('editKind'),kinds,null,'single');
  for(let i=1;i<=15;i++)$('launchTeams').add(createOption(String(i),i+' '+(i===1?'команда':'команд')));
  $('launchTeams').value='4';
- if(!window.supabase?.createClient){$('connText').textContent='Сбой загрузки Supabase';return}
+ if(!window.supabase?.createClient){connection('error','Не удалось подключиться');return}
  state.db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
  try{const {data:{session}}=await state.db.auth.getSession();if(!session)throw Error('Войдите как преподаватель на главной.');
   if(!await rpc('org_quiz_is_admin_check'))throw Error('У вас нет прав преподавателя.');
-  $('connText').textContent='● Кабинет подключён';
+  connection('ready','Кабинет подключён');
   await overview();await loadRooms();
   const code=sessionStorage.getItem('qwiz-host-room');if(code){section('rooms');await selectRoom(code)}
   state.roomTimer=setInterval(()=>{if(state.roomCode&&!document.hidden)refreshLive()},12000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.roomCode)refreshLive()});
- }catch(e){$('connText').textContent=e.message;$('bankItems').innerHTML='<div class="empty">'+esc(e.message)+' <a href="./">Вернуться ко входу</a></div>'}
+ }catch(e){connection('error',e.message);$('bankItems').innerHTML='<div class="empty">'+esc(e.message)+' <a href="./">Вернуться ко входу</a></div>'}
 }
 window.addEventListener('DOMContentLoaded',init);
