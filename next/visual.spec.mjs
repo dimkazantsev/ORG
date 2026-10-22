@@ -700,6 +700,7 @@ test('Sixth flag mechanic shows four illustrated labels and only one official ke
  await page.locator('#editKind').evaluate(el=>{el.value='errors';el.dispatchEvent(new Event('change',{bubbles:true}))});
  await expect(page.locator('[data-error-image]')).toHaveCount(4);
  await expect(page.locator('[data-error-label]')).toHaveCount(4);
+ await page.goto('http://127.0.0.1:8080/next/index.html');
  await page.evaluate(()=>{
   ctx.room={code:'ERRFLAG6',room_id:'00000000-0000-4000-8000-000000000055',title:'Найди ошибку',
    phase:'question',index:0,total:1,ends_at:new Date(Date.now()+30000).toISOString(),
