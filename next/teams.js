@@ -24,7 +24,7 @@ window.QwizTeams=(()=>{
   let dialog=document.getElementById('teamQrDialog');if(!dialog){dialog=document.createElement('dialog');dialog.id='teamQrDialog';dialog.className='team-qr-dialog';dialog.setAttribute('aria-labelledby','teamQrTitle');document.body.append(dialog);}
   const link=url(code,team?.id,inviter);
   dialog.innerHTML='<div class="team-dialog-head"><div><span class="eyebrow">ВХОД ПО QR</span><h2 id="teamQrTitle">'+escape(title)+'</h2></div><button type="button" data-qr-close aria-label="Закрыть приглашение">×</button></div>'+
-   '<div class="team-dialog-identity">'+(team?QwizStage.icon(team,true):'')+'<strong>'+escape(team?.name||code)+'</strong></div><div class="team-qr-large"></div><p class="team-qr-caption">Сканируйте код: комната и команда уже выбраны.</p><label>Ссылка на команду<input class="team-invite-url" readonly value="'+escape(link)+'"></label><p class="team-copy-status" role="status"></p><div class="team-dialog-actions"><button type="button" class="secondary-button" data-qr-copy>Скопировать ссылку</button><button type="button" class="primary-button" data-qr-close>Закрыть</button></div>';
+   '<div class="team-dialog-identity">'+(team?QwizStage.icon(team,true):'')+'<strong>'+escape(team?.name||code)+'</strong></div><div class="team-qr-large"></div><p class="team-qr-caption">Сканируйте QR-код для входа в текущую игру.</p><label>Ссылка на команду<input class="team-invite-url" readonly value="'+escape(link)+'"></label><p class="team-copy-status" role="status"></p><div class="team-dialog-actions"><button type="button" class="secondary-button" data-qr-copy>Скопировать ссылку</button><button type="button" class="primary-button" data-qr-close>Закрыть</button></div>';
   for(const b of dialog.querySelectorAll('[data-qr-close]'))b.onclick=()=>dialog.close();
   dialog.querySelector('[data-qr-copy]').onclick=()=>copy(link,dialog.querySelector('[role="status"]'));
   dialog.onclick=e=>{if(e.target===dialog)dialog.close();};qr(dialog.querySelector('.team-qr-large'),link,256);if(!dialog.open)dialog.showModal();
@@ -36,11 +36,11 @@ window.QwizTeams=(()=>{
   const button=root.querySelector('button');if(button)button.onclick=()=>showQr({code:s.code,team,inviter:s.me.id,title:'Ваш QR-код команды'});
  }
  function board(root,teams,code){if(!root)return;const key=code+':'+teams.map(t=>[t.id,t.name,t.position].join(':')).join('|');
-  if(root.dataset.boardKey!==key){root.dataset.boardKey=key;root.innerHTML=teams.map(t=>'<button type="button" class="team-board-card" data-board-team="'+escape(t.id)+'" aria-label="Увеличить QR команды '+escape(t.name)+'">'+
+  if(root.dataset.boardKey!==key){root.dataset.boardKey=key;root.innerHTML='<button type="button" class="team-board-card team-board-global" data-board-general aria-label="Увеличить общий QR-код текущей комнаты"><div class="team-board-heading"><strong>Войти в любую команду</strong></div><div class="team-board-qr"></div><span class="board-count">Общий QR комнаты '+escape(code)+'</span></button>'+teams.map(t=>'<button type="button" class="team-board-card" data-board-team="'+escape(t.id)+'" aria-label="Увеличить QR команды '+escape(t.name)+'">'+
    '<div class="team-board-heading">'+QwizStage.icon(t,true)+'<strong>'+escape(t.name)+'</strong></div><div class="team-board-qr"></div><span class="board-count"></span></button>').join('');
-   for(const card of root.children){const team=teams.find(t=>t.id===card.dataset.boardTeam);qr(card.querySelector('.team-board-qr'),url(code,team.id),144);card.onclick=()=>showQr({code,team});}
+   for(const card of root.children){const team=teams.find(t=>t.id===card.dataset.boardTeam);qr(card.querySelector('.team-board-qr'),url(code,team?.id),144);card.onclick=()=>showQr({code,team,title:team?'Приглашение в команду':'Вход в игру '+code});}
   }
-  for(const card of root.children){const team=teams.find(t=>t.id===card.dataset.boardTeam);card.querySelector('.board-count').textContent=Number(team?.members??team?.players??0)+' участников';}
+  for(const card of root.children){const team=teams.find(t=>t.id===card.dataset.boardTeam);if(team)card.querySelector('.board-count').textContent=Number(team.members??team.players??0)+' участников';}
  }
  function keepInvitationLinks(){const target=intent();if(!target.room||!/^[A-F0-9]{8}$/.test(target.room)||target.invalid)return;
   for(const a of document.querySelectorAll('a[href]')){const u=new URL(a.getAttribute('href'),location.href);if(u.origin!==location.origin)continue;
