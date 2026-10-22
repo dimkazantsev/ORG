@@ -640,6 +640,7 @@ test('Color-strip answers are touch-ready on the student screen',async({page})=>
 
 test('In-card SVG trash buttons are compact and keyboard-accessible',async({page})=>{
  await page.goto('http://127.0.0.1:8080/next/workspace.html');
+ await page.locator('[data-section="builder"]').click();
  await page.evaluate(()=>{
   state.builds=[{id:'00000000-0000-4000-8000-000000000123',title:'Пример сборки'}];renderBuilds();
   state.hostRooms=[{id:'00000000-0000-4000-8000-000000000124',title:'Пример комнаты',phase:'lobby',players:0,teams:4,code:'ABBCC123'}];
