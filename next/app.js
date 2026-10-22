@@ -117,7 +117,7 @@ function renderResults(){if(ctx.mode!=='studio')return;const s=ctx.room;text('re
 function flagOptionHtml(value,index){
  const bands=QwizStage.stripeOption(value);if(bands)return bands;
  if(value&&typeof value==='object'&&typeof value.image_url==='string'&&/^https:\/\//i.test(value.image_url)){
-  return '<img class="flag-choice-art" src="'+esc(value.image_url)+'" alt="Флаг, вариант '+String.fromCharCode(65+index)+'" loading="lazy" decoding="async">';
+  return '<span class="flag-choice-with-label"><img class="flag-choice-art" src="'+esc(value.image_url)+'" alt="Флаг, вариант '+String.fromCharCode(65+index)+'" loading="lazy" decoding="async">'+(typeof value.label==='string'?'<span class="flag-choice-label">'+esc(value.label)+'</span>':'')+'</span>';
  }
  return '<span>'+esc(typeof value==='object'?value?.label||'':value)+'</span>';
 }
@@ -164,18 +164,13 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  const el=$('gameContent');
  const cue=s.phase+':'+s.index;if(cue!==ctx.gameCue){ctx.gameCue=cue;if(s.phase==='result')QwizStage.audio.play('reveal');else if(s.phase==='finished')QwizStage.audio.play(s.activity?.sound||'fanfare');else if(s.phase==='question')QwizStage.audio.play('pop')}
  $('playerTeamProgress').hidden=s.phase!=='question';if(s.phase==='question')QwizStage.progress($('playerTeamProgress'),s.public_stats?.teams||[]);
- window.QwizArcade?.syncWallet(s,ctx);
- const renderKey=[s.code,s.index,s.phase,s.activity?.title,s.activity?.settings?.arcade_mode,s.has_answer,s.eligible,s.total,s.question?.kind,s.question?.prompt,me?.team_id].join(':');
+ const renderKey=[s.code,s.index,s.phase,s.has_answer,s.eligible,s.total,s.question?.kind,s.question?.prompt,me?.team_id].join(':');
  if(ctx.gameRenderKey===renderKey)return;
  ctx.gameRenderKey=renderKey;
- if(s.phase!=='intermission')window.QwizArcade?.stop('player');
  if(s.phase==='lobby'){el.innerHTML='<div class="game-empty"><div class="eyebrow">Вы в комнате '+esc(s.code)+'</div><h1>Вы в игре.</h1><p>Преподаватель собирает участников. Игра начнётся на всех устройствах одновременно.</p><div class="phase-label">'+esc(myTeam?.name||'Ожидание команды')+'</div></div>';text('playerStatus','Подключён. Ожидайте начала.');return}
  if(s.phase==='finished'){el.innerHTML='<div class="game-empty"><div class="eyebrow">Игра завершена</div><h1>Финальный рейтинг</h1><p>Спасибо за участие. Результаты зафиксированы на сервере.</p>'+personalResults(s,true)+'</div>';text('playerStatus','Игра завершена.');return}
  const question=s.question;
  if(s.phase==='intermission'){
-   if(window.QwizArcade?.mountPlayer(el,s,ctx)){
-     text('playerStatus','Командное испытание. Действуйте вместе, зарабатывайте достижения и жетоны.');return;
-   }
    el.innerHTML='<div class="game-empty"><div class="eyebrow">ДОПОЛНИТЕЛЬНАЯ АКТИВНОСТЬ</div><h1>'+esc(s.activity?.title||'Перерыв')+'</h1><p>Следующий этап откроет преподаватель.</p></div>';
    text('playerStatus','Ожидаем продолжения.');
    return;
@@ -329,7 +324,9 @@ function attach(){q('#logoHome').addEventListener('click',home);
  $('refreshRoom').onclick=()=>refreshRoom();$('copyInvite').onclick=copyInvite;
  $('exportResults').onclick=exportResults;
  $('hostPlayers').addEventListener('change',e=>{const input=e.target.closest('[data-team-for]');if(input)assign(input.dataset.teamFor,input.value)});
- $('gameSound').onclick=async()=>{const on=await QwizStage.audio.toggle();$('gameSound').textContent=on?'♫ Звук включён':'♫ Звук';$('gameSound').setAttribute('aria-pressed',String(on))};
+ QwizStage.iconLabel($('gameSound'),QwizStage.audio.enabled?'Звук включён':'Звук выключен',QwizStage.audio.enabled?'volume':'muted');
+ $('gameSound').setAttribute('aria-pressed',String(QwizStage.audio.enabled));
+ $('gameSound').onclick=async()=>{const on=await QwizStage.audio.toggle();QwizStage.iconLabel($('gameSound'),on?'Звук включён':'Звук выключен',on?'volume':'muted');$('gameSound').setAttribute('aria-pressed',String(on))};
  $('leaveGame').onclick=()=>{cleanupRoom();home()};
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ctx.roomCode)scheduleRefresh(200)});
  addQuestion();
@@ -429,7 +426,7 @@ async function openPresenterWindow(){
  'success');
 }
 
-async function init(){attach();if(!window.supabase?.createClient){notice('joinNotice','Не удалось загрузить Supabase. Проверьте подключение к интернету.','error');notice('loginNotice','Не удалось загрузить Supabase.','error');return}
+async function init(){attach();QwizStage.decorateControls();if(!window.supabase?.createClient){notice('joinNotice','Не удалось загрузить Supabase. Проверьте подключение к интернету.','error');notice('loginNotice','Не удалось загрузить Supabase.','error');return}
  ctx.client=window.supabase.createClient(URL_SUPABASE,KEY_SUPABASE);
  await restore();
 }
