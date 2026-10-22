@@ -234,7 +234,7 @@ function renderInsights(){const d=state.insights||{},overview=d.overview||{},stu
  $('insightMetrics').innerHTML=[['Комнат',overview.rooms||0],['Завершено',overview.completed||0],['Студентов',students.length],['Ответов',students.reduce((s,x)=>s+Number(x.answers||0),0)]]
   .map(([label,value])=>'<div><span>'+label+'</span><strong>'+fmt(value)+'</strong></div>').join('');
  const key=$('studentSort').value;const rows=students.slice().sort((a,b)=>Number(b[key]||0)-Number(a[key]||0));
- $('studentRows').innerHTML=rows.map((s,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(s.name)+'</td><td>'+esc(s.group)+'</td><td>'+fmt(s.games)+'</td><td>'+fmt(s.answers)+'</td><td>'+fmt(s.correct)+'</td><td>'+fmt(s.score)+'</td></tr>').join('')||'<tr><td colspan="7">Пока нет ответов.</td></tr>';
+ $('studentRows').innerHTML=rows.map((s,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(s.name)+'</td><td>'+esc(s.group)+'</td><td>'+fmt(s.games)+'</td><td>'+fmt(s.answers)+'</td><td>'+fmt(s.correct)+'</td><td>'+fmt(s.accuracy)+'%</td><td>'+fmt(s.score)+'</td></tr>').join('')||'<tr><td colspan="8">Пока нет ответов.</td></tr>';
  const best=Math.max(1,...rows.slice(0,10).map(x=>Number(x.correct||0)));
  $('studentChart').innerHTML=rows.slice(0,10).map(s=>'<div class="bar-row"><span>'+esc(s.name)+'</span><div class="bar-track"><div class="bar-fill" style="width:'+(100*Number(s.correct||0)/best).toFixed(2)+'%"></div></div><strong>'+fmt(s.correct)+'</strong></div>').join('')||'<p class="small-help">Нет данных для диаграммы.</p>';
  const bar=(arr,label)=>arr.length?arr.map(x=>{
@@ -244,6 +244,7 @@ function renderInsights(){const d=state.insights||{},overview=d.overview||{},stu
    '<div class="bar-track" title="'+pct+'% правильных"><div class="bar-fill" style="width:'+pct+'%"></div></div>'+
    '<strong>'+pct+'%</strong></div>';
  }).join(''):'<p class="small-help">Пока нет результатов для расчёта.</p>';
+ $('groupChart').innerHTML=bar(d.groups||[],'name');
  $('topicChart').innerHTML=bar(d.by_topic||[],'topic');
  $('questionChart').innerHTML=bar(d.by_question||[],'prompt');
 }
