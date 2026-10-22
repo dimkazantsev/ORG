@@ -38,6 +38,8 @@ test('Ten warning ticks and distinct expiry sound do not repeat on clock refresh
 });
 test('Audio unlocks on a gesture, respects volume/mute and frees every oscillator',async({page})=>{
  await projector(page,state());expect(await page.evaluate(()=>QwizStage.audio.context)).toBeNull();
+ await expect(page.locator('#projectionSound')).toHaveAttribute('aria-pressed','true');
+ await page.locator('#projectionSound').click();await expect(page.locator('#projectionSound')).toHaveAttribute('aria-pressed','false');
  await page.locator('#projectionSound').click();await expect(page.locator('#projectionSound')).toHaveAttribute('aria-pressed','true');
  await page.locator('#projectionVolume').fill('20');expect(await page.evaluate(()=>QwizStage.audio.volume)).toBe(.2);
  await page.evaluate(()=>QwizStage.audio.play('reveal'));expect(await page.evaluate(()=>QwizStage.audio.voices.size)).toBeGreaterThan(0);await expect.poll(()=>page.evaluate(()=>QwizStage.audio.voices.size)).toBe(0);

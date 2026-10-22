@@ -13,7 +13,7 @@ const flagModes=[
  ['colors','Цвета и полосы',true],
  ['symbols','Символы и гербы',true],
  ['fragments','Скрытые фрагменты и пиксели',true],
- ['errors','Поиск ошибок',false],
+ ['errors','Поиск ошибок на флагах',true],
  ['similar','Похожие флаги',false],
  ['assemble','Сборка флага',false],
  ['multiple','Несколько правильных ответов',false],
@@ -85,7 +85,7 @@ async function refreshWorkspace(){
  finally{button.disabled=false;button.setAttribute('aria-busy','false')}
 }
 const resumeKey='qwiz-studio-position-v3';
-let restoringView=false,restoreScrollQueued=false;
+let restoringView=true,restoreScrollQueued=false; // Lock persistence during initial render; F5 must not overwrite saved section.
 function savePosition(){
  if(restoringView)return;
  try{sessionStorage.setItem(resumeKey,JSON.stringify({
@@ -100,8 +100,8 @@ function readPosition(){
   return x&&['bank','builder','rooms','insights'].includes(x.section)?x:null
  }catch{return null}
 }
-async function restorePosition(){
- const last=readPosition();if(!last)return;
+async function restorePosition(last=readPosition()){
+ if(!last)return;
  restoringView=true;
  try{
   if(typeof last.search==='string')$('bankSearch').value=last.search.slice(0,90);
@@ -115,13 +115,15 @@ async function restorePosition(){
   const target=Math.max(0,Number(last.scrollY)||0);
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
   window.scrollTo({top:target,behavior:'instant'});
+  // Restore a second time after layout, fonts and asynchronous cards have settled.
+  requestAnimationFrame(()=>window.scrollTo({top:target,behavior:'instant'}));
  }finally{restoringView=false;savePosition()}
 }
 function section(section){state.activePage=section;for(const id of ['bank','builder','rooms','insights'])$(id+'Page').hidden=id!==section;
  for(const n of all('[data-section]')){const selected=n.dataset.section===section;n.classList.toggle('selected',selected);if(selected)n.setAttribute('aria-current','page');else n.removeAttribute('aria-current')}
  animatePage($(section+'Page'));
  if(section==='rooms')loadRooms();if(section==='insights')loadInsights();
- window.scrollTo({top:0,behavior:'instant'});savePosition()}
+ window.scrollTo({top:0,behavior:'instant'});if(!restoringView)history.replaceState(null,'','#'+section);savePosition()}
 function createOption(value,label){const n=document.createElement('option');n.value=value;n.textContent=label;return n}
 function fillSelect(select,options,placeholder,selected=''){select.replaceChildren();if(placeholder!==null)select.add(createOption('',placeholder));for(const [value,title]of options)select.add(createOption(value,title));select.value=selected}
 function nameTopic(id){return state.topics.find(t=>t.id===id)?.name||'Все темы'}
@@ -199,6 +201,17 @@ async function saveTopic(e){e.preventDefault();
 function answerEditor(mode,question){
  const opts=question?.options||[],sol=question?.solution||{};
  const count=4;
+ if(mode==='errors'){
+  const choices=Array.from({length:4},(_,i)=>{
+   const value=typeof opts[i]==='object'&&opts[i]?opts[i]:{};
+   return '<div class="flag-option-editor">'+
+    '<label>Вариант '+String.fromCharCode(65+i)+' · ссылка на флаг SVG<input data-error-image="'+i+'" type="url" required value="'+esc(value.image_url||'')+'" placeholder="https://…/fr.svg"></label>'+
+    '<label>Подпись под флагом<input data-error-label="'+i+'" required maxlength="110" value="'+esc(value.label||'')+'" placeholder="Название государства"></label></div>';
+  }).join('');
+  $('answerEditor').innerHTML='<div class="answer-fields"><p class="small-help">Покажите четыре изображения с названиями стран. Только одна подпись должна быть ошибочной; этот вариант выбирается правильным ответом. Остальные три подписи должны точно соответствовать флагам.</p>'+choices+
+    '<label>Вариант с ошибкой<select id="correctAnswer">'+Array.from({length:4},(_,i)=>'<option value="'+i+'" '+(Number(sol.correct||0)===i?'selected':'')+'>'+String.fromCharCode(65+i)+'</option>').join('')+'</select></label></div>';
+  return;
+ }
  if(mode==='colors'){
   const orientation=opts[0]?.orientation||'horizontal';
   const sequence=Array.from({length:4},(_,i)=>{
@@ -250,20 +263,24 @@ async function saveQuestion(event){
  const mode=$('editKind').value;
  if(!flagModes.some(([id,,ready])=>id===mode&&ready)){msg('questionSaveMessage','Эта механика ещё не подключена к игровому движку.',true);return}
  const isUrl=value=>/^https:\/\/[^/?#]+\/\S+$/i.test(value);
- const options=mode==='colors'?Array.from({length:4},(_,i)=>({
+ const options=mode==='errors'?Array.from({length:4},(_,i)=>({
+  image_url:$('answerEditor').querySelector('[data-error-image="'+i+'"]')?.value.trim()||'',
+  label:$('answerEditor').querySelector('[data-error-label="'+i+'"]')?.value.trim()||''
+ })):mode==='colors'?Array.from({length:4},(_,i)=>({
   orientation:$('colorOrientation').value,
   stripes:all('[data-stripe]',$('answerEditor')).filter(input=>input.dataset.stripe.startsWith(i+':')).map(input=>input.value)
  })):mode==='picker'?all('[data-flag-image]',$('answerEditor')).map(input=>({image_url:input.value.trim()})):
   all('[data-option]',$('answerEditor')).map(input=>input.value.trim());
- const labels=mode==='colors'?all('[data-color-label]',$('answerEditor')).map(input=>input.value.trim()):
+ const labels=mode==='errors'?options.map(o=>o.label):mode==='colors'?all('[data-color-label]',$('answerEditor')).map(input=>input.value.trim()):
   mode==='picker'?all('[data-flag-label]',$('answerEditor')).map(input=>input.value.trim()):options;
  if(options.length!==4||labels.some(v=>!v)||new Set(labels.map(x=>x.toLocaleLowerCase('ru-RU'))).size!==4){
   msg('questionSaveMessage','Нужно четыре разных и заполненных варианта.',true);return
  }
- if(mode==='picker'&&(options.some(x=>!isUrl(x.image_url))||new Set(options.map(x=>x.image_url)).size!==4)){
+ if(['picker','errors'].includes(mode)&&(options.some(x=>!isUrl(x.image_url))||new Set(options.map(x=>x.image_url)).size!==4)){
   msg('questionSaveMessage','Для каждого варианта нужна своя корректная HTTPS-ссылка на флаг.',true);return
  }
  const solution={correct:Number($('correctAnswer').value),flag_mode:mode};
+ if(mode==='errors')solution.error_kind='mislabeled';
  if(mode==='picker'||mode==='colors')solution.option_labels=labels;
  const mediaUrl=$('questionMediaUrl')?.value.trim()||'';
  if(['country','symbols','fragments'].includes(mode)){
@@ -494,10 +511,14 @@ function wire(){
  $('questionForm').onsubmit=saveQuestion;
  $('newBuild').onclick=newBuild;$('generalSettings').onclick=generalSettings;$('generalForm').onsubmit=saveGeneralSettings;
  $('generalApplyCount').onchange=e=>{$('generalCount').disabled=!e.target.checked};$('generalApplySound').onchange=e=>{$('generalSound').disabled=!e.target.checked};
- $('studioSound').onclick=async()=>{const enabled=await QwizStage.audio.toggle();$('studioSound').setAttribute('aria-pressed',String(enabled));$('studioSound').textContent=enabled?'♫ Звук включён':'♫ Звук'};
- $('cardSoundPreview').onclick=async()=>{if(!QwizStage.audio.enabled)await QwizStage.audio.toggle();QwizStage.audio.play($('cardSound').value)};
+ QwizStage.decorateControls();
+ QwizStage.iconLabel($('studioSound'),QwizStage.audio.enabled?'Звук включён':'Звук выключен',QwizStage.audio.enabled?'volume':'muted');
+ $('studioSound').setAttribute('aria-pressed',String(QwizStage.audio.enabled));
+ $('studioSound').onclick=async()=>{const enabled=await QwizStage.audio.toggle();$('studioSound').setAttribute('aria-pressed',String(enabled));QwizStage.iconLabel($('studioSound'),enabled?'Звук включён':'Звук выключен',enabled?'volume':'muted')};
+ $('cardSoundPreview').onclick=async()=>{if(!QwizStage.audio.enabled)await QwizStage.audio.toggle();await QwizStage.audio.unlock();QwizStage.audio.play($('cardSound').value)};
  $('addCard').onclick=()=>appendCard('round');$('appendRound').onclick=()=>appendCard('round');
  $('cardPalette').onclick=e=>{const b=e.target.closest('[data-card]');if(b)appendCard(b.dataset.card,b.dataset.arcade||null)};
+ $('arcadePalette').onclick=e=>{const b=e.target.closest('[data-arcade]');if(b)appendCard(b.dataset.card,b.dataset.arcade)};
  $('roundCards').onclick=e=>{
   const edit=e.target.closest('[data-edit-card]');if(edit){editCard(Number(edit.dataset.editCard));return}
   const del=e.target.closest('[data-delete-card]');if(del){const i=Number(del.dataset.deleteCard),c=state.cards[i];if(c&&confirm('Удалить раунд «'+c.title+'» из сборки? Для сохранения изменений нажмите «Сохранить сборку».')){state.cards.splice(i,1);renderCards();msg('buildMessage','Раунд удалён из конструктора. Сохраните сборку, чтобы применить изменения.')}return}
@@ -527,6 +548,10 @@ function wire(){
  for(const dialog of all('dialog'))dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()});
 }
 async function init(){
+ // Read before wiring listeners or awaiting Supabase. The previous code overwrote
+ // sessionStorage with the default 'bank' state during initial scroll/layout.
+ const savedBeforeBoot=readPosition();
+ restoringView=true;
  wire();animatePage($('bankPage'));
  fillSelect($('bankMode'),flagModes.map(([id,title])=>[id,title]),'Все механики');
  const select=$('editKind');
@@ -544,10 +569,17 @@ async function init(){
   if(!await rpc('org_quiz_is_admin_check'))throw Error('У вас нет прав преподавателя.');
   connection('ready','Кабинет подключён');
   await overview();await loadRooms();
-  const previous=readPosition();if(previous){await restorePosition()}else{const code=sessionStorage.getItem('qwiz-host-room');if(code){section('rooms');await selectRoom(code)}}
+  if(savedBeforeBoot){await restorePosition(savedBeforeBoot)}
+  else{
+   const hash=location.hash.slice(1);
+   const code=sessionStorage.getItem('qwiz-host-room');
+   if(code){section('rooms');await selectRoom(code)}
+   else if(['bank','builder','rooms','insights'].includes(hash))section(hash);
+   restoringView=false;savePosition();
+  }
   state.roomTimer=setInterval(()=>{if(state.roomCode&&!document.hidden)refreshLive()},8000);
   setInterval(()=>{if(!state.room||document.hidden)return;const s=state.room;if(['question','result'].includes(s.phase)){const left=QwizStage.updateClock(s,state.clockOffset,document,'liveTimer');if(left===0&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}}else if(s.phase==='countdown'&&Date.parse(s.ends_at)<=Date.now()+state.clockOffset&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}},250);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.roomCode)refreshLive()});
- }catch(e){connection('error',e.message);$('bankItems').innerHTML='<div class="empty">'+esc(e.message)+' <a href="./">Вернуться ко входу</a></div>'}
+ }catch(e){restoringView=false;connection('error',e.message);$('bankItems').innerHTML='<div class="empty">'+esc(e.message)+' <a href="./">Вернуться ко входу</a></div>'}
 }
 window.addEventListener('DOMContentLoaded',init);

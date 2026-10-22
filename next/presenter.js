@@ -41,7 +41,7 @@ function finalShow(state){
 function projectionOption(value,index){
  const bands=QwizStage.stripeOption(value);if(bands)return bands;
  if(value&&typeof value==='object'&&typeof value.image_url==='string'&&/^https:\/\//i.test(value.image_url)){
-  return '<img class="flag-choice-art" src="'+escapeText(value.image_url)+'" alt="Флаг, вариант '+String.fromCharCode(65+index)+'" loading="lazy" decoding="async">';
+  return '<span class="flag-choice-with-label"><img class="flag-choice-art" src="'+escapeText(value.image_url)+'" alt="Флаг, вариант '+String.fromCharCode(65+index)+'" loading="lazy" decoding="async">'+(typeof value.label==='string'?'<span class="flag-choice-label">'+escapeText(value.label)+'</span>':'')+'</span>';
  }
  return '<span>'+escapeText(typeof value==='object'?value?.label||'':value)+'</span>';
 }
@@ -94,7 +94,10 @@ function subscribe(){if(ctx.channel)ctx.client.removeChannel(ctx.channel);
 }
 async function init(){
  $('projectionFullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch{showError('Используйте F11 для полноэкранного режима.')}};
- $('projectionSound').onclick=async()=>{const enabled=await QwizStage.audio.toggle();$('projectionSound').textContent=enabled?'♫ Звук включён':'♫ Включить звук';$('projectionSound').setAttribute('aria-pressed',String(enabled))};
+ QwizStage.decorateControls();
+ QwizStage.iconLabel($('projectionSound'),QwizStage.audio.enabled?'Звук включён':'Звук выключен',QwizStage.audio.enabled?'volume':'muted');
+ $('projectionSound').setAttribute('aria-pressed',String(QwizStage.audio.enabled));
+ $('projectionSound').onclick=async()=>{const enabled=await QwizStage.audio.toggle();QwizStage.iconLabel($('projectionSound'),enabled?'Звук включён':'Звук выключен',enabled?'volume':'muted');$('projectionSound').setAttribute('aria-pressed',String(enabled))};
  $('projectionVolume').oninput=e=>QwizStage.audio.setVolume(Number(e.target.value)/100);
  if(!room){setup();return}
  if(!/^[A-F0-9]{8}$/.test(room)){showError('Некорректный код');setup();return}
