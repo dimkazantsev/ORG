@@ -39,6 +39,7 @@ function finalShow(state){
  (stats.length?questionStats(stats):'<p class="stage-empty">Статистика вопросов появится после первого сыгранного вопроса.</p>')+'</section>';
 }
 function projectionOption(value,index){
+ const bands=QwizStage.stripeOption(value);if(bands)return bands;
  if(value&&typeof value==='object'&&typeof value.image_url==='string'&&/^https:\/\//i.test(value.image_url)){
   return '<img class="flag-choice-art" src="'+escapeText(value.image_url)+'" alt="Флаг, вариант '+String.fromCharCode(65+index)+'" loading="lazy" decoding="async">';
  }
