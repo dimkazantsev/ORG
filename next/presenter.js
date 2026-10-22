@@ -6,8 +6,8 @@ const KEY='sb_publishable_Hv7NgYuVsfKhFuhX_9pl0Q_qXWA2wOr';
 let room=new URLSearchParams(location.search).get('room')?.trim().toUpperCase()||'';
 const $=id=>document.getElementById(id);
 const escapeText=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const ctx={client:null,last:null,channel:null,local:null,checking:false,timer:null,previousQuestion:-2,finalStep:0,finalTimer:null,sound:false,audio:null,lastReleaseAttempt:0};
-const seconds=t=>Math.max(0,Math.ceil((Date.parse(t)-Date.now())/1000))||0;
+const ctx={client:null,last:null,channel:null,local:null,checking:false,timer:null,previousQuestion:-2,finalStep:0,finalTimer:null,sound:false,audio:null,lastReleaseAttempt:0,offset:0,renderKey:''};
+const seconds=t=>Math.max(0,Math.ceil((Date.parse(t)-Date.now()-ctx.offset)/1000))||0;
 function showError(s){$('projectionError').textContent=s;$('projectionError').hidden=false}
 function clearError(){$('projectionError').hidden=true}
 function qr(div,url){if(typeof QRCode==='function'&&div){div.replaceChildren();new QRCode(div,{text:url,width:240,height:240,colorLight:'#fff',colorDark:'#27302b',correctLevel:QRCode.CorrectLevel.M})}}
@@ -23,107 +23,59 @@ function setup(){
  $('projectionJoin').onsubmit=e=>{e.preventDefault();const code=$('projectionCode').value;
  if(!/^[A-F0-9]{8}$/.test(code))return;const url=new URL(location.href);url.searchParams.set('room',code);location.assign(url.toString())};
 }
-const jingles={
- fanfare:[[523,0,.15],[659,.14,.15],[784,.28,.18],[1047,.47,.35]],
- synth:[[330,0,.15],[494,.17,.13],[659,.30,.19],[988,.49,.25]],
- funny:[[440,0,.12],[310,.14,.10],[550,.27,.10],[245,.40,.17],[735,.61,.16]],
- start:[[610,0,.12],[830,.13,.18]],
- end:[[770,0,.12],[510,.15,.2]],
- pop:[[640,0,.085]],round:[[523,0,.13],[783,.17,.23]]
-};
-function tone(kind){
- if(!ctx.sound||kind==='none')return;
- try{
-  ctx.audio ||= new (window.AudioContext||window.webkitAudioContext)();
-  if(ctx.audio.state==='suspended')ctx.audio.resume().catch(()=>{});
-  const pattern=jingles[kind]||jingles.round;
-  const now=ctx.audio.currentTime+.02;
-  for(const [pitch,offset,duration] of pattern){
-   const osc=ctx.audio.createOscillator(),gain=ctx.audio.createGain();
-   osc.type=kind==='funny'?'square':kind==='synth'?'sawtooth':'sine';
-   osc.frequency.setValueAtTime(pitch,now+offset);
-   gain.gain.setValueAtTime(.0001,now+offset);
-   gain.gain.linearRampToValueAtTime(.045,now+offset+.024);
-   gain.gain.exponentialRampToValueAtTime(.001,now+offset+duration);
-   osc.connect(gain);gain.connect(ctx.audio.destination);
-   osc.start(now+offset);osc.stop(now+offset+duration+.02);
-  }
- }catch{}
-}
+function tone(kind){QwizStage.audio.play(kind==='end'?'timeup':kind)}
 function ranking(rows,key){
  const first=(rows||[]).slice(0,100);
  return '<ol class="projection-ranking">'+first.map((x,i)=>'<li><span class="projection-rank">'+(i+1)+'</span>'+
  '<strong>'+escapeText(x[key]||'Игрок')+'</strong><b>'+Number(x.score||0).toLocaleString('ru-RU')+'</b></li>').join('')+'</ol>';
 }
+function questionStats(rows){return QwizStage.questionStats(rows)}
 function finalShow(state){
- const teams=state.teams||[],players=state.players||[];
- const isTeams=ctx.finalStep%2===0;
- $('projectionMain').innerHTML='<div class="projection-finale"><div class="projection-eyebrow">QWIZ-PARTY / ФИНАЛ</div>'+
-  '<h1>'+(isTeams?'Результаты команд':'Рейтинг участников')+'</h1>'+
-  '<p>'+(isTeams?'Места по итогам всех сыгранных вопросов.':'Рейтинг без публикации личных данных участников.')+'</p>'+
-  ranking(isTeams?teams:players,isTeams?'name':'nickname')+'</div>';
+ const teams=state.teams||[],players=state.players||[],stats=state.question_stats||[];
+ const title=state.activity?.title&&state.activity.title!=='Финал игры'?state.activity.title:'Вот это была игра!';
+ $('projectionMain').innerHTML='<section class="projection-finale"><div class="finale-heading"><div><span class="projection-eyebrow">QWIZ-PARTY / ФИНАЛ</span><h1>'+escapeText(title)+'</h1><p>'+escapeText(state.title)+' · '+teams.length+' команд · '+players.length+' участников</p></div><span class="finale-star" aria-hidden="true">✦</span></div>'+
+ '<section class="stage-team-results"><div class="stage-section-head"><h2>Рейтинг команд</h2><span>По баллам; при равенстве — по средней скорости</span></div>'+QwizStage.teams(teams,{full:true,ranked:true})+'</section>'+
+ '<section class="stage-player-results"><div class="stage-section-head"><h2>Личный рейтинг</h2><span>Баллы → верный ответ → скорость</span></div>'+QwizStage.leaderboard(players,80)+'</section>'+
+ (stats.length?questionStats(stats):'<p class="stage-empty">Статистика вопросов появится после первого сыгранного вопроса.</p>')+'</section>';
 }
-function render(state){clearError();$('projectionRoom').textContent=state.code||'';
- const phaseChanged=state.phase!==ctx.lastPhase;ctx.lastPhase=state.phase;
+function questionScene(state){
+ const q=state.question,answer=state.answer,isResult=state.phase==='result';
+ const media=typeof q.media_url==='string'&&/^https:\/\//i.test(q.media_url)&&['audio','video'].includes(q.kind)?'<'+q.kind+' class="projection-'+q.kind+'" controls preload="metadata" src="'+escapeText(q.media_url)+'"></'+q.kind+'>':'';
+ const frame=QwizStage.illustration(q,answer);
+ const top='<div class="projection-topline"><div><span class="projection-count">'+escapeText(q.round_title||q.topic||'Раунд вопросов')+'</span><p class="question-step">Вопрос '+(state.index+1)+' <span>/ '+state.total+'</span></p></div>'+QwizStage.clockMarkup(state)+'</div>';
+ if(isResult)return '<section class="projection-question is-result">'+top+'<div class="answer-scene answer-reveal">'+frame+'<div class="answer-copy"><span class="answer-label">'+(q.kind==='poll'?'ИТОГ ГОЛОСОВАНИЯ':'ПРАВИЛЬНЫЙ ОТВЕТ')+'</span><h1>'+escapeText(answer?.text||'Ответ открыт')+'</h1>'+(answer?.explanation?'<p>'+escapeText(answer.explanation)+'</p>':'')+'</div></div>'+
+ '<section class="stage-team-results"><div class="stage-section-head"><h2>Скорость команд</h2><span>Среднее время на участника · ↑ быстрее, ↓ медленнее</span></div>'+QwizStage.teams(state.teams,{full:true,ranked:true})+'</section>'+
+ '<section class="stage-player-results"><div class="stage-section-head"><h2>Личный рейтинг</h2><span>Баллы → верный ответ → скорость</span></div>'+QwizStage.leaderboard(state.players,10)+'</section></section>';
+ return '<section class="projection-question">'+top+frame+'<h1>'+escapeText(q.prompt)+'</h1>'+media+'<div class="projection-options">'+(Array.isArray(q.options)?q.options:[]).map((v,i)=>'<div class="projection-option"><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+escapeText(v)+'</span></div>').join('')+'</div>'+
+ (q.kind==='match'?'<div class="projection-match-bank">'+(q.match_choices||[]).map(x=>'<span>'+escapeText(x)+'</span>').join('')+'</div>':'')+
+ '<section class="question-team-strip"><div class="stage-section-head"><h2>Команды в игре</h2><span><b id="teamAnswerCount">'+(state.teams||[]).reduce((a,t)=>a+Number(t.answered||0),0)+'</b> из '+(state.teams||[]).reduce((a,t)=>a+Number(t.members||0),0)+' ответили</span></div>'+QwizStage.teams(state.teams)+'</section></section>';
+}
+function render(state){
+ clearError();$('projectionRoom').textContent=state.code||'';
+ const key=[state.code,state.phase,state.index,state.activity?.title,state.activity?.type].join(':');
+ if(key===ctx.renderKey){
+  if(state.phase==='question'){QwizStage.patchTeams($('projectionMain'),state.teams);if($('teamAnswerCount'))$('teamAnswerCount').textContent=(state.teams||[]).reduce((a,t)=>a+Number(t.answered||0),0)}
+  QwizStage.updateClock(state,ctx.offset);return;
+ }
+ ctx.renderKey=key;const previous=ctx.lastPhase;ctx.lastPhase=state.phase;
  if(state.phase==='lobby'){
-  $('projectionMain').innerHTML='<section class="projection-lobby"><div><div class="projection-eyebrow">КОМНАТА ОТКРЫТА</div>'+
-   '<h1>Присоединяйтесь!</h1><p>Наведите камеру на QR-код или введите код комнаты на телефоне.</p>'+
-   '<strong class="projection-code">'+escapeText(state.code)+'</strong></div><div class="projection-qr" id="projectionQr"></div></section>';
-  qr($('projectionQr'),link(state.code));return;
+  $('projectionMain').innerHTML='<section class="projection-lobby"><div><div class="projection-eyebrow">КОМНАТА ОТКРЫТА</div><h1>Присоединяйтесь!</h1><p>Наведите камеру на QR-код или введите код комнаты на телефоне.</p><strong class="projection-code">'+escapeText(state.code)+'</strong></div><div class="projection-qr" id="projectionQr"></div></section>';qr($('projectionQr'),link(state.code));return;
  }
- if(state.phase==='finished'){
-  if(phaseChanged)tone('fanfare');
-  finalShow(state);
-  if(!ctx.finalTimer)ctx.finalTimer=setInterval(()=>{ctx.finalStep++;if(ctx.last?.phase==='finished')finalShow(ctx.last)},11000);
-  return;
- }
- if(ctx.finalTimer){clearInterval(ctx.finalTimer);ctx.finalTimer=null}
- if(state.phase==='countdown'){
-  if(phaseChanged)tone(state.round_sound||'fanfare');
-  const left=seconds(state.ends_at);
-  $('projectionMain').innerHTML='<div class="countdown-scene"><span class="projection-eyebrow">СЛЕДУЮЩИЙ РАУНД</span><h1>Приготовьтесь!</h1><div class="countdown-number" id="countdownNumber">'+left+'</div><p>Вопрос появится после обратного отсчёта.</p></div>';
-  return;
- }
+ if(state.phase==='finished'){tone(state.activity?.sound||'fanfare');finalShow(state);return}
+ if(state.phase==='countdown'){tone(state.round_sound||'fanfare');$('projectionMain').innerHTML='<div class="countdown-scene"><span class="projection-eyebrow">СЛЕДУЮЩИЙ РАУНД</span><h1>Приготовьтесь!</h1><div class="countdown-number" id="countdownNumber">'+seconds(state.ends_at)+'</div><p>Вопрос появится после обратного отсчёта.</p></div>';return}
  if(state.phase==='intermission'){
-  const activity=state.activity||{};
-  const title=escapeText(activity.title||'Дополнительная активность');
-  const type=activity.type||'break';
-  if(phaseChanged){tone(activity.sound||'funny');ctx.previousQuestion=-3}
-  let extras='';
-  if(type==='team_stats')extras=ranking(state.teams||[],'name');
-  if(type==='player_stats')extras=ranking(state.players||[],'nickname');
-  const funny=type==='break'?'РАЗМИНАЕМ ИЗВИЛИНЫ':type==='intro'?'НАСТРОЙТЕСЬ НА ИГРУ':type==='bonus'?'ЛОВИТЕ БОНУС':type==='duel'?'ВРЕМЯ ДУЭЛИ':'ПРОМЕЖУТОЧНЫЕ РЕЗУЛЬТАТЫ';
-  $('projectionMain').innerHTML='<section class="projection-activity" data-type="'+escapeText(type)+'">'+
-   '<span class="projection-eyebrow">QWIZ-PARTY · '+funny+'</span><div class="activity-emblem" aria-hidden="true">✦</div>'+
-   '<h1>'+title+'</h1><p>Следующий этап запускает преподаватель.</p>'+extras+'</section>';
-  return;
+  const activity=state.activity||{},type=activity.type||'break';tone(activity.sound||'funny');
+  const extras=type==='team_stats'?QwizStage.teams(state.teams,{full:true,ranked:true}):type==='player_stats'?QwizStage.leaderboard(state.players,20):'';
+  $('projectionMain').innerHTML='<section class="projection-activity" data-type="'+escapeText(type)+'"><span class="projection-eyebrow">QWIZ-PARTY · ПРОДОЛЖАЕМ ИГРУ</span><div class="activity-emblem" aria-hidden="true">✦</div><h1>'+escapeText(activity.title||'Дополнительная активность')+'</h1><p>Следующий этап запускает преподаватель.</p>'+extras+'</section>';return;
  }
  if(!state.question){$('projectionMain').innerHTML='<div class="projection-loading"><h1>Следующий раунд</h1><p>Смотрите на экран.</p></div>';return}
- const q=state.question,round=q.topic||'Раунд вопросов';
- if(ctx.previousQuestion!==state.index){tone('pop');ctx.previousQuestion=state.index}
- if(phaseChanged&&state.phase==='result')tone('end')
- $('projectionMain').innerHTML='<section class="projection-question"><div class="projection-topline"><span class="projection-count">'+
- escapeText(round.toUpperCase())+' · ВОПРОС '+(state.index+1)+' / '+state.total+'</span>'+
- '<span class="projection-timer" id="projectionTimer">'+(state.phase==='question'?seconds(state.ends_at)+' сек.':'Ответы приняты')+'</span></div>'+
- '<h1>'+escapeText(q.prompt)+'</h1>'+
- (typeof q.media_url==='string'&&/^https:\/\//i.test(q.media_url)?(
- q.kind==='audio'?'<audio class="projection-audio" controls preload="none" src="'+escapeText(q.media_url)+'"></audio>':
- q.kind==='video'?'<video class="projection-video" controls preload="metadata" src="'+escapeText(q.media_url)+'"></video>':
- '<div class="projection-media"><img src="'+escapeText(q.media_url)+'" alt="Иллюстрация к вопросу"></div>'):'')+
- '<div class="projection-options">'+(Array.isArray(q.options)?q.options:[]).map((v,i)=>
- '<div class="projection-option"><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+escapeText(v)+'</span></div>').join('')+'</div>'+
- (q.kind==='match'?'<div class="projection-match-bank">'+(q.match_choices||[]).map(x=>'<span>'+escapeText(x)+'</span>').join('')+'</div>':'')+
- '</section>';
+ if(state.phase==='result')tone('reveal');else if(previous!=='question'||ctx.previousQuestion!==state.index)tone('pop');ctx.previousQuestion=state.index;
+ $('projectionMain').innerHTML=questionScene(state);QwizStage.updateClock(state,ctx.offset);QwizStage.hydrateIllustrations($('projectionMain'));
 }
 async function refresh(){if(!ctx.client||!room||ctx.checking)return;ctx.checking=true;
- try{const {data,error}=await ctx.client.rpc('qwiz_public_screen',{p_code:room});if(error)throw Error(error.message);
-  if(data.phase==='countdown' && seconds(data.ends_at)===0){
-    await ctx.client.rpc('qwiz_release_countdown',{p_code:room});
-    const fresh=await ctx.client.rpc('qwiz_public_screen',{p_code:room});
-    if(!fresh.error && fresh.data){ctx.last=fresh.data;render(fresh.data)}
-   } else if(JSON.stringify(ctx.last)!==JSON.stringify(data)){ctx.last=data;render(data)}
-  clearError();
- }catch(e){showError('Нет доступа к экрану игры: '+e.message)}finally{ctx.checking=false}}
+ try{const sentAt=Date.now();const {data,error}=await ctx.client.rpc('qwiz_public_screen',{p_code:room});if(error)throw Error(error.message);
+  if(data.server_now)ctx.offset=Date.parse(data.server_now)-(sentAt+Date.now())/2;ctx.last=data;render(data);clearError();
+ }catch(e){showError('Связь с игрой прервана. Пробуем восстановить: '+e.message)}finally{ctx.checking=false}}
 function subscribe(){if(ctx.channel)ctx.client.removeChannel(ctx.channel);
  ctx.channel=ctx.client.channel('org-next-'+room,{config:{broadcast:{ack:false}}});
  for(const event of ['phase','answer','team'])ctx.channel.on('broadcast',{event},()=>refresh());
@@ -132,24 +84,19 @@ function subscribe(){if(ctx.channel)ctx.client.removeChannel(ctx.channel);
 }
 async function init(){
  $('projectionFullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch{showError('Используйте F11 для полноэкранного режима.')}};
- $('projectionSound').onclick=async()=>{
-  ctx.sound=!ctx.sound;$('projectionSound').textContent=ctx.sound?'♫ Звук включён':'♫ Включить звук';
-  if(ctx.sound){tone('start');await ctx.audio?.resume()}
- };
+ $('projectionSound').onclick=async()=>{const enabled=await QwizStage.audio.toggle();$('projectionSound').textContent=enabled?'♫ Звук включён':'♫ Включить звук';$('projectionSound').setAttribute('aria-pressed',String(enabled))};
+ $('projectionVolume').oninput=e=>QwizStage.audio.setVolume(Number(e.target.value)/100);
  if(!room){setup();return}
  if(!/^[A-F0-9]{8}$/.test(room)){showError('Некорректный код');setup();return}
  if(!window.supabase?.createClient){showError('Не удалось подключить Supabase');return}
  ctx.client=window.supabase.createClient(SUPABASE_URL,KEY);
  subscribe();await refresh();
- setInterval(()=>{if(!document.hidden)refresh()},15000);
+ setInterval(()=>{if(!document.hidden)refresh()},3000);
  setInterval(()=>{
-   if(ctx.last?.phase==='question'&&$('projectionTimer'))$('projectionTimer').textContent=seconds(ctx.last.ends_at)+' сек.';
-   if(ctx.last?.phase==='countdown'){
-    const n=seconds(ctx.last.ends_at);
-    if($('countdownNumber'))$('countdownNumber').textContent=n;
-    if(n===0 && Date.now()-ctx.lastReleaseAttempt>3000){ctx.lastReleaseAttempt=Date.now();refresh()}
-   }
- },250);
+  const s=ctx.last;if(!s||document.hidden)return;
+  if(['question','result'].includes(s.phase)){const left=QwizStage.updateClock(s,ctx.offset);if(left===0&&Date.now()-ctx.lastReleaseAttempt>750){ctx.lastReleaseAttempt=Date.now();refresh()}}
+  if(s.phase==='countdown'){const n=seconds(s.ends_at);if($('countdownNumber'))$('countdownNumber').textContent=n;if(n===0&&Date.now()-ctx.lastReleaseAttempt>750){ctx.lastReleaseAttempt=Date.now();refresh()}}
+ },200);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
 }
 window.addEventListener('DOMContentLoaded',init);

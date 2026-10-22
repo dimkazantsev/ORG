@@ -7,10 +7,11 @@
 <title>QWIZ-PARTY — экран аудитории</title>
 <link rel="preload" href="./assets/manrope-variable.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="./theme.css?v=lavender-2">
-<link rel="stylesheet" href="./presenter.css?v=lavender-1">
+<link rel="stylesheet" href="./presenter.css?v=stage-1">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="./vendor/qrcode.min.js"></script>
-<script defer src="./presenter.js?v=7"></script>
+<link rel="stylesheet" href="./stage.css?v=1"><script defer src="./stage.js?v=1"></script>
+<script defer src="./presenter.js?v=8"></script>
 <link rel="stylesheet" href="./motion.css?v=2">
 </head>
 <body data-design="lavender-20261022">
@@ -19,12 +20,12 @@
  <div class="projection-brand"><span class="brand-square" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M24 15.5a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0Z" stroke="currentColor" stroke-width="3.5"/><path d="m19.5 20 5 5" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span><span>QWIZ<span class="brand-dash">-</span>PARTY</span></div>
  <div id="projectionRoom" class="projection-room"></div>
 </header>
-<main id="projectionMain" aria-live="polite" aria-atomic="true">
+<main id="projectionMain" >
 <div class="projection-loading"><h1>Подключаем экран аудитории</h1><p>Ожидание состояния игры.</p></div>
 </main>
 <footer class="projection-footer">
  <span>QWIZ-PARTY · Экран аудитории</span>
- <button id="projectionSound" type="button" class="fullscreen-control">♫ Включить звук</button>
+ <div class="stage-audio-control"><label class="stage-volume">Громкость<input id="projectionVolume" type="range" min="0" max="100" value="45" aria-label="Громкость звуков"></label><button id="projectionSound" aria-pressed="false" type="button" class="fullscreen-control">♫ Включить звук</button></div>
  <button id="projectionFullscreen" type="button" class="fullscreen-control">⛶ На весь экран</button>
 </footer>
 <p id="projectionError" role="status" class="projection-error" hidden></p>

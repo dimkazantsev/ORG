@@ -49,6 +49,10 @@ jobs:
           test -s next/migrations/qwiz_advance_variable_collision_fix.sql
           node --check next/workspace.js
           node --check next/profile.js
+          node --check next/stage.js
+          test -s next/stage.css
+          test -s next/assets/habitats.svg
+          test -s next/migrations/20261022_question_stage.sql
           node --check next/presenter.js
           node --check next/load-check.mjs
           test -s next/migrations/qwiz_rich_scoring.sql
@@ -101,7 +105,7 @@ jobs:
                grep -q -- '--q-blue' /tmp/org-published-uipromax.css &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/index.html?release=$GITHUB_RUN_ID" -o /tmp/org-next-index.html &&
                grep -q 'QWIZ-PARTY — командный квиз' /tmp/org-next-index.html &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/app.js?v=12" -o /tmp/org-next-app.js &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/app.js?v=13" -o /tmp/org-next-app.js &&
                grep -q 'org_next_answer' /tmp/org-next-app.js &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/motion.css?v=2" -o /tmp/qwiz-motion.css &&
                grep -q 'qwiz-enter' /tmp/qwiz-motion.css &&
@@ -113,8 +117,16 @@ jobs:
                grep -q 'Сборки и раунды' /tmp/qwiz-workspace.html &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/profile.html" -o /tmp/qwiz-profile.html &&
                grep -q 'Мой профиль' /tmp/qwiz-profile.html &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/workspace.js?v=5" -o /tmp/qwiz-workspace.js &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/workspace.js?v=6" -o /tmp/qwiz-workspace.js &&
                grep -q 'qwiz_launch_build' /tmp/qwiz-workspace.js &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/stage.js?v=1" -o /tmp/qwiz-stage.js &&
+               grep -q 'hydrateIllustrations' /tmp/qwiz-stage.js &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/stage.css?v=1" -o /tmp/qwiz-stage.css &&
+               grep -q 'frame-drift' /tmp/qwiz-stage.css &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/presenter.js?v=8" -o /tmp/qwiz-presenter.js &&
+               grep -q 'questionScene' /tmp/qwiz-presenter.js &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/assets/habitats.svg" -o /tmp/qwiz-habitats.svg &&
+               grep -q 'id="mangrove"' /tmp/qwiz-habitats.svg &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/assets/animals.svg" -o /tmp/qwiz-animals.svg &&
                grep -q 'id="fox"' /tmp/qwiz-animals.svg; then
               echo "Published QWIZ-PARTY HTML, JS, CSS and projection display verified."

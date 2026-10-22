@@ -11,7 +11,8 @@
 <link rel="stylesheet" href="./app.css?v=lavender-1">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="./vendor/qrcode.min.js"></script>
-<script defer src="./app.js?v=12"></script>
+<link rel="stylesheet" href="./stage.css?v=1"><script defer src="./stage.js?v=1"></script>
+<script defer src="./app.js?v=13"></script>
 <link rel="stylesheet" href="./motion.css?v=2">
 </head>
 <body data-design="lavender-20261022"><a class="skip-link" href="#mainContent">К содержимому</a>
@@ -153,8 +154,9 @@
 </section>
 <section id="gameView" class="view" hidden>
  <div class="player-layout">
-  <div class="game-top"><div><div class="eyebrow" style="margin:0 0 8px">ORG / Командный квиз</div><div id="playerGameTitle" class="game-name">Подключение…</div><div id="playerTeamName" class="game-sub">Команда определяется</div></div><div class="control-row"><a class="btn btn-small" href="./profile.html" id="myProfileLink">Мой профиль</a><button class="btn btn-small" id="leaveGame" type="button">На главную</button></div></div>
-  <div id="gameContent" class="game-card" aria-live="polite"><div class="game-empty"><h1>Загрузка игры</h1><p>Получаем состояние комнаты.</p></div></div>
+  <div class="game-top"><div><div class="eyebrow" style="margin:0 0 8px">ORG / Командный квиз</div><div id="playerGameTitle" class="game-name">Подключение…</div><div id="playerTeamName" class="game-sub">Команда определяется</div></div><div class="control-row"><a class="btn btn-small" href="./profile.html" id="myProfileLink">Мой профиль</a><button class="btn btn-small" id="gameSound" type="button" aria-pressed="false">♫ Звук</button><button class="btn btn-small" id="leaveGame" type="button">На главную</button></div></div>
+  <div id="gameContent" class="game-card"><div class="game-empty"><h1>Загрузка игры</h1><p>Получаем состояние комнаты.</p></div></div>
+  <section class="player-team-progress" id="playerTeamProgress" aria-label="Ответы команд" hidden></section>
   <div class="game-side"><div class="panel"><h3>Рейтинг команд</h3><div id="playerScoreboard"></div></div><div class="panel"><h3>Ваш статус</h3><p id="playerStatus">Ожидание первого вопроса.</p></div></div>
   <p id="gameNotice" class="notice" role="status" aria-live="polite"></p>
  </div>

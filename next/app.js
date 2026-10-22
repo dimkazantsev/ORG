@@ -7,7 +7,7 @@ const q=(selector,root=document)=>root.querySelector(selector);
 const qa=(selector,root=document)=>[...root.querySelectorAll(selector)];
 const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const storage={get(k){try{return sessionStorage.getItem('org2:'+k)}catch{return null}},set(k,v){try{sessionStorage.setItem('org2:'+k,v)}catch{}},del(k){try{sessionStorage.removeItem('org2:'+k)}catch{}}};
-const ctx={client:null,role:'player',roomCode:null,room:null,quizzes:[],channel:null,refreshing:false,lastRefresh:0,releaseAttemptAt:0,refreshTimer:null,clock:null,mode:'home',visibleTab:'library'};
+const ctx={client:null,role:'player',roomCode:null,room:null,quizzes:[],channel:null,refreshing:false,lastRefresh:0,releaseAttemptAt:0,refreshTimer:null,clock:null,mode:'home',visibleTab:'library',clockOffset:0,gameCue:''};
 function text(id,value){if($(id))$(id).textContent=value==null?'':String(value)}
 function notice(id,value,type=''){const el=$(id);if(!el)return;el.textContent=value||'';el.classList.toggle('error',type==='error');el.classList.toggle('success',type==='success')}
 function showScreen(name){ctx.mode=name;for(const id of ['home','studio','game'])$(id+'View').hidden=id!==name;window.scrollTo({top:0,behavior:'auto'})}
@@ -30,7 +30,7 @@ function tab(name){ctx.visibleTab=name;for(const id of ['library','room','result
 function busy(button,active){if(!button)return;button.disabled=active;button.setAttribute('aria-busy',String(active))}
 async function rpc(name,params={}){if(!ctx.client)throw Error('Нет соединения с Supabase. Проверьте загрузку библиотеки.');const {data,error}=await ctx.client.rpc(name,params);if(error)throw Error(error.message||'Ошибка запроса');return data}
 async function ensureAuth(){const {data:{session},error}=await ctx.client.auth.getSession();if(error)throw Error(error.message);if(session)return session;const r=await ctx.client.auth.signInAnonymously();if(r.error)throw Error(r.error.message);return r.data.session}
-function dataState(room){ctx.room=room; if(!room)return;renderQrPanels();connectRoom(room.code); if(ctx.mode==='studio'){renderRoom();renderResults()}else if(ctx.mode==='game')renderGame()}
+function dataState(room){if(room?.server_now)ctx.clockOffset=Date.parse(room.server_now)-Date.now();ctx.room=room; if(!room)return;renderQrPanels();connectRoom(room.code); if(ctx.mode==='studio'){renderRoom();renderResults()}else if(ctx.mode==='game')renderGame()}
 function cleanupRoom(){if(ctx.channel){ctx.client?.removeChannel(ctx.channel);ctx.channel=null}ctx.room=null;ctx.roomCode=null;storage.del('room');renderQrPanels();}
 function connectRoom(code){if(!ctx.client||!code)return;if(ctx.channel&&ctx.channel.topic==='realtime:org-next-'+code)return;if(ctx.channel)ctx.client.removeChannel(ctx.channel);
  ctx.channel=ctx.client.channel('org-next-'+code,{config:{broadcast:{ack:false}}})
@@ -101,12 +101,12 @@ async function createRoom(event){event.preventDefault();busy($('createRoomButton
  ctx.roomCode=code;storage.set('host-room',code);renderQrPanels();await refreshRoom();renderRoom();notice('createRoomNotice','');
  }catch(error){notice('createRoomNotice',error.message,'error')}finally{busy($('createRoomButton'),false)}}
 function phaseText(phase){return ({lobby:'Ожидание',question:'Вопрос',result:'Разбор',finished:'Завершена'})[phase]||phase}
-function remaining(date){if(!date)return 0;return Math.max(0,Math.ceil((Date.parse(date)-Date.now())/1000))}
+function remaining(date){if(!date)return 0;return Math.max(0,Math.ceil((Date.parse(date)-Date.now()-ctx.clockOffset)/1000))}
 function teamMarkup(teams){return (teams||[]).slice().sort((a,b)=>b.score-a.score).map((t,i)=>'<div class="team-row"><div><span class="team-flag">'+(i+1)+'</span> <strong>'+esc(t.name)+'</strong> <small>· '+esc(t.players)+' чел.</small></div><b>'+esc(t.score)+'</b></div>').join('')||'<p class="muted">Команд пока нет.</p>'}
 function renderRoom(){if(ctx.mode!=='studio')return;const s=ctx.room;const has=!!(s&&ctx.roomCode);
  $('createRoomPanel').hidden=has;$('activeRoomPanel').hidden=!has;
  if(!has)return;text('hostRoomCode',s.code);text('hostPlayersCount',(s.players||[]).length);text('hostTeamsCount',(s.teams||[]).length);text('hostPhase',phaseText(s.phase));text('hostRound',s.index<0?'До начала':(s.index+1)+' / '+s.total+' · '+phaseText(s.phase));
- $('hostStart').hidden=s.phase!=='lobby';$('hostReveal').hidden=s.phase!=='question';$('hostNext').hidden=s.phase!=='result';$('hostFinish').hidden=s.phase==='finished';$('hostNewRoom').hidden=s.phase!=='finished';$('hostTeams').innerHTML=teamMarkup(s.teams);
+ $('hostStart').hidden=s.phase!=='lobby';$('hostReveal').hidden=s.phase!=='question';$('hostNext').hidden=!['question','result','intermission'].includes(s.phase);$('hostNext').textContent=s.phase==='question'?'Далее: ответ →':'Следующий вопрос →';$('hostFinish').hidden=s.phase==='finished';$('hostNewRoom').hidden=s.phase!=='finished';$('hostTeams').innerHTML=teamMarkup(s.teams);
  if(s.question&&s.phase!=='lobby'){const x=s.question;$('hostQuestion').hidden=false;
   $('hostQuestion').innerHTML='<div class="row"><span class="eyebrow" style="margin:0">Вопрос '+(s.index+1)+'</span><span class="phase-label">'+(s.phase==='question'?'Ответов: '+s.answers_count+'/'+s.players.length:'Ответ открыт')+'</span></div><h2>'+esc(x.prompt)+'</h2><div class="option-list">'+(x.options||[]).map((option,i)=>'<div class="option '+(s.phase==='result'&&i===Number(x.correct)?'correct':'')+'"><span class="letter">'+String.fromCharCode(65+i)+'</span>'+esc(option)+'</div>').join('')+'</div><p class="muted-small">'+(s.phase==='question'?'До конца вопроса: <b id="hostTimer">'+remaining(s.ends_at)+'</b> сек.':'Разбор вопроса')+'</p>';
  }else $('hostQuestion').hidden=true;
@@ -146,14 +146,20 @@ function gameRichResult(q){
  if(k==='hotspot')return 'Верная область отмечена ведущим.';
  return 'Правильный ответ: '+((q.options||[])[Number(q.correct)]??'—');
 }
+function personalResults(s,final=false){
+ const metrics=s.public_stats||{};
+ return '<section class="personal-results"><h2>'+(final?'Рейтинг команд':'Скорость команд')+'</h2>'+QwizStage.teams(metrics.teams||[],{full:true,ranked:true})+'<h2>Личный рейтинг</h2>'+QwizStage.leaderboard(metrics.players||[],final?80:10)+(final&&metrics.question_stats?.length?QwizStage.questionStats(metrics.question_stats):'')+'</section>';
+}
 function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;const me=s.me;const myTeam=(s.teams||[]).find(t=>t.id===me?.team_id);
  text('playerGameTitle',s.title);text('playerTeamName',myTeam?.name||'Команда пока не назначена');$('playerScoreboard').innerHTML=teamMarkup(s.teams);
  const el=$('gameContent');
+ const cue=s.phase+':'+s.index;if(cue!==ctx.gameCue){ctx.gameCue=cue;if(s.phase==='result')QwizStage.audio.play('reveal');else if(s.phase==='finished')QwizStage.audio.play(s.activity?.sound||'fanfare');else if(s.phase==='question')QwizStage.audio.play('pop')}
+ $('playerTeamProgress').hidden=s.phase!=='question';if(s.phase==='question')QwizStage.progress($('playerTeamProgress'),s.public_stats?.teams||[]);
  const renderKey=[s.code,s.index,s.phase,s.has_answer,s.eligible,s.total,s.question?.kind,s.question?.prompt].join(':');
  if(ctx.gameRenderKey===renderKey)return;
  ctx.gameRenderKey=renderKey;
  if(s.phase==='lobby'){el.innerHTML='<div class="game-empty"><div class="eyebrow">Вы в комнате '+esc(s.code)+'</div><h1>Вы в игре.</h1><p>Преподаватель собирает участников. Игра начнётся на всех устройствах одновременно.</p><div class="phase-label">'+esc(myTeam?.name||'Ожидание команды')+'</div></div>';text('playerStatus','Подключён. Ожидайте начала.');return}
- if(s.phase==='finished'){el.innerHTML='<div class="game-empty"><div class="eyebrow">Игра завершена</div><h1>Финальный рейтинг</h1><p>Спасибо за участие. Результаты зафиксированы на сервере.</p>'+teamMarkup(s.teams)+'</div>';text('playerStatus','Игра завершена.');return}
+ if(s.phase==='finished'){el.innerHTML='<div class="game-empty"><div class="eyebrow">Игра завершена</div><h1>Финальный рейтинг</h1><p>Спасибо за участие. Результаты зафиксированы на сервере.</p>'+personalResults(s,true)+'</div>';text('playerStatus','Игра завершена.');return}
  const question=s.question;
  if(s.phase==='intermission'){
    el.innerHTML='<div class="game-empty"><div class="eyebrow">ДОПОЛНИТЕЛЬНАЯ АКТИВНОСТЬ</div><h1>'+esc(s.activity?.title||'Перерыв')+'</h1><p>Следующий этап откроет преподаватель.</p></div>';
@@ -171,18 +177,14 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  const done=!!s.has_answer;const eligible=s.eligible!==false;const locked=s.phase!=='question'||done||time===0||!eligible;
  const richKind=question.kind||'single';
  const richLocked=locked;
- const optsMarkup=gameRichMarkup({...question,_phase:s.phase},richLocked);
- const media=typeof question.media_url==='string'&&/^https:\/\//i.test(question.media_url)?(
-   ['audio'].includes(richKind)?'<audio class="rich-media" controls preload="none" src="'+esc(question.media_url)+'"></audio>':
-   ['video'].includes(richKind)?'<video class="rich-media" controls preload="metadata" src="'+esc(question.media_url)+'"></video>':
-   richKind==='hotspot'?'':'<div class="question-media"><img src="'+esc(question.media_url)+'" alt="Иллюстрация к вопросу" loading="lazy"></div>'
-  ):'';
- el.innerHTML='<div class="row"><span class="eyebrow" style="margin:0">Вопрос '+(s.index+1)+' / '+s.total+'</span><span class="phase-label">'+(s.phase==='result'?'Ответ открыт':'Вопрос открыт')+'</span></div>'+
- '<h1>'+esc(question.prompt)+'</h1>'+media+
- '<div class="meter"><span>'+(s.phase==='result'?'Время вышло':richKind==='multi'?'Выберите все верные варианты':'Отправьте ответ')+'</span><strong>'+(s.phase==='question'?'<span id="playerTimer">'+time+'</span> сек.':'Разбор')+'</strong></div>'+
- optsMarkup+
- (s.phase==='result'?'<p class="notice success">'+esc(gameRichResult(question))+'</p>'+(question.explanation?'<p>'+esc(question.explanation)+'</p>':''):
- done?'<p class="notice success">Ваш ответ принят. Ожидайте остальных участников.</p>':time===0?'<p class="notice">Приём ответов завершён.</p>':'');
+ let optsMarkup=gameRichMarkup({...question,_phase:s.phase},richLocked);
+ let interactive='';
+ if(richKind==='hotspot'&&s.phase==='question'){interactive=optsMarkup.match(/<button type="button" id="richSpot"[\s\S]*?<\/button>/)?.[0]||'';optsMarkup=optsMarkup.replace(interactive,'').replace(/<p class="muted-small">[\s\S]*?<\/p>/,'')}
+ const media=QwizStage.illustration(question,s.answer,interactive);
+ const clip=typeof question.media_url==='string'&&/^https:\/\//i.test(question.media_url)&&['audio','video'].includes(richKind)?'<'+richKind+' class="rich-media" controls preload="metadata" src="'+esc(question.media_url)+'"></'+richKind+'>':'';
+ el.innerHTML='<div class="player-question-top"><span class="eyebrow">Вопрос '+(s.index+1)+' / '+s.total+'</span>'+QwizStage.clockMarkup(s,'playerTimer')+'</div>'+media+'<h1>'+esc(question.prompt)+'</h1>'+clip+
+ (s.phase==='result'?'<section class="player-answer answer-reveal" role="status"><span>'+(richKind==='poll'?'ИТОГ ГОЛОСОВАНИЯ':'ПРАВИЛЬНЫЙ ОТВЕТ')+'</span><h2>'+esc(s.answer?.text||gameRichResult(question).replace(/^Правильный ответ: /,''))+'</h2>'+(question.explanation?'<p>'+esc(question.explanation)+'</p>':'')+'</section>'+personalResults(s):optsMarkup+(done?'<p class="notice success">Ваш ответ принят. Ожидайте остальных участников.</p>':time===0?'<p class="notice">Приём ответов завершён.</p>':''));
+ QwizStage.updateClock(s,ctx.clockOffset,document,'playerTimer');QwizStage.hydrateIllustrations(el);
  text('playerStatus',!eligible?'Этот раунд не назначен вашей команде или участнику.':s.phase==='result'?'Результат открыт. Скоро следующий вопрос.':done?'Ответ записан на сервере.':'Ваш ответ ещё не отправлен.');
 }
 async function advance(action){const s=ctx.room;if(!s)return;busy($('host'+({start:'Start',reveal:'Reveal',next:'Next',finish:'Finish'})[action]),true);notice('hostNotice','');
@@ -191,7 +193,7 @@ async function advance(action){const s=ctx.room;if(!s)return;busy($('host'+({sta
  }catch(e){notice('hostNotice',e.message,'error')}finally{for(const b of ['hostStart','hostReveal','hostNext','hostFinish'])busy($(b),false)}}
 async function assign(playerId,teamId){if(!ctx.room||ctx.room.phase!=='lobby')return;try{await rpc('org_next_assign',{p_room:ctx.room.room_id,p_player:playerId,p_team:teamId});signal('team');await refreshRoom()}catch(e){notice('hostNotice',e.message,'error')}}
 async function submitAnswer(choice){if(ctx.mode!=='game'||!ctx.room||ctx.room.phase!=='question'||ctx.room.has_answer)return;const buttons=qa('[data-answer]');buttons.forEach(x=>busy(x,true));
- notice('gameNotice','Отправляем ответ…');try{await (['single','boolean','flag','portrait','image'].includes(ctx.room.question?.kind||'single')?rpc('org_next_answer',{p_room:ctx.room.room_id,p_choice:choice}):rpc('qwiz_submit_answer',{p_room:ctx.room.room_id,p_payload:{index:choice}}));signal('answer');notice('gameNotice','Ответ сохранён.','success');await refreshRoom(false);
+ notice('gameNotice','Отправляем ответ…');try{await (['single','boolean','flag','portrait','image'].includes(ctx.room.question?.kind||'single')?rpc('org_next_answer',{p_room:ctx.room.room_id,p_choice:choice}):rpc('qwiz_submit_answer',{p_room:ctx.room.room_id,p_payload:{index:choice}}));QwizStage.audio.play('accept');signal('answer');notice('gameNotice','Ответ сохранён.','success');await refreshRoom(false);
  }catch(e){notice('gameNotice',e.message,'error');await refreshRoom(false)}finally{buttons.forEach(x=>busy(x,false))}}
 async function submitRichAnswer(){
  const s=ctx.room,q=s?.question;if(!s||!q||s.phase!=='question'||s.has_answer||s.eligible===false)return;
@@ -218,7 +220,7 @@ async function submitRichAnswer(){
  const button=document.querySelector('#gameContent [data-submit-rich]');if(button)busy(button,true);
  try{notice('gameNotice','Отправляем ответ…');
   await rpc('qwiz_submit_answer',{p_room:s.room_id,p_payload:payload});
-  signal('answer');notice('gameNotice','Ответ принят сервером.','success');await refreshRoom(false);
+  QwizStage.audio.play('accept');signal('answer');notice('gameNotice','Ответ принят сервером.','success');await refreshRoom(false);
  }catch(e){notice('gameNotice',e.message,'error');await refreshRoom(false)}
  finally{if(button)busy(button,false)}
 }
@@ -236,7 +238,13 @@ function updateClocks(){if(ctx.room?.phase==='countdown'){
    }
    return;
  }
- if(ctx.room?.phase!=='question')return;const seconds=remaining(ctx.room.ends_at);text('playerTimer',seconds);text('hostTimer',seconds);if(seconds===0){for(const b of qa('#gameContent [data-answer],#gameContent [data-submit-rich],#gameContent #richSpot'))b.disabled=true}}
+ if(!['question','result'].includes(ctx.room?.phase))return;
+ const seconds=QwizStage.updateClock(ctx.room,ctx.clockOffset,document,'playerTimer');text('hostTimer',seconds);
+ if(seconds===0){
+  for(const button of qa('#gameContent [data-answer],#gameContent [data-submit-rich],#gameContent #richSpot'))button.disabled=true;
+  if(!ctx.releaseTimer)ctx.releaseTimer=setTimeout(()=>{ctx.releaseTimer=null;if(ctx.roomCode)refreshRoom(false)},700+Math.floor(Math.random()*1800));
+ }
+}
 async function restore(){if(!ctx.client)return;try{
  const data=await ctx.client.auth.getSession();if(data.error)throw data.error;const session=data.data.session;if(!session){teacherSession(null);return}
  const incoming=new URLSearchParams(location.search).get('room');
@@ -306,6 +314,7 @@ function attach(){q('#logoHome').addEventListener('click',home);
  $('refreshRoom').onclick=()=>refreshRoom();$('copyInvite').onclick=copyInvite;
  $('exportResults').onclick=exportResults;
  $('hostPlayers').addEventListener('change',e=>{const input=e.target.closest('[data-team-for]');if(input)assign(input.dataset.teamFor,input.value)});
+ $('gameSound').onclick=async()=>{const on=await QwizStage.audio.toggle();$('gameSound').textContent=on?'♫ Звук включён':'♫ Звук';$('gameSound').setAttribute('aria-pressed',String(on))};
  $('leaveGame').onclick=()=>{cleanupRoom();home()};
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ctx.roomCode)scheduleRefresh(200)});
  addQuestion();
