@@ -237,3 +237,18 @@ test('Question editor captures new game mechanics without hidden correct-answer 
  await page.locator('#editKind').selectOption('auction');
  await expect(page.locator('#answerEditor')).toContainText('пока не участвует');
 });
+
+test('Realtime refresh does not erase a partially entered free-text answer',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.evaluate(()=>{
+  ctx.room={code:'ABCDEF12',room_id:'00000000-0000-4000-8000-000000000003',title:'Тест редактирования',phase:'question',index:2,total:5,
+   ends_at:new Date(Date.now()+90000).toISOString(),question:{kind:'text',prompt:'Введите слово',options:[]},
+   teams:[{id:'a',name:'Команда',score:0}],me:{id:'p',team_id:'a'},has_answer:false,eligible:true};
+  showScreen('game');renderGame();
+ });
+ await page.locator('#richTextAnswer').fill('Мой незавершённый ответ');
+ await page.evaluate(()=>renderGame());
+ await expect(page.locator('#richTextAnswer')).toHaveValue('Мой незавершённый ответ');
+ await page.evaluate(()=>{ctx.room.index=3;renderGame()});
+ await expect(page.locator('#richTextAnswer')).toHaveValue('');
+});
