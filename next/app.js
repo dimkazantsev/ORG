@@ -108,12 +108,19 @@ function renderRoom(){if(ctx.mode!=='studio')return;const s=ctx.room;const has=!
  if(!has)return;text('hostRoomCode',s.code);text('hostPlayersCount',(s.players||[]).length);text('hostTeamsCount',(s.teams||[]).length);text('hostPhase',phaseText(s.phase));text('hostRound',s.index<0?'До начала':(s.index+1)+' / '+s.total+' · '+phaseText(s.phase));
  $('hostStart').hidden=s.phase!=='lobby';$('hostReveal').hidden=s.phase!=='question';$('hostNext').hidden=!['question','result','intermission'].includes(s.phase);$('hostNext').textContent=s.phase==='question'?'Далее: ответ →':'Следующий вопрос →';$('hostFinish').hidden=s.phase==='finished';$('hostNewRoom').hidden=s.phase!=='finished';$('hostTeams').innerHTML=teamMarkup(s.teams);
  if(s.question&&s.phase!=='lobby'){const x=s.question;$('hostQuestion').hidden=false;
-  $('hostQuestion').innerHTML='<div class="row"><span class="eyebrow" style="margin:0">Вопрос '+(s.index+1)+'</span><span class="phase-label">'+(s.phase==='question'?'Ответов: '+s.answers_count+'/'+s.players.length:'Ответ открыт')+'</span></div><h2>'+esc(x.prompt)+'</h2><div class="option-list">'+(x.options||[]).map((option,i)=>'<div class="option '+(s.phase==='result'&&i===Number(x.correct)?'correct':'')+'"><span class="letter">'+String.fromCharCode(65+i)+'</span>'+esc(option)+'</div>').join('')+'</div><p class="muted-small">'+(s.phase==='question'?'До конца вопроса: <b id="hostTimer">'+remaining(s.ends_at)+'</b> сек.':'Разбор вопроса')+'</p>';
+  $('hostQuestion').innerHTML='<div class="row"><span class="eyebrow" style="margin:0">Вопрос '+(s.index+1)+'</span><span class="phase-label">'+(s.phase==='question'?'Ответов: '+s.answers_count+'/'+s.players.length:'Ответ открыт')+'</span></div><h2>'+esc(x.prompt)+'</h2><div class="option-list">'+(x.options||[]).map((option,i)=>'<div class="option '+(s.phase==='result'&&i===Number(x.correct)?'correct':'')+'"><span class="letter">'+String.fromCharCode(65+i)+'</span>'+flagOptionHtml(option,i)+'</div>').join('')+'</div><p class="muted-small">'+(s.phase==='question'?'До конца вопроса: <b id="hostTimer">'+remaining(s.ends_at)+'</b> сек.':'Разбор вопроса')+'</p>';
  }else $('hostQuestion').hidden=true;
  $('hostPlayers').innerHTML=(s.players||[]).length?(s.players||[]).map(p=>'<div class="player-row"><div><strong>'+esc(p.name)+'</strong><small> '+esc(p.group||'')+'</small></div><select aria-label="Команда игрока '+esc(p.name)+'" data-team-for="'+esc(p.id)+'" '+(s.phase==='lobby'?'':'disabled')+'>'+
  (s.teams||[]).map(t=>'<option value="'+esc(t.id)+'" '+(t.id===p.team_id?'selected':'')+'>'+esc(t.name)+'</option>').join('')+'</select></div>').join(''):'<div class="placeholder">Участники появятся после входа по коду.</div>';
 }
 function renderResults(){if(ctx.mode!=='studio')return;const s=ctx.room;text('resultIntro',s?.phase==='finished'?'Игра завершена. Результаты рассчитаны на сервере.':'Текущие результаты команд. Окончательными они станут после завершения игры.');$('resultTeams').innerHTML=s?teamMarkup(s.teams):'<div class="placeholder">Создайте и проведите игру.</div>'; $('exportResults').disabled=!s}
+function flagOptionHtml(value,index){
+ if(value&&typeof value==='object'&&typeof value.image_url==='string'&&/^https:\/\//i.test(value.image_url)){
+  return '<img class="flag-choice-art" src="'+esc(value.image_url)+'" alt="Флаг, вариант '+String.fromCharCode(65+index)+'" loading="lazy" decoding="async">';
+ }
+ return '<span>'+esc(typeof value==='object'?value?.label||'':value)+'</span>';
+}
+function flagOptionAnswer(value){return typeof value==='object'?value?.label||'Флаг':String(value??'—')}
 function gameRichMarkup(q,locked){
  const kind=q.kind||'single', options=q.options||[], disabled=locked?' disabled':'';
  const select=(values,cls,first='Выберите')=>'<select class="'+cls+'"'+disabled+'><option value="">'+first+'</option>'+
@@ -133,7 +140,7 @@ function gameRichMarkup(q,locked){
  '<span class="rich-marker" id="richMarker" hidden>+</span></button><button type="button" class="btn btn-dark rich-send" data-submit-rich'+disabled+'>Подтвердить точку →</button>';
  return '<div class="option-list">'+options.map((option,i)=>{
   let classes='option';if(q._phase==='result'&&i===Number(q.correct))classes+=' correct';
-  return '<button type="button" class="'+classes+'" data-answer="'+i+'"'+disabled+'><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+esc(option)+'</span></button>';
+  return '<button type="button" class="'+classes+'" data-answer="'+i+'"'+disabled+'><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+flagOptionHtml(option,i)+'</span></button>';
  }).join('')+'</div>';
 }
 function gameRichResult(q){
@@ -144,7 +151,7 @@ function gameRichResult(q){
  if(['order','sequence'].includes(k))return 'Верный порядок: '+(s.order||[]).join(' → ');
  if(['text','riddle','puzzle','blitz','number','date','estimate'].includes(k))return 'Правильный ответ: '+(s.answer||'—');
  if(k==='hotspot')return 'Верная область отмечена ведущим.';
- return 'Правильный ответ: '+((q.options||[])[Number(q.correct)]??'—');
+ return 'Правильный ответ: '+flagOptionAnswer((q.options||[])[Number(q.correct)]);
 }
 function personalResults(s,final=false){
  const metrics=s.public_stats||{};
