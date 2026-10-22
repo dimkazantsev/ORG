@@ -5,17 +5,23 @@ const SUPABASE_KEY='sb_publishable_Hv7NgYuVsfKhFuhX_9pl0Q_qXWA2wOr';
 const $=id=>document.getElementById(id);
 const all=(selector,root=document)=>Array.from(root.querySelectorAll(selector));
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const kinds=[
- ['single','Один правильный'],['boolean','Да / нет'],['multi','Несколько правильных'],
- ['match','Соответствие'],['order','Порядок'],['text','Короткий ответ'],
- ['number','Числовой ответ'],['flag','Флаги'],['portrait','Лица и портреты'],
- ['image','Изображение'],['audio','Музыка и аудио'],['video','Видео'],
- ['map','География и карта'],['date','Историческая дата'],['estimate','На глаз'],
- ['sequence','Продолжить последовательность'],['hotspot','Найди на картинке'],
- ['puzzle','Головоломка'],['riddle','Загадка'],['auction','Аукцион'],
- ['blitz','Блиц'],['poll','Опрос']];
-const supported=new Set(['single','boolean','multi','match','order','sequence','text','number','date','estimate','riddle','puzzle','blitz','flag','portrait','image','audio','video','map','poll','hotspot']);
-const titleKind=id=>kinds.find(x=>x[0]===id)?.[1]||id;
+// Only the approved "Flags of the World" formats are exposed in the new library.
+// The old scoring primitives remain server-side for compatibility with historic rooms.
+const flagModes=[
+ ['country','Угадать страну по флагу',true],
+ ['picker','Выбрать флаг по названию',true],
+ ['colors','Цвета и полосы',false],
+ ['symbols','Символы и гербы',false],
+ ['fragments','Скрытые фрагменты и пиксели',false],
+ ['errors','Поиск ошибок',false],
+ ['similar','Похожие флаги',false],
+ ['assemble','Сборка флага',false],
+ ['multiple','Несколько правильных ответов',false],
+ ['memory','Задания на память',false],
+ ['geo','География и карты',false],
+ ['history','История и символика',false]
+];
+const titleKind=id=>flagModes.find(x=>x[0]===id)?.[1]||'Флаги мира';
 const icons={round:'▦',intro:'◉',break:'♫',team_stats:'▥',player_stats:'♙',bonus:'✦',duel:'⇄',finale:'★'};
 const titles={round:'Раунд вопросов',intro:'Начало игры',break:'Музыкальная пауза',team_stats:'Рейтинг команд',player_stats:'Статистика игроков',bonus:'Бонусная активность',duel:'Дуэль команд',finale:'Финал игры'};
 const buildDefaults={count:5,seconds:30,answer_seconds:10,order:'random',offset:0,team_cap:null,player_cap:null,sound:'fanfare',lead_seconds:5};
@@ -56,7 +62,7 @@ function section(section){state.activePage=section;for(const id of ['bank','buil
 function createOption(value,label){const n=document.createElement('option');n.value=value;n.textContent=label;return n}
 function fillSelect(select,options,placeholder,selected=''){select.replaceChildren();if(placeholder!==null)select.add(createOption('',placeholder));for(const [value,title]of options)select.add(createOption(value,title));select.value=selected}
 function nameTopic(id){return state.topics.find(t=>t.id===id)?.name||'Все темы'}
-async function overview(){let d=await studio('overview');if(!d.topics?.length){await rpc('qwiz_seed_topics');d=await studio('overview')}state.topics=d.topics||[];state.builds=d.builds||[];renderTopics();renderBuilds();updateSelectors();await loadQuestions()}
+async function overview(){const d=await studio('overview');state.topics=d.topics||[];state.builds=d.builds||[];renderTopics();renderBuilds();updateSelectors();await loadQuestions()}
 function updateSelectors(){
  const items=state.topics.map(t=>[t.id,t.name]);
  for(const id of ['bankTopic','editTopic','cardTopic']){const el=$(id),selected=el.value;fillSelect(el,items,id==='bankTopic'?'Все темы':'Без темы',selected)}
@@ -67,7 +73,7 @@ function renderTopics(){
  $('topicChips').innerHTML=items.map(t=>'<button type="button" class="topic-chip '+($('bankTopic').value===t.id?'current':'')+'" data-topic="'+esc(t.id)+'">'+esc(t.name)+'</button>').join('');
 }
 async function loadQuestions(){
- const input={search:$('bankSearch').value.trim().slice(0,90),topic_id:$('bankTopic').value,kind:$('bankKind').value,sort:$('bankSort').value,offset:state.bankOffset,limit:state.bankPageSize};
+ const input={search:$('bankSearch').value.trim().slice(0,90),topic_id:$('bankTopic').value,kind:'flag',sort:$('bankSort').value,offset:state.bankOffset,limit:state.bankPageSize};
  try{const data=await studio('questions',input);state.questions=data.items||[];state.questionTotal=data.total||0;
   $('navQuestionCount').textContent=fmt(state.questionTotal);$('questionsTotal').textContent='('+fmt(state.questionTotal)+')';
   const totalPages=Math.max(1,Math.ceil(state.questionTotal/state.bankPageSize));
@@ -79,8 +85,8 @@ async function loadQuestions(){
 }
 function renderQuestions(){
  $('bankItems').innerHTML=state.questions.length?state.questions.map(q=>'<article class="question-row">'+
-  '<div><div class="question-meta"><span class="chip">'+esc(titleKind(q.kind))+'</span><span class="chip lilac">'+esc(nameTopic(q.topic_id))+'</span><span class="chip">★ '+esc(q.difficulty)+'</span></div>'+
-  '<h3>'+esc(q.prompt)+'</h3><p>'+(supported.has(q.kind)?'Доступен для обычной игры':'В банке · игровой обработчик ещё не подключён')+'</p></div>'+
+  '<div><div class="question-meta"><span class="chip">'+esc(titleKind(q.solution?.flag_mode))+'</span><span class="chip lilac">'+esc(nameTopic(q.topic_id))+'</span><span class="chip">★ '+esc(q.difficulty)+'</span></div>'+
+  '<h3>'+esc(q.prompt)+'</h3><p>'+('Флаги мира · серверная проверка ответа')+'</p></div>'+
   '<button class="small-button" data-edit-question="'+esc(q.id)+'">Изменить</button></article>').join(''):
   '<div class="empty">Вопросов пока нет. Выберите тему и добавьте первый вопрос.</div>';
  if(state.activePage==='bank')animateView($('bankItems'),[{opacity:.35,transform:'translateY(12px)'},{opacity:1,transform:'translateY(0)'}],{duration:420});
@@ -90,75 +96,67 @@ async function saveTopic(e){e.preventDefault();
   await studio('topic_save',{name,category});$('topicDialog').close();$('topicForm').reset();await overview();
  }catch(err){msg('topicNotice',err.message,true)}
 }
-function answerEditor(kind,question){
- const opts=question?.options||[], sol=question?.solution||{};
- const choice=['single','boolean','flag','portrait','image','audio','video','map','poll','multi'].includes(kind);
- const bo=kind==='boolean',count=Math.max(bo?2:2,Math.min(6,opts.length||(bo?2:4)));
- if(choice){
-  $('answerEditor').innerHTML='<div class="answer-fields"><span class="mini-label">Варианты ответа</span>'+
-   Array.from({length:count},(_,i)=>'<label>'+String.fromCharCode(65+i)+'<input data-option="'+i+'" value="'+esc(opts[i]??(bo?['Да','Нет'][i]:''))+'" required></label>').join('')+
-   (kind==='poll'?'<p class="small-help">Опрос собирает ответы без начисления очков.</p>':kind==='multi'?
-    '<label>Номера правильных вариантов через запятую (например, 1,3)<input id="correctIndices" value="'+esc((sol.correct_indices||[]).map(x=>x+1).join(','))+'" required></label>':
-    '<label>Правильный вариант<select id="correctAnswer">'+Array.from({length:count},(_,i)=>'<option value="'+i+'" '+(Number(sol.correct||0)===i?'selected':'')+'>'+String.fromCharCode(65+i)+'</option>').join('')+'</select></label>')+
-    '</div>';
-  if(['flag','portrait','image','audio','video','map'].includes(kind))
-    $('answerEditor').insertAdjacentHTML('beforeend','<label>Медиафайл (публичный HTTPS-адрес)<input id="questionMediaUrl" type="url" placeholder="https://..." value="'+esc(sol.media_url||'')+'"></label>');
-  return;
- }
- if(['match','order','sequence'].includes(kind)){
-  $('answerEditor').innerHTML='<label>'+(kind==='match'?'Пары «предмет = соответствие», каждая с новой строки':'Элементы в правильном порядке, каждый с новой строки')+
-   '<textarea id="genericItems" rows="6" required placeholder="'+(kind==='match'?'Франция = Париж&#10;Россия = Москва':'Первое событие&#10;Второе событие&#10;Третье событие')+'">'+esc(opts.join('\n'))+'</textarea></label>'+
-   '<p class="small-help">В игре порядок будет перемешан, а соответствия потребуется подобрать.</p>';
-  return;
- }
- if(kind==='hotspot'){
-  $('answerEditor').innerHTML='<label>Ссылка на изображение (HTTPS)<input id="questionMediaUrl" type="url" required value="'+esc(sol.media_url||'')+'" placeholder="https://..."></label>'+
-  '<div class="mini-grid"><label>Координата X, %<input type="number" id="hotspotX" min="0" max="100" step="0.1" required value="'+esc(sol.x??50)+'"></label>'+
-  '<label>Координата Y, %<input type="number" id="hotspotY" min="0" max="100" step="0.1" required value="'+esc(sol.y??50)+'"></label>'+
-  '<label>Допуск, %<input type="number" id="hotspotRadius" min="0.1" max="100" step="0.1" required value="'+esc(sol.radius??12)+'"></label></div>';
-  return;
- }
- if(kind==='auction'){
-  $('answerEditor').innerHTML='<p class="small-help">Ставки между командами требуют отдельного сценария и ручного подтверждения ведущего. Этот формат пока не участвует в игровых раундах.</p>';
-  return;
- }
- $('answerEditor').innerHTML='<label>Правильный ответ<input id="genericAnswer" required placeholder="Введите ответ" value="'+esc(sol.answer||'')+'"></label>'+
- (kind==='estimate'?'<label>Допустимое отклонение от числа<input type="number" min="0" step="any" id="answerTolerance" value="'+esc(sol.tolerance??0)+'"></label>':'')+
- '<p class="small-help">Ответ проверяется сервером: без учёта регистра и лишних пробелов; для числа учитывается заданный допуск.</p>';
+function answerEditor(mode,question){
+ const opts=question?.options||[],sol=question?.solution||{};
+ const count=4;
+ const title=mode==='picker'?'Флаги — варианты ответа':'Страны — варианты ответа';
+ const content=Array.from({length:count},(_,i)=>{
+  const item=opts[i];
+  if(mode==='picker'){
+   const url=typeof item==='object'&&item?item.image_url||'':'';
+   const label=typeof item==='object'&&item?item.label||'':'';
+   return '<div class="flag-option-editor"><label>Флаг '+String.fromCharCode(65+i)+' · HTTPS-ссылка на SVG<input data-flag-image="'+i+'" type="url" required value="'+esc(url)+'" placeholder="https://…/fr.svg"></label><label>Страна на флаге '+String.fromCharCode(65+i)+'<input data-flag-label="'+i+'" required maxlength="100" value="'+esc(label)+'" placeholder="Название для проверки и разбора"></label></div>';
+  }
+  return '<label>'+String.fromCharCode(65+i)+' · страна<input data-option="'+i+'" required maxlength="120" value="'+esc(typeof item==='string'?item:'')+'" placeholder="Название страны"></label>';
+ }).join('');
+ $('answerEditor').innerHTML='<div class="answer-fields"><span class="mini-label">'+title+'</span>'+content+
+ '<label>Правильный вариант<select id="correctAnswer">'+Array.from({length:count},(_,i)=>'<option value="'+i+'" '+(Number(sol.correct||0)===i?'selected':'')+'>'+String.fromCharCode(65+i)+'</option>').join('')+'</select></label></div>'+
+ (mode==='country'?'<label>SVG флага (HTTPS)<input id="questionMediaUrl" type="url" required placeholder="https://…/fr.svg" value="'+esc(sol.media_url||'')+'"></label>':
+ '<p class="small-help">На экране студент увидит изображения без названий стран. Названия нужны только для проверки и раскрытия ответа.</p>');
 }
-function editQuestion(id=null){const question=state.questions.find(q=>q.id===id)||null;state.editingQuestion=question?.id||null;
+function editQuestion(id=null){
+ const question=state.questions.find(q=>q.id===id)||null;
+ if(question&&question.kind!=='flag'){msg('bankMessage','Этот старый формат не доступен в новой библиотеке.',true);return}
+ state.editingQuestion=question?.id||null;
  $('questionDialogTitle').textContent=question?'Редактирование вопроса':'Создание вопроса';
- $('editKind').value=question?.kind||'single';
- $('editTopic').value=question?.topic_id||'';
- $('editPrompt').value=question?.prompt||'';$('editIllustration').value=question?.solution?.illustration_url||'';
+ $('editKind').value=question?.solution?.flag_mode==='picker'?'picker':'country';
+ $('editTopic').value=question?.topic_id||state.topics.find(t=>t.name==='Флаги мира')?.id||'';
+ $('editPrompt').value=question?.prompt||'';
+ $('editIllustration').value=question?.solution?.illustration_url||'';
  $('editExplanation').value=question?.explanation||'';
  $('editDifficulty').value=String(question?.difficulty||2);
  answerEditor($('editKind').value,question);msg('questionSaveMessage','');$('questionDialog').showModal();
 }
-async function saveQuestion(event){event.preventDefault();const kind=$('editKind').value;
- const options=all('[data-option]',$('answerEditor')).map(x=>x.value.trim());
- let solution={};
- if(['single','boolean','flag','portrait','image','audio','video','map','poll','multi'].includes(kind)){
-  solution=kind==='poll'?{}:kind==='multi'?{correct_indices:$('correctIndices').value.split(',').map(x=>Number(x.trim())-1)}:{correct:Number($('correctAnswer').value)};
-  const mediaUrl=$('questionMediaUrl')?.value.trim()||'';
-  if(mediaUrl){
-    if(!/^https:\/\//i.test(mediaUrl)){msg('questionSaveMessage','Изображение должно использовать HTTPS.',true);return}
-    solution.media_url=mediaUrl;
-  }
+async function saveQuestion(event){
+ event.preventDefault();
+ const mode=$('editKind').value;
+ if(!flagModes.some(([id,,ready])=>id===mode&&ready)){msg('questionSaveMessage','Эта механика ещё не подключена к игровому движку.',true);return}
+ const isUrl=value=>/^https:\/\/[^/?#]+\/\S+$/i.test(value);
+ const options=mode==='picker'?all('[data-flag-image]',$('answerEditor')).map((input,i)=>({
+  image_url:input.value.trim(),label:all('[data-flag-label]',$('answerEditor'))[i].value.trim()
+ })):all('[data-option]',$('answerEditor')).map(input=>input.value.trim());
+ const labels=options.map(v=>typeof v==='string'?v:v.label);
+ if(options.length!==4||labels.some(v=>!v)||new Set(labels.map(x=>x.toLocaleLowerCase('ru-RU'))).size!==4){
+  msg('questionSaveMessage','Нужно четыре разных и заполненных варианта.',true);return
  }
- else if(kind==='hotspot'){solution={media_url:$('questionMediaUrl').value.trim(),x:Number($('hotspotX').value),y:Number($('hotspotY').value),radius:Number($('hotspotRadius').value)}}
- else{solution={answer:$('genericAnswer')?.value.trim()||''};
- if(kind==='estimate')solution.tolerance=Number($('answerTolerance').value||0)}
-
- const illustration=$('editIllustration').value.trim();if(illustration){if(!/^https:\/\//i.test(illustration)){msg('questionSaveMessage','Для иллюстрации нужна HTTPS-ссылка.',true);return}solution.illustration_url=illustration}
- if(!options.length&&$('genericItems'))options.splice(0,0,...$('genericItems').value.split('\n').map(x=>x.trim()).filter(Boolean));
- if(['single','boolean','flag','portrait','image','audio','video','map','poll','multi'].includes(kind)&&options.some(x=>!x)){msg('questionSaveMessage','Заполните все варианты.',true);return}
+ if(mode==='picker'&&(options.some(x=>!isUrl(x.image_url))||new Set(options.map(x=>x.image_url)).size!==4)){
+  msg('questionSaveMessage','Для каждого варианта нужна своя корректная HTTPS-ссылка на флаг.',true);return
+ }
+ const solution={correct:Number($('correctAnswer').value),flag_mode:mode};
+ const mediaUrl=$('questionMediaUrl')?.value.trim()||'';
+ if(mode==='country'){if(!isUrl(mediaUrl)){msg('questionSaveMessage','Укажите HTTPS-ссылку на изображение флага.',true);return}solution.media_url=mediaUrl}
+ const illustration=$('editIllustration').value.trim();
+ if(illustration){if(!isUrl(illustration)){msg('questionSaveMessage','Для иллюстрации нужна HTTPS-ссылка.',true);return}solution.illustration_url=illustration}
  disable('questionSubmit',true);
- try{await studio('question_save',{id:state.editingQuestion||undefined,kind,topic_id:$('editTopic').value||null,
-  prompt:$('editPrompt').value.trim(),options,solution,
-  difficulty:Number($('editDifficulty').value),explanation:$('editExplanation').value.trim()});
+ try{
+  await studio('question_save',{id:state.editingQuestion||undefined,kind:'flag',
+   topic_id:$('editTopic').value||null,prompt:$('editPrompt').value.trim(),
+   options,solution,difficulty:Number($('editDifficulty').value),
+   explanation:$('editExplanation').value.trim()});
   $('questionDialog').close();await loadQuestions();
- }catch(e){msg('questionSaveMessage',e.message,true)}finally{disable('questionSubmit',false)}}
+ }catch(e){msg('questionSaveMessage',e.message,true)}
+ finally{disable('questionSubmit',false)}
+}
 function card(type){return {type,title:titles[type]||'Раунд',icon:icons[type]||'◫',topic_id:null,
  settings:{...buildDefaults}}}
 function ensureFinale(){state.cards=state.cards.filter((c,i)=>c.type!=='finale'||i===state.cards.length-1);
@@ -297,7 +295,7 @@ function wire(){
  $('refreshAll').onclick=refreshWorkspace;
  document.addEventListener('keydown',event=>{if(event.key!=='/'||event.ctrlKey||event.metaKey||event.altKey||event.target.closest('input,textarea,select,[contenteditable="true"]')||document.querySelector('dialog[open]')||state.activePage!=='bank')return;event.preventDefault();$('bankSearch').focus()});
  $('bankSearch').oninput=()=>{clearTimeout(state.bankTimer);state.bankOffset=0;state.bankTimer=setTimeout(loadQuestions,350)};
- for(const id of ['bankTopic','bankKind','bankSort'])$(id).onchange=()=>{state.bankOffset=0;loadQuestions()};
+ for(const id of ['bankTopic','bankSort'])$(id).onchange=()=>{state.bankOffset=0;loadQuestions()};
  $('topicChips').onclick=e=>{const b=e.target.closest('[data-topic]');if(!b)return;$('bankTopic').value=b.dataset.topic;state.bankOffset=0;loadQuestions()};
  $('bankPrevious').onclick=()=>{state.bankOffset=Math.max(0,state.bankOffset-state.bankPageSize);loadQuestions()};
  $('bankNext').onclick=()=>{if(state.bankOffset+state.bankPageSize<state.questionTotal){state.bankOffset+=state.bankPageSize;loadQuestions()}};
@@ -337,7 +335,14 @@ function wire(){
  for(const dialog of all('dialog'))dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()});
 }
 async function init(){
- wire();animatePage($('bankPage'));fillSelect($('bankKind'),kinds,'Все типы');fillSelect($('editKind'),kinds,null,'single');
+ wire();animatePage($('bankPage'));
+ const select=$('editKind');
+ select.replaceChildren();
+ for(const [id,label,ready] of flagModes){
+  const option=createOption(id,label+(ready?'':' · в разработке'));
+  option.disabled=!ready;select.add(option);
+ }
+ select.value='country';
  for(let i=1;i<=15;i++)$('launchTeams').add(createOption(String(i),i+' '+(i===1?'команда':'команд')));
  $('launchTeams').value='4';
  if(!window.supabase?.createClient){connection('error','Не удалось подключиться');return}
