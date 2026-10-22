@@ -111,9 +111,9 @@ jobs:
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/index.html?release=$GITHUB_RUN_ID" -o /tmp/org-next-index.html &&
                grep -q 'QWIZ-PARTY — Командная викторина' /tmp/org-next-index.html &&
                grep -q 'id="playerMore"' /tmp/org-next-index.html &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/player-layout.js?v=mobile-20261023-1" -o /tmp/qwiz-player-layout.js &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/player-layout.js?v=mobile-20261023-2" -o /tmp/qwiz-player-layout.js &&
                grep -q 'player-compact' /tmp/qwiz-player-layout.js &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/player-layout.css?v=mobile-20261023-1" -o /tmp/qwiz-player-layout.css &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/player-layout.css?v=mobile-20261023-2" -o /tmp/qwiz-player-layout.css &&
                grep -q 'player-sheet' /tmp/qwiz-player-layout.css &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/app.js?v=13" -o /tmp/org-next-app.js &&
                grep -q 'org_next_answer' /tmp/org-next-app.js &&

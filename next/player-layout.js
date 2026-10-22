@@ -19,6 +19,9 @@
  }
  function sync(){
   const compact=media.matches&&!game.hidden;root.classList.toggle('player-compact',compact);
+  const confirmation=content.querySelector('.player-responses>.notice.success'),accepted=document.getElementById('playerAccepted');
+  accepted.hidden=!compact||!confirmation;accepted.textContent=confirmation?'Ответ принят.':'';
+  if(confirmation)confirmation.hidden=compact;
   if(!compact)close();
   for(const {node,anchor} of blocks){const target=compact?(node.classList.contains('control-row')?document.getElementById('playerSheetControls'):body):anchor.parentNode;if(node.parentNode!==target){if(compact)target.append(node);else anchor.after(node)}}
   for(let i=transient.length-1;i>=0;i--){const item=transient[i];if(!item.anchor.isConnected){item.node.remove();transient.splice(i,1)}}
