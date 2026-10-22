@@ -131,6 +131,9 @@ function gameRichResult(q){
 function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;const me=s.me;const myTeam=(s.teams||[]).find(t=>t.id===me?.team_id);
  text('playerGameTitle',s.title);text('playerTeamName',myTeam?.name||'Команда пока не назначена');$('playerScoreboard').innerHTML=teamMarkup(s.teams);
  const el=$('gameContent');
+ const renderKey=[s.code,s.index,s.phase,s.has_answer,s.eligible,s.total].join(':');
+ if(ctx.gameRenderKey===renderKey)return;
+ ctx.gameRenderKey=renderKey;
  if(s.phase==='lobby'){el.innerHTML='<div class="game-empty"><div class="eyebrow">Вы в комнате '+esc(s.code)+'</div><h1>Вы в игре.</h1><p>Преподаватель собирает участников. Игра начнётся на всех устройствах одновременно.</p><div class="phase-label">'+esc(myTeam?.name||'Ожидание команды')+'</div></div>';text('playerStatus','Подключён. Ожидайте начала.');return}
  if(s.phase==='finished'){el.innerHTML='<div class="game-empty"><div class="eyebrow">Игра завершена</div><h1>Финальный рейтинг</h1><p>Спасибо за участие. Результаты зафиксированы на сервере.</p>'+teamMarkup(s.teams)+'</div>';text('playerStatus','Игра завершена.');return}
  const question=s.question;
@@ -187,7 +190,7 @@ async function submitRichAnswer(){
   if(items.some(x=>x===null)||new Set(items).size!==items.length){notice('gameNotice','Каждый элемент должен быть выбран ровно один раз.','error');return}
   payload={items};
  }else if(kind==='hotspot'){
-  if(!ctx.hotspotPoint){notice('gameNotice','Отметьте точку на картинке.','error');return}
+  if(!ctx.hotspotPoint||ctx.hotspotQuestion!==s.code+':'+s.index){notice('gameNotice','Отметьте точку на картинке.','error');return}
   payload=ctx.hotspotPoint;
  }else{
   const textAnswer=$('richTextAnswer')?.value.trim();
@@ -259,10 +262,16 @@ function attach(){q('#logoHome').addEventListener('click',home);
   const answer=event.target.closest('#gameContent [data-answer]');if(answer)submitAnswer(Number(answer.dataset.answer));
   const submit=event.target.closest('#gameContent [data-submit-rich]');if(submit)submitRichAnswer();
   const spot=event.target.closest('#gameContent #richSpot');if(spot&&ctx.room?.phase==='question'){
-   const rect=spot.getBoundingClientRect();
-   ctx.hotspotPoint={x:Number((((event.clientX-rect.left)/rect.width)*100).toFixed(2)),
-     y:Number((((event.clientY-rect.top)/rect.height)*100).toFixed(2))};
-   const mark=$('richMarker');if(mark){mark.hidden=false;mark.style.left=ctx.hotspotPoint.x+'%';mark.style.top=ctx.hotspotPoint.y+'%'}
+   const rect=spot.getBoundingClientRect(),img=spot.querySelector('img');
+   const scale=img?.naturalWidth&&img?.naturalHeight?Math.min(rect.width/img.naturalWidth,rect.height/img.naturalHeight):null;
+   const drawW=scale?img.naturalWidth*scale:rect.width,drawH=scale?img.naturalHeight*scale:rect.height;
+   const padX=(rect.width-drawW)/2,padY=(rect.height-drawH)/2;
+   const imageX=event.clientX-rect.left-padX,imageY=event.clientY-rect.top-padY;
+   if(imageX<0||imageX>drawW||imageY<0||imageY>drawH)return;
+   ctx.hotspotQuestion=ctx.room.code+':'+ctx.room.index;
+   ctx.hotspotPoint={x:Number((imageX/drawW*100).toFixed(2)),y:Number((imageY/drawH*100).toFixed(2))};
+   const mark=$('richMarker');
+   if(mark){mark.hidden=false;mark.style.left=((event.clientX-rect.left)/rect.width*100)+'%';mark.style.top=((event.clientY-rect.top)/rect.height*100)+'%'}
   }
  
  });
