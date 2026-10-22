@@ -18,7 +18,8 @@ const supported=new Set(['single','boolean','multi','match','order','sequence','
 const titleKind=id=>kinds.find(x=>x[0]===id)?.[1]||id;
 const icons={round:'▦',intro:'◉',break:'♫',team_stats:'▥',player_stats:'♙',bonus:'✦',duel:'⇄',finale:'★'};
 const titles={round:'Раунд вопросов',intro:'Начало игры',break:'Музыкальная пауза',team_stats:'Рейтинг команд',player_stats:'Статистика игроков',bonus:'Бонусная активность',duel:'Дуэль команд',finale:'Финал игры'};
-const state={db:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,bankOffset:0,bankPageSize:25,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',dragFrom:null};
+const buildDefaults={count:5,seconds:30,answer_seconds:10,order:'random',offset:0,team_cap:null,player_cap:null,sound:'fanfare',lead_seconds:5};
+const state={db:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,bankOffset:0,bankPageSize:25,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',dragFrom:null,clockOffset:0,liveKey:'',lastDeadlineRefresh:0};
 function msg(id,text='',isError=false){const el=$(id);if(!el)return;el.textContent=text;el.classList.toggle('error',!!isError)}
 function disable(id,value){const el=$(id);if(el)el.disabled=value}
 function fmt(x){return Number(x||0).toLocaleString('ru-RU')}
@@ -129,7 +130,7 @@ function editQuestion(id=null){const question=state.questions.find(q=>q.id===id)
  $('questionDialogTitle').textContent=question?'Редактирование вопроса':'Создание вопроса';
  $('editKind').value=question?.kind||'single';
  $('editTopic').value=question?.topic_id||'';
- $('editPrompt').value=question?.prompt||'';
+ $('editPrompt').value=question?.prompt||'';$('editIllustration').value=question?.solution?.illustration_url||'';
  $('editExplanation').value=question?.explanation||'';
  $('editDifficulty').value=String(question?.difficulty||2);
  answerEditor($('editKind').value,question);msg('questionSaveMessage','');$('questionDialog').showModal();
@@ -149,6 +150,7 @@ async function saveQuestion(event){event.preventDefault();const kind=$('editKind
  else{solution={answer:$('genericAnswer')?.value.trim()||''};
  if(kind==='estimate')solution.tolerance=Number($('answerTolerance').value||0)}
 
+ const illustration=$('editIllustration').value.trim();if(illustration){if(!/^https:\/\//i.test(illustration)){msg('questionSaveMessage','Для иллюстрации нужна HTTPS-ссылка.',true);return}solution.illustration_url=illustration}
  if(!options.length&&$('genericItems'))options.splice(0,0,...$('genericItems').value.split('\n').map(x=>x.trim()).filter(Boolean));
  if(['single','boolean','flag','portrait','image','audio','video','map','poll','multi'].includes(kind)&&options.some(x=>!x)){msg('questionSaveMessage','Заполните все варианты.',true);return}
  disable('questionSubmit',true);
@@ -158,41 +160,53 @@ async function saveQuestion(event){event.preventDefault();const kind=$('editKind
   $('questionDialog').close();await loadQuestions();
  }catch(e){msg('questionSaveMessage',e.message,true)}finally{disable('questionSubmit',false)}}
 function card(type){return {type,title:titles[type]||'Раунд',icon:icons[type]||'◫',topic_id:null,
- settings:{count:5,seconds:30,order:'random',offset:0,team_cap:null,player_cap:null,sound:'fanfare'}}}
+ settings:{...buildDefaults}}}
 function ensureFinale(){state.cards=state.cards.filter((c,i)=>c.type!=='finale'||i===state.cards.length-1);
  if(!state.cards.some(c=>c.type==='finale'))state.cards.push(card('finale'))}
 function newBuild(){state.buildId=null;state.cards=[card('intro'),card('round'),card('finale')];$('buildTitle').value='';$('composer').hidden=false;renderCards();$('buildTitle').focus()}
 function appendCard(type='round'){if(state.cards.length>=60){msg('buildMessage','Не больше 60 карточек.',true);return}
  state.cards.splice(Math.max(0,state.cards.length-1),0,card(type));renderCards()}
 function cardDesc(c){const settings=c.settings||{};
- if(c.type==='round')return (c.topic_id?nameTopic(c.topic_id):'Тема не выбрана')+' · '+(settings.count||5)+' вопр. · '+(settings.seconds||30)+' сек.';
- if(c.type==='finale')return 'Финальный рейтинг команд и участников';
+ if(c.type==='round')return (c.topic_id?nameTopic(c.topic_id):'Тема не выбрана')+' · '+(settings.count||5)+' вопр. · '+(settings.seconds||30)+' сек. · ответ '+(settings.answer_seconds||10)+' сек.';
+ if(c.type==='finale')return 'Команды, личный рейтинг и вопросы, которые запомнились';
  return 'Дополнительная активность · настройки в карточке'}
-function renderCards(){ensureFinale();$('roundCards').innerHTML=state.cards.map((c,i)=>
- '<article class="round-card" data-index="'+i+'" data-type="'+esc(c.type)+'" draggable="'+(c.type!=='finale')+'">'+
- '<span class="round-icon" aria-hidden="true">'+esc(c.icon||icons[c.type])+'</span><span class="small-help">КАРТОЧКА '+(i+1).toString().padStart(2,'0')+'</span>'+
- '<h3>'+esc(c.title)+'</h3><p class="round-sub">'+esc(cardDesc(c))+'</p>'+
- '<div class="round-actions"><button type="button" data-move="'+i+':-1" aria-label="Раньше" '+(i===0||c.type==='finale'?'disabled':'')+'>←</button>'+
- '<button type="button" data-move="'+i+':1" aria-label="Позже" '+(i>=state.cards.length-2?'disabled':'')+'>→</button>'+
- '<button type="button" class="round-edit" data-edit-card="'+i+'">Настроить</button>'+
- '<button type="button" data-delete-card="'+i+'" aria-label="Удалить карточку" '+(c.type==='finale'?'disabled':'')+'>✕</button></div></article>').join('');}
+function renderCards(){ensureFinale();$('roundCards').innerHTML=state.cards.map((c,i)=>{
+ const final=c.type==='finale',emblem=final?'<svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M15 7h18v13c0 13-18 13-18 0V7ZM15 11H7v6c0 7 8 10 12 8M33 11h8v6c0 7-8 10-12 8M24 30v10M16 41h16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':esc(c.icon||icons[c.type]);
+ return '<article class="round-card" data-index="'+i+'" data-type="'+esc(c.type)+'" tabindex="0" role="group" aria-label="'+esc(c.title)+'. Открыть настройки" draggable="'+!final+'"><div class="round-card-heading"><span class="round-icon" aria-hidden="true">'+emblem+'</span><span class="small-help">'+(final?'ФИНАЛ ИГРЫ':'КАРТОЧКА '+(i+1).toString().padStart(2,'0'))+'</span></div><h3>'+esc(c.title)+'</h3><p class="round-sub">'+esc(cardDesc(c))+'</p>'+
+ (final?'<div class="finale-card-tags"><span>Команды</span><span>Участники</span><span>3 + 3 вопроса</span></div>':'')+'<div class="round-actions">'+(!final?'<button type="button" data-move="'+i+':-1" aria-label="Раньше" '+(i===0?'disabled':'')+'>←</button><button type="button" data-move="'+i+':1" aria-label="Позже" '+(i>=state.cards.length-2?'disabled':'')+'>→</button>':'')+'<button type="button" class="round-edit" data-edit-card="'+i+'">'+(final?'Настроить финал':'Настроить')+'</button>'+(!final?'<button type="button" data-delete-card="'+i+'" aria-label="Удалить карточку">✕</button>':'')+'</div></article>';
+ }).join('');}
 function moveCard(i,j){if(j<0||j>=state.cards.length-1||i<0||i>=state.cards.length-1)return;
  const [item]=state.cards.splice(i,1);state.cards.splice(j,0,item);renderCards()}
 function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{};
  $('cardTitle').value=c.title;$('cardTopic').value=c.topic_id||'';$('cardIcon').value=c.icon||'▦';
- $('cardCount').value=s.count||5;$('cardSeconds').value=s.seconds||30;
+ $('cardCount').value=s.count||5;$('cardSeconds').value=s.seconds||30;$('cardAnswerSeconds').value=s.answer_seconds||10;
+ $('cardRoundSettings').hidden=c.type!=='round';$('cardFinalePreview').hidden=c.type!=='finale';
  $('cardOrder').value=s.order||'random';$('cardOffset').value=(s.offset||0)+1;
  $('cardTeamCap').value=s.team_cap||'';$('cardPlayerCap').value=s.player_cap||'';
  $('cardSound').value=s.sound||'fanfare';
  $('cardDialog').showModal()}
 function saveCard(event){event.preventDefault();const c=state.cards[state.editingCard];c.title=$('cardTitle').value.trim();
  c.topic_id=$('cardTopic').value||null;c.icon=$('cardIcon').value||icons[c.type]||'▦';
- c.settings={count:Number($('cardCount').value),seconds:Number($('cardSeconds').value),
+ c.settings={...c.settings,count:Number($('cardCount').value),seconds:Number($('cardSeconds').value),answer_seconds:Number($('cardAnswerSeconds').value),
   order:$('cardOrder').value,offset:Math.max(0,Number($('cardOffset').value)-1),
   team_cap:$('cardTeamCap').value?Number($('cardTeamCap').value):null,
   player_cap:$('cardPlayerCap').value?Number($('cardPlayerCap').value):null,
   sound:$('cardSound').value,lead_seconds:5};
  $('cardDialog').close();renderCards()}
+function generalSettings(){
+ const first=state.cards.find(c=>c.type==='round')?.settings||buildDefaults;
+ $('generalSeconds').value=first.seconds||30;$('generalAnswerSeconds').value=first.answer_seconds||10;$('generalCount').value=first.count||5;$('generalSound').value=first.sound||'fanfare';
+ $('generalApplyCount').checked=false;$('generalApplySound').checked=false;$('generalCount').disabled=true;$('generalSound').disabled=true;
+ $('generalRoundCount').textContent=state.cards.filter(c=>c.type==='round').length;$('generalDialog').showModal();
+}
+function saveGeneralSettings(event){
+ event.preventDefault();const timing={seconds:Number($('generalSeconds').value),answer_seconds:Number($('generalAnswerSeconds').value)};
+ if(timing.seconds<10||timing.seconds>120||timing.answer_seconds<5||timing.answer_seconds>30)return;
+ if($('generalApplyCount').checked)timing.count=Number($('generalCount').value);
+ if($('generalApplySound').checked)timing.sound=$('generalSound').value;
+ Object.assign(buildDefaults,timing);for(const c of state.cards)if(c.type==='round')c.settings={...buildDefaults,...c.settings,...timing};
+ $('generalDialog').close();renderCards();msg('buildMessage','Общие настройки применены. Сохраните сборку, чтобы использовать их в игре.');QwizStage.audio.play('accept');
+}
 function renderBuilds(){$('savedBuilds').innerHTML=state.builds.length?state.builds.map(b=>
  '<button type="button" class="saved-build" data-load-build="'+esc(b.id)+'"><span>СОХРАНЁННАЯ СБОРКА</span><strong>'+esc(b.title)+'</strong><span>Редактировать →</span></button>').join(''):'<div class="empty">Сборок пока нет. Создайте первую.</div>'}
 async function loadBuild(id){try{const r=await studio('build_get',{id});state.buildId=r.build.id;
@@ -225,14 +239,17 @@ async function selectRoom(code){state.roomCode=code;sessionStorage.setItem('qwiz
  $('liveConsole').hidden=false;subscribeRoom(code);await refreshLive();
  $('liveConsole').scrollIntoView({behavior:'smooth',block:'start'})}
 async function refreshLive(){if(!state.roomCode||state.roomBusy)return;state.roomBusy=true;
- try{const s=await rpc('org_next_state',{p_code:state.roomCode});state.room=s;renderLive(s);msg('liveMessage','')}
+ try{const s=await rpc('org_next_state',{p_code:state.roomCode});if(s.server_now)state.clockOffset=Date.parse(s.server_now)-Date.now();state.room=s;renderLive(s);msg('liveMessage','')}
  catch(e){msg('liveMessage',e.message,true)}finally{state.roomBusy=false}}
-function renderLive(s){$('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
+function renderLive(s){
+ const key=s.phase+':'+s.index;if(key!==state.liveKey){state.liveKey=key;if(s.phase==='result')QwizStage.audio.play('reveal');else if(s.phase==='finished')QwizStage.audio.play(s.activity?.sound||'fanfare')}
+ $('liveClock').innerHTML=['question','result'].includes(s.phase)?QwizStage.clockMarkup(s,'liveTimer'):'';QwizStage.updateClock(s,state.clockOffset,document,'liveTimer',false);
+$('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  $('livePlayers').textContent=(s.players||[]).length;$('liveTeams').textContent=(s.teams||[]).length;
  $('livePhase').textContent=({lobby:'Ожидание',question:'Вопрос',result:'Разбор',finished:'Финал',countdown:'5…4…3…',intermission:'Активность'})[s.phase]||s.phase;
  $('liveAnswers').textContent=s.answers_count||0;
- $('liveStart').hidden=s.phase!=='lobby';$('liveReveal').hidden=s.phase!=='question';
- $('liveNext').hidden=!['result','intermission'].includes(s.phase);$('liveFinish').hidden=s.phase==='finished';
+ $('liveStart').hidden=s.phase!=='lobby';$('liveReveal').hidden=true;
+ $('liveNext').hidden=!['question','result','intermission'].includes(s.phase);$('liveNext').textContent=s.phase==='question'?'Далее: открыть ответ →':s.phase==='intermission'?'Продолжить →':'Следующий вопрос →';$('liveFinish').hidden=s.phase==='finished';
  $('liveQuestion').textContent=s.phase==='intermission'?(s.activity?.title||'Дополнительная активность')+
   ' · нажмите «Следующий вопрос», чтобы продолжить':
   s.phase==='countdown'?'Серверный обратный отсчёт: 5 секунд':
@@ -288,14 +305,19 @@ function wire(){
  $('bankItems').onclick=e=>{const b=e.target.closest('[data-edit-question]');if(b)editQuestion(b.dataset.editQuestion)};
  $('editKind').onchange=()=>answerEditor($('editKind').value,null);
  $('questionForm').onsubmit=saveQuestion;
- $('newBuild').onclick=newBuild;
+ $('newBuild').onclick=newBuild;$('generalSettings').onclick=generalSettings;$('generalForm').onsubmit=saveGeneralSettings;
+ $('generalApplyCount').onchange=e=>{$('generalCount').disabled=!e.target.checked};$('generalApplySound').onchange=e=>{$('generalSound').disabled=!e.target.checked};
+ $('studioSound').onclick=async()=>{const enabled=await QwizStage.audio.toggle();$('studioSound').setAttribute('aria-pressed',String(enabled));$('studioSound').textContent=enabled?'♫ Звук включён':'♫ Звук'};
+ $('cardSoundPreview').onclick=async()=>{if(!QwizStage.audio.enabled)await QwizStage.audio.toggle();QwizStage.audio.play($('cardSound').value)};
  $('addCard').onclick=()=>appendCard('round');$('appendRound').onclick=()=>appendCard('round');
  $('cardPalette').onclick=e=>{const b=e.target.closest('[data-card]');if(b)appendCard(b.dataset.card)};
  $('roundCards').onclick=e=>{
   const edit=e.target.closest('[data-edit-card]');if(edit){editCard(Number(edit.dataset.editCard));return}
   const del=e.target.closest('[data-delete-card]');if(del){state.cards.splice(Number(del.dataset.deleteCard),1);renderCards();return}
-  const move=e.target.closest('[data-move]');if(move){const [a,d]=move.dataset.move.split(':').map(Number);moveCard(a,a+d)}
+  const move=e.target.closest('[data-move]');if(move){const [a,d]=move.dataset.move.split(':').map(Number);moveCard(a,a+d);return}
+  const card=e.target.closest('.round-card');if(card&&!e.target.closest('button'))editCard(Number(card.dataset.index));
  };
+ $('roundCards').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.round-card')){e.preventDefault();editCard(Number(e.target.dataset.index))}});
  $('roundCards').addEventListener('dragstart',e=>{const x=e.target.closest('.round-card');if(!x||x.dataset.type==='finale')return;
  state.dragFrom=Number(x.dataset.index);x.classList.add('dragging');e.dataTransfer.effectAllowed='move'});
  $('roundCards').addEventListener('dragover',e=>{const x=e.target.closest('.round-card');if(!x||x.dataset.type==='finale')return;e.preventDefault();x.classList.add('drop-here')});
@@ -325,7 +347,8 @@ async function init(){
   connection('ready','Кабинет подключён');
   await overview();await loadRooms();
   const code=sessionStorage.getItem('qwiz-host-room');if(code){section('rooms');await selectRoom(code)}
-  state.roomTimer=setInterval(()=>{if(state.roomCode&&!document.hidden)refreshLive()},12000);
+  state.roomTimer=setInterval(()=>{if(state.roomCode&&!document.hidden)refreshLive()},8000);
+  setInterval(()=>{if(!state.room||document.hidden)return;const s=state.room;if(['question','result'].includes(s.phase)){const left=QwizStage.updateClock(s,state.clockOffset,document,'liveTimer');if(left===0&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}}else if(s.phase==='countdown'&&Date.parse(s.ends_at)<=Date.now()+state.clockOffset&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}},250);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.roomCode)refreshLive()});
  }catch(e){connection('error',e.message);$('bankItems').innerHTML='<div class="empty">'+esc(e.message)+' <a href="./">Вернуться ко входу</a></div>'}
 }

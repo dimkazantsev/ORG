@@ -72,7 +72,7 @@ label{font-weight:650;font-size:12px;display:grid;gap:7px;min-width:0}
 .round-card.dragging{opacity:.38}
 .round-card.drop-here{outline:2px dashed #3c8c65;outline-offset:2px}
 .round-card[data-type="finale"]{color:#fff}
-.round-card[data-type="finale"] *{color:#fff!important}
+.round-card[data-type="finale"] *{color:inherit}
 .round-icon{display:grid;place-items:center;width:37px;height:37px;border-radius:11px;font-size:21px}
 .round-card h3{min-height:18px}
 .round-card .round-sub{min-height:38px}
@@ -383,3 +383,15 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 @media(prefers-reduced-motion:reduce){
  .studio-polish *,.studio-polish *::before,.studio-polish *::after{animation:none!important;transition:none!important}
 }
+
+/* Whole-card targets and the finale. */
+.round-card[draggable="true"],.round-card[data-type="finale"]{cursor:pointer}.round-card:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+.round-card-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.round-card-heading .small-help{font-size:10px;letter-spacing:.05em}.round-card .round-actions button{min-height:44px}
+.round-card[data-type="finale"]{background:#f2eafb;color:var(--ink);border-color:#d6c3f1;overflow:hidden}.round-card[data-type="finale"] .round-icon{width:52px;height:52px;background:#fff;color:var(--accent);border:0;border-radius:15px}.round-card[data-type="finale"] .round-icon svg{width:38px;height:38px}
+.round-card[data-type="finale"] .small-help{color:var(--accent);font-weight:750}.round-card[data-type="finale"] h3{font-size:22px;line-height:1.2;letter-spacing:-.035em;margin-top:6px}.round-card[data-type="finale"] .round-sub{color:#67517f;font-size:12px;line-height:1.65}.round-card[data-type="finale"] .round-actions{border-color:#dcd0ed}.round-card[data-type="finale"] .round-edit{background:#fff;color:var(--accent);border-color:#d6c3f1;font-weight:750}
+.finale-card-tags{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}.finale-card-tags span{background:#e5d8f6;color:#67468e!important;font-size:10px;padding:4px 7px;border-radius:5px}
+.finale-preview{padding:20px;border-radius:15px;background:var(--accent-soft);font-size:14px}.finale-preview p{margin:8px 0 0;color:var(--muted);font-size:13px}.settings-intro{font-size:14px;line-height:1.6;color:var(--muted);margin-top:0}
+.bulk-optional{padding:16px 0;border-top:1px solid var(--line);display:grid;gap:12px}.check-row{display:flex!important;align-items:center;gap:10px!important;font-size:13px!important}.check-row input{width:18px!important;height:18px;min-height:18px!important;accent-color:var(--accent)}
+.moderator-clock:empty{display:none}.moderator-clock{float:right;margin:16px 0 10px 20px;min-width:144px}.moderator-clock .clock-value strong{font-size:48px}.moderator-clock .clock-track{height:5px}.live-actions{clear:both}
+#cardRoundSettings{display:grid;gap:16px}[hidden]#cardRoundSettings,[hidden]#cardFinalePreview{display:none}
+@media(max-width:600px){.composer-actions{flex-wrap:wrap}.composer-actions button{flex:1 1 40%}.round-card[data-type="finale"] h3{font-size:23px}.moderator-clock{float:none;margin:16px 0 0;max-width:none}.moderator-clock .stage-clock{text-align:left}.moderator-clock .clock-value{justify-content:flex-start}}

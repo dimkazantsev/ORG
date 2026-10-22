@@ -1,5 +1,6 @@
 // QWIZ-PARTY: bounded, opt-in test of 40 simultaneous PUBLIC SCREEN reads.
-// Not a 40-player game simulation. No account credentials, answer submissions or mutations.
+// Not a 40-player game simulation. No credentials or answer submissions.
+// Public state reads release expired stages; use a dedicated fixture/lobby/finished room.
 // Usage: QWIZ_ROOM_CODE=ABCDEF12 QWIZ_PUBLIC_KEY=sb_publishable_... node next/load-check.mjs
 const code=(process.env.QWIZ_ROOM_CODE||'').trim().toUpperCase();
 const key=(process.env.QWIZ_PUBLIC_KEY||'').trim();
