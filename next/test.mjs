@@ -176,18 +176,25 @@ test('Flags subcategories are a metadata filter, not duplicated topic tables',()
  assert.match(seed,/raise exception 'Проверка качества пилотной партии/);
 });
 
-test('Pilot SVG manifest contains exactly 40 original-country flags',()=>{
+test('World flags manifest contains 193 UN members and two observers with local assets',()=>{
  const manifest=JSON.parse(readFileSync(new URL('./assets/flags-world/catalog.json',import.meta.url),'utf8'));
  assert.equal(manifest.target_countries,195);
  assert.equal(manifest.pilot_countries,40);
- assert.equal(manifest.countries.length,40);
+ assert.equal(manifest.countries.length,195);
+ assert.equal(manifest.countries.filter(x=>x.un_status==='member').length,193);
+ assert.equal(manifest.countries.filter(x=>x.un_status==='observer').length,2);
+ assert.equal(manifest.countries.filter(x=>x.flag_status!=='source_verified').length,1);
  const codes=new Set();
  for(const country of manifest.countries){
   assert.match(country.iso2,/^[A-Z]{2}$/);
   assert.ok(!codes.has(country.iso2),'Duplicate ISO '+country.iso2);
   codes.add(country.iso2);
+  assert.match(country.name_ru,/[^\s]/);
+  assert.ok(['member','observer'].includes(country.un_status));
   const svg=readFileSync(new URL('./assets/flags-world/'+country.iso2.toLowerCase()+'.svg',import.meta.url),'utf8');
   assert.match(svg,/<svg\b/i);
-  assert.doesNotMatch(svg,/<script\b|javascript:/i);
+  assert.doesNotMatch(svg,/<script\b|<foreignobject\b|javascript:/i);
  }
+ assert.ok(codes.has('PS')&&codes.has('VA'));
+ for(const forbidden of ['XK','TW','EH','CK','NU','HK'])assert.ok(!codes.has(forbidden));
 });
