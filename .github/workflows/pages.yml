@@ -31,7 +31,7 @@ jobs:
           node --check app.js
           test -s studio-2026.css
           test -s ui-ux-pro-max.css
-          node --test next/test.mjs
+          node --test next/test.mjs next/flags-six.test.cjs
           test -s next/presenter.html
           test -s next/presenter.css
           test -s next/presenter.js

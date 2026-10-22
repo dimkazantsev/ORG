@@ -80,7 +80,10 @@ function render(state){
  }
  if(!state.question){$('projectionMain').innerHTML='<div class="projection-loading"><h1>Следующий раунд</h1><p>Смотрите на экран.</p></div>';return}
  if(state.phase==='result')tone('reveal');else if(previous!=='question'||ctx.previousQuestion!==state.index)tone('pop');ctx.previousQuestion=state.index;
- $('projectionMain').innerHTML=questionScene(state);QwizStage.updateClock(state,ctx.offset);QwizStage.hydrateIllustrations($('projectionMain'));
+ $('projectionMain').innerHTML=questionScene(state);
+ if(state.phase==='question'&&state.question.flag_memory)$('projectionMain').querySelector('.projection-options')?.setAttribute('data-memory-answer','');
+ if(state.phase==='result')$('projectionMain').querySelector('.answer-copy')?.insertAdjacentHTML('beforeend',QwizStage.sourceLinks(state.answer));
+ QwizStage.updateClock(state,ctx.offset);QwizStage.hydrateIllustrations($('projectionMain'));
 }
 async function refresh(){if(!ctx.client||!room||ctx.checking)return;ctx.checking=true;
  try{const sentAt=Date.now();const {data,error}=await ctx.client.rpc('qwiz_public_screen',{p_code:room});if(error)throw Error(error.message);

@@ -126,7 +126,8 @@ function gameRichMarkup(q,locked){
  const kind=q.kind||'single', options=q.options||[], disabled=locked?' disabled':'';
  const select=(values,cls,first='Выберите')=>'<select class="'+cls+'"'+disabled+'><option value="">'+first+'</option>'+
    values.map((v,i)=>'<option value="'+i+'">'+esc(v)+'</option>').join('')+'</select>';
- if(kind==='multi')return '<div class="rich-choices">'+options.map((v,i)=>'<label class="rich-choice"><input type="checkbox" data-multi="'+i+'"'+disabled+'><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+esc(v)+'</span></label>').join('')+'</div>'+
+ if(q.flag_assembly)return QwizStage.assemblyMarkup(q,locked)+'<button class="btn btn-dark rich-send" type="button" data-submit-rich'+disabled+'>Отправить собранный флаг →</button>';
+ if(kind==='multi')return '<p class="muted-small">Выберите все правильные варианты, затем подтвердите выбор.</p><div class="rich-choices">'+options.map((v,i)=>'<label class="rich-choice"><input type="checkbox" data-multi="'+i+'"'+disabled+'><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+flagOptionHtml(v,i)+'</span></label>').join('')+'</div>'+
   '<button class="btn btn-dark rich-send" type="button" data-submit-rich'+disabled+'>Подтвердить выбранные варианты →</button>';
  if(kind==='match')return '<div class="rich-rows">'+options.map((v,i)=>'<label class="rich-row"><span>'+esc(v)+'</span>'+select(q.match_choices||[],'rich-match','Соответствие')+'</label>').join('')+'</div>'+
  '<button class="btn btn-dark rich-send" type="button" data-submit-rich'+disabled+'>Проверить соответствия →</button>';
@@ -198,7 +199,11 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  const clip=typeof question.media_url==='string'&&/^https:\/\//i.test(question.media_url)&&['audio','video'].includes(richKind)?'<'+richKind+' class="rich-media" controls preload="metadata" src="'+esc(question.media_url)+'"></'+richKind+'>':'';
  el.innerHTML='<div class="player-question-top"><span class="eyebrow">Вопрос '+(s.index+1)+' / '+s.total+'</span>'+QwizStage.clockMarkup(s,'playerTimer')+'</div>'+media+'<h1>'+esc(question.prompt)+'</h1>'+clip+
  (s.phase==='result'?'<section class="player-answer answer-reveal" role="status"><span>'+(richKind==='poll'?'ИТОГ ГОЛОСОВАНИЯ':'ПРАВИЛЬНЫЙ ОТВЕТ')+'</span><h2>'+esc(s.answer?.text||gameRichResult(question).replace(/^Правильный ответ: /,''))+'</h2>'+(question.explanation?'<p>'+esc(question.explanation)+'</p>':'')+'</section>'+personalResults(s):optsMarkup+(done?'<p class="notice success">Ваш ответ принят. Ожидайте остальных участников.</p>':time===0?'<p class="notice">Приём ответов завершён.</p>':''));
- QwizStage.updateClock(s,ctx.clockOffset,document,'playerTimer');QwizStage.hydrateIllustrations(el);
+ if(question.flag_memory&&s.phase==='question'){
+  const controls=el.querySelector('.option-list');if(controls)controls.setAttribute('data-memory-answer','');
+ }
+ if(s.phase==='result')el.querySelector('.player-answer')?.insertAdjacentHTML('beforeend',QwizStage.sourceLinks(s.answer));
+ QwizStage.updateClock(s,ctx.clockOffset,document,'playerTimer');QwizStage.hydrateIllustrations(el);QwizStage.hydrateAssembly(el,question);
  text('playerStatus',!eligible?(me?.team_id&&Number(me.entry_question)>s.index?'Вы подключились во время игры. Участвуете со следующего вопроса.':!me?.team_id?'Ожидайте распределения в команду.':'Этот раунд не назначен вашей команде или участнику.'):s.phase==='result'?'Результат открыт. Скоро следующий вопрос.':done?'Ответ записан на сервере.':'Ваш ответ ещё не отправлен.');
 }
 async function advance(action){const s=ctx.room;if(!s)return;busy($('host'+({start:'Start',reveal:'Reveal',next:'Next',finish:'Finish'})[action]),true);notice('hostNotice','');

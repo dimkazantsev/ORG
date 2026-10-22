@@ -14,12 +14,12 @@ const flagModes=[
  ['symbols','Символы и гербы',true],
  ['fragments','Скрытые фрагменты и пиксели',true],
  ['errors','Поиск ошибок на флагах',true],
- ['similar','Похожие флаги',false],
- ['assemble','Сборка флага',false],
- ['multiple','Несколько правильных ответов',false],
- ['memory','Задания на память',false],
- ['geo','География и карты',false],
- ['history','История и символика',false]
+ ['similar','Похожие флаги',true],
+ ['assemble','Сборка флага',true],
+ ['multiple','Несколько правильных ответов',true],
+ ['memory','Задания на память',true],
+ ['geo','География и карты',true],
+ ['history','История и символика',true]
 ];
 const titleKind=id=>flagModes.find(x=>x[0]===id)?.[1]||'Флаги мира';
 const icons={round:'▦',intro:'◉',break:'♫',team_stats:'▥',player_stats:'♙',bonus:'✦',duel:'⇄',finale:'★'};
@@ -200,7 +200,21 @@ async function saveTopic(e){e.preventDefault();
 }
 function answerEditor(mode,question){
  const opts=question?.options||[],sol=question?.solution||{};
+ $('editIllustration').closest('label').hidden=mode==='memory';
  const count=4;
+ if(mode==='assemble'){
+  const names=opts.length?opts:['синий','белый','красный'];
+  $('answerEditor').innerHTML='<div class="answer-fields"><p class="small-help">Три равные полосы без герба. Укажите правильный порядок; в игре полосы перемешиваются. Студент собирает флаг и видит результат своего выбора.</p><label>Направление полос<select id="assemblyOrientation"><option value="horizontal">Горизонтально · сверху вниз</option><option value="vertical">Вертикально · слева направо</option></select></label>'+names.map((name,i)=>'<div class="two-inputs"><label>Полоса '+(i+1)+' · название цвета<input data-assembly-name required maxlength="40" value="'+esc(name)+'"></label><label>Цвет полосы<input type="color" data-assembly-color value="'+esc(sol.flag_assembly?.colors?.[name]||['#0055a4','#ffffff','#ef4135'][i])+'"></label></div>').join('')+'</div>';
+  $('assemblyOrientation').value=sol.flag_assembly?.orientation||'horizontal';return;
+ }
+ if(['similar','multiple','memory','geo','history'].includes(mode)){
+  const pictures=['similar','multiple','geo'].includes(mode);
+  $('answerEditor').innerHTML='<div class="answer-fields"><p class="small-help">'+({similar:'Подберите близкие по рисунку флаги с однозначным отличием. Избегайте почти неразличимых изображений.',multiple:'Отметьте все правильные флаги. Баллы начисляются только за полный набор без лишних вариантов.',memory:'Флаг показывается в начале вопроса, затем скрывается на всех экранах. Ответы принимаются только после скрытия.',geo:'Добавьте карту или контур страны без названия. Студент выбирает соответствующий флаг.',history:'Укажите проверяемый факт и ссылку на первичный источник. Ссылка появится в разборе.'})[mode]+'</p>'+Array.from({length:4},(_,i)=>pictures?'<div class="flag-option-editor"><label>Флаг '+String.fromCharCode(65+i)+' · SVG<input data-new-image type="url" required value="'+esc(opts[i]?.image_url||'')+'"></label><label>Страна<input data-new-label required maxlength="110" value="'+esc(sol.option_labels?.[i]||'')+'"></label></div>':'<label>Вариант '+String.fromCharCode(65+i)+'<input data-new-text required maxlength="120" value="'+esc(typeof opts[i]==='string'?opts[i]:'')+'"></label>').join('')+
+  (mode==='multiple'?'<fieldset><legend>Правильные варианты</legend>'+Array.from({length:4},(_,i)=>'<label class="check-row"><input type="checkbox" data-new-correct="'+i+'" '+(sol.correct_indices?.includes(i)?'checked':'')+'>Вариант '+String.fromCharCode(65+i)+'</label>').join('')+'</fieldset>':'<label>Правильный вариант<select id="correctAnswer">'+Array.from({length:4},(_,i)=>'<option value="'+i+'" '+(Number(sol.correct||0)===i?'selected':'')+'>'+String.fromCharCode(65+i)+'</option>').join('')+'</select></label>')+
+  (['memory','geo'].includes(mode)?'<label>'+(mode==='memory'?'Флаг для запоминания':'Карта или контур без подписей')+' · SVG<input id="newMediaUrl" type="url" required value="'+esc(sol.media_url||'')+'"></label>':'')+
+  (mode==='memory'?'<label>Время запоминания, секунд<input id="memorySeconds" type="number" min="3" max="10" value="'+esc(sol.flag_memory?.seconds||5)+'" required></label>':'')+
+  (mode==='history'?'<label>Первичный источник · HTTPS<input id="historySource" type="url" required value="'+esc(sol.source_urls?.[0]||'')+'"></label>':'')+'</div>';return;
+ }
  if(mode==='errors'){
   const choices=Array.from({length:4},(_,i)=>{
    const value=typeof opts[i]==='object'&&opts[i]?opts[i]:{};
@@ -247,7 +261,7 @@ function answerEditor(mode,question){
 }
 function editQuestion(id=null){
  const question=state.questions.find(q=>q.id===id)||null;
- if(question&&question.kind!=='flag'){msg('bankMessage','Этот старый формат не доступен в новой библиотеке.',true);return}
+ if(question&&!flagModes.some(x=>x[0]===question.solution?.flag_mode)){msg('bankMessage','Этот старый формат не доступен в новой библиотеке.',true);return}
  state.editingQuestion=question?.id||null;
  $('questionDialogTitle').textContent=question?'Редактирование вопроса':'Создание вопроса';
  $('editKind').value=flagModes.some(x=>x[0]===question?.solution?.flag_mode&&x[2])?question.solution.flag_mode:'country';
@@ -263,6 +277,39 @@ async function saveQuestion(event){
  const mode=$('editKind').value;
  if(!flagModes.some(([id,,ready])=>id===mode&&ready)){msg('questionSaveMessage','Эта механика ещё не подключена к игровому движку.',true);return}
  const isUrl=value=>/^https:\/\/[^/?#]+\/\S+$/i.test(value);
+ if(['similar','assemble','multiple','memory','geo','history'].includes(mode)){
+  let options,solution={flag_mode:mode},kind='flag';
+  const sources=state.questions.find(q=>q.id===state.editingQuestion)?.solution?.source_urls;
+  if(sources)solution.source_urls=sources;
+  if(mode==='assemble'){
+   options=all('[data-assembly-name]',$('answerEditor')).map(x=>x.value.trim());
+   const colors=all('[data-assembly-color]',$('answerEditor')).map(x=>x.value);
+   if(options.some(x=>!x)||new Set(options.map(x=>x.toLowerCase())).size!==3||new Set(colors).size!==3){msg('questionSaveMessage','Нужны три разных названия и цвета полос.',true);return}
+   kind='order';solution.flag_assembly={orientation:$('assemblyOrientation').value,colors:Object.fromEntries(options.map((x,i)=>[x,colors[i]]))};
+  }else{
+   const pictures=['similar','multiple','geo'].includes(mode);
+   options=pictures?all('[data-new-image]',$('answerEditor')).map(x=>({image_url:x.value.trim()})):all('[data-new-text]',$('answerEditor')).map(x=>x.value.trim());
+   const labels=pictures?all('[data-new-label]',$('answerEditor')).map(x=>x.value.trim()):options;
+   if(labels.some(x=>!x)||new Set(labels.map(x=>x.toLowerCase())).size!==4||pictures&&(options.some(x=>!isUrl(x.image_url))||new Set(options.map(x=>x.image_url)).size!==4)){msg('questionSaveMessage','Нужны четыре разных заполненных варианта и корректные HTTPS-ссылки.',true);return}
+   if(pictures)solution.option_labels=labels;
+   if(mode==='multiple'){
+    kind='multi';solution.correct_indices=all('[data-new-correct]',$('answerEditor')).filter(x=>x.checked).map(x=>Number(x.dataset.newCorrect));
+    if(solution.correct_indices.length<2||solution.correct_indices.length>3){msg('questionSaveMessage','Отметьте два или три правильных варианта.',true);return}
+   }else solution.correct=Number($('correctAnswer').value);
+   if(['memory','geo'].includes(mode)){
+    solution.media_url=$('newMediaUrl').value.trim();if(!isUrl(solution.media_url)){msg('questionSaveMessage','Укажите HTTPS-ссылку на SVG.',true);return}
+   }
+   if(mode==='memory')solution.flag_memory={seconds:Number($('memorySeconds').value)};
+   if(mode==='history'){
+    solution.source_urls=[$('historySource').value.trim()];if(!isUrl(solution.source_urls[0])){msg('questionSaveMessage','Укажите ссылку на первичный источник.',true);return}
+   }
+  }
+  const illustration=$('editIllustration').value.trim();
+  if(illustration&&mode!=='memory'){if(!isUrl(illustration)){msg('questionSaveMessage','Для иллюстрации нужна HTTPS-ссылка.',true);return}solution.illustration_url=illustration}
+  disable('questionSubmit',true);
+  try{await studio('question_save',{id:state.editingQuestion||undefined,kind,topic_id:$('editTopic').value||null,prompt:$('editPrompt').value.trim(),options,solution,difficulty:Number($('editDifficulty').value),explanation:$('editExplanation').value.trim()});$('questionDialog').close();await loadQuestions()}
+  catch(error){msg('questionSaveMessage',error.message,true)}finally{disable('questionSubmit',false)}return;
+ }
  const options=mode==='errors'?Array.from({length:4},(_,i)=>({
   image_url:$('answerEditor').querySelector('[data-error-image="'+i+'"]')?.value.trim()||'',
   label:$('answerEditor').querySelector('[data-error-label="'+i+'"]')?.value.trim()||''

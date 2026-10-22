@@ -242,12 +242,12 @@ test('Standalone teacher workspace is responsive and has two library sections',a
  await expect(page.locator('#roundCards .round-card')).toHaveCount(4);
  await expect(page.locator('#roundCards .round-card').last()).toHaveAttribute('data-type','finale');
 });
-test('Flag studio shows six working formats, without old question types',async({page})=>{
+test('Flag studio shows twelve working formats, without old question types',async({page})=>{
  await page.goto('http://127.0.0.1:8080/next/workspace.html');
  await page.locator('#newQuestion').click();
  await expect(page.locator('#questionDialog')).toBeVisible();
  await expect(page.locator('#editKind option')).toHaveCount(12);
- await expect(page.locator('#editKind option:disabled')).toHaveCount(6);
+ await expect(page.locator('#editKind option:disabled')).toHaveCount(0);
  await expect(page.locator('#editKind')).toHaveValue('country');
  await expect(page.locator('#answerEditor [data-option]')).toHaveCount(4);
  await expect(page.locator('#questionMediaUrl')).toBeVisible();
@@ -579,7 +579,7 @@ test('Studio native animations respect reduced motion while controls still work'
  expect(await page.locator('.refresh-check').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
 });
 
-test('Round editor filters flags by six ready mechanics',async({page})=>{
+test('Round editor filters flags by twelve ready mechanics',async({page})=>{
  await page.goto('http://127.0.0.1:8080/next/workspace.html');
  await expect(page.locator('#bankMode option')).toHaveCount(13);
  await page.locator('[data-section="builder"]').click();
@@ -588,8 +588,8 @@ test('Round editor filters flags by six ready mechanics',async({page})=>{
  await expect(page.locator('#cardDialog')).toBeVisible();
  await page.locator('#cardModesDetails summary').click();
  await expect(page.locator('#cardFlagModes [data-card-mode]')).toHaveCount(12);
- await expect(page.locator('#cardFlagModes [data-card-mode]:not(:disabled)')).toHaveCount(6);
- await expect(page.locator('#cardFlagModes [data-card-mode]:checked')).toHaveCount(6);
+ await expect(page.locator('#cardFlagModes [data-card-mode]:not(:disabled)')).toHaveCount(12);
+ await expect(page.locator('#cardFlagModes [data-card-mode]:checked')).toHaveCount(12);
  await page.locator('[data-card-mode="picker"]').uncheck();
  await page.locator('[data-card-mode="colors"]').uncheck();
  await page.locator('[data-card-mode="symbols"]').uncheck();
