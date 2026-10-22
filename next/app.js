@@ -194,7 +194,7 @@ async function submitRichAnswer(){
   if(!textAnswer){notice('gameNotice','Введите ответ.','error');return}
   payload={text:textAnswer};
  }
- const button=q('#gameContent [data-submit-rich]');if(button)busy(button,true);
+ const button=document.querySelector('#gameContent [data-submit-rich]');if(button)busy(button,true);
  try{notice('gameNotice','Отправляем ответ…');
   await rpc('qwiz_submit_answer',{p_room:s.room_id,p_payload:payload});
   signal('answer');notice('gameNotice','Ответ принят сервером.','success');await refreshRoom(false);
