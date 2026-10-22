@@ -79,6 +79,13 @@ test('Classroom board renders 15 habitat icons and locally generated QR codes',a
  expect(await page.locator('.team-board-card').last().evaluate(el=>el.getBoundingClientRect().bottom)).toBeLessThan(900);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);await page.screenshot({path:'visual-artifacts/teams-projector-15.png',fullPage:true,animations:'disabled'});
 });
+test('Shared classroom QR enlarges without consuming a team slot',async({page})=>{
+ await mock(page,fixture(15,30),{host:false});await page.setViewportSize({width:1440,height:900});await page.goto(base+'presenter.html?room=AABBCCDD');
+ await expect(page.locator('.team-board-card')).toHaveCount(15);
+ await page.locator('#projectionQr').click();await expect(page.locator('#projectionQrDialog')).toBeVisible();
+ await expect(page.locator('#projectionQrZoom canvas')).toHaveCount(1);
+ await page.locator('#projectionQrClose').click();await expect(page.locator('#projectionQrDialog')).toBeHidden();
+});
 test('Classroom membership refresh keeps QR elements stable',async({page})=>{
  await mock(page,fixture(),{host:false});await page.goto(base+'presenter.html?room=AABBCCDD');await expect(page.locator('.team-board-card')).toHaveCount(5);
  await page.evaluate(()=>{window.firstQr=document.querySelector('.team-board-qr canvas');window.fixture.lobby_teams=window.fixture.teams.map((t,i)=>({...t,members:i===0?7:6}));render(window.fixture);});
