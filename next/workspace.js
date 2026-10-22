@@ -11,8 +11,8 @@ const flagModes=[
  ['country','Угадать страну по флагу',true],
  ['picker','Выбрать флаг по названию',true],
  ['colors','Цвета и полосы',true],
- ['symbols','Символы и гербы',false],
- ['fragments','Скрытые фрагменты и пиксели',false],
+ ['symbols','Символы и гербы',true],
+ ['fragments','Скрытые фрагменты и пиксели',true],
  ['errors','Поиск ошибок',false],
  ['similar','Похожие флаги',false],
  ['assemble','Сборка флага',false],
@@ -42,6 +42,7 @@ function cardIconSvg(type,glyph=null){
  const key=glyphToCardIcon[glyph]||type;
  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(cardSvgPaths[key]||cardSvgPaths.round)+'</svg>';
 }
+const trashSvg='<svg class="trash-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 4h4m-7 3 1 13h8l1-13M10 11v6m4-6v6"/></svg>';
 const titles={round:'Раунд вопросов',intro:'Начало игры',break:'Музыкальная пауза',team_stats:'Рейтинг команд',player_stats:'Статистика игроков',bonus:'Бонусная активность',duel:'Дуэль команд',finale:'Финал игры'};
 const buildDefaults={count:5,seconds:30,answer_seconds:10,order:'random',offset:0,team_cap:null,player_cap:null,sound:'fanfare',lead_seconds:5};
 const state={db:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,bankOffset:0,bankPageSize:25,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',dragFrom:null,clockOffset:0,liveKey:'',lastDeadlineRefresh:0};
@@ -73,11 +74,44 @@ async function refreshWorkspace(){
  }catch(error){button.dataset.state='error';$('refreshLabel').textContent='Повторить';msg('bankMessage',error.message,true);connection('error','Не удалось обновить кабинет')}
  finally{button.disabled=false;button.setAttribute('aria-busy','false')}
 }
+const resumeKey='qwiz-studio-position-v3';
+let restoringView=false,restoreScrollQueued=false;
+function savePosition(){
+ if(restoringView)return;
+ try{sessionStorage.setItem(resumeKey,JSON.stringify({
+  section:state.activePage,scrollY:Math.max(0,Math.round(window.scrollY)),
+  buildId:state.buildId,roomCode:state.roomCode,bankOffset:state.bankOffset,
+  search:$('bankSearch')?.value||'',topic:$('bankTopic')?.value||'',
+  mode:$('bankMode')?.value||'',sort:$('bankSort')?.value||''
+ }))}catch{}
+}
+function readPosition(){
+ try{const x=JSON.parse(sessionStorage.getItem(resumeKey)||'null');
+  return x&&['bank','builder','rooms','insights'].includes(x.section)?x:null
+ }catch{return null}
+}
+async function restorePosition(){
+ const last=readPosition();if(!last)return;
+ restoringView=true;
+ try{
+  if(typeof last.search==='string')$('bankSearch').value=last.search.slice(0,90);
+  for(const [id,key]of [['bankTopic','topic'],['bankMode','mode'],['bankSort','sort']])
+   if(typeof last[key]==='string'&&[...$(id).options].some(o=>o.value===last[key]))$(id).value=last[key];
+  state.bankOffset=Math.max(0,Math.floor(Number(last.bankOffset)||0));
+  await loadQuestions();
+  if(last.section==='builder'&&last.buildId&&state.builds.some(b=>b.id===last.buildId))await loadBuild(last.buildId);
+  else section(last.section);
+  if(last.section==='rooms'&&last.roomCode&&state.hostRooms?.some(r=>r.code===last.roomCode))await selectRoom(last.roomCode);
+  const target=Math.max(0,Number(last.scrollY)||0);
+  await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+  window.scrollTo({top:target,behavior:'instant'});
+ }finally{restoringView=false;savePosition()}
+}
 function section(section){state.activePage=section;for(const id of ['bank','builder','rooms','insights'])$(id+'Page').hidden=id!==section;
  for(const n of all('[data-section]')){const selected=n.dataset.section===section;n.classList.toggle('selected',selected);if(selected)n.setAttribute('aria-current','page');else n.removeAttribute('aria-current')}
  animatePage($(section+'Page'));
  if(section==='rooms')loadRooms();if(section==='insights')loadInsights();
- window.scrollTo({top:0,behavior:'instant'})}
+ window.scrollTo({top:0,behavior:'instant'});savePosition()}
 function createOption(value,label){const n=document.createElement('option');n.value=value;n.textContent=label;return n}
 function fillSelect(select,options,placeholder,selected=''){select.replaceChildren();if(placeholder!==null)select.add(createOption('',placeholder));for(const [value,title]of options)select.add(createOption(value,title));select.value=selected}
 function nameTopic(id){return state.topics.find(t=>t.id===id)?.name||'Все темы'}
@@ -243,7 +277,7 @@ function cardDesc(c){const settings=c.settings||{};
 function renderCards(){ensureFinale();$('roundCards').innerHTML=state.cards.map((c,i)=>{
  const final=c.type==='finale',emblem=final?'<svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M15 7h18v13c0 13-18 13-18 0V7ZM15 11H7v6c0 7 8 10 12 8M33 11h8v6c0 7-8 10-12 8M24 30v10M16 41h16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':cardIconSvg(c.type,c.icon);
  return '<article class="round-card" data-index="'+i+'" data-type="'+esc(c.type)+'" tabindex="0" role="group" aria-label="'+esc(c.title)+'. Открыть настройки" draggable="'+!final+'"><div class="round-card-heading"><span class="round-icon" aria-hidden="true">'+emblem+'</span><span class="small-help">'+(final?'ФИНАЛ ИГРЫ':'КАРТОЧКА '+(i+1).toString().padStart(2,'0'))+'</span></div><h3>'+esc(c.title)+'</h3><p class="round-sub">'+esc(cardDesc(c))+'</p>'+
- (final?'<div class="finale-card-tags"><span>Команды</span><span>Участники</span><span>3 + 3 вопроса</span></div>':'')+'<div class="round-actions">'+(!final?'<button type="button" data-move="'+i+':-1" aria-label="Раньше" '+(i===0?'disabled':'')+'>←</button><button type="button" data-move="'+i+':1" aria-label="Позже" '+(i>=state.cards.length-2?'disabled':'')+'>→</button>':'')+'<button type="button" class="round-edit" data-edit-card="'+i+'">'+(final?'Настроить финал':'Настроить')+'</button>'+(!final?'<button type="button" data-delete-card="'+i+'" aria-label="Удалить карточку">✕</button>':'')+'</div></article>';
+ (final?'<div class="finale-card-tags"><span>Команды</span><span>Участники</span><span>3 + 3 вопроса</span></div>':'')+'<div class="round-actions">'+(!final?'<button type="button" data-move="'+i+':-1" aria-label="Раньше" '+(i===0?'disabled':'')+'>←</button><button type="button" data-move="'+i+':1" aria-label="Позже" '+(i>=state.cards.length-2?'disabled':'')+'>→</button>':'')+'<button type="button" class="round-edit" data-edit-card="'+i+'">'+(final?'Настроить финал':'Настроить')+'</button></div>'+(!final?'<button type="button" class="card-trash round-trash" data-delete-card="'+i+'" title="Удалить раунд" aria-label="Удалить раунд '+esc(c.title)+'">'+trashSvg+'</button>':'')+'</article>';
  }).join('');}
 function moveCard(i,j){if(j<0||j>=state.cards.length-1||i<0||i>=state.cards.length-1)return;
  const [item]=state.cards.splice(i,1);state.cards.splice(j,0,item);renderCards()}
@@ -289,13 +323,13 @@ function saveGeneralSettings(event){
  $('generalDialog').close();renderCards();msg('buildMessage','Общие настройки применены. Сохраните сборку, чтобы использовать их в игре.');QwizStage.audio.play('accept');
 }
 function renderBuilds(){$('savedBuilds').innerHTML=state.builds.length?state.builds.map(b=>
- '<div class="saved-build-wrap"><button type="button" class="saved-build" data-load-build="'+esc(b.id)+'"><span>СОХРАНЁННАЯ СБОРКА</span><strong>'+esc(b.title)+'</strong><span>Редактировать →</span></button><button type="button" class="small-button delete-small" data-delete-build="'+esc(b.id)+'" aria-label="Удалить сборку '+esc(b.title)+'">Удалить</button></div>').join(''):'<div class="empty">Сборок пока нет. Создайте первую.</div>'}
+ '<div class="saved-build-wrap"><button type="button" class="saved-build" data-load-build="'+esc(b.id)+'"><span>СОХРАНЁННАЯ СБОРКА</span><strong>'+esc(b.title)+'</strong><span>Редактировать →</span></button><button type="button" class="card-trash" data-delete-build="'+esc(b.id)+'" title="Удалить сборку" aria-label="Удалить сборку '+esc(b.title)+'">'+trashSvg+'</button></div>').join(''):'<div class="empty">Сборок пока нет. Создайте первую.</div>'}
 async function deleteBuild(id){
  const build=state.builds.find(b=>b.id===id);if(!build)return;
  if(!confirm('Удалить сборку «'+build.title+'»? Сыгранные комнаты и результаты сохранятся.'))return;
  try{
   await studio('build_delete',{id});
-  if(state.buildId===id){state.buildId=null;$('composer').hidden=true}
+  if(state.buildId===id){state.buildId=null;$('composer').hidden=true;savePosition()}
   await overview();
   msg('buildMessage','Сборка удалена. История сыгранных комнат сохранена.');
  }catch(error){msg('buildMessage',error.message,true)}
@@ -305,22 +339,22 @@ async function deleteRoom(id){
  if(!confirm('Убрать комнату «'+room.title+'»? Если в ней уже участвовали студенты, результаты сохранятся в архиве.'))return;
  try{
   const result=await rpc('qwiz_remove_room',{p_room:id});
-  if(state.roomCode===room.code){state.roomCode=null;sessionStorage.removeItem('qwiz-host-room');$('liveConsole').hidden=true;if(state.channel)state.db.removeChannel(state.channel);state.channel=null}
+  if(state.roomCode===room.code){state.roomCode=null;sessionStorage.removeItem('qwiz-host-room');$('liveConsole').hidden=true;if(state.channel)state.db.removeChannel(state.channel);state.channel=null;savePosition()}
   await loadRooms();
   msg('launchMessage',result.archived?'Комната убрана из списка. История ответов сохранена.':'Пустая комната удалена.');
  }catch(error){msg('launchMessage',error.message,true)}
 }
 async function loadBuild(id){try{const r=await studio('build_get',{id});state.buildId=r.build.id;
- $('buildTitle').value=r.build.title;state.cards=r.cards||[];ensureFinale();$('composer').hidden=false;renderCards();section('builder');
+ $('buildTitle').value=r.build.title;state.cards=r.cards||[];ensureFinale();$('composer').hidden=false;renderCards();section('builder');savePosition();
  }catch(e){msg('buildMessage',e.message,true)}}
 async function saveBuild(){disable('saveBuild',true);msg('buildMessage','Сохранение…');
  try{ensureFinale();if(!state.cards.some(c=>c.type==='round'))throw Error('Добавьте хотя бы один раунд вопросов.');
  const result=await studio('build_save',{id:state.buildId||undefined,title:$('buildTitle').value.trim(),
   cards:state.cards});state.buildId=result.id;
- await overview();msg('buildMessage','Сборка сохранена. Её можно запустить с любого вашего устройства.');}
+ await overview();savePosition();msg('buildMessage','Сборка сохранена. Её можно запустить с любого вашего устройства.');}
  catch(e){msg('buildMessage',e.message,true)}finally{disable('saveBuild',false)}}
 async function loadRooms(){try{const list=await rpc('qwiz_host_rooms');state.hostRooms=list;$('hostRoomList').innerHTML=list.length?list.map(r=>
- '<article class="room-row"><div><div class="question-meta"><span class="chip">'+esc(r.phase)+'</span><span class="chip lilac">'+esc(r.code)+'</span></div><h3>'+esc(r.title)+'</h3><p>'+esc(r.players)+' участников · '+esc(r.teams)+' команд</p></div><div class="room-row-actions"><button class="primary-button" data-room="'+esc(r.code)+'">Управлять →</button><button class="small-button delete-small" data-delete-room="'+esc(r.id)+'">Удалить</button></div></article>').join(''):
+ '<article class="room-row"><div><div class="question-meta"><span class="chip">'+esc(r.phase)+'</span><span class="chip lilac">'+esc(r.code)+'</span></div><h3>'+esc(r.title)+'</h3><p>'+esc(r.players)+' участников · '+esc(r.teams)+' команд</p></div><div class="room-row-actions"><button class="primary-button" data-room="'+esc(r.code)+'">Управлять →</button></div><button type="button" class="card-trash" data-delete-room="'+esc(r.id)+'" title="Удалить комнату" aria-label="Удалить комнату '+esc(r.title)+'">'+trashSvg+'</button></article>').join(''):
  '<div class="empty">Создайте комнату из сохранённой сборки.</div>';
  }catch(e){msg('launchMessage',e.message,true)}}
 async function launch(){disable('launchButton',true);msg('launchMessage','');
@@ -338,7 +372,7 @@ function subscribeRoom(code){if(state.channel){state.db.removeChannel(state.chan
 }
 async function selectRoom(code){state.roomCode=code;sessionStorage.setItem('qwiz-host-room',code);
  $('liveConsole').hidden=false;subscribeRoom(code);await refreshLive();
- $('liveConsole').scrollIntoView({behavior:'instant',block:'start'})}
+ $('liveConsole').scrollIntoView({behavior:'instant',block:'start'});savePosition()}
 async function refreshLive(){if(!state.roomCode)return;if(state.roomBusy){state.roomRefreshQueued=true;return;}state.roomBusy=true;const code=state.roomCode;
  try{const s=await rpc('org_next_state',{p_code:code});if(code!==state.roomCode)return;if(s.server_now)state.clockOffset=Date.parse(s.server_now)-Date.now();state.room=s;renderLive(s);msg('liveMessage','')}
  catch(e){msg('liveMessage',e.message,true)}finally{state.roomBusy=false;if(state.roomRefreshQueued){state.roomRefreshQueued=false;queueMicrotask(refreshLive);}}}
@@ -398,7 +432,9 @@ function wire(){
   b.innerHTML=cardIconSvg(b.dataset.card)+'<span>'+esc(label)+'</span>';
  }
  for(const b of all('[data-section]'))b.onclick=()=>section(b.dataset.section);
- $('signOut').onclick=signOut;
+ $('signOut').onclick=()=>{sessionStorage.removeItem(resumeKey);signOut()};
+ window.addEventListener('scroll',()=>{if(!restoreScrollQueued){restoreScrollQueued=true;requestAnimationFrame(()=>{restoreScrollQueued=false;savePosition()})}},{passive:true});
+ window.addEventListener('pagehide',savePosition);
  $('refreshAll').onclick=refreshWorkspace;
  document.addEventListener('keydown',event=>{if(event.key!=='/'||event.ctrlKey||event.metaKey||event.altKey||event.target.closest('input,textarea,select,[contenteditable="true"]')||document.querySelector('dialog[open]')||state.activePage!=='bank')return;event.preventDefault();$('bankSearch').focus()});
  $('bankSearch').oninput=()=>{clearTimeout(state.bankTimer);state.bankOffset=0;state.bankTimer=setTimeout(loadQuestions,350)};
@@ -429,7 +465,7 @@ function wire(){
  $('cardPalette').onclick=e=>{const b=e.target.closest('[data-card]');if(b)appendCard(b.dataset.card)};
  $('roundCards').onclick=e=>{
   const edit=e.target.closest('[data-edit-card]');if(edit){editCard(Number(edit.dataset.editCard));return}
-  const del=e.target.closest('[data-delete-card]');if(del){state.cards.splice(Number(del.dataset.deleteCard),1);renderCards();return}
+  const del=e.target.closest('[data-delete-card]');if(del){const i=Number(del.dataset.deleteCard),c=state.cards[i];if(c&&confirm('Удалить раунд «'+c.title+'» из сборки? Для сохранения изменений нажмите «Сохранить сборку».')){state.cards.splice(i,1);renderCards();msg('buildMessage','Раунд удалён из конструктора. Сохраните сборку, чтобы применить изменения.')}return}
   const move=e.target.closest('[data-move]');if(move){const [a,d]=move.dataset.move.split(':').map(Number);moveCard(a,a+d);return}
   const card=e.target.closest('.round-card');if(card&&!e.target.closest('button'))editCard(Number(card.dataset.index));
  };
@@ -473,7 +509,7 @@ async function init(){
   if(!await rpc('org_quiz_is_admin_check'))throw Error('У вас нет прав преподавателя.');
   connection('ready','Кабинет подключён');
   await overview();await loadRooms();
-  const code=sessionStorage.getItem('qwiz-host-room');if(code){section('rooms');await selectRoom(code)}
+  const previous=readPosition();if(previous){await restorePosition()}else{const code=sessionStorage.getItem('qwiz-host-room');if(code){section('rooms');await selectRoom(code)}}
   state.roomTimer=setInterval(()=>{if(state.roomCode&&!document.hidden)refreshLive()},8000);
   setInterval(()=>{if(!state.room||document.hidden)return;const s=state.room;if(['question','result'].includes(s.phase)){const left=QwizStage.updateClock(s,state.clockOffset,document,'liveTimer');if(left===0&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}}else if(s.phase==='countdown'&&Date.parse(s.ends_at)<=Date.now()+state.clockOffset&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}},250);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.roomCode)refreshLive()});
