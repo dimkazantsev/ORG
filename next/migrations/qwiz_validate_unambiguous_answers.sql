@@ -39,29 +39,9 @@ begin
  elsif p_kind in ('text','riddle','puzzle','blitz','number','date','estimate') then
   if length(btrim(coalesce(p_solution->>'answer','')))=0 then return false;end if;
   if p_kind in ('number','estimate') then
-   if (p_solution->>'answer') !~ '^-?[0-9]+([.,][0-9]+)?
- elsif p_kind='hotspot' then
-  return jsonb_typeof(p_solution->'x')='number' and jsonb_typeof(p_solution->'y')='number'
-   and jsonb_typeof(p_solution->'radius')='number'
-   and (p_solution->>'x')::numeric between 0 and 100
-   and (p_solution->>'y')::numeric between 0 and 100
-   and (p_solution->>'radius')::numeric between 0.1 and 100
-   and coalesce(p_solution->>'media_url','') ~ '^https://';
- end if;
- return false;
-end $$; then return false;end if;
+   if (p_solution->>'answer') !~ '^-?[0-9]+([.,][0-9]+)?$' then return false;end if;
    if p_kind='estimate' and
-    (coalesce(p_solution->>'tolerance','0') !~ '^[0-9]+([.][0-9]+)?
- elsif p_kind='hotspot' then
-  return jsonb_typeof(p_solution->'x')='number' and jsonb_typeof(p_solution->'y')='number'
-   and jsonb_typeof(p_solution->'radius')='number'
-   and (p_solution->>'x')::numeric between 0 and 100
-   and (p_solution->>'y')::numeric between 0 and 100
-   and (p_solution->>'radius')::numeric between 0.1 and 100
-   and coalesce(p_solution->>'media_url','') ~ '^https://';
- end if;
- return false;
-end $$; or
+    (coalesce(p_solution->>'tolerance','0') !~ '^[0-9]+([.][0-9]+)?$' or
     (coalesce(p_solution->>'tolerance','0'))::numeric<0) then return false;end if;
   end if;
   return true;
