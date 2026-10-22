@@ -133,3 +133,25 @@ test('Rich answer engine never exposes solution to students or projector',()=>{
  assert.match(compiler,/match_choices/);
  assert.match(compiler,/v_sol/);
 });
+
+test('Flags of the World starts without legacy question formats or auto-seeding',()=>{
+ const h=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ const w=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const presenter=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
+ const flagSql=readFileSync(new URL('./migrations/qwiz_flags_world_visual_answers.sql',import.meta.url),'utf8');
+ const resetSql=readFileSync(new URL('./migrations/MANUAL_flags_world_catalog_reset.sql',import.meta.url),'utf8');
+ for(const name of ['Угадать страну по флагу','Выбрать флаг по названию','Цвета и полосы',
+  'Символы и гербы','Скрытые фрагменты и пиксели','Поиск ошибок',
+  'Похожие флаги','Сборка флага','Несколько правильных ответов','Задания на память',
+  'География и карты','История и символика'])assert.ok(w.includes(name),name);
+ assert.doesNotMatch(w,/qwiz_seed_topics/);
+ assert.doesNotMatch(h,/id="bankKind"/);
+ assert.match(w,/kind:'flag'/);
+ assert.match(w,/flag_mode:mode/);
+ assert.match(w,/data-flag-image/);
+ assert.match(js,/flagOptionHtml/);
+ assert.match(presenter,/projectionOption/);
+ assert.match(flagSql,/->>'label'/);
+ assert.match(resetSql,/qwiz_flags_reset_archive_20261022/);
+ assert.match(resetSql,/count\(\*\) from public\.org_next_rooms/);
+});
