@@ -93,3 +93,9 @@ body:fullscreen .projection-shell{height:100dvh}
 .projection-media{width:min(760px,100%);height:min(29vh,290px);display:grid;place-items:center;margin:0 auto 27px;background:#fff;border:1px solid #edf0ef;border-radius:18px;overflow:hidden}
 .projection-media img{width:100%;height:100%;object-fit:contain}
 @media(max-width:750px){.projection-media{height:210px}}
+
+.projection-audio,.projection-video{display:block;width:min(820px,100%);max-height:min(32vh,325px);margin:18px auto 25px;background:#fff;border:1px solid #e3ebe7;border-radius:15px}
+.projection-audio{min-height:54px;padding:9px}
+.projection-match-bank{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:18px}
+.projection-match-bank span{display:inline-flex;align-items:center;justify-content:center;background:#ece5f9;padding:12px 20px;border:1px solid #dacff3;border-radius:12px;font-size:clamp(16px,1.5vw,24px);font-weight:750}
+@media(max-width:760px){.projection-video{max-height:250px}}
