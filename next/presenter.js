@@ -92,7 +92,10 @@ function subscribe(){if(ctx.channel)ctx.client.removeChannel(ctx.channel);
 }
 async function init(){
  $('projectionFullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch{showError('Используйте F11 для полноэкранного режима.')}};
- $('projectionSound').onclick=async()=>{const enabled=await QwizStage.audio.toggle();$('projectionSound').textContent=enabled?'♫ Звук включён':'♫ Включить звук';$('projectionSound').setAttribute('aria-pressed',String(enabled))};
+ QwizStage.decorateControls();
+ QwizStage.iconLabel($('projectionSound'),QwizStage.audio.enabled?'Звук включён':'Звук выключен',QwizStage.audio.enabled?'volume':'muted');
+ $('projectionSound').setAttribute('aria-pressed',String(QwizStage.audio.enabled));
+ $('projectionSound').onclick=async()=>{const enabled=await QwizStage.audio.toggle();QwizStage.iconLabel($('projectionSound'),enabled?'Звук включён':'Звук выключен',enabled?'volume':'muted');$('projectionSound').setAttribute('aria-pressed',String(enabled))};
  $('projectionVolume').oninput=e=>QwizStage.audio.setVolume(Number(e.target.value)/100);
  if(!room){setup();return}
  if(!/^[A-F0-9]{8}$/.test(room)){showError('Некорректный код');setup();return}
