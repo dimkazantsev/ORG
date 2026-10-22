@@ -143,3 +143,6 @@ body:fullscreen .projection-shell{height:100dvh}
 /* Visual flag answers: same image on the projector and participant screen. */
 .projection-option .flag-choice-art{display:block;width:min(260px,100%);height:100px;max-width:100%;object-fit:contain;background:white;border:1px solid var(--line,#e8e3f0);border-radius:9px;padding:5px}
 @media(max-width:750px){.projection-option .flag-choice-art{height:76px;width:min(175px,100%)}}
+
+/* Flags: crisp 2-4 stripe tiles in question choices */
+.flag-stripe-art{display:flex;overflow:hidden;width:min(100%,230px);height:100px;margin:0 auto;border:1px solid #dbd3e6;border-radius:5px;box-shadow:0 1px 3px #2215311a;flex-shrink:0}.flag-stripe-art.horizontal{flex-direction:column}.flag-stripe-art.vertical{flex-direction:row}.flag-stripe-art>span{flex:1;min-height:0;min-width:0}
