@@ -18,11 +18,14 @@ function optionMarkup(option,index){
 window.addEventListener('message',e=>{
  if(e.origin!==location.origin||e.source!==window.opener||e.data?.type!=='qwiz-preview-data')return;
  const {question:q,index,total}=e.data;if(!q)return;
- $('previewMode').textContent=({country:'Страна по флагу',picker:'Флаг по названию',colors:'Цвета и полосы'})[q.solution?.flag_mode]||'Флаги мира';
+ $('previewMode').textContent=({country:'Страна по флагу',picker:'Флаг по названию',colors:'Цвета и полосы',symbols:'Символы и гербы',fragments:'Фрагменты и пиксели'})[q.solution?.flag_mode]||'Флаги мира';
  $('previewPosition').textContent='Вопрос '+index+' из '+total;
  $('previewPrompt').textContent=q.prompt||'Без текста';
- const media=q.solution?.flag_mode==='country'?q.solution?.media_url:q.solution?.illustration_url;
- $('previewMedia').innerHTML=typeof media==='string'&&/^https:\/\//.test(media)?'<img src="'+esc(media)+'" alt="Изображение к вопросу" loading="lazy">':'';
+ const isVisual=['symbols','fragments'].includes(q.solution?.flag_mode);
+ const media=['country','symbols','fragments'].includes(q.solution?.flag_mode)?q.solution?.media_url:q.solution?.illustration_url;
+ $('previewMedia').innerHTML=typeof media==='string'&&/^https:\/\//.test(media)?
+  (isVisual?QwizStage.flagVisualContent(media,q.solution.flag_visual,false):'<img src="'+esc(media)+'" alt="Изображение к вопросу" loading="lazy">'):'';
+ QwizStage.hydrateFlagVisuals($('previewMedia'));
  $('previewMedia').hidden=!$('previewMedia').innerHTML;
  $('previewChoices').innerHTML=(q.options||[]).map((o,i)=>'<div class="preview-choice">'+optionMarkup(o,i)+'</div>').join('');
  $('previewPrev').disabled=index<=1;$('previewNext').disabled=index>=total;
