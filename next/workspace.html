@@ -86,7 +86,13 @@
  <label>Сложность<select id="editDifficulty"><option value="1">1 · Лёгкая</option><option value="2" selected>2 · Обычная</option><option value="3">3 · Средняя</option><option value="4">4 · Сложная</option><option value="5">5 · Экспертная</option></select></label></div>
  <div class="dialog-footer"><span id="questionSaveMessage" class="message" role="status"></span><button type="button" class="secondary-button" data-close="questionDialog">Отмена</button><button type="submit" class="primary-button" id="questionSubmit">Сохранить</button></div></form></dialog>
 <dialog class="edit-dialog" id="cardDialog"><form id="cardForm" method="dialog"><div class="dialog-head"><div><span class="eyebrow">РЕДАКТОР РАУНДА</span><h2>Настройка карточки</h2></div><button type="button" class="icon-btn" data-close="cardDialog">✕</button></div>
- <div class="dialog-body"><label>Название карточки<input id="cardTitle" maxlength="120" required></label><label>Тема<select id="cardTopic"><option value="">Без темы</option></select></label>
+ <div class="dialog-body"><label>Название карточки<input id="cardTitle" maxlength="120" required></label>
+ <label>Иконка раунда<select id="cardIcon">
+ <option value="▦">▦ Вопросы</option><option value="◉">◉ Начало</option><option value="♫">♫ Музыка</option>
+ <option value="▥">▥ Статистика</option><option value="♙">♙ Игроки</option><option value="✦">✦ Бонус</option>
+ <option value="⇄">⇄ Дуэль</option><option value="★">★ Финал</option><option value="⚑">⚑ Флаги</option>
+ <option value="⌖">⌖ География</option><option value="☷">☷ Порядок</option><option value="◆">◆ Логика</option>
+ </select></label><label>Тема<select id="cardTopic"><option value="">Без темы</option></select></label>
  <div class="two-inputs"><label>Вопросов<input id="cardCount" type="number" min="1" max="100" value="5"></label><label>Время на вопрос (сек.)<input id="cardSeconds" type="number" min="10" max="120" value="30"></label></div>
  <div class="two-inputs"><label>Порядок<select id="cardOrder"><option value="random">Случайный</option><option value="sequential">По порядку</option><option value="reverse">С конца</option></select></label><label>Начать с номера<input id="cardOffset" type="number" min="1" value="1"></label></div>
  <div class="two-inputs"><label>Лимит команд<input id="cardTeamCap" type="number" min="1" max="15" placeholder="Без ограничения"></label><label>Лимит игроков<input id="cardPlayerCap" type="number" min="1" placeholder="Без ограничения"></label></div>
