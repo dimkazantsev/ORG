@@ -395,3 +395,16 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 .moderator-clock:empty{display:none}.moderator-clock{float:right;margin:16px 0 10px 20px;min-width:144px}.moderator-clock .clock-value strong{font-size:48px}.moderator-clock .clock-track{height:5px}.live-actions{clear:both}
 #cardRoundSettings{display:grid;gap:16px}[hidden]#cardRoundSettings,[hidden]#cardFinalePreview{display:none}
 @media(max-width:600px){.composer-actions{flex-wrap:wrap}.composer-actions button{flex:1 1 40%}.round-card[data-type="finale"] h3{font-size:23px}.moderator-clock{float:none;margin:16px 0 0;max-width:none}.moderator-clock .stage-clock{text-align:left}.moderator-clock .clock-value{justify-content:flex-start}}
+
+/* Flags mode taxonomy: compact lavender controls without new layout system. */
+.card-mode-details{border:1px solid var(--line);border-radius:13px;padding:12px 14px;background:#faf9fd}
+.card-mode-details summary{display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:750;cursor:pointer;list-style:none}
+.card-mode-details summary::-webkit-details-marker{display:none}
+.card-mode-details summary::after{content:"⌄";color:var(--accent);font-weight:700}
+.card-mode-details[open] summary::after{content:"⌃"}
+.card-mode-details>p{margin:10px 0;color:var(--muted)}
+.card-mode-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.card-mode-grid .flag-mode-item{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 10px;min-height:45px;cursor:pointer}
+.card-mode-grid .flag-mode-item:has(input:checked){border-color:#aa8ae7;background:#f2ebff}
+.card-mode-grid .flag-mode-item.unavailable{opacity:.5;cursor:default}
+@media(max-width:600px){.card-mode-grid{grid-template-columns:1fr}}
