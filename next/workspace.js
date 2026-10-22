@@ -473,7 +473,7 @@ async function selectRoom(code){state.roomCode=code;sessionStorage.setItem('qwiz
  $('liveConsole').hidden=false;subscribeRoom(code);await refreshLive();
  $('liveConsole').scrollIntoView({behavior:'instant',block:'start'});savePosition()}
 async function refreshLive(){if(!state.roomCode)return;if(state.roomBusy){state.roomRefreshQueued=true;return;}state.roomBusy=true;const code=state.roomCode;
- try{const s=await rpc('org_next_state',{p_code:code});if(code!==state.roomCode)return;if(s.server_now)state.clockOffset=Date.parse(s.server_now)-Date.now();state.room=s;renderLive(s);msg('liveMessage','')}
+ try{const s=await rpc('qwiz_party_state',{p_code:code});if(code!==state.roomCode)return;if(s.server_now)state.clockOffset=Date.parse(s.server_now)-Date.now();state.room=s;renderLive(s);msg('liveMessage','')}
  catch(e){msg('liveMessage',e.message,true)}finally{state.roomBusy=false;if(state.roomRefreshQueued){state.roomRefreshQueued=false;queueMicrotask(refreshLive);}}}
 function renderLive(s){
  const key=s.phase+':'+s.index;if(key!==state.liveKey){state.liveKey=key;if(s.phase==='result')QwizStage.audio.play('reveal');else if(s.phase==='finished')QwizStage.audio.play(s.activity?.sound||'fanfare')}
@@ -482,23 +482,29 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  $('livePlayers').textContent=(s.players||[]).length;$('liveTeams').textContent=(s.teams||[]).length;
  $('livePhase').textContent=QwizStage.phaseLabel(s.phase);
  $('liveAnswers').textContent=s.answers_count||0;
- $('liveStart').hidden=s.phase!=='lobby';$('liveReveal').hidden=true;
- $('liveNext').hidden=!['question','result','intermission'].includes(s.phase);$('liveNext').textContent=s.phase==='question'?'Далее: открыть ответ →':s.phase==='intermission'?'Продолжить →':'Следующий вопрос →';$('liveFinish').hidden=s.phase==='finished';
+ $('liveStart').hidden=false;$('liveStart').disabled=s.phase!=='lobby';$('liveStart').setAttribute('aria-label',s.phase==='lobby'?'Начать игру':'Игра уже начата');
+ $('livePause').hidden=false;$('livePause').disabled=!['countdown','question','result'].includes(s.phase);$('livePause').textContent=s.paused?'▶ Продолжить':'⏸ Пауза';$('livePause').setAttribute('aria-pressed',String(!!s.paused));
+ $('liveNext').hidden=false;$('liveNext').disabled=!!s.paused||!['question','result','intermission'].includes(s.phase);$('liveNext').textContent='Далее →';$('liveReveal').hidden=true;$('liveFinish').hidden=false;$('liveFinish').disabled=s.phase==='finished';
  $('liveQuestion').textContent=s.phase==='intermission'?(s.activity?.title||'Дополнительная активность')+
-  ' · нажмите «Следующий вопрос», чтобы продолжить':
+  ' · следующий этап откроется автоматически (можно перейти вручную)':
   s.phase==='countdown'?'Серверный обратный отсчёт: 5 секунд':
   s.question?s.question.prompt+' · '+(s.index+1)+' / '+s.total:
   s.phase==='finished'?'Игра завершена. Итоги на экране аудитории.':'Ожидание начала игры.';
+ const boosts=new Map((s.public_stats?.teams||[]).map(t=>[t.id,t.boost]));
  $('liveRanking').innerHTML=(s.teams||[]).slice().sort((a,b)=>b.score-a.score).map((t,i)=>
-  '<div class="live-line"><span>'+ (i+1)+'. '+esc(t.name)+'</span><strong>'+esc(t.score)+'</strong></div>').join('');
+  '<div class="live-line"><span>'+ (i+1)+'. '+esc(t.name)+' '+(boosts.get(t.id)?'<b class="team-boost-chip" title="Усиление этого раунда">✦ '+esc(boosts.get(t.id).title)+'</b>':'')+'</span><strong>'+esc(t.score)+'</strong></div>').join('');
+ const stats=s.public_stats||{};const latest=(stats.question_stats||[]).at(-1);const completed=Math.max(0,s.index+1);
+ $('liveRoundStats').textContent='Вопрос '+completed+' / '+s.total+' · Ответов '+(s.answers_count||0)+(latest?' · Верных '+latest.correct+'/'+latest.answered:'')+(s.paused?' · Игра на паузе':'');
  $('liveRoster').innerHTML=(s.players||[]).map(p=>'<div class="live-line"><span>'+esc(p.name)+'</span><small>'+
- esc(s.teams.find(t=>t.id===p.team_id)?.name||'Ожидает распределения')+'</small></div>').join('');renderTeamManager(s);window.QwizArcade?.mountHost($('arcadeHostPanel'),s,state.db);}
-async function control(action){if(!state.room)return;for(const id of ['liveStart','liveReveal','liveNext','liveFinish'])disable(id,true);
+ esc(s.teams.find(t=>t.id===p.team_id)?.name||'Ожидает распределения')+'</small></div>').join('');renderTeamManager(s);window.QwizArcade?.mountHost($('arcadeHostPanel'),s,state.db);
+ const mirror=$('liveScreenMirror');if(mirror&&mirror.dataset.room!==s.code){mirror.dataset.room=s.code;const u=new URL('./presenter.html',location.href);u.searchParams.set('room',s.code);u.searchParams.set('embedded','1');mirror.src=u.toString()}
+}
+async function control(action){if(!state.room)return;for(const id of ['liveStart','livePause','liveReveal','liveNext','liveFinish'])disable(id,true);
  try{if(action==='finish'&&!confirm('Завершить игру?'))return;
- await rpc('org_next_advance',{p_room:state.room.room_id,p_action:action});
+ await rpc('qwiz_party_control',{p_room:state.room.room_id,p_action:action});
  state.channel?.send({type:'broadcast',event:'phase',payload:{room:state.roomCode}})?.catch(()=>{});
  await refreshLive()}catch(e){msg('liveMessage',e.message,true)}
- finally{for(const id of ['liveStart','liveReveal','liveNext','liveFinish'])disable(id,false);if(state.room)roomReadiness(state.room);}}
+ finally{for(const id of ['liveStart','livePause','liveReveal','liveNext','liveFinish'])disable(id,false);if(state.room){roomReadiness(state.room);renderLive(state.room)}}}
 function projection(){const u=new URL('./presenter.html',location.href);if(state.roomCode)u.searchParams.set('room',state.roomCode);
  window.open(u.toString(),'qwiz_party_public_screen','noopener,width=1280,height=760')}
 async function copyRoom(){const u=new URL('./',location.href);u.searchParams.set('room',state.roomCode);
@@ -588,7 +594,7 @@ function wire(){
  $('hostRoomList').onclick=e=>{const d=e.target.closest('[data-delete-room]');if(d){deleteRoom(d.dataset.deleteRoom);return}
   const b=e.target.closest('[data-room]');if(b)selectRoom(b.dataset.room)};
  $('liveStart').onclick=()=>control('start');$('liveReveal').onclick=()=>control('reveal');
- $('liveNext').onclick=()=>control('next');$('liveFinish').onclick=()=>control('finish');
+ $('liveNext').onclick=()=>control('next');$('livePause').onclick=()=>control(state.room?.paused?'resume':'pause');$('liveFinish').onclick=()=>control('finish');
  $('copyRoomUrl').onclick=copyRoom;$('openScreen').onclick=projection;$('showPublicScreen').onclick=projection;
  $('reloadInsights').onclick=loadInsights;$('studentSort').onchange=renderInsights;
  for(const b of all('[data-close]'))b.onclick=()=>$(b.dataset.close).close();
@@ -626,7 +632,7 @@ async function init(){
    restoringView=false;savePosition();
   }
   state.roomTimer=setInterval(()=>{if(state.roomCode&&!document.hidden)refreshLive()},8000);
-  setInterval(()=>{if(!state.room||document.hidden)return;const s=state.room;if(['question','result'].includes(s.phase)){const left=QwizStage.updateClock(s,state.clockOffset,document,'liveTimer');if(left===0&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}}else if(s.phase==='countdown'&&Date.parse(s.ends_at)<=Date.now()+state.clockOffset&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}},250);
+  setInterval(()=>{if(!state.room||document.hidden)return;const s=state.room;if(['question','result'].includes(s.phase)&&!s.paused){const left=QwizStage.updateClock(s,state.clockOffset,document,'liveTimer');if(left===0&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}}else if(s.phase==='countdown'&&!s.paused&&Date.parse(s.ends_at)<=Date.now()+state.clockOffset&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}},250);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.roomCode)refreshLive()});
  }catch(e){restoringView=false;connection('error',e.message);$('bankItems').innerHTML='<div class="empty">'+esc(e.message)+' <a href="./">Вернуться ко входу</a></div>'}
  finally{workspaceReady()}

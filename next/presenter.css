@@ -144,3 +144,34 @@ body:fullscreen .projection-shell{height:100dvh}
 /* Visual flag answers: same image on the projector and participant screen. */
 .projection-option .flag-choice-art{display:block;width:min(260px,100%);height:100px;max-width:100%;object-fit:contain;background:white;border:1px solid var(--line,#e8e3f0);border-radius:9px;padding:5px}
 @media(max-width:750px){.projection-option .flag-choice-art{height:76px;width:min(175px,100%)}}
+
+/* Lightweight welcome scene and always-available current-room QR (no heavy graphic assets). */
+.projection-join-qr{display:flex;gap:9px;align-items:center;border:1px solid #e0d6f0;background:white;border-radius:16px;padding:8px 12px;cursor:zoom-in;color:#574277;font-size:11px;font-weight:900;letter-spacing:.06em}
+.projection-join-qr #projectionJoinQrImage{width:76px;height:76px;flex:none}
+.projection-join-qr #projectionJoinQrImage :is(canvas,img){display:block;width:76px!important;height:76px!important;image-rendering:pixelated}
+.projection-join-qr:hover,.projection-join-qr:focus-visible{transform:scale(1.08);box-shadow:0 10px 26px #55407829}
+.projection-paused{background:#fff3ce;border:1px solid #e8c66c;color:#6b4c1d;padding:10px 15px;border-radius:14px;font-weight:900}
+.projection-qr-dialog{max-width:min(92vw,650px);padding:25px;border:1px solid #d8c7ed;border-radius:24px;text-align:center;background:#fff;box-shadow:0 24px 75px #22133440}
+.projection-qr-dialog::backdrop{background:#1f173a9c}
+.projection-qr-dialog button{display:block;margin-left:auto;border:0;border-radius:12px;padding:12px 18px;cursor:pointer}
+#projectionQrZoom{display:grid;place-items:center;max-width:500px;margin:15px auto}
+#projectionQrZoom :is(canvas,img){width:min(65vw,480px)!important;height:auto!important;aspect-ratio:1;image-rendering:pixelated}
+.projection-qr{cursor:zoom-in;transition:transform .3s ease}
+.projection-qr:hover{transform:scale(1.06)}
+.projection-welcome{position:relative;overflow:hidden;width:min(1350px,100%);min-height:65vh;margin:auto;border-radius:32px;background:radial-gradient(circle at 70% 20%,#ffefd3 0,transparent 30%),linear-gradient(135deg,#ece2ff,#faf7ff 65%,#e9efff);display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:clamp(30px,5vw,80px)}
+.projection-welcome h1{font-size:clamp(46px,7vw,118px);line-height:1.07;max-width:1050px;letter-spacing:-.06em;z-index:1}
+.projection-welcome p{font-size:clamp(18px,2vw,30px);max-width:750px;z-index:1}
+.welcome-orbit{position:absolute;inset:0;pointer-events:none}
+.welcome-orbit span{position:absolute;display:block;font-size:clamp(72px,12vw,175px);opacity:.4;animation:qwiz-float 5s ease-in-out infinite alternate}
+.welcome-orbit span:nth-child(1){top:7%;left:9%;color:#9176ea}.welcome-orbit span:nth-child(2){bottom:8%;right:10%;color:#e0ad56;animation-delay:-2s}.welcome-orbit span:nth-child(3){top:14%;right:13%;color:#85b8e0;animation-delay:-3s}
+@keyframes qwiz-float{from{transform:translateY(-12px) rotate(-8deg)}to{transform:translateY(14px) rotate(11deg)}}
+.welcome-dots{display:flex;gap:12px;margin-top:26px}.welcome-dots i{width:13px;height:13px;border-radius:50%;background:#9470e2;animation:qwiz-pulse 1.2s ease-in-out infinite alternate}.welcome-dots i:nth-child(2){animation-delay:.2s}.welcome-dots i:nth-child(3){animation-delay:.4s}.welcome-dots i:nth-child(4){animation-delay:.6s}.welcome-dots i:nth-child(5){animation-delay:.8s}
+@keyframes qwiz-pulse{to{transform:scale(.45);opacity:.4}}
+.finale-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:20px 0 30px}
+.finale-summary>div{display:flex;flex-direction:column;gap:6px;padding:21px;background:#fff;border:1px solid var(--line);border-radius:18px}
+.finale-summary strong{font-size:clamp(25px,3vw,48px);font-variant-numeric:tabular-nums}.finale-summary span{font-size:13px;color:var(--subtle)}
+.projection-embedded .projection-shell{padding:14px 20px}.projection-embedded .projection-footer{display:none}.projection-embedded .projection-join-qr{display:none}.projection-embedded .projection-header{padding-bottom:10px}
+@media(max-width:700px){.projection-join-qr{padding:6px}.projection-join-qr>span:last-child{display:none}.finale-summary{grid-template-columns:1fr}.projection-welcome{min-height:50vh}}
+@media(prefers-reduced-motion:reduce){.welcome-orbit span,.welcome-dots i{animation:none!important}.projection-qr,.projection-join-qr{transition:none!important;transform:none!important}}
+
+.projection-join-qr[hidden],.projection-paused[hidden]{display:none!important}

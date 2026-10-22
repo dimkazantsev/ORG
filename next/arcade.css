@@ -71,3 +71,22 @@
 .arcade-host-panel .arcade-rank{grid-template-columns:130px 1fr 50px}
 @media(max-width:760px){.arcade-palette{grid-template-columns:repeat(2,minmax(0,1fr))}.arcade-store{grid-template-columns:1fr}.arcade-choices{grid-template-columns:1fr}.arcade-scene{padding:12px}.arcade-rank{grid-template-columns:85px 1fr 40px;gap:6px}.arcade-tap-btn{min-height:96px}.arcade-rank-name{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.arcade-shell *{animation:none!important;transition:none!important}}
+
+/* Compact performance-safe mini-game polish and meaningful team vote. */
+.arcade-shell .arcade-scene{box-shadow:inset 0 1px 0 #fff,0 10px 32px #43316b10}
+.arcade-projection .arcade-scene{background:radial-gradient(ellipse at 72% 12%,#e7d7ff,transparent 52%),linear-gradient(150deg,#f4eeff,#edf3ff)}
+.arcade-rocket-art{filter:drop-shadow(0 9px 12px #6044a333)}
+.arcade-vote{border:1px solid #e6d8ad;border-radius:19px;padding:18px;background:linear-gradient(155deg,#fffcf3,#f7f0ff);text-align:left;margin-top:16px}
+.arcade-vote[hidden]{display:none!important}
+.arcade-vote-title>span{display:block;color:#886427;font-size:11px;font-weight:850;letter-spacing:.09em}
+.arcade-vote-title>strong{display:block;font-size:clamp(19px,2.5vw,29px);margin:4px 0;color:#36244a}
+.arcade-vote-title p,.arcade-vote-rule{color:#615376;font-size:12px;margin:8px 0 14px}
+.arcade-boost-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.arcade-boost-grid button{border-radius:14px;border:1px solid #d9cdee;min-height:108px;background:#fff;padding:12px;color:#44385a;text-align:left;display:flex;flex-direction:column;gap:7px;font:inherit;cursor:pointer;transition:transform .16s,box-shadow .16s}
+.arcade-boost-grid button strong{font-size:15px}.arcade-boost-grid button span{font-size:12px;line-height:1.25;flex:1}.arcade-boost-grid button b{font-size:12px;color:#714e9b}
+.arcade-boost-grid button.selected{background:#ede6ff;border-color:#9470e2;box-shadow:inset 0 0 0 1px #9470e2}
+.arcade-boost-grid button:not(:disabled):hover{transform:translateY(-2px);box-shadow:0 8px 20px #57438021}
+.arcade-boost-grid button:disabled{cursor:default;opacity:.74}
+.arcade-projection .arcade-vote-title>strong{font-size:clamp(23px,3.4vw,46px)}
+@media(max-width:660px){.arcade-boost-grid{grid-template-columns:1fr}.arcade-boost-grid button{min-height:0}}
+@media(prefers-reduced-motion:reduce){.arcade-boost-grid button{transition:none!important;transform:none!important}}

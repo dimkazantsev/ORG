@@ -6,25 +6,27 @@ window.QwizStage=(()=>{
  const capitalize=value=>{const text=String(value??'');return text.charAt(0).toLocaleUpperCase('ru-RU')+text.slice(1)};
  const countLabel=(value,forms)=>Number(value||0).toLocaleString('ru-RU')+' '+forms[new Intl.PluralRules('ru').select(Number(value)||0)];
  const phaseLabel=phase=>({lobby:'Ожидание участников',question:'Вопрос',result:'Разбор ответа',finished:'Игра завершена',countdown:'Подготовка',intermission:'Перерыв'})[phase]||'Ожидание данных';
- const habitats=[['forest','Лес','#278563'],['reef','Коралловый риф','#bb537e'],['savanna','Саванна','#a97920'],['mountains','Горы','#6962c4'],['arctic','Арктика','#2484a6'],['desert','Пустыня','#c46b38'],['jungle','Джунгли','#4b872c'],['ocean','Океан','#356cc1'],['wetland','Болото','#80822b'],['island','Остров','#229b8e'],['cave','Пещера','#8b678c'],['river','Река','#3494bc'],['meadow','Луг','#bb5b38'],['volcano','Вулкан','#c34d59'],['mangrove','Мангры','#97673e']];
- const fillCut=t=>{const size=Math.max(0,Number(t.members??t.players)||0),answered=Math.min(size,Math.max(0,Number(t.answered)||0));return size&&answered?Math.max(0,94-88*answered/size):100};
+ const animalNames=['fox','owl','cat','panda','otter','raccoon','capybara','penguin','koala','red-panda','rabbit','bear'];
+ const animalLabels=['Лиса','Сова','Кот','Панда','Выдра','Енот','Капибара','Пингвин','Коала','Красная панда','Кролик','Медведь'];
  function icon(t,full=false){
-  const [id,label,color]=habitats[(Math.max(1,Number(t.position)||1)-1)%15],size=Math.max(0,Number(t.members??t.players)||0),answered=Math.min(size,Math.max(0,Number(t.answered)||0));
-  const seams=Array.from({length:Math.max(0,Math.min(80,size)-1)},(_,i)=>'<path d="M4 '+(94-88*(i+1)/size).toFixed(3)+'H96"/>').join('');
-  return '<svg class="habitat-icon" viewBox="0 0 100 100" role="img" aria-label="'+esc(label)+': '+answered+' из '+size+' ответили" style="--team-color:'+color+'"><use class="habitat-base" href="./assets/habitats.svg#'+id+'"/><g class="habitat-color" style="clip-path:inset('+(full?0:fillCut(t))+'% 0 0)"><use href="./assets/habitats.svg#'+id+'"/></g><g class="habitat-seams" aria-hidden="true">'+seams+'</g></svg>';
+  const n=(Math.max(1,Number(t.position)||1)-1)%animalNames.length;
+  const members=Math.max(0,Number(t.members??t.players)||0),answered=Math.min(members,Math.max(0,Number(t.answered)||0));
+  const pct=full?100:members?Math.round(100*answered/members):0;
+  return '<div class="animal-medallion" role="img" aria-label="'+esc(animalLabels[n]+': '+answered+' из '+members+' ответили')+'" style="--animal-progress:'+pct+'%"><svg class="team-avatar" viewBox="0 0 100 100" aria-hidden="true"><use href="./assets/animals.svg#'+animalNames[n]+'"/></svg></div>';
  }
  function teamTile(t,{full=false,ranked=false}={}){
   const d=t.speed_delta==null?null:Number(t.speed_delta);
   const badge=d==null?'<span class="speed-delta neutral" title="Сравнение появится после второго вопроса">—</span>':'<span class="speed-delta '+(d>0?'faster':d<0?'slower':'neutral')+'" title="Изменение скорости относительно прошлого вопроса">'+(d>0?'↑ +':d<0?'↓ −':'')+fmt(Math.abs(d))+'%</span>';
-  return '<li class="habitat-team" data-team="'+esc(t.id||t.position)+'">'+(ranked?'<span class="team-place">'+fmt(t.rank||1)+'</span>':'')+'<div class="habitat-wrap">'+icon(t,full)+(ranked?badge:'')+'</div><strong title="'+esc(t.name)+'">'+esc(t.name)+'</strong><span class="team-detail">'+(ranked?(t.mean_seconds==null?'Время не записано':Number(t.mean_seconds).toLocaleString('ru-RU',{minimumFractionDigits:1,maximumFractionDigits:1})+' с / чел.'):'<b class="team-answered">'+fmt(t.answered)+'</b> / '+fmt(t.members??t.players)+' ответили')+'</span>'+(ranked?'<span class="team-points">'+fmt(t.score)+' баллов</span>':'')+'</li>';
+  return '<li class="habitat-team" data-team="'+esc(t.id||t.position)+'">'+(ranked?'<span class="team-place">'+fmt(t.rank||1)+'</span>':'')+'<div class="habitat-wrap">'+icon(t,full)+(ranked?badge:'')+'</div>'+(t.boost?'<span class="team-boost-chip" title="'+esc(t.boost.title||'Усиление следующего раунда')+'">✦ '+esc(t.boost.title||'Усиление')+'</span>':'')+'<strong title="'+esc(t.name)+'">'+esc(t.name)+'</strong><span class="team-detail">'+(ranked?(t.mean_seconds==null?'Время не записано':Number(t.mean_seconds).toLocaleString('ru-RU',{minimumFractionDigits:1,maximumFractionDigits:1})+' с / чел.'):'<b class="team-answered">'+fmt(t.answered)+'</b> / '+fmt(t.members??t.players)+' ответили')+'</span>'+(ranked?'<span class="team-points">'+fmt(t.score)+' баллов</span>':'')+'</li>';
  }
  function teams(rows,options={}){return '<ol class="habitat-grid'+(options.ranked?' ranked':'')+'" style="--team-count:'+Math.max(1,Math.min(15,rows?.length||0))+'">'+(rows||[]).map(t=>teamTile(t,options)).join('')+'</ol>'}
  function patchTeams(root,rows){
   for(const t of rows||[]){
    const el=Array.from(root.querySelectorAll('[data-team]')).find(x=>x.dataset.team===String(t.id||t.position));if(!el)continue;
-   const fill=el.querySelector('.habitat-color');if(fill)fill.style.clipPath='inset('+fillCut(t)+'% 0 0)';
-   const count=el.querySelector('.team-answered');if(count)count.textContent=Number(t.answered||0);
-   el.querySelector('svg')?.setAttribute('aria-label',habitats[(Math.max(1,Number(t.position)||1)-1)%15][1]+': '+Number(t.answered||0)+' из '+Number(t.members??t.players??0)+' ответили');
+   const badge=el.querySelector('.animal-medallion');
+   const members=Math.max(0,Number(t.members??t.players)||0),answered=Math.max(0,Number(t.answered)||0);
+   if(badge){badge.style.setProperty('--animal-progress',members?Math.min(100,100*answered/members)+'%':'0%');badge.setAttribute('aria-label',animalLabels[(Math.max(1,Number(t.position)||1)-1)%animalNames.length]+': '+answered+' из '+members+' ответили')}
+   const count=el.querySelector('.team-answered');if(count)count.textContent=answered;
   }
  }
  function progress(root,rows){
@@ -92,7 +94,7 @@ window.QwizStage=(()=>{
  }
  const duration=s=>Number(s.duration||s.question?.duration)||Math.max(1,Math.ceil((Date.parse(s.ends_at)-Date.now())/1000))||30;
  function clockMarkup(s,id='stageTimer'){return '<div class="stage-clock" data-phase="'+esc(s.phase)+'"><div class="clock-label">'+(s.phase==='result'?'Следующий этап через':'Время на ответ')+'</div><div class="clock-value"><strong id="'+id+'">0</strong><span>сек.</span></div><div class="clock-track" role="progressbar" aria-label="Оставшееся время" aria-valuemin="0" aria-valuemax="'+duration(s)+'"><span></span></div><span class="clock-warning" aria-live="polite"></span></div>'}
- const audio={context:null,enabled:(()=>{try{return localStorage.getItem('qwiz-audio-preference-v1')!=='off'}catch{return true}})(),volume:.45,voices:new Set(),lastTick:'',unlocking:null,
+ const audio={context:null,enabled:(()=>{try{return localStorage.getItem('qwiz-audio-preference-v1')!=='off'}catch{return true}})(),volume:.45,voices:new Set(),lastTick:'',unlocking:null,musicTimer:null,musicKey:'',
   async unlock(){
    if(!this.enabled)return false;
    if(this.context?.state==='running')return true;
@@ -110,7 +112,16 @@ window.QwizStage=(()=>{
    if(await this.unlock())this.play('start');
    return true;
   },
-  stop(){for(const o of this.voices){try{o.stop()}catch{}}this.voices.clear()},
+  stop(){this.stopMusic();for(const o of this.voices){try{o.stop()}catch{}}this.voices.clear()},
+  stopMusic(){if(this.musicTimer)clearInterval(this.musicTimer);this.musicTimer=null;this.musicKey=''},
+  music(kind='arcade',id='',durationMs=16000){
+   if(!this.enabled||document.hidden)return;
+   const key=kind+':'+id;if(this.musicTimer&&this.musicKey===key)return;
+   this.stopMusic();this.musicKey=key;
+   let beat=0;const melody=kind==='intro'?['sunrise','sparkle','bells','fanfare']:kind==='victory'?['victory','sparkle','triumphant','bells']:['arcade','retro','synth','sprint'];
+   const playBeat=()=>{if(document.hidden||!this.enabled){this.stopMusic();return}this.play(melody[beat++%melody.length]);if(durationMs&&beat*2350>=durationMs)this.stopMusic()};
+   playBeat();this.musicTimer=setInterval(playBeat,2350);
+  },
   setVolume(v){this.volume=Math.max(0,Math.min(1,Number(v)||0))},
   play(kind){
    if(!this.enabled||!this.context||this.context.state!=='running'||document.hidden||kind==='none')return;

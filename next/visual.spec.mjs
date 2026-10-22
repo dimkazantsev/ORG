@@ -352,7 +352,7 @@ async function authFixture(page,{signedIn=true,admin=true}={}){
     if(name==='qwiz_studio')return {data:args.p_action==='overview'?{topics:[],builds:[]}:{items:[],total:0},error:null};
     if(name==='qwiz_host_rooms')return {data:[],error:null};
     if(name==='qwiz_student_identity')return {data:{registered:true,full_name:'Тестовый участник'},error:null};
-    if(name==='org_next_state')return {data:{code:'ABCDEF12',room_id:'qa-room',title:'Проверка возврата',phase:'lobby',index:-1,total:4,teams:[{id:'qa-team',name:'Команда',players:1,score:0}],players:[],me:{id:'qa-player',team_id:'qa-team'}},error:null};
+    if(name==='qwiz_party_state')return {data:{code:'ABCDEF12',room_id:'qa-room',title:'Проверка возврата',phase:'lobby',index:-1,total:4,teams:[{id:'qa-team',name:'Команда',players:1,score:0}],players:[],me:{id:'qa-player',team_id:'qa-team'}},error:null};
     return {data:[],error:null}
    },
    from:()=>query,
