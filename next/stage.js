@@ -39,7 +39,7 @@ window.QwizStage=(()=>{
  function hydrateIllustrations(root=document){
   for(const img of root.querySelectorAll('.question-picture img')){
    const picture=img.closest('.question-picture'),marker=picture.querySelector('.answer-hotspot');
-   const fit=()=>{if(!marker||!img.naturalWidth)return;const box=picture.getBoundingClientRect(),scale=Math.min(box.width/img.naturalWidth,box.height/img.naturalHeight),w=img.naturalWidth*scale,h=img.naturalHeight*scale;
+   const fit=()=>{if(!marker||!img.naturalWidth)return;const box={width:picture.clientWidth,height:picture.clientHeight},scale=Math.min(box.width/img.naturalWidth,box.height/img.naturalHeight),w=img.naturalWidth*scale,h=img.naturalHeight*scale;
     Object.assign(marker.style,{left:(box.width-w)/2+w*Number(marker.dataset.x)/100+'px',top:(box.height-h)/2+h*Number(marker.dataset.y)/100+'px',width:w*Number(marker.dataset.radius)/50+'px',height:h*Number(marker.dataset.radius)/50+'px'})};
    img.onload=fit;img.onerror=()=>{const fallback=document.createElement('div');fallback.innerHTML=illustration({});picture.replaceChildren(fallback.querySelector('svg'));picture.closest('figure').querySelector('figcaption').textContent='Иллюстрация недоступна'};
    if(img.complete){if(img.naturalWidth)fit();else img.onerror()}
