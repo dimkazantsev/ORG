@@ -173,3 +173,5 @@ body:fullscreen .projection-shell{height:100dvh}
 .projection-embedded .projection-shell{padding:14px 20px}.projection-embedded .projection-footer{display:none}.projection-embedded .projection-join-qr{display:none}.projection-embedded .projection-header{padding-bottom:10px}
 @media(max-width:700px){.projection-join-qr{padding:6px}.projection-join-qr>span:last-child{display:none}.finale-summary{grid-template-columns:1fr}.projection-welcome{min-height:50vh}}
 @media(prefers-reduced-motion:reduce){.welcome-orbit span,.welcome-dots i{animation:none!important}.projection-qr,.projection-join-qr{transition:none!important;transform:none!important}}
+
+.projection-join-qr[hidden],.projection-paused[hidden]{display:none!important}
