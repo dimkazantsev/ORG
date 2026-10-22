@@ -30,6 +30,10 @@ const cardSvgPaths={
  team_stats:'<circle cx="9" cy="8" r="3"/><path d="M3.5 20v-2c0-3 2-5 5.5-5s5.5 2 5.5 5v2M17 5a3 3 0 0 1 0 6M17 14c2.5 0 4 2 4 4v2"/>',
  player_stats:'<circle cx="12" cy="7" r="4"/><path d="M4.5 21v-2c0-4.2 3-7 7.5-7s7.5 2.8 7.5 7v2"/>',
  bonus:'<path d="m12 2 2.6 6.4L21 11l-6.4 2.6L12 20l-2.6-6.4L3 11l6.4-2.6L12 2Z"/>',
+ arcade_rocket:'<path d="M5 16c1-5 5-9 12-12 0 7-4 11-10 12L5 16Z M12 7l5 5 M6 19l-2 3m8-5-3 4"/><circle cx="12.5" cy="10" r="1.5"/>',
+ arcade_blitz:'<path d="m13 2-9 12h7l-1 8 10-13h-7V2Z"/>',
+ arcade_tug:'<path d="M3 12h18M4 8v8m16-8v8M8 9l4 3-4 3m8-6-4 3 4 3"/>',
+ arcade_captain:'<path d="m2 8 5 4 5-7 5 7 5-4-2 12H4L2 8Z M12 2v3"/>',
  duel:'<path d="m4 7 4-4m0 0 4 4M8 3v12M20 17l-4 4m0 0-4-4m4 4V9"/>',
  finale:'<path d="M7 4h10v7c0 7-10 7-10 0V4ZM7 7H3v3c0 3 3 5 6 5m8-8h4v3c0 3-3 5-6 5m-3 2v4m-4 0h8"/>',
  flag:'<path d="M5 21V3m0 1c5-3 8 2 15-1v11c-7 3-10-2-15 1"/>',
@@ -39,12 +43,18 @@ const cardSvgPaths={
 };
 const glyphToCardIcon={'▦':'round','◉':'intro','♫':'break','▥':'team_stats','♙':'player_stats','✦':'bonus','⇄':'duel','★':'finale','⚑':'flag','⌖':'map','☷':'list','◆':'logic'};
 function cardIconSvg(type,glyph=null){
- const key=glyphToCardIcon[glyph]||type;
+ const key=cardSvgPaths[glyph]?glyph:(glyphToCardIcon[glyph]||type);
  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(cardSvgPaths[key]||cardSvgPaths.round)+'</svg>';
 }
 const trashSvg='<svg class="trash-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 4h4m-7 3 1 13h8l1-13M10 11v6m4-6v6"/></svg>';
 const titles={round:'Раунд вопросов',intro:'Начало игры',break:'Музыкальная пауза',team_stats:'Рейтинг команд',player_stats:'Статистика игроков',bonus:'Бонусная активность',duel:'Дуэль команд',finale:'Финал игры'};
 const buildDefaults={count:5,seconds:30,answer_seconds:10,order:'random',offset:0,team_cap:null,player_cap:null,sound:'fanfare',lead_seconds:5};
+const arcadeGames={
+ rocket:{title:'Ракетная гонка',icon:'arcade_rocket',seconds:12,help:'Все игроки разгоняют командную ракету. Учитывается средний вклад игрока, а не размер команды. Победа: +25 очков и награда.'},
+ blitz:{title:'Блиц-вопрос',icon:'arcade_blitz',seconds:25,help:'7 секунд команды борются за право ответа. После захвата открывается вопрос из банка флагов. Правильный ответ: +80 очков.'},
+ tug:{title:'Перетягивание очков',icon:'arcade_tug',seconds:12,help:'Команды соревнуются нажатиями. Лидеру +15 очков, последняя активная команда уступает не более 15 очков (ниже нуля не опускается).'},
+ captain:{title:'Дуэль капитанов',icon:'arcade_captain',seconds:10,help:'Первый подключившийся игрок команды — капитан. После 3 секунд подготовки только один удар. Фальстарт лишает попытки. Победа: +15 очков.'}
+};
 const state={db:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,bankOffset:0,bankPageSize:25,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',dragFrom:null,clockOffset:0,liveKey:'',lastDeadlineRefresh:0};
 function msg(id,text='',isError=false){const el=$(id);if(!el)return;el.textContent=text;el.classList.toggle('error',!!isError)}
 function disable(id,value){const el=$(id);if(el)el.disabled=value}
@@ -303,9 +313,12 @@ function card(type){return {type,title:titles[type]||'Раунд',icon:icons[typ
 function ensureFinale(){state.cards=state.cards.filter((c,i)=>c.type!=='finale'||i===state.cards.length-1);
  if(!state.cards.some(c=>c.type==='finale'))state.cards.push(card('finale'))}
 function newBuild(){state.buildId=null;state.cards=[card('intro'),card('round'),card('finale')];$('buildTitle').value='';$('composer').hidden=false;renderCards();$('buildTitle').focus()}
-function appendCard(type='round'){if(state.cards.length>=60){msg('buildMessage','Не больше 60 карточек.',true);return}
- state.cards.splice(Math.max(0,state.cards.length-1),0,card(type));renderCards()}
+function appendCard(type='round',arcadeMode=null){if(state.cards.length>=60){msg('buildMessage','Не больше 60 карточек.',true);return}
+ const added=card(type);
+ if(arcadeMode&&arcadeGames[arcadeMode]){const meta=arcadeGames[arcadeMode];added.title=meta.title;added.icon=meta.icon;added.settings.arcade_mode=arcadeMode;added.settings.arcade_seconds=meta.seconds;}
+ state.cards.splice(Math.max(0,state.cards.length-1),0,added);renderCards()}
 function cardDesc(c){const settings=c.settings||{};
+ if(arcadeGames[settings.arcade_mode])return 'Командная мини-игра · '+(settings.arcade_seconds||arcadeGames[settings.arcade_mode].seconds)+' секунд · достижения и жетоны';
  if(c.type==='round')return (c.topic_id?nameTopic(c.topic_id):'Тема не выбрана')+' · '+(Array.isArray(settings.flag_modes)&&settings.flag_modes.length?settings.flag_modes.map(titleKind).join(', '):'Все доступные механики')+' · '+(settings.count||5)+' вопр. · '+(settings.seconds||30)+' сек. · ответ '+(settings.answer_seconds||10)+' сек.';
  if(c.type==='finale')return 'Команды, личный рейтинг и вопросы, которые запомнились';
  return 'Дополнительная активность · настройки в карточке'}
@@ -320,6 +333,9 @@ function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{}
  $('cardTitle').value=c.title;$('cardTopic').value=c.topic_id||'';$('cardIcon').value=c.icon||'▦';
  $('cardCount').value=s.count||5;$('cardSeconds').value=s.seconds||30;$('cardAnswerSeconds').value=s.answer_seconds||10;
  $('cardRoundSettings').hidden=c.type!=='round';$('cardFinalePreview').hidden=c.type!=='finale';
+ const arcade=arcadeGames[s.arcade_mode];$('cardArcadeSettings').hidden=!arcade;
+ $('cardArcadeSeconds').value=s.arcade_seconds||arcade?.seconds||12;
+ $('cardArcadeHelp').textContent=arcade?.help||'';
  $('cardOrder').value=s.order||'random';$('cardOffset').value=(s.offset||0)+1;
  $('cardTeamCap').value=s.team_cap||'';$('cardPlayerCap').value=s.player_cap||'';
  $('cardSound').value=s.sound||'fanfare';
@@ -342,6 +358,7 @@ function saveCard(event){event.preventDefault();const c=state.cards[state.editin
   team_cap:$('cardTeamCap').value?Number($('cardTeamCap').value):null,
   player_cap:$('cardPlayerCap').value?Number($('cardPlayerCap').value):null,
   sound:$('cardSound').value,lead_seconds:5,flag_modes:selected.length===flagModes.filter(x=>x[2]).length?[]:selected};
+ if(arcadeGames[c.settings.arcade_mode])c.settings.arcade_seconds=Math.max(8,Math.min(40,Number($('cardArcadeSeconds').value)||arcadeGames[c.settings.arcade_mode].seconds));
  $('cardDialog').close();renderCards()}
 function generalSettings(){
  const first=state.cards.find(c=>c.type==='round')?.settings||buildDefaults;
@@ -428,7 +445,7 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  $('liveRanking').innerHTML=(s.teams||[]).slice().sort((a,b)=>b.score-a.score).map((t,i)=>
   '<div class="live-line"><span>'+ (i+1)+'. '+esc(t.name)+'</span><strong>'+esc(t.score)+'</strong></div>').join('');
  $('liveRoster').innerHTML=(s.players||[]).map(p=>'<div class="live-line"><span>'+esc(p.name)+'</span><small>'+
- esc(s.teams.find(t=>t.id===p.team_id)?.name||'Ожидает распределения')+'</small></div>').join('');renderTeamManager(s);}
+ esc(s.teams.find(t=>t.id===p.team_id)?.name||'Ожидает распределения')+'</small></div>').join('');renderTeamManager(s);window.QwizArcade?.mountHost($('arcadeHostPanel'),s,state.db);}
 async function control(action){if(!state.room)return;for(const id of ['liveStart','liveReveal','liveNext','liveFinish'])disable(id,true);
  try{if(action==='finish'&&!confirm('Завершить игру?'))return;
  await rpc('org_next_advance',{p_room:state.room.room_id,p_action:action});
@@ -462,9 +479,9 @@ function renderInsights(){const d=state.insights||{},overview=d.overview||{},stu
 }
 async function signOut(){await state.db.auth.signOut();location.replace('./')}
 function wire(){
- for(const b of all('#cardPalette [data-card]')){
+ for(const b of all('#cardPalette [data-card],#arcadePalette [data-card]')){
   const label=b.textContent.trim().replace(/^[^\s]+\s+/,'');
-  b.innerHTML=cardIconSvg(b.dataset.card)+'<span>'+esc(label)+'</span>';
+  b.innerHTML=cardIconSvg(b.dataset.card,b.dataset.arcade?'arcade_'+b.dataset.arcade:null)+'<span>'+esc(label)+'</span>';
  }
  for(const b of all('[data-section]'))b.onclick=()=>section(b.dataset.section);
  $('signOut').onclick=()=>{sessionStorage.removeItem(resumeKey);signOut()};
@@ -500,7 +517,8 @@ function wire(){
  $('studioSound').onclick=async()=>{const enabled=await QwizStage.audio.toggle();$('studioSound').setAttribute('aria-pressed',String(enabled));QwizStage.iconLabel($('studioSound'),enabled?'Звук включён':'Звук выключен',enabled?'volume':'muted')};
  $('cardSoundPreview').onclick=async()=>{if(!QwizStage.audio.enabled)await QwizStage.audio.toggle();await QwizStage.audio.unlock();QwizStage.audio.play($('cardSound').value)};
  $('addCard').onclick=()=>appendCard('round');$('appendRound').onclick=()=>appendCard('round');
- $('cardPalette').onclick=e=>{const b=e.target.closest('[data-card]');if(b)appendCard(b.dataset.card)};
+ $('cardPalette').onclick=e=>{const b=e.target.closest('[data-card]');if(b)appendCard(b.dataset.card,b.dataset.arcade||null)};
+ $('arcadePalette').onclick=e=>{const b=e.target.closest('[data-arcade]');if(b)appendCard(b.dataset.card,b.dataset.arcade)};
  $('roundCards').onclick=e=>{
   const edit=e.target.closest('[data-edit-card]');if(edit){editCard(Number(edit.dataset.editCard));return}
   const del=e.target.closest('[data-delete-card]');if(del){const i=Number(del.dataset.deleteCard),c=state.cards[i];if(c&&confirm('Удалить раунд «'+c.title+'» из сборки? Для сохранения изменений нажмите «Сохранить сборку».')){state.cards.splice(i,1);renderCards();msg('buildMessage','Раунд удалён из конструктора. Сохраните сборку, чтобы применить изменения.')}return}
