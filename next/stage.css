@@ -105,3 +105,8 @@ html:fullscreen{overflow-y:auto}
 .assembly-preview>span{background:var(--line)}
 .rich-choice:has(.flag-choice-art){min-width:0;min-height:110px;flex-wrap:wrap}
 .answer-sources a{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+
+/* Restored original illustrated animals from assets/animals.svg; progress is a lightweight CSS ring. */
+.animal-medallion{width:100%;aspect-ratio:1;display:grid;place-items:center;padding:4px;border-radius:50%;background:conic-gradient(var(--accent,#9470e2) 0 var(--animal-progress,0%),#ece6f5 var(--animal-progress,0%) 100%);box-shadow:0 4px 18px #31245414}
+.animal-medallion .team-avatar{display:block;width:100%;height:100%;border-radius:50%;background:#fff;filter:drop-shadow(0 2px 2px #34234612)}
+.team-boost-chip{max-width:100%;font-size:10px;line-height:1.25;text-align:center;border-radius:999px;background:#fff3cf;color:#70460c;border:1px solid #e3bf66;padding:4px 8px;font-weight:800;overflow-wrap:anywhere}
