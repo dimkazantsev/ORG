@@ -175,3 +175,7 @@ body:fullscreen .projection-shell{height:100dvh}
 @media(prefers-reduced-motion:reduce){.welcome-orbit span,.welcome-dots i{animation:none!important}.projection-qr,.projection-join-qr{transition:none!important;transform:none!important}}
 
 .projection-join-qr[hidden],.projection-paused[hidden]{display:none!important}
+
+.projection-lobby .projection-qr[role="button"]{cursor:zoom-in;transition:transform .22s ease}
+.projection-lobby .projection-qr[role="button"]:hover,.projection-lobby .projection-qr[role="button"]:focus-visible{transform:scale(1.08);outline:2px solid #9470e2;outline-offset:4px}
+@media(prefers-reduced-motion:reduce){.projection-lobby .projection-qr[role="button"]{transition:none!important;transform:none!important}}
