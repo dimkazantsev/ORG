@@ -13,7 +13,6 @@ window.QwizArcade=(()=>{
  const isArcade=a=>!!META[a?.settings?.arcade_mode];
  function modeTitle(mode){return META[mode]?.title||'Командная игра'}
  const currentTime=tr=>Date.now()+(tr.offset||0);
- const seconds=(end,tr)=>Math.max(0,Math.ceil((Date.parse(end)||0-currentTime(tr))/1000));
  // Avoid ambiguous operator precedence: timestamps are always milliseconds.
  const left=(end,tr)=>Math.max(0,Math.ceil(((Date.parse(end)||0)-currentTime(tr))/1000));
  function art(mode){
@@ -127,7 +126,7 @@ window.QwizArcade=(()=>{
   const el=document.getElementById('arcadeWalletPanel');if(!el)return;
   if(!view?.mine){el.hidden=true;return}
   const mine=view.mine;el.hidden=false;
-  el.innerHTML='<div class="arcade-wallet-title"><span>Командная мастерская</span><span class="arcade-wallet-total">'+Number(mine.credits)||0+' жетонов</span></div>'+
+  el.innerHTML='<div class="arcade-wallet-title"><span>Командная мастерская</span><span class="arcade-wallet-total">'+Number(mine.credits||0)+' жетонов</span></div>'+
    '<div class="arcade-store">'+UPGRADES.map(([id,title,price,desc])=>
      '<button type="button" data-arcade-buy="'+id+'" '+(mine[id]||mine.credits<price||wallet.phase==='intermission'?'disabled':'')+'><strong>'+
      escape(title)+'</strong><span>'+escape(desc)+'</span><span>'+ (mine[id]?'Приобретено':'Купить · '+price+' жет.')+'</span></button>').join('')+'</div>'+
