@@ -26,7 +26,10 @@ begin
   -- Flag-picker answer options may be image records rather than strings.
   -- Reveal only the human-reviewed country label, never serialized JSON.
   if jsonb_typeof(q->'options'->coalesce((q->>'correct')::int,(sol->>'correct')::int))='object' then
-    label:=q->'options'->coalesce((q->>'correct')::int,(sol->>'correct')::int)->>'label';
+    label:=coalesce(
+      sol->'option_labels'->>coalesce((q->>'correct')::int,(sol->>'correct')::int),
+      q->'options'->coalesce((q->>'correct')::int,(sol->>'correct')::int)->>'label'
+    );
   else
     label:=q->'options'->>coalesce((q->>'correct')::int,(sol->>'correct')::int);
   end if;
@@ -41,9 +44,9 @@ declare v_label text;
 begin
   select public.qwiz_answer_display(jsonb_build_object(
     'kind','flag','options',jsonb_build_array(
-       jsonb_build_object('image_url','https://example.com/fr.svg','label','Франция'),
-       jsonb_build_object('image_url','https://example.com/de.svg','label','Германия')),
-    'correct',1,'solution',jsonb_build_object('correct',1))) ->> 'text' into v_label;
+       jsonb_build_object('image_url','https://example.com/fr.svg'),
+       jsonb_build_object('image_url','https://example.com/de.svg')),
+    'correct',1,'solution',jsonb_build_object('correct',1,'option_labels',jsonb_build_array('Франция','Германия')))) ->> 'text' into v_label;
   if v_label is distinct from 'Германия' then raise exception 'Ошибка раскрытия ответа-картинки: %',v_label;end if;
 end $verify$;
 commit;
