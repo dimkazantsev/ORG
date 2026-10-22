@@ -242,14 +242,19 @@ test('Standalone teacher workspace is responsive and has two library sections',a
  await expect(page.locator('#roundCards .round-card')).toHaveCount(4);
  await expect(page.locator('#roundCards .round-card').last()).toHaveAttribute('data-type','finale');
 });
-test('Studio question editor changes fields for boolean and correspondence',async({page})=>{
+test('Flag studio shows two working formats, without old question types',async({page})=>{
  await page.goto('http://127.0.0.1:8080/next/workspace.html');
  await page.locator('#newQuestion').click();
  await expect(page.locator('#questionDialog')).toBeVisible();
- await page.locator('#editKind').selectOption('boolean');
- await expect(page.locator('#answerEditor [data-option]')).toHaveCount(2);
- await page.locator('#editKind').selectOption('match');
- await expect(page.locator('#genericItems')).toBeVisible();
+ await expect(page.locator('#editKind option')).toHaveCount(12);
+ await expect(page.locator('#editKind option:disabled')).toHaveCount(10);
+ await expect(page.locator('#editKind')).toHaveValue('country');
+ await expect(page.locator('#answerEditor [data-option]')).toHaveCount(4);
+ await expect(page.locator('#questionMediaUrl')).toBeVisible();
+ await page.locator('#editKind').selectOption('picker');
+ await expect(page.locator('#answerEditor [data-flag-image]')).toHaveCount(4);
+ await expect(page.locator('#answerEditor [data-flag-label]')).toHaveCount(4);
+ await expect(page.locator('#questionMediaUrl')).toHaveCount(0);
 });
 test('Student can see registration and twelve animal avatars',async({page})=>{
  await page.goto('http://127.0.0.1:8080/next/profile.html');
@@ -297,20 +302,20 @@ test('Multiple-choice, matching, order and free text are playable at phone size'
  }
  await page.screenshot({path:'visual-artifacts/rich-game-390.png',fullPage:true,animations:'disabled'});
 });
-test('Question editor captures new game mechanics without hidden correct-answer defaults',async({page})=>{
+test('Flag image choices use separate SVG links and private country labels',async({page})=>{
  await page.goto('http://127.0.0.1:8080/next/workspace.html');
  await page.locator('#newQuestion').click();
- await page.locator('#editKind').selectOption('multi');
- await expect(page.locator('#correctIndices')).toBeVisible();
- await page.locator('#editKind').selectOption('estimate');
- await expect(page.locator('#answerTolerance')).toBeVisible();
- await page.locator('#editKind').selectOption('hotspot');
- await expect(page.locator('#hotspotRadius')).toBeVisible();
- await expect(page.locator('#questionMediaUrl')).toBeVisible();
- await page.locator('#editKind').selectOption('auction');
- await expect(page.locator('#answerEditor')).toContainText('пока не участвует');
+ await expect(page.locator('#bankKind')).toHaveCount(0);
+ await page.locator('#editKind').selectOption('picker');
+ const urls=page.locator('#answerEditor [data-flag-image]');
+ const labels=page.locator('#answerEditor [data-flag-label]');
+ await urls.nth(0).fill('https://example.com/ca.svg');
+ await labels.nth(0).fill('Канада');
+ await expect(urls.nth(0)).toHaveValue('https://example.com/ca.svg');
+ await expect(labels.nth(0)).toHaveValue('Канада');
+ await expect(page.locator('#editKind option[value="boolean"]')).toHaveCount(0);
+ await expect(page.locator('#editKind option[value="auction"]')).toHaveCount(0);
 });
-
 test('Realtime refresh does not erase a partially entered free-text answer',async({page})=>{
  await page.setViewportSize({width:390,height:844});
  await page.evaluate(()=>{
@@ -572,4 +577,24 @@ test('Studio native animations respect reduced motion while controls still work'
  await page.locator('#refreshAll').click();
  await expect(page.locator('#refreshAll')).toHaveAttribute('data-state','done');
  expect(await page.locator('.refresh-check').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
+});
+
+test('Round editor filters flags by one or both ready mechanics',async({page})=>{
+ await page.goto('http://127.0.0.1:8080/next/workspace.html');
+ await expect(page.locator('#bankMode option')).toHaveCount(13);
+ await page.locator('[data-section="builder"]').click();
+ await page.locator('#newBuild').click();
+ await page.locator('#roundCards [data-edit-card="1"]').click();
+ await expect(page.locator('#cardDialog')).toBeVisible();
+ await page.locator('#cardModesDetails summary').click();
+ await expect(page.locator('#cardFlagModes [data-card-mode]')).toHaveCount(12);
+ await expect(page.locator('#cardFlagModes [data-card-mode]:not(:disabled)')).toHaveCount(2);
+ await expect(page.locator('#cardFlagModes [data-card-mode]:checked')).toHaveCount(2);
+ await page.locator('[data-card-mode="picker"]').uncheck();
+ await page.locator('#cardDialog button[type="submit"]').click();
+ await expect(page.locator('#roundCards .round-card').nth(1)).toContainText('Угадать страну по флагу');
+ await page.locator('#roundCards [data-edit-card="1"]').click();
+ await page.locator('#cardModesDetails summary').click();
+ await expect(page.locator('[data-card-mode="country"]')).toBeChecked();
+ await expect(page.locator('[data-card-mode="picker"]')).not.toBeChecked();
 });

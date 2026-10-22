@@ -75,7 +75,7 @@ begin
  (build,0,'intro','QA intro','◉',null,'{}'),
  (build,1,'round','QA round','▦',topic,'{"count":1,"seconds":40,"answer_seconds":30,"sound":"none"}'),
  (build,2,'finale','QA finale','★',null,'{"sound":"synth"}');
- launched:=public.qwiz_launch_build(build,'QA compiled rollback',2);other_code:=launched->>'code';other_room:=(launched->>'room_id')::uuid;
+ launched:=public.qwiz_prepare_room(build,'QA compiled rollback',2);other_code:=launched->>'code';other_room:=(launched->>'room_id')::uuid;
  result:=public.org_next_advance(other_room,'start');if result<>'intermission' then raise exception 'Intro regression';end if;
  result:=public.org_next_advance(other_room,'next');if result<>'countdown' then raise exception 'Round countdown regression';end if;
  update public.org_next_rooms set ends_at=now()-interval '1 second' where id=other_room;

@@ -9,6 +9,9 @@ on:
       - 'ui-ux-pro-max.css'
       - '.github/workflows/next-visual.yml'
   workflow_dispatch:
+concurrency:
+  group: next-visual-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   browser:
     runs-on: ubuntu-24.04

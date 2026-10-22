@@ -70,7 +70,7 @@ test('Entire round card and Enter key open settings; answer time is editable',as
 });
 test('Bulk timing reaches all rounds and persists in the build payload',async({page})=>{
  await workspace(page);await page.locator('[data-section="builder"]').click();await page.locator('#newBuild').click();await page.locator('#appendRound').click();await page.locator('#generalSettings').click();await page.locator('#generalSeconds').fill('45');await page.locator('#generalAnswerSeconds').fill('30');await page.locator('#generalForm button[type="submit"]').click();
- await expect(page.locator('.round-card[data-type="round"] .round-sub')).toHaveText(['Тема не выбрана · 5 вопр. · 45 сек. · ответ 30 сек.','Тема не выбрана · 5 вопр. · 45 сек. · ответ 30 сек.']);await page.locator('#buildTitle').fill('Общая игра');await page.locator('#saveBuild').click();
+ await expect(page.locator('.round-card[data-type="round"] .round-sub')).toHaveText(['Тема не выбрана · Все доступные механики · 5 вопр. · 45 сек. · ответ 30 сек.','Тема не выбрана · Все доступные механики · 5 вопр. · 45 сек. · ответ 30 сек.']);await page.locator('#buildTitle').fill('Общая игра');await page.locator('#saveBuild').click();
  expect(await page.evaluate(()=>window.savedBuild.cards.filter(c=>c.type==='round').every(c=>c.settings.seconds===45&&c.settings.answer_seconds===30&&c.settings.count===5))).toBe(true);
 });
 test('Final card has a trophy, readable controls and appropriate settings',async({page})=>{

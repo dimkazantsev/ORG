@@ -38,6 +38,12 @@ function finalShow(state){
  '<section class="stage-player-results"><div class="stage-section-head"><h2>Личный рейтинг</h2><span>Баллы → верный ответ → скорость</span></div>'+QwizStage.leaderboard(players,80)+'</section>'+
  (stats.length?questionStats(stats):'<p class="stage-empty">Статистика вопросов появится после первого сыгранного вопроса.</p>')+'</section>';
 }
+function projectionOption(value,index){
+ if(value&&typeof value==='object'&&typeof value.image_url==='string'&&/^https:\/\//i.test(value.image_url)){
+  return '<img class="flag-choice-art" src="'+escapeText(value.image_url)+'" alt="Флаг, вариант '+String.fromCharCode(65+index)+'" loading="lazy" decoding="async">';
+ }
+ return '<span>'+escapeText(typeof value==='object'?value?.label||'':value)+'</span>';
+}
 function questionScene(state){
  const q=state.question,answer=state.answer,isResult=state.phase==='result';
  const media=typeof q.media_url==='string'&&/^https:\/\//i.test(q.media_url)&&['audio','video'].includes(q.kind)?'<'+q.kind+' class="projection-'+q.kind+'" controls preload="metadata" src="'+escapeText(q.media_url)+'"></'+q.kind+'>':'';
@@ -46,7 +52,7 @@ function questionScene(state){
  if(isResult)return '<section class="projection-question is-result">'+top+'<div class="answer-scene answer-reveal">'+frame+'<div class="answer-copy"><span class="answer-label">'+(q.kind==='poll'?'ИТОГ ГОЛОСОВАНИЯ':'ПРАВИЛЬНЫЙ ОТВЕТ')+'</span><h1>'+escapeText(answer?.text||'Ответ открыт')+'</h1>'+(answer?.explanation?'<p>'+escapeText(answer.explanation)+'</p>':'')+'</div></div>'+
  '<section class="stage-team-results"><div class="stage-section-head"><h2>Скорость команд</h2><span>Среднее время на участника · ↑ быстрее, ↓ медленнее</span></div>'+QwizStage.teams(state.teams,{full:true,ranked:true})+'</section>'+
  '<section class="stage-player-results"><div class="stage-section-head"><h2>Личный рейтинг</h2><span>Баллы → верный ответ → скорость</span></div>'+QwizStage.leaderboard(state.players,10)+'</section></section>';
- return '<section class="projection-question">'+top+frame+'<h1>'+escapeText(q.prompt)+'</h1>'+media+'<div class="projection-options">'+(Array.isArray(q.options)?q.options:[]).map((v,i)=>'<div class="projection-option"><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+escapeText(v)+'</span></div>').join('')+'</div>'+
+ return '<section class="projection-question">'+top+frame+'<h1>'+escapeText(q.prompt)+'</h1>'+media+'<div class="projection-options">'+(Array.isArray(q.options)?q.options:[]).map((v,i)=>'<div class="projection-option"><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+projectionOption(v,i)+'</span></div>').join('')+'</div>'+
  (q.kind==='match'?'<div class="projection-match-bank">'+(q.match_choices||[]).map(x=>'<span>'+escapeText(x)+'</span>').join('')+'</div>':'')+
  '<section class="question-team-strip"><div class="stage-section-head"><h2>Команды в игре</h2><span><b id="teamAnswerCount">'+(state.teams||[]).reduce((a,t)=>a+Number(t.answered||0),0)+'</b> из '+(state.teams||[]).reduce((a,t)=>a+Number(t.members||0),0)+' ответили</span></div>'+QwizStage.teams(state.teams)+'</section></section>';
 }

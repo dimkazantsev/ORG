@@ -134,3 +134,67 @@ test('Rich answer engine never exposes solution to students or projector',()=>{
  assert.match(compiler,/v_sol/);
 });
 
+test('Flags of the World starts without legacy question formats or auto-seeding',()=>{
+ const h=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ const w=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const presenter=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
+ const flagSql=readFileSync(new URL('./migrations/qwiz_flags_world_visual_answers.sql',import.meta.url),'utf8');
+ const resetSql=readFileSync(new URL('./migrations/MANUAL_flags_world_catalog_reset.sql',import.meta.url),'utf8');
+ for(const name of ['Угадать страну по флагу','Выбрать флаг по названию','Цвета и полосы',
+  'Символы и гербы','Скрытые фрагменты и пиксели','Поиск ошибок',
+  'Похожие флаги','Сборка флага','Несколько правильных ответов','Задания на память',
+  'География и карты','История и символика'])assert.ok(w.includes(name),name);
+ assert.doesNotMatch(w,/qwiz_seed_topics/);
+ assert.doesNotMatch(h,/id="bankKind"/);
+ assert.match(w,/kind:'flag'/);
+ assert.match(w,/flag_mode:mode/);
+ assert.match(w,/data-flag-image/);
+ assert.match(js,/flagOptionHtml/);
+ assert.match(presenter,/projectionOption/);
+ assert.match(flagSql,/->>'label'/);
+ assert.match(resetSql,/qwiz_flags_reset_archive_20261022/);
+ assert.match(resetSql,/count\(\*\) from public\.org_next_rooms/);
+});
+
+test('Flags subcategories are a metadata filter, not duplicated topic tables',()=>{
+ const w=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const h=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ const migration=readFileSync(new URL('./migrations/qwiz_flags_mechanics_round_selection.sql',import.meta.url),'utf8');
+ const seed=readFileSync(new URL('./migrations/qwiz_flags_seed_first_40_verified.sql',import.meta.url),'utf8');
+ assert.match(h,/id="bankMode"/);
+ assert.match(h,/id="cardModesDetails"/);
+ assert.match(w,/data-card-mode/);
+ assert.match(w,/flag_modes:selected.length===2/);
+ assert.match(w,/studio\('flag_publish'/);
+ assert.match(migration,/q\.solution->>'flag_mode'=p_input->>'mode'/);
+ assert.match(migration,/b\.solution->>'flag_mode' in \(select jsonb_array_elements_text\(v_modes\)\)/);
+ assert.match(migration,/b\.tags @> array\['fw:published'\]/);
+ assert.match(migration,/not \(b\.id=any\(v_used\)\)/);
+ assert.match(migration,/array_remove\(tags,'fw:published'\)/);
+ assert.match(migration,/public\.qwiz_flags_question_valid/);
+ assert.match(seed,/40 UN-member flags x 2 approved mechanics = 80 questions/);
+ assert.match(seed,/raise exception 'Проверка качества пилотной партии/);
+});
+
+test('World flags manifest contains 193 UN members and two observers with local assets',()=>{
+ const manifest=JSON.parse(readFileSync(new URL('./assets/flags-world/catalog.json',import.meta.url),'utf8'));
+ assert.equal(manifest.target_countries,195);
+ assert.equal(manifest.pilot_countries,40);
+ assert.equal(manifest.countries.length,195);
+ assert.equal(manifest.countries.filter(x=>x.un_status==='member').length,193);
+ assert.equal(manifest.countries.filter(x=>x.un_status==='observer').length,2);
+ assert.equal(manifest.countries.filter(x=>x.flag_status!=='source_verified').length,1);
+ const codes=new Set();
+ for(const country of manifest.countries){
+  assert.match(country.iso2,/^[A-Z]{2}$/);
+  assert.ok(!codes.has(country.iso2),'Duplicate ISO '+country.iso2);
+  codes.add(country.iso2);
+  assert.match(country.name_ru,/[^\s]/);
+  assert.ok(['member','observer'].includes(country.un_status));
+  const svg=readFileSync(new URL('./assets/flags-world/'+country.iso2.toLowerCase()+'.svg',import.meta.url),'utf8');
+  assert.match(svg,/<svg\b/i);
+  assert.doesNotMatch(svg,/<script\b|<foreignobject\b|javascript:/i);
+ }
+ assert.ok(codes.has('PS')&&codes.has('VA'));
+ for(const forbidden of ['XK','TW','EH','CK','NU','HK'])assert.ok(!codes.has(forbidden));
+});

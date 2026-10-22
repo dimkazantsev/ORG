@@ -1,0 +1,1968 @@
+{
+  "catalog": "Флаги мира",
+  "basis": "193 UN members + State of Palestine and Holy See",
+  "target_countries": 195,
+  "pilot_countries": 40,
+  "remaining_countries": 155,
+  "country_roster_en": "https://github.com/stefangabos/world_countries/blob/master/data/countries/en/countries.json",
+  "country_roster_ru": "https://github.com/stefangabos/world_countries/blob/master/data/countries/ru/countries.json",
+  "country_roster_file_shas": {
+    "en": "6cd105010d78dc32dbd14e79ddef93fd1033b95b",
+    "ru": "3508b0551a8a116171fcdee300290973bbba8f0b"
+  },
+  "source_repository": "https://github.com/hampusborgos/country-flags",
+  "source_commit": "c09927e63705529bbf59ca6684cd9b23225dddad",
+  "assets": "GitHub Pages local SVG assets, no Supabase storage",
+  "countries": [
+    {
+      "iso2": "AD",
+      "iso3": "AND",
+      "name_ru": "Андорра",
+      "name_en": "Andorra",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ad.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "AE",
+      "iso3": "ARE",
+      "name_ru": "ОАЭ",
+      "name_en": "United Arab Emirates",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ae.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "AF",
+      "iso3": "AFG",
+      "name_ru": "Афганистан",
+      "name_en": "Afghanistan",
+      "un_status": "member",
+      "flag_status": "needs_official_review",
+      "svg": "./af.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "AG",
+      "iso3": "ATG",
+      "name_ru": "Антигуа и Барбуда",
+      "name_en": "Antigua and Barbuda",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ag.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "AL",
+      "iso3": "ALB",
+      "name_ru": "Албания",
+      "name_en": "Albania",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./al.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "AM",
+      "iso3": "ARM",
+      "name_ru": "Армения",
+      "name_en": "Armenia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./am.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "AO",
+      "iso3": "AGO",
+      "name_ru": "Ангола",
+      "name_en": "Angola",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ao.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "AR",
+      "iso3": "ARG",
+      "name_ru": "Аргентина",
+      "name_en": "Argentina",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ar.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "AT",
+      "iso3": "AUT",
+      "name_ru": "Австрия",
+      "name_en": "Austria",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./at.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "AU",
+      "iso3": "AUS",
+      "name_ru": "Австралия",
+      "name_en": "Australia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./au.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "AZ",
+      "iso3": "AZE",
+      "name_ru": "Азербайджан",
+      "name_en": "Azerbaijan",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./az.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "BA",
+      "iso3": "BIH",
+      "name_ru": "Босния и Герцеговина",
+      "name_en": "Bosnia and Herzegovina",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ba.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "BB",
+      "iso3": "BRB",
+      "name_ru": "Барбадос",
+      "name_en": "Barbados",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./bb.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "BD",
+      "iso3": "BGD",
+      "name_ru": "Бангладеш",
+      "name_en": "Bangladesh",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./bd.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "BE",
+      "iso3": "BEL",
+      "name_ru": "Бельгия",
+      "name_en": "Belgium",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./be.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "BF",
+      "iso3": "BFA",
+      "name_ru": "Буркина-Фасо",
+      "name_en": "Burkina Faso",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./bf.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "BG",
+      "iso3": "BGR",
+      "name_ru": "Болгария",
+      "name_en": "Bulgaria",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./bg.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "BH",
+      "iso3": "BHR",
+      "name_ru": "Бахрейн",
+      "name_en": "Bahrain",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./bh.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "BI",
+      "iso3": "BDI",
+      "name_ru": "Бурунди",
+      "name_en": "Burundi",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./bi.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "BJ",
+      "iso3": "BEN",
+      "name_ru": "Бенин",
+      "name_en": "Benin",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./bj.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "BN",
+      "iso3": "BRN",
+      "name_ru": "Бруней",
+      "name_en": "Brunei Darussalam",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./bn.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "BO",
+      "iso3": "BOL",
+      "name_ru": "Боливия",
+      "name_en": "Bolivia, Plurinational State of",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./bo.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "BR",
+      "iso3": "BRA",
+      "name_ru": "Бразилия",
+      "name_en": "Brazil",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./br.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "BS",
+      "iso3": "BHS",
+      "name_ru": "Багамские Острова",
+      "name_en": "Bahamas",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./bs.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "BT",
+      "iso3": "BTN",
+      "name_ru": "Бутан",
+      "name_en": "Bhutan",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./bt.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "BW",
+      "iso3": "BWA",
+      "name_ru": "Ботсвана",
+      "name_en": "Botswana",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./bw.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "BY",
+      "iso3": "BLR",
+      "name_ru": "Беларусь",
+      "name_en": "Belarus",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./by.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "BZ",
+      "iso3": "BLZ",
+      "name_ru": "Белиз",
+      "name_en": "Belize",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./bz.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "CA",
+      "iso3": "CAN",
+      "name_ru": "Канада",
+      "name_en": "Canada",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ca.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "CD",
+      "iso3": "COD",
+      "name_ru": "ДР Конго",
+      "name_en": "Congo, Democratic Republic of the",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./cd.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "CF",
+      "iso3": "CAF",
+      "name_ru": "ЦАР",
+      "name_en": "Central African Republic",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./cf.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "CG",
+      "iso3": "COG",
+      "name_ru": "Республика Конго",
+      "name_en": "Congo",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./cg.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "CH",
+      "iso3": "CHE",
+      "name_ru": "Швейцария",
+      "name_en": "Switzerland",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ch.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "CI",
+      "iso3": "CIV",
+      "name_ru": "Кот-д’Ивуар",
+      "name_en": "Côte d'Ivoire",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ci.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "CL",
+      "iso3": "CHL",
+      "name_ru": "Чили",
+      "name_en": "Chile",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./cl.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "CM",
+      "iso3": "CMR",
+      "name_ru": "Камерун",
+      "name_en": "Cameroon",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./cm.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "CN",
+      "iso3": "CHN",
+      "name_ru": "Китай",
+      "name_en": "China",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./cn.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "CO",
+      "iso3": "COL",
+      "name_ru": "Колумбия",
+      "name_en": "Colombia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./co.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "CR",
+      "iso3": "CRI",
+      "name_ru": "Коста-Рика",
+      "name_en": "Costa Rica",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./cr.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "CU",
+      "iso3": "CUB",
+      "name_ru": "Куба",
+      "name_en": "Cuba",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./cu.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "CV",
+      "iso3": "CPV",
+      "name_ru": "Кабо-Верде",
+      "name_en": "Cabo Verde",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./cv.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "CY",
+      "iso3": "CYP",
+      "name_ru": "Кипр",
+      "name_en": "Cyprus",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./cy.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "CZ",
+      "iso3": "CZE",
+      "name_ru": "Чехия",
+      "name_en": "Czechia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./cz.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "DE",
+      "iso3": "DEU",
+      "name_ru": "Германия",
+      "name_en": "Germany",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./de.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "DJ",
+      "iso3": "DJI",
+      "name_ru": "Джибути",
+      "name_en": "Djibouti",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./dj.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "DK",
+      "iso3": "DNK",
+      "name_ru": "Дания",
+      "name_en": "Denmark",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./dk.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "DM",
+      "iso3": "DMA",
+      "name_ru": "Доминика",
+      "name_en": "Dominica",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./dm.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "DO",
+      "iso3": "DOM",
+      "name_ru": "Доминиканская Республика",
+      "name_en": "Dominican Republic",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./do.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "DZ",
+      "iso3": "DZA",
+      "name_ru": "Алжир",
+      "name_en": "Algeria",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./dz.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "EC",
+      "iso3": "ECU",
+      "name_ru": "Эквадор",
+      "name_en": "Ecuador",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ec.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "EE",
+      "iso3": "EST",
+      "name_ru": "Эстония",
+      "name_en": "Estonia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ee.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "EG",
+      "iso3": "EGY",
+      "name_ru": "Египет",
+      "name_en": "Egypt",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./eg.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "ER",
+      "iso3": "ERI",
+      "name_ru": "Эритрея",
+      "name_en": "Eritrea",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./er.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "ES",
+      "iso3": "ESP",
+      "name_ru": "Испания",
+      "name_en": "Spain",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./es.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "ET",
+      "iso3": "ETH",
+      "name_ru": "Эфиопия",
+      "name_en": "Ethiopia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./et.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "FI",
+      "iso3": "FIN",
+      "name_ru": "Финляндия",
+      "name_en": "Finland",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./fi.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "FJ",
+      "iso3": "FJI",
+      "name_ru": "Фиджи",
+      "name_en": "Fiji",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./fj.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "FM",
+      "iso3": "FSM",
+      "name_ru": "Микронезия",
+      "name_en": "Micronesia, Federated States of",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./fm.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "FR",
+      "iso3": "FRA",
+      "name_ru": "Франция",
+      "name_en": "France",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./fr.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "GA",
+      "iso3": "GAB",
+      "name_ru": "Габон",
+      "name_en": "Gabon",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ga.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "GB",
+      "iso3": "GBR",
+      "name_ru": "Великобритания",
+      "name_en": "United Kingdom of Great Britain and Northern Ireland",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./gb.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "GD",
+      "iso3": "GRD",
+      "name_ru": "Гренада",
+      "name_en": "Grenada",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./gd.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "GE",
+      "iso3": "GEO",
+      "name_ru": "Грузия",
+      "name_en": "Georgia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ge.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "GH",
+      "iso3": "GHA",
+      "name_ru": "Гана",
+      "name_en": "Ghana",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./gh.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "GM",
+      "iso3": "GMB",
+      "name_ru": "Гамбия",
+      "name_en": "Gambia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./gm.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "GN",
+      "iso3": "GIN",
+      "name_ru": "Гвинея",
+      "name_en": "Guinea",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./gn.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "GQ",
+      "iso3": "GNQ",
+      "name_ru": "Экваториальная Гвинея",
+      "name_en": "Equatorial Guinea",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./gq.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "GR",
+      "iso3": "GRC",
+      "name_ru": "Греция",
+      "name_en": "Greece",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./gr.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "GT",
+      "iso3": "GTM",
+      "name_ru": "Гватемала",
+      "name_en": "Guatemala",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./gt.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "GW",
+      "iso3": "GNB",
+      "name_ru": "Гвинея-Бисау",
+      "name_en": "Guinea-Bissau",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./gw.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "GY",
+      "iso3": "GUY",
+      "name_ru": "Гайана",
+      "name_en": "Guyana",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./gy.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "HN",
+      "iso3": "HND",
+      "name_ru": "Гондурас",
+      "name_en": "Honduras",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./hn.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "HR",
+      "iso3": "HRV",
+      "name_ru": "Хорватия",
+      "name_en": "Croatia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./hr.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "HT",
+      "iso3": "HTI",
+      "name_ru": "Гаити",
+      "name_en": "Haiti",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ht.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "HU",
+      "iso3": "HUN",
+      "name_ru": "Венгрия",
+      "name_en": "Hungary",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./hu.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "ID",
+      "iso3": "IDN",
+      "name_ru": "Индонезия",
+      "name_en": "Indonesia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./id.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "IE",
+      "iso3": "IRL",
+      "name_ru": "Ирландия",
+      "name_en": "Ireland",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ie.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "IL",
+      "iso3": "ISR",
+      "name_ru": "Израиль",
+      "name_en": "Israel",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./il.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "IN",
+      "iso3": "IND",
+      "name_ru": "Индия",
+      "name_en": "India",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./in.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "IQ",
+      "iso3": "IRQ",
+      "name_ru": "Ирак",
+      "name_en": "Iraq",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./iq.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "IR",
+      "iso3": "IRN",
+      "name_ru": "Иран",
+      "name_en": "Iran, Islamic Republic of",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ir.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "IS",
+      "iso3": "ISL",
+      "name_ru": "Исландия",
+      "name_en": "Iceland",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./is.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "IT",
+      "iso3": "ITA",
+      "name_ru": "Италия",
+      "name_en": "Italy",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./it.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "JM",
+      "iso3": "JAM",
+      "name_ru": "Ямайка",
+      "name_en": "Jamaica",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./jm.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "JO",
+      "iso3": "JOR",
+      "name_ru": "Иордания",
+      "name_en": "Jordan",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./jo.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "JP",
+      "iso3": "JPN",
+      "name_ru": "Япония",
+      "name_en": "Japan",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./jp.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "KE",
+      "iso3": "KEN",
+      "name_ru": "Кения",
+      "name_en": "Kenya",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ke.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "KG",
+      "iso3": "KGZ",
+      "name_ru": "Кыргызстан",
+      "name_en": "Kyrgyzstan",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./kg.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "KH",
+      "iso3": "KHM",
+      "name_ru": "Камбоджа",
+      "name_en": "Cambodia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./kh.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "KI",
+      "iso3": "KIR",
+      "name_ru": "Кирибати",
+      "name_en": "Kiribati",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ki.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "KM",
+      "iso3": "COM",
+      "name_ru": "Коморы",
+      "name_en": "Comoros",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./km.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "KN",
+      "iso3": "KNA",
+      "name_ru": "Сент-Китс и Невис",
+      "name_en": "Saint Kitts and Nevis",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./kn.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "KP",
+      "iso3": "PRK",
+      "name_ru": "КНДР (Корейская Народно-Демократическая Республика)",
+      "name_en": "Korea, Democratic People's Republic of",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./kp.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "KR",
+      "iso3": "KOR",
+      "name_ru": "Южная Корея",
+      "name_en": "Korea, Republic of",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./kr.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "KW",
+      "iso3": "KWT",
+      "name_ru": "Кувейт",
+      "name_en": "Kuwait",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./kw.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "KZ",
+      "iso3": "KAZ",
+      "name_ru": "Казахстан",
+      "name_en": "Kazakhstan",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./kz.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "LA",
+      "iso3": "LAO",
+      "name_ru": "Лаос",
+      "name_en": "Lao People's Democratic Republic",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./la.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "LB",
+      "iso3": "LBN",
+      "name_ru": "Ливан",
+      "name_en": "Lebanon",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./lb.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "LC",
+      "iso3": "LCA",
+      "name_ru": "Сент-Люсия",
+      "name_en": "Saint Lucia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./lc.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "LI",
+      "iso3": "LIE",
+      "name_ru": "Лихтенштейн",
+      "name_en": "Liechtenstein",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./li.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "LK",
+      "iso3": "LKA",
+      "name_ru": "Шри-Ланка",
+      "name_en": "Sri Lanka",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./lk.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "LR",
+      "iso3": "LBR",
+      "name_ru": "Либерия",
+      "name_en": "Liberia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./lr.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "LS",
+      "iso3": "LSO",
+      "name_ru": "Лесото",
+      "name_en": "Lesotho",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ls.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "LT",
+      "iso3": "LTU",
+      "name_ru": "Литва",
+      "name_en": "Lithuania",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./lt.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "LU",
+      "iso3": "LUX",
+      "name_ru": "Люксембург",
+      "name_en": "Luxembourg",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./lu.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "LV",
+      "iso3": "LVA",
+      "name_ru": "Латвия",
+      "name_en": "Latvia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./lv.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "LY",
+      "iso3": "LBY",
+      "name_ru": "Ливия",
+      "name_en": "Libya",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ly.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "MA",
+      "iso3": "MAR",
+      "name_ru": "Марокко",
+      "name_en": "Morocco",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ma.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "MC",
+      "iso3": "MCO",
+      "name_ru": "Монако",
+      "name_en": "Monaco",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./mc.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "MD",
+      "iso3": "MDA",
+      "name_ru": "Молдова",
+      "name_en": "Moldova, Republic of",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./md.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "ME",
+      "iso3": "MNE",
+      "name_ru": "Черногория",
+      "name_en": "Montenegro",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./me.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "MG",
+      "iso3": "MDG",
+      "name_ru": "Мадагаскар",
+      "name_en": "Madagascar",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./mg.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "MH",
+      "iso3": "MHL",
+      "name_ru": "Маршалловы Острова",
+      "name_en": "Marshall Islands",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./mh.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "MK",
+      "iso3": "MKD",
+      "name_ru": "Северная Македония",
+      "name_en": "North Macedonia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./mk.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "ML",
+      "iso3": "MLI",
+      "name_ru": "Мали",
+      "name_en": "Mali",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ml.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "MM",
+      "iso3": "MMR",
+      "name_ru": "Мьянма",
+      "name_en": "Myanmar",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./mm.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "MN",
+      "iso3": "MNG",
+      "name_ru": "Монголия",
+      "name_en": "Mongolia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./mn.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "MR",
+      "iso3": "MRT",
+      "name_ru": "Мавритания",
+      "name_en": "Mauritania",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./mr.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "MT",
+      "iso3": "MLT",
+      "name_ru": "Мальта",
+      "name_en": "Malta",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./mt.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "MU",
+      "iso3": "MUS",
+      "name_ru": "Маврикий",
+      "name_en": "Mauritius",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./mu.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "MV",
+      "iso3": "MDV",
+      "name_ru": "Мальдивы",
+      "name_en": "Maldives",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./mv.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "MW",
+      "iso3": "MWI",
+      "name_ru": "Малави",
+      "name_en": "Malawi",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./mw.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "MX",
+      "iso3": "MEX",
+      "name_ru": "Мексика",
+      "name_en": "Mexico",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./mx.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "MY",
+      "iso3": "MYS",
+      "name_ru": "Малайзия",
+      "name_en": "Malaysia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./my.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "MZ",
+      "iso3": "MOZ",
+      "name_ru": "Мозамбик",
+      "name_en": "Mozambique",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./mz.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "NA",
+      "iso3": "NAM",
+      "name_ru": "Намибия",
+      "name_en": "Namibia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./na.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "NE",
+      "iso3": "NER",
+      "name_ru": "Нигер",
+      "name_en": "Niger",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ne.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "NG",
+      "iso3": "NGA",
+      "name_ru": "Нигерия",
+      "name_en": "Nigeria",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ng.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "NI",
+      "iso3": "NIC",
+      "name_ru": "Никарагуа",
+      "name_en": "Nicaragua",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ni.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "NL",
+      "iso3": "NLD",
+      "name_ru": "Нидерланды",
+      "name_en": "Netherlands",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./nl.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "NO",
+      "iso3": "NOR",
+      "name_ru": "Норвегия",
+      "name_en": "Norway",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./no.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "NP",
+      "iso3": "NPL",
+      "name_ru": "Непал",
+      "name_en": "Nepal",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./np.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "NR",
+      "iso3": "NRU",
+      "name_ru": "Науру",
+      "name_en": "Nauru",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./nr.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "NZ",
+      "iso3": "NZL",
+      "name_ru": "Новая Зеландия",
+      "name_en": "New Zealand",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./nz.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "OM",
+      "iso3": "OMN",
+      "name_ru": "Оман",
+      "name_en": "Oman",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./om.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "PA",
+      "iso3": "PAN",
+      "name_ru": "Панама",
+      "name_en": "Panama",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./pa.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "PE",
+      "iso3": "PER",
+      "name_ru": "Перу",
+      "name_en": "Peru",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./pe.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "PG",
+      "iso3": "PNG",
+      "name_ru": "Папуа — Новая Гвинея",
+      "name_en": "Papua New Guinea",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./pg.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "PH",
+      "iso3": "PHL",
+      "name_ru": "Филиппины",
+      "name_en": "Philippines",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ph.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "PK",
+      "iso3": "PAK",
+      "name_ru": "Пакистан",
+      "name_en": "Pakistan",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./pk.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "PL",
+      "iso3": "POL",
+      "name_ru": "Польша",
+      "name_en": "Poland",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./pl.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "PS",
+      "iso3": "PSE",
+      "name_ru": "Палестина",
+      "name_en": "State of Palestine",
+      "un_status": "observer",
+      "flag_status": "source_verified",
+      "svg": "./ps.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "PT",
+      "iso3": "PRT",
+      "name_ru": "Португалия",
+      "name_en": "Portugal",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./pt.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "PW",
+      "iso3": "PLW",
+      "name_ru": "Палау",
+      "name_en": "Palau",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./pw.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "PY",
+      "iso3": "PRY",
+      "name_ru": "Парагвай",
+      "name_en": "Paraguay",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./py.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "QA",
+      "iso3": "QAT",
+      "name_ru": "Катар",
+      "name_en": "Qatar",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./qa.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "RO",
+      "iso3": "ROU",
+      "name_ru": "Румыния",
+      "name_en": "Romania",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ro.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "RS",
+      "iso3": "SRB",
+      "name_ru": "Сербия",
+      "name_en": "Serbia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./rs.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "RU",
+      "iso3": "RUS",
+      "name_ru": "Россия",
+      "name_en": "Russian Federation",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ru.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "RW",
+      "iso3": "RWA",
+      "name_ru": "Руанда",
+      "name_en": "Rwanda",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./rw.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "SA",
+      "iso3": "SAU",
+      "name_ru": "Саудовская Аравия",
+      "name_en": "Saudi Arabia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./sa.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "SB",
+      "iso3": "SLB",
+      "name_ru": "Соломоновы Острова",
+      "name_en": "Solomon Islands",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./sb.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "SC",
+      "iso3": "SYC",
+      "name_ru": "Сейшельские Острова",
+      "name_en": "Seychelles",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./sc.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "SD",
+      "iso3": "SDN",
+      "name_ru": "Судан",
+      "name_en": "Sudan",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./sd.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "SE",
+      "iso3": "SWE",
+      "name_ru": "Швеция",
+      "name_en": "Sweden",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./se.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "SG",
+      "iso3": "SGP",
+      "name_ru": "Сингапур",
+      "name_en": "Singapore",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./sg.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "SI",
+      "iso3": "SVN",
+      "name_ru": "Словения",
+      "name_en": "Slovenia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./si.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "SK",
+      "iso3": "SVK",
+      "name_ru": "Словакия",
+      "name_en": "Slovakia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./sk.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "SL",
+      "iso3": "SLE",
+      "name_ru": "Сьерра-Леоне",
+      "name_en": "Sierra Leone",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./sl.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "SM",
+      "iso3": "SMR",
+      "name_ru": "Сан-Марино",
+      "name_en": "San Marino",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./sm.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "SN",
+      "iso3": "SEN",
+      "name_ru": "Сенегал",
+      "name_en": "Senegal",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./sn.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "SO",
+      "iso3": "SOM",
+      "name_ru": "Сомали",
+      "name_en": "Somalia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./so.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "SR",
+      "iso3": "SUR",
+      "name_ru": "Суринам",
+      "name_en": "Suriname",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./sr.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "SS",
+      "iso3": "SSD",
+      "name_ru": "Южный Судан",
+      "name_en": "South Sudan",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ss.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "ST",
+      "iso3": "STP",
+      "name_ru": "Сан-Томе и Принсипи",
+      "name_en": "Sao Tome and Principe",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./st.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "SV",
+      "iso3": "SLV",
+      "name_ru": "Сальвадор",
+      "name_en": "El Salvador",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./sv.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "SY",
+      "iso3": "SYR",
+      "name_ru": "Сирия",
+      "name_en": "Syrian Arab Republic",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./sy.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "SZ",
+      "iso3": "SWZ",
+      "name_ru": "Эсватини",
+      "name_en": "Eswatini",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./sz.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "TD",
+      "iso3": "TCD",
+      "name_ru": "Чад",
+      "name_en": "Chad",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./td.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "TG",
+      "iso3": "TGO",
+      "name_ru": "Того",
+      "name_en": "Togo",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./tg.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "TH",
+      "iso3": "THA",
+      "name_ru": "Таиланд",
+      "name_en": "Thailand",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./th.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "TJ",
+      "iso3": "TJK",
+      "name_ru": "Таджикистан",
+      "name_en": "Tajikistan",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./tj.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "TL",
+      "iso3": "TLS",
+      "name_ru": "Восточный Тимор",
+      "name_en": "Timor-Leste",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./tl.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "TM",
+      "iso3": "TKM",
+      "name_ru": "Туркменистан",
+      "name_en": "Turkmenistan",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./tm.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "TN",
+      "iso3": "TUN",
+      "name_ru": "Тунис",
+      "name_en": "Tunisia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./tn.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "TO",
+      "iso3": "TON",
+      "name_ru": "Тонга",
+      "name_en": "Tonga",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./to.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "TR",
+      "iso3": "TUR",
+      "name_ru": "Турция",
+      "name_en": "Türkiye",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./tr.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "TT",
+      "iso3": "TTO",
+      "name_ru": "Тринидад и Тобаго",
+      "name_en": "Trinidad and Tobago",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./tt.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "TV",
+      "iso3": "TUV",
+      "name_ru": "Тувалу",
+      "name_en": "Tuvalu",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./tv.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "TZ",
+      "iso3": "TZA",
+      "name_ru": "Танзания",
+      "name_en": "Tanzania, United Republic of",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./tz.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "UA",
+      "iso3": "UKR",
+      "name_ru": "Украина",
+      "name_en": "Ukraine",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ua.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "UG",
+      "iso3": "UGA",
+      "name_ru": "Уганда",
+      "name_en": "Uganda",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ug.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "US",
+      "iso3": "USA",
+      "name_ru": "США",
+      "name_en": "United States of America",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./us.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "UY",
+      "iso3": "URY",
+      "name_ru": "Уругвай",
+      "name_en": "Uruguay",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./uy.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "UZ",
+      "iso3": "UZB",
+      "name_ru": "Узбекистан",
+      "name_en": "Uzbekistan",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./uz.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "VA",
+      "iso3": "VAT",
+      "name_ru": "Ватикан (Святой Престол)",
+      "name_en": "Holy See",
+      "un_status": "observer",
+      "flag_status": "source_verified",
+      "svg": "./va.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "VC",
+      "iso3": "VCT",
+      "name_ru": "Сент-Винсент и Гренадины",
+      "name_en": "Saint Vincent and the Grenadines",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./vc.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "VE",
+      "iso3": "VEN",
+      "name_ru": "Венесуэла",
+      "name_en": "Venezuela, Bolivarian Republic of",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ve.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "VN",
+      "iso3": "VNM",
+      "name_ru": "Вьетнам",
+      "name_en": "Viet Nam",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./vn.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "VU",
+      "iso3": "VUT",
+      "name_ru": "Вануату",
+      "name_en": "Vanuatu",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./vu.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "WS",
+      "iso3": "WSM",
+      "name_ru": "Самоа",
+      "name_en": "Samoa",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ws.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "YE",
+      "iso3": "YEM",
+      "name_ru": "Йемен",
+      "name_en": "Yemen",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./ye.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "ZA",
+      "iso3": "ZAF",
+      "name_ru": "ЮАР",
+      "name_en": "South Africa",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./za.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "ZM",
+      "iso3": "ZMB",
+      "name_ru": "Замбия",
+      "name_en": "Zambia",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./zm.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    },
+    {
+      "iso2": "ZW",
+      "iso3": "ZWE",
+      "name_ru": "Зимбабве",
+      "name_en": "Zimbabwe",
+      "un_status": "member",
+      "flag_status": "source_verified",
+      "svg": "./zw.svg",
+      "source_sha": "c09927e63705529bbf59ca6684cd9b23225dddad"
+    }
+  ]
+}
