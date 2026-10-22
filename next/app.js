@@ -140,7 +140,7 @@ function gameRichMarkup(q,locked){
  if(kind==='hotspot')return '<p class="muted-small">Нажмите на нужную область фотографии.</p><button type="button" id="richSpot" class="rich-hotspot"'+disabled+' aria-label="Выбрать точку на изображении">'+
  (typeof q.media_url==='string'&&/^https:\/\//i.test(q.media_url)?'<img src="'+esc(q.media_url)+'" alt="Изображение для поиска точки" draggable="false">':'<span>Изображение не указано</span>')+
  '<span class="rich-marker" id="richMarker" hidden>+</span></button><button type="button" class="btn btn-dark rich-send" data-submit-rich'+disabled+'>Подтвердить точку →</button>';
- return '<div class="option-list">'+options.map((option,i)=>{
+ return '<div class="option-list'+(options.some(option=>typeof option==='string'&&option.length>36)?' has-long-options':'')+'">'+options.map((option,i)=>{
   let classes='option';if(q._phase==='result'&&i===Number(q.correct))classes+=' correct';
   return '<button type="button" class="'+classes+'" data-answer="'+i+'"'+disabled+'><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+flagOptionHtml(option,i)+'</span></button>';
  }).join('')+'</div>';
@@ -197,8 +197,8 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  if(richKind==='hotspot'&&s.phase==='question'){interactive=optsMarkup.match(/<button type="button" id="richSpot"[\s\S]*?<\/button>/)?.[0]||'';optsMarkup=optsMarkup.replace(interactive,'').replace(/<p class="muted-small">[\s\S]*?<\/p>/,'')}
  const media=QwizStage.illustration(question,s.answer,interactive);
  const clip=typeof question.media_url==='string'&&/^https:\/\//i.test(question.media_url)&&['audio','video'].includes(richKind)?'<'+richKind+' class="rich-media" controls preload="metadata" src="'+esc(question.media_url)+'"></'+richKind+'>':'';
- el.innerHTML='<div class="player-question-top"><span class="eyebrow">Вопрос '+(s.index+1)+' / '+s.total+'</span>'+QwizStage.clockMarkup(s,'playerTimer')+'</div>'+media+'<h1>'+esc(question.prompt)+'</h1>'+clip+
- (s.phase==='result'?'<section class="player-answer answer-reveal" role="status"><span>'+(richKind==='poll'?'ИТОГ ГОЛОСОВАНИЯ':'ПРАВИЛЬНЫЙ ОТВЕТ')+'</span><h2>'+esc(s.answer?.text||gameRichResult(question).replace(/^Правильный ответ: /,''))+'</h2>'+(question.explanation?'<p>'+esc(question.explanation)+'</p>':'')+'</section>'+personalResults(s):optsMarkup+(done?'<p class="notice success">Ваш ответ принят. Ожидайте остальных участников.</p>':time===0?'<p class="notice">Приём ответов завершён.</p>':''));
+ el.innerHTML='<div class="player-question-top"><span class="eyebrow">Вопрос '+(s.index+1)+' / '+s.total+'</span>'+QwizStage.clockMarkup(s,'playerTimer')+'</div><div class="player-question-layout"><div class="player-prompt">'+media+'<h1>'+esc(question.prompt)+'</h1>'+clip+'</div><div class="player-responses">'+
+ (s.phase==='result'?'<section class="player-answer answer-reveal" role="status"><span>'+(richKind==='poll'?'ИТОГ ГОЛОСОВАНИЯ':'ПРАВИЛЬНЫЙ ОТВЕТ')+'</span><h2>'+esc(s.answer?.text||gameRichResult(question).replace(/^Правильный ответ: /,''))+'</h2>'+(question.explanation?'<p>'+esc(question.explanation)+'</p>':'')+'</section>'+personalResults(s):optsMarkup+(done?'<p class="notice success">Ваш ответ принят. Ожидайте остальных участников.</p>':time===0?'<p class="notice">Приём ответов завершён.</p>':''))+'</div></div>';
  if(question.flag_memory&&s.phase==='question'){
   const controls=el.querySelector('.option-list');if(controls)controls.setAttribute('data-memory-answer','');
  }

@@ -50,6 +50,8 @@ jobs:
           node --check next/workspace.js
           node --check next/profile.js
           node --check next/stage.js
+          node --check next/player-layout.js
+          test -s next/player-layout.css
           node --check next/teams.js
           node --check next/workspace-teams.js
           test -s next/teams.css
@@ -108,6 +110,11 @@ jobs:
                grep -q -- '--q-blue' /tmp/org-published-uipromax.css &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/index.html?release=$GITHUB_RUN_ID" -o /tmp/org-next-index.html &&
                grep -q 'QWIZ-PARTY — Командная викторина' /tmp/org-next-index.html &&
+               grep -q 'id="playerMore"' /tmp/org-next-index.html &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/player-layout.js?v=mobile-20261023-1" -o /tmp/qwiz-player-layout.js &&
+               grep -q 'player-compact' /tmp/qwiz-player-layout.js &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/player-layout.css?v=mobile-20261023-1" -o /tmp/qwiz-player-layout.css &&
+               grep -q 'player-sheet' /tmp/qwiz-player-layout.css &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/app.js?v=13" -o /tmp/org-next-app.js &&
                grep -q 'org_next_answer' /tmp/org-next-app.js &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/motion.css?v=2" -o /tmp/qwiz-motion.css &&
