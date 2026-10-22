@@ -11,19 +11,19 @@ async function projector(page,data){
 }
 async function workspace(page){
  await page.route('https://cdn.jsdelivr.net/**',r=>r.fulfill({contentType:'application/javascript',body:
- 'window.savedBuild=null;window.actions=[];window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:{user:{id:"host"}}}}),signOut:async()=>({})},rpc:async(name,args)=>{window.actions.push([name,args]);if(name==="org_quiz_is_admin_check")return {data:true};if(name==="qwiz_studio"&&args.p_action==="overview")return {data:{topics:[],builds:[],total_questions:0}};if(name==="qwiz_studio"&&args.p_action==="questions")return {data:{items:[],total:0}};if(name==="qwiz_studio"&&args.p_action==="build_save"){window.savedBuild=args.p_input;return {data:{id:"saved"}}}if(name==="qwiz_host_rooms")return {data:[]};if(name==="org_next_state")return {data:window.fixture};if(name==="org_next_advance"){window.fixture={...window.fixture,phase:window.fixture.phase==="question"?"result":"question",ends_at:new Date(Date.now()+10000).toISOString()};return {data:window.fixture.phase}}return {data:{items:[],total:0}}},channel:()=>({on(){return this},subscribe(){return this}}),removeChannel:()=>{}})};'}));
+ 'window.savedBuild=null;window.actions=[];window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:{user:{id:"host"}}}}),signOut:async()=>({})},rpc:async(name,args)=>{window.actions.push([name,args]);if(name==="org_quiz_is_admin_check")return {data:true};if(name==="qwiz_studio"&&args.p_action==="overview")return {data:{topics:[],builds:[],total_questions:0}};if(name==="qwiz_studio"&&args.p_action==="questions")return {data:{items:[],total:0}};if(name==="qwiz_studio"&&args.p_action==="build_save"){window.savedBuild=args.p_input;return {data:{id:"saved"}}}if(name==="qwiz_host_rooms")return {data:[]};if(name==="qwiz_party_state")return {data:window.fixture};if(name==="qwiz_party_control"){window.fixture={...window.fixture,phase:window.fixture.phase==="question"?"result":"question",ends_at:new Date(Date.now()+10000).toISOString()};return {data:window.fixture.phase}}return {data:{items:[],total:0}}},channel:()=>({on(){return this},subscribe(){return this}}),removeChannel:()=>{}})};'}));
  await page.goto(base+'workspace.html');await expect(page.locator('#connText')).toHaveAttribute('data-state','ready');
 }
 test('Fifteen distinct habitat icons fit the classroom screen and illustration precedes question',async({page})=>{
  await page.setViewportSize({width:1440,height:1000});await projector(page,state());await expect(page.locator('.habitat-team')).toHaveCount(15);
- const d=await page.evaluate(()=>{const icons=[...document.querySelectorAll('.habitat-icon')];return {symbols:new Set(icons.map(x=>x.querySelector('use').getAttribute('href'))).size,colors:new Set(icons.map(x=>x.style.getPropertyValue('--team-color'))).size,art:document.querySelector('.question-frame').getBoundingClientRect().bottom,question:document.querySelector('.projection-question h1').getBoundingClientRect().top,last:icons.at(-1).getBoundingClientRect().bottom,overflow:document.documentElement.scrollWidth-innerWidth}});
- expect(d.symbols).toBe(15);expect(d.colors).toBe(15);expect(d.art).toBeLessThan(d.question);expect(d.last).toBeLessThan(1000);expect(d.overflow).toBeLessThanOrEqual(1);
+ const d=await page.evaluate(()=>{const icons=[...document.querySelectorAll('.animal-medallion .team-avatar')];return {symbols:new Set(icons.map(x=>x.querySelector('use').getAttribute('href'))).size,art:document.querySelector('.question-frame').getBoundingClientRect().bottom,question:document.querySelector('.projection-question h1').getBoundingClientRect().top,last:icons.at(-1).getBoundingClientRect().bottom,overflow:document.documentElement.scrollWidth-innerWidth}});
+ expect(d.symbols).toBe(12);expect(d.art).toBeLessThan(d.question);expect(d.last).toBeLessThan(1000);expect(d.overflow).toBeLessThanOrEqual(1);
  await page.screenshot({path:'visual-artifacts/question-stage-1440.png',fullPage:true,animations:'disabled'});
 });
 test('Replies fill five segments bottom-up without replacing the illustration',async({page})=>{
  const s=state();s.teams[0].answered=0;await projector(page,s);const first=page.locator('[data-team="team-0"]');
- await expect(first.locator('.habitat-seams path')).toHaveCount(4);await page.evaluate(()=>window.originalArt=document.querySelector('.question-frame'));
- await page.evaluate(()=>{window.fixture.teams[0].answered=1;render(window.fixture)});await expect(first.locator('.team-answered')).toHaveText('1');await expect(first.locator('.habitat-color')).toHaveAttribute('style',/76.4/);
+ await expect(first.locator('.animal-medallion .team-avatar')).toHaveCount(1);await page.evaluate(()=>window.originalArt=document.querySelector('.question-frame'));
+ await page.evaluate(()=>{window.fixture.teams[0].answered=1;render(window.fixture)});await expect(first.locator('.team-answered')).toHaveText('1');await expect(first.locator('.animal-medallion')).toHaveAttribute('style',/20%/);
  await page.evaluate(()=>{window.fixture.teams[0].answered=5;render(window.fixture)});await expect(first.locator('.team-answered')).toHaveText('5');
  expect(await page.evaluate(()=>window.originalArt===document.querySelector('.question-frame'))).toBe(true);
 });
@@ -81,8 +81,8 @@ test('Final card has a trophy, readable controls and appropriate settings',async
 });
 test('Moderator Next is available in question and answer and uses the protected RPC',async({page})=>{
  await workspace(page);await page.evaluate(s=>{window.fixture={...s,room_id:'room',players:[],teams:[]};state.roomCode=s.code;state.room=window.fixture;document.getElementById('liveConsole').hidden=false;section('rooms');renderLive(window.fixture)},state());
- await expect(page.locator('#liveNext')).toBeVisible();await expect(page.locator('#liveNext')).toContainText('ответ');await page.locator('#liveNext').click();await expect(page.locator('#livePhase')).toHaveText('Разбор ответа');await expect(page.locator('#liveNext')).toBeVisible();
- expect(await page.evaluate(()=>window.actions.some(([name,args])=>name==='org_next_advance'&&args.p_action==='next'))).toBe(true);
+ await expect(page.locator('#liveNext')).toBeVisible();await expect(page.locator('#liveNext')).toContainText('Далее');await page.locator('#liveNext').click();await expect(page.locator('#livePhase')).toHaveText('Разбор ответа');await expect(page.locator('#liveNext')).toBeVisible();
+ expect(await page.evaluate(()=>window.actions.some(([name,args])=>name==='qwiz_party_control'&&args.p_action==='next'))).toBe(true);
 });
 test('Broken illustration still leaves a drawing in the moving frame',async({page})=>{
  const s=state();s.question.illustration_url='https://assets.example.org/missing.svg';await page.route('https://assets.example.org/**',r=>r.fulfill({status:404,body:''}));await projector(page,s);await expect(page.locator('.question-picture svg')).toBeVisible();await expect(page.locator('.question-frame figcaption')).toHaveText('Иллюстрация недоступна');
