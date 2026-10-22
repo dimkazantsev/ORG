@@ -51,7 +51,7 @@ test('Shuffle uses the server action and redraws balanced memberships',async({pa
  expect(await page.evaluate(()=>window.actions.some(([n,a])=>n==='qwiz_team_admin'&&a.p_action==='shuffle'))).toBe(true);
 });
 test('Teacher can drag a student with avatar to another team',async({page})=>{
- await host(page);const player=uid(101),target=uid(2);await page.locator('[data-player-id="'+player+'"]').dragTo(page.locator('[data-drop-team="'+target+'"]'));
+ await host(page);const player=uid(101),target=uid(2);await page.locator('[data-player-id="'+player+'"] .team-member-name').dragTo(page.locator('[data-drop-team="'+target+'"] .team-card-head'));
  await expect(page.locator('[data-drop-team="'+target+'"] [data-player-id="'+player+'"]')).toBeVisible();
  expect(await page.evaluate(()=>window.actions.filter(([n,a])=>n==='qwiz_team_admin'&&a.p_action==='move').at(-1)[1].p_input)).toEqual({player_id:player,team_id:target});
 });
