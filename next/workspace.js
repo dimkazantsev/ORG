@@ -462,7 +462,7 @@ function renderInsights(){const d=state.insights||{},overview=d.overview||{},stu
 }
 async function signOut(){await state.db.auth.signOut();location.replace('./')}
 function wire(){
- for(const b of all('#cardPalette [data-card]')){
+ for(const b of all('#cardPalette [data-card],#arcadePalette [data-card]')){
   const label=b.textContent.trim().replace(/^[^\s]+\s+/,'');
   b.innerHTML=cardIconSvg(b.dataset.card,b.dataset.arcade?'arcade_'+b.dataset.arcade:null)+'<span>'+esc(label)+'</span>';
  }
