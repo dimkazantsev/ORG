@@ -92,7 +92,7 @@ test('Library separates bank from round builds and charts',()=>{
  const j=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
  for(const id of ['bankPage','builderPage','roomsPage','insightsPage','roundCards','questionDialog','cardDialog','studentChart','hostRoomList','liveConsole'])
   assert.match(h,new RegExp('id="'+id+'"'));
- for(const api of ['qwiz_studio','qwiz_launch_build','qwiz_host_rooms','qwiz_teacher_stats'])
+ for(const api of ['qwiz_studio','qwiz_prepare_room','qwiz_host_rooms','qwiz_teacher_stats'])
   assert.match(j,new RegExp(api));
  assert.match(j,/draggable|dragstart/);
 });
