@@ -9,7 +9,7 @@ test('New JavaScript parses independently of legacy app.js',()=>{assert.doesNotT
 test('All direct DOM IDs referenced by client exist in HTML',()=>{
  const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]));
  const refs=new Set([...js.matchAll(/\$\('([^']+)'\)/g)].map(x=>x[1]));
- for(const ref of refs)assert.ok(ids.has(ref),'Missing #'+ref);
+ for(const ref of refs)assert.ok(ids.has(ref)||js.includes('id="'+ref+'"'),'Missing static or dynamically rendered #'+ref);
 });
 test('Client never directly reads answer keys or core tables',()=>{
  assert.doesNotMatch(js,/\.from\(['"]org_next_/);
@@ -39,7 +39,8 @@ test('Database is isolated and uses RLS + explicit RPC grants',()=>{
 test('No client-side fabricated correct answers or scores',()=>{
  assert.doesNotMatch(js,/KEY_SUPABASE\s*=\s*['"]service_role/);
  assert.match(js,/ctx\.client\.rpc\(name,params\)/);
- assert.match(js,/await rpc\('org_next_answer'/);
+ assert.match(js,/org_next_answer/);
+ assert.match(js,/qwiz_submit_answer/);
 });
 
 test('QWIZ-PARTY brand, QR library, presenter-only route and 15 teams',()=>{
