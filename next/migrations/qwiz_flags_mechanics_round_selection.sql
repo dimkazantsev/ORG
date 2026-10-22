@@ -14,7 +14,7 @@ begin
  if v_correct is null or v_correct !~ '^[0-3]$' then return false;end if;
  v_mode:=p_solution->>'flag_mode';
  if v_mode='country' then
-  if coalesce(p_solution->>'media_url','') !~ '^https://[^ ]+\\.svg([?][^ ]*)?$' then return false;end if;
+  if coalesce(p_solution->>'media_url','') !~ '^https://[^ ]+[.]svg([?][^ ]*)?$' then return false;end if;
   if exists(select 1 from jsonb_array_elements(p_options) v
      where jsonb_typeof(v.value)<>'string' or length(btrim(v.value#>>'{}'))<2) then return false;end if;
   if (select count(distinct lower(btrim(v.value))) from jsonb_array_elements_text(p_options) v)<>4 then return false;end if;
@@ -25,7 +25,7 @@ begin
   if (select count(distinct lower(btrim(v.value))) from jsonb_array_elements_text(p_solution->'option_labels') v)<>4 then return false;end if;
   if exists(select 1 from jsonb_array_elements(p_options) v
       where jsonb_typeof(v.value)<>'object' or
-      coalesce(v.value->>'image_url','') !~ '^https://[^ ]+\\.svg([?][^ ]*)?$' or
+      coalesce(v.value->>'image_url','') !~ '^https://[^ ]+[.]svg([?][^ ]*)?$' or
       v.value ? 'label') then return false;end if;
   if (select count(distinct v.value->>'image_url') from jsonb_array_elements(p_options) v)<>4 then return false;end if;
   return true;
@@ -65,7 +65,6 @@ begin
   return jsonb_build_object(
    'total',(select count(*) from public.qwiz_bank q where q.owner_id=v_user and (nullif(p_input->>'topic_id','') is null or q.topic_id=(p_input->>'topic_id')::uuid)
      and (nullif(p_input->>'kind','') is null or q.kind=p_input->>'kind')
-       and (nullif(p_input->>'mode','') is null or q.solution->>'flag_mode'=p_input->>'mode')
      and (nullif(p_input->>'mode','') is null or q.solution->>'flag_mode'=p_input->>'mode')
      and (nullif(p_input->>'search','') is null or q.prompt ilike '%'||(p_input->>'search')||'%')),
    'items',(select coalesce(jsonb_agg(s.data order by s.ord),'[]'::jsonb) from
@@ -79,6 +78,7 @@ begin
        from public.qwiz_bank q where q.owner_id=v_user
        and (nullif(p_input->>'topic_id','') is null or q.topic_id=(p_input->>'topic_id')::uuid)
        and (nullif(p_input->>'kind','') is null or q.kind=p_input->>'kind')
+       and (nullif(p_input->>'mode','') is null or q.solution->>'flag_mode'=p_input->>'mode')
        and (nullif(p_input->>'search','') is null or q.prompt ilike '%'||(p_input->>'search')||'%')
        order by ord limit greatest(1,least(100,coalesce((p_input->>'limit')::int,25))) offset greatest(0,least(100000,coalesce((p_input->>'offset')::int,0)))
       )s)
