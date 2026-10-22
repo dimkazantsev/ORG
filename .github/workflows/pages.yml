@@ -120,8 +120,14 @@ jobs:
                grep -q 'Сборки и раунды' /tmp/qwiz-workspace.html &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/profile.html" -o /tmp/qwiz-profile.html &&
                grep -q 'Мой профиль' /tmp/qwiz-profile.html &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/workspace.js?v=6" -o /tmp/qwiz-workspace.js &&
-               grep -q 'qwiz_launch_build' /tmp/qwiz-workspace.js &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/workspace.js?v=teams-flags-1" -o /tmp/qwiz-workspace.js &&
+               grep -q 'qwiz_prepare_room' /tmp/qwiz-workspace.js &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/workspace-teams.js" -o /tmp/qwiz-workspace-teams.js &&
+               grep -q 'qwiz_team_admin' /tmp/qwiz-workspace-teams.js &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/teams.js" -o /tmp/qwiz-teams.js &&
+               grep -q 'qwiz_join_team' /tmp/qwiz-teams.js &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/teams.css" -o /tmp/qwiz-teams.css &&
+               grep -q 'team-board-card' /tmp/qwiz-teams.css &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/stage.js?v=1" -o /tmp/qwiz-stage.js &&
                grep -q 'hydrateIllustrations' /tmp/qwiz-stage.js &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/stage.css?v=1" -o /tmp/qwiz-stage.css &&
