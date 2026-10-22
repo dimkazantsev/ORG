@@ -141,7 +141,7 @@ async function init(){
  if(!window.supabase?.createClient){showError('Не удалось подключить Supabase');return}
  ctx.client=window.supabase.createClient(SUPABASE_URL,KEY);
  subscribe();await refresh();
- setInterval(()=>{if(!document.hidden)refresh()},7000);
+ setInterval(()=>{if(!document.hidden)refresh()},15000);
  setInterval(()=>{
    if(ctx.last?.phase==='question'&&$('projectionTimer'))$('projectionTimer').textContent=seconds(ctx.last.ends_at)+' сек.';
    if(ctx.last?.phase==='countdown'){
