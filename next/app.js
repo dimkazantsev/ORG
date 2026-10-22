@@ -164,13 +164,18 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  const el=$('gameContent');
  const cue=s.phase+':'+s.index;if(cue!==ctx.gameCue){ctx.gameCue=cue;if(s.phase==='result')QwizStage.audio.play('reveal');else if(s.phase==='finished')QwizStage.audio.play(s.activity?.sound||'fanfare');else if(s.phase==='question')QwizStage.audio.play('pop')}
  $('playerTeamProgress').hidden=s.phase!=='question';if(s.phase==='question')QwizStage.progress($('playerTeamProgress'),s.public_stats?.teams||[]);
- const renderKey=[s.code,s.index,s.phase,s.has_answer,s.eligible,s.total,s.question?.kind,s.question?.prompt,me?.team_id].join(':');
+ window.QwizArcade?.syncWallet(s,ctx);
+ const renderKey=[s.code,s.index,s.phase,s.activity?.title,s.activity?.settings?.arcade_mode,s.has_answer,s.eligible,s.total,s.question?.kind,s.question?.prompt,me?.team_id].join(':');
  if(ctx.gameRenderKey===renderKey)return;
  ctx.gameRenderKey=renderKey;
+ if(s.phase!=='intermission')window.QwizArcade?.stop('player');
  if(s.phase==='lobby'){el.innerHTML='<div class="game-empty"><div class="eyebrow">Вы в комнате '+esc(s.code)+'</div><h1>Вы в игре.</h1><p>Преподаватель собирает участников. Игра начнётся на всех устройствах одновременно.</p><div class="phase-label">'+esc(myTeam?.name||'Ожидание команды')+'</div></div>';text('playerStatus','Подключён. Ожидайте начала.');return}
  if(s.phase==='finished'){el.innerHTML='<div class="game-empty"><div class="eyebrow">Игра завершена</div><h1>Финальный рейтинг</h1><p>Спасибо за участие. Результаты зафиксированы на сервере.</p>'+personalResults(s,true)+'</div>';text('playerStatus','Игра завершена.');return}
  const question=s.question;
  if(s.phase==='intermission'){
+   if(window.QwizArcade?.mountPlayer(el,s,ctx)){
+     text('playerStatus','Командное испытание. Действуйте вместе, зарабатывайте достижения и жетоны.');return;
+   }
    el.innerHTML='<div class="game-empty"><div class="eyebrow">ДОПОЛНИТЕЛЬНАЯ АКТИВНОСТЬ</div><h1>'+esc(s.activity?.title||'Перерыв')+'</h1><p>Следующий этап откроет преподаватель.</p></div>';
    text('playerStatus','Ожидаем продолжения.');
    return;
