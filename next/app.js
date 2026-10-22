@@ -96,6 +96,38 @@ function renderRoom(){if(ctx.mode!=='studio')return;const s=ctx.room;const has=!
  (s.teams||[]).map(t=>'<option value="'+esc(t.id)+'" '+(t.id===p.team_id?'selected':'')+'>'+esc(t.name)+'</option>').join('')+'</select></div>').join(''):'<div class="placeholder">Участники появятся после входа по коду.</div>';
 }
 function renderResults(){if(ctx.mode!=='studio')return;const s=ctx.room;text('resultIntro',s?.phase==='finished'?'Игра завершена. Результаты рассчитаны на сервере.':'Текущие результаты команд. Окончательными они станут после завершения игры.');$('resultTeams').innerHTML=s?teamMarkup(s.teams):'<div class="placeholder">Создайте и проведите игру.</div>'; $('exportResults').disabled=!s}
+function gameRichMarkup(q,locked){
+ const kind=q.kind||'single', options=q.options||[], disabled=locked?' disabled':'';
+ const select=(values,cls,first='Выберите')=>'<select class="'+cls+'"'+disabled+'><option value="">'+first+'</option>'+
+   values.map((v,i)=>'<option value="'+i+'">'+esc(v)+'</option>').join('')+'</select>';
+ if(kind==='multi')return '<div class="rich-choices">'+options.map((v,i)=>'<label class="rich-choice"><input type="checkbox" data-multi="'+i+'"'+disabled+'><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+esc(v)+'</span></label>').join('')+'</div>'+
+  '<button class="btn btn-dark rich-send" type="button" data-submit-rich'+disabled+'>Подтвердить выбранные варианты →</button>';
+ if(kind==='match')return '<div class="rich-rows">'+options.map((v,i)=>'<label class="rich-row"><span>'+esc(v)+'</span>'+select(q.match_choices||[],'rich-match','Соответствие')+'</label>').join('')+'</div>'+
+ '<button class="btn btn-dark rich-send" type="button" data-submit-rich'+disabled+'>Проверить соответствия →</button>';
+ if(['order','sequence'].includes(kind))return '<p class="muted-small">Укажите правильную последовательность элементов.</p><div class="rich-rows">'+
+ options.map((_,i)=>'<label class="rich-row"><span>Позиция '+(i+1)+'</span>'+select(options,'rich-order','Выберите элемент')+'</label>').join('')+'</div>'+
+ '<button class="btn btn-dark rich-send" type="button" data-submit-rich'+disabled+'>Отправить порядок →</button>';
+ if(['text','riddle','puzzle','blitz','number','date','estimate'].includes(kind))
+ return '<label class="rich-free">Ваш ответ<input id="richTextAnswer" maxlength="200" autocomplete="off" placeholder="'+(['number','estimate'].includes(kind)?'Введите число':kind==='date'?'Введите дату':'Введите ответ')+'"'+disabled+'></label>'+
+ '<button class="btn btn-dark rich-send" type="button" data-submit-rich'+disabled+'>Отправить ответ →</button>';
+ if(kind==='hotspot')return '<p class="muted-small">Нажмите на нужную область фотографии.</p><button type="button" id="richSpot" class="rich-hotspot"'+disabled+' aria-label="Выбрать точку на изображении">'+
+ (typeof q.media_url==='string'&&/^https:\/\//i.test(q.media_url)?'<img src="'+esc(q.media_url)+'" alt="Изображение для поиска точки" draggable="false">':'<span>Изображение не указано</span>')+
+ '<span class="rich-marker" id="richMarker" hidden>+</span></button><button type="button" class="btn btn-dark rich-send" data-submit-rich'+disabled+'>Подтвердить точку →</button>';
+ return '<div class="option-list">'+options.map((option,i)=>{
+  let classes='option';if(q._phase==='result'&&i===Number(q.correct))classes+=' correct';
+  return '<button type="button" class="'+classes+'" data-answer="'+i+'"'+disabled+'><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+esc(option)+'</span></button>';
+ }).join('')+'</div>';
+}
+function gameRichResult(q){
+ const k=q.kind||'single',s=q.solution||{};
+ if(k==='poll')return 'Голосование завершено.';
+ if(k==='multi')return 'Правильные варианты: '+(s.correct_indices||[]).map(i=>(q.options||[])[i]).join(', ');
+ if(k==='match')return 'Соответствия: '+(q.options||[]).map((x,i)=>x+' → '+((s.matches||[])[i]||'—')).join('; ');
+ if(['order','sequence'].includes(k))return 'Верный порядок: '+(s.order||[]).join(' → ');
+ if(['text','riddle','puzzle','blitz','number','date','estimate'].includes(k))return 'Правильный ответ: '+(s.answer||'—');
+ if(k==='hotspot')return 'Верная область отмечена ведущим.';
+ return 'Правильный ответ: '+((q.options||[])[Number(q.correct)]??'—');
+}
 function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;const me=s.me;const myTeam=(s.teams||[]).find(t=>t.id===me?.team_id);
  text('playerGameTitle',s.title);text('playerTeamName',myTeam?.name||'Команда пока не назначена');$('playerScoreboard').innerHTML=teamMarkup(s.teams);
  const el=$('gameContent');
@@ -116,15 +148,19 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  if(!question){el.innerHTML='<p class="placeholder">Ожидаем вопрос.</p>';return}
  const time=remaining(s.ends_at);
  const done=!!s.has_answer;const eligible=s.eligible!==false;const locked=s.phase!=='question'||done||time===0||!eligible;
- const options=(question.options||[]).map((option,i)=>{
-  let classes='option';if(s.phase==='result'&&i===Number(question.correct))classes+=' correct';
-  return '<button type="button" class="'+classes+'" data-answer="'+i+'" '+(locked?'disabled':'')+'><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+esc(option)+'</span></button>';
- }).join('');
+ const richKind=question.kind||'single';
+ const richLocked=locked;
+ const optsMarkup=gameRichMarkup({...question,_phase:s.phase},richLocked);
+ const media=typeof question.media_url==='string'&&/^https:\/\//i.test(question.media_url)?(
+   ['audio'].includes(richKind)?'<audio class="rich-media" controls preload="none" src="'+esc(question.media_url)+'"></audio>':
+   ['video'].includes(richKind)?'<video class="rich-media" controls preload="metadata" src="'+esc(question.media_url)+'"></video>':
+   richKind==='hotspot'?'':'<div class="question-media"><img src="'+esc(question.media_url)+'" alt="Иллюстрация к вопросу" loading="lazy"></div>'
+  ):'';
  el.innerHTML='<div class="row"><span class="eyebrow" style="margin:0">Вопрос '+(s.index+1)+' / '+s.total+'</span><span class="phase-label">'+(s.phase==='result'?'Ответ открыт':'Вопрос открыт')+'</span></div>'+
- '<h1>'+esc(question.prompt)+'</h1>'+
- (typeof question.media_url==='string'&&/^https:\/\//i.test(question.media_url)?'<div class="question-media"><img src="'+esc(question.media_url)+'" alt="Иллюстрация к вопросу" loading="lazy"></div>':'')+
- '<div class="meter"><span>'+(s.phase==='result'?'Время вышло':'Выберите один ответ')+'</span><strong>'+(s.phase==='question'?'<span id="playerTimer">'+time+'</span> сек.':'Разбор')+'</strong></div>'+
- '<div class="option-list">'+options+'</div>'+(s.phase==='result'?'<p class="notice success">Правильный ответ: '+esc((question.options||[])[Number(question.correct)]??'—')+'</p>'+(question.explanation?'<p>'+esc(question.explanation)+'</p>':''):
+ '<h1>'+esc(question.prompt)+'</h1>'+media+
+ '<div class="meter"><span>'+(s.phase==='result'?'Время вышло':richKind==='multi'?'Выберите все верные варианты':'Отправьте ответ')+'</span><strong>'+(s.phase==='question'?'<span id="playerTimer">'+time+'</span> сек.':'Разбор')+'</strong></div>'+
+ optsMarkup+
+ (s.phase==='result'?'<p class="notice success">'+esc(gameRichResult(question))+'</p>'+(question.explanation?'<p>'+esc(question.explanation)+'</p>':''):
  done?'<p class="notice success">Ваш ответ принят. Ожидайте остальных участников.</p>':time===0?'<p class="notice">Приём ответов завершён.</p>':'');
  text('playerStatus',!eligible?'Этот раунд не назначен вашей команде или участнику.':s.phase==='result'?'Результат открыт. Скоро следующий вопрос.':done?'Ответ записан на сервере.':'Ваш ответ ещё не отправлен.');
 }
@@ -136,6 +172,35 @@ async function assign(playerId,teamId){if(!ctx.room||ctx.room.phase!=='lobby')re
 async function submitAnswer(choice){if(ctx.mode!=='game'||!ctx.room||ctx.room.phase!=='question'||ctx.room.has_answer)return;const buttons=qa('[data-answer]');buttons.forEach(x=>busy(x,true));
  notice('gameNotice','Отправляем ответ…');try{await rpc('org_next_answer',{p_room:ctx.room.room_id,p_choice:choice});signal('answer');notice('gameNotice','Ответ сохранён.','success');await refreshRoom(false);
  }catch(e){notice('gameNotice',e.message,'error');await refreshRoom(false)}finally{buttons.forEach(x=>busy(x,false))}}
+async function submitRichAnswer(){
+ const s=ctx.room,q=s?.question;if(!s||!q||s.phase!=='question'||s.has_answer||s.eligible===false)return;
+ const kind=q.kind||'single';let payload={};
+ if(kind==='multi'){
+  const indices=qa('#gameContent [data-multi]').filter(x=>x.checked).map(x=>Number(x.dataset.multi));
+  if(!indices.length){notice('gameNotice','Отметьте хотя бы один вариант.','error');return}payload={indices};
+ }else if(kind==='match'){
+  const rows=qa('#gameContent select.rich-match'),items=rows.map(x=>x.value===''?null:q.match_choices[Number(x.value)]);
+  if(items.some(x=>x===null)){notice('gameNotice','Заполните все соответствия.','error');return}
+  payload={items};
+ }else if(['order','sequence'].includes(kind)){
+  const rows=qa('#gameContent select.rich-order'),items=rows.map(x=>x.value===''?null:q.options[Number(x.value)]);
+  if(items.some(x=>x===null)||new Set(items).size!==items.length){notice('gameNotice','Каждый элемент должен быть выбран ровно один раз.','error');return}
+  payload={items};
+ }else if(kind==='hotspot'){
+  if(!ctx.hotspotPoint){notice('gameNotice','Отметьте точку на картинке.','error');return}
+  payload=ctx.hotspotPoint;
+ }else{
+  const textAnswer=$('richTextAnswer')?.value.trim();
+  if(!textAnswer){notice('gameNotice','Введите ответ.','error');return}
+  payload={text:textAnswer};
+ }
+ const button=q('#gameContent [data-submit-rich]');if(button)busy(button,true);
+ try{notice('gameNotice','Отправляем ответ…');
+  await rpc('qwiz_submit_answer',{p_room:s.room_id,p_payload:payload});
+  signal('answer');notice('gameNotice','Ответ принят сервером.','success');await refreshRoom(false);
+ }catch(e){notice('gameNotice',e.message,'error');await refreshRoom(false)}
+ finally{if(button)busy(button,false)}
+}
 function exportResults(){const s=ctx.room;if(!s)return;const rows=[['Место','Команда','Игроков','Очков'],...s.teams.slice().sort((a,b)=>b.score-a.score).map((x,i)=>[i+1,x.name,x.players,x.score])];const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='org-party-'+s.code+'.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 async function copyInvite(){if(!ctx.roomCode)return;const invite=joinUrl(ctx.roomCode);try{await navigator.clipboard.writeText(invite);notice('hostNotice','Ссылка скопирована.','success')}catch{notice('hostNotice','Ссылка для приглашения: '+invite)}}
@@ -147,7 +212,7 @@ function updateClocks(){if(ctx.room?.phase==='countdown'){
    }
    return;
  }
- if(ctx.room?.phase!=='question')return;const seconds=remaining(ctx.room.ends_at);text('playerTimer',seconds);text('hostTimer',seconds);if(seconds===0){for(const b of qa('#gameContent [data-answer]'))b.disabled=true}}
+ if(ctx.room?.phase!=='question')return;const seconds=remaining(ctx.room.ends_at);text('playerTimer',seconds);text('hostTimer',seconds);if(seconds===0){for(const b of qa('#gameContent [data-answer],#gameContent [data-submit-rich],#gameContent #richSpot'))b.disabled=true}}
 async function restore(){if(!ctx.client)return;try{
  const data=await ctx.client.auth.getSession();if(!data.data.session)return;
  const incoming=new URLSearchParams(location.search).get('room');
@@ -189,6 +254,14 @@ function attach(){q('#logoHome').addEventListener('click',home);
   const choose=event.target.closest('[data-pick-quiz]');if(choose){$('roomQuizSelect').value=choose.dataset.pickQuiz;tab('room')}
   const remove=event.target.closest('[data-remove-question]');if(remove){const item=remove.closest('.question-editor');if(qa('.question-editor').length>1)item.remove();else notice('quizNotice','Нужен хотя бы один вопрос.','error')}
   const answer=event.target.closest('#gameContent [data-answer]');if(answer)submitAnswer(Number(answer.dataset.answer));
+  const submit=event.target.closest('#gameContent [data-submit-rich]');if(submit)submitRichAnswer();
+  const spot=event.target.closest('#gameContent #richSpot');if(spot&&ctx.room?.phase==='question'){
+   const rect=spot.getBoundingClientRect();
+   ctx.hotspotPoint={x:Number((((event.clientX-rect.left)/rect.width)*100).toFixed(2)),
+     y:Number((((event.clientY-rect.top)/rect.height)*100).toFixed(2))};
+   const mark=$('richMarker');if(mark){mark.hidden=false;mark.style.left=ctx.hotspotPoint.x+'%';mark.style.top=ctx.hotspotPoint.y+'%'}
+  }
+ 
  });
  $('createQuizToggle').onclick=()=>{$('quizCreator').hidden=false;$('quizTitle').focus()};
  $('closeQuizCreator').onclick=()=>{$('quizCreator').hidden=true};$('addQuestion').onclick=addQuestion;$('quizForm').addEventListener('submit',saveQuiz);
