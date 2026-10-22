@@ -11,7 +11,21 @@ const ctx={client:null,role:'player',roomCode:null,room:null,quizzes:[],channel:
 function text(id,value){if($(id))$(id).textContent=value==null?'':String(value)}
 function notice(id,value,type=''){const el=$(id);if(!el)return;el.textContent=value||'';el.classList.toggle('error',type==='error');el.classList.toggle('success',type==='success')}
 function showScreen(name){ctx.mode=name;for(const id of ['home','studio','game'])$(id+'View').hidden=id!==name;window.scrollTo({top:0,behavior:'auto'})}
-function setRole(role){for(const [name,id] of [['player','rolePlayer'],['host','roleHost']])$(id).setAttribute('aria-selected',String(role===name));$('playerEntry').hidden=role!=='player';$('hostEntry').hidden=role!=='host'}
+function setRole(role){ctx.role=role;storage.set('entry-role',role);for(const [name,id] of [['player','rolePlayer'],['host','roleHost']]){$(id).setAttribute('aria-selected',String(role===name));$(id).tabIndex=role===name?0:-1}$('playerEntry').hidden=role!=='player';$('hostEntry').hidden=role!=='host'}
+function teacherSession(session){
+ ctx.teacherSession=session||null;
+ $('hostSession').hidden=!session;$('loginForm').hidden=!!session;
+ text('hostSessionEmail',session?.user?.email||'Аккаунт преподавателя');
+ text('hostEntryDescription',session?'Авторизация сохранена. Выберите, когда открыть кабинет.':'Войдите, чтобы подготовить и провести квиз.');
+}
+function resumeOffer(){const code=ctx.roomCode||storage.get('room');$('resumeGame').hidden=!code;text('resumeCode',code);}
+async function resumeGame(){
+ const code=ctx.roomCode||storage.get('room');if(!code)return;
+ busy($('resumeGameButton'),true);notice('joinNotice','Возвращаемся в игру…');
+ try{ctx.roomCode=code;await refreshRoom(false);if(!ctx.room)throw Error('Комната недоступна. Проверьте код или присоединитесь к другой игре.');showScreen('game');renderGame();notice('joinNotice','')}
+ catch(error){notice('joinNotice',error.message,'error')}
+ finally{busy($('resumeGameButton'),false)}
+}
 function tab(name){ctx.visibleTab=name;for(const id of ['library','room','results'])$(id+'Tab').hidden=id!==name;for(const el of qa('[data-tab]'))el.setAttribute('aria-current',name===el.dataset.tab?'page':'false');text('studioHeading',({library:'Библиотека',room:'Провести игру',results:'Результаты'})[name]);text('studioDescription',({library:'Все наборы вопросов в одном месте.',room:'Комната, команды и управление раундами.',results:'Командный рейтинг и результаты.'})[name]);if(name==='results')renderResults();if(name==='room')renderRoom()}
 function busy(button,active){if(!button)return;button.disabled=active;button.setAttribute('aria-busy',String(active))}
 async function rpc(name,params={}){if(!ctx.client)throw Error('Нет соединения с Supabase. Проверьте загрузку библиотеки.');const {data,error}=await ctx.client.rpc(name,params);if(error)throw Error(error.message||'Ошибка запроса');return data}
@@ -46,14 +60,18 @@ async function login(event){event.preventDefault();busy($('loginButton'),true);n
  try{const {data,error}=await ctx.client.auth.signInWithPassword({email:$('loginEmail').value.trim(),password:$('loginPassword').value});if(error)throw Error(error.message);
   const isAdmin=await rpc('org_quiz_is_admin_check');
   if(!isAdmin){await ctx.client.auth.signOut();throw Error('У этой учётной записи нет прав преподавателя.')}
-  $('loginPassword').value='';await enterStudio();
+  $('loginPassword').value='';teacherSession(data.session);await enterStudio();
  }catch(error){notice('loginNotice',error.message,'error')}finally{busy($('loginButton'),false)}}
 async function enterStudio(){location.assign(new URL('./workspace.html',location.href).toString());return;
 /* Legacy studio kept for compatibility; the v4 workspace handles the teacher's tasks. */
 showScreen('studio');tab('library');await loadCatalog();
  const code=storage.get('host-room');if(code){ctx.roomCode=code;await refreshRoom(false);if(ctx.room)tab('room')}}
-async function logout(){if(!ctx.client)return;await ctx.client.auth.signOut();cleanupRoom();storage.del('host-room');showScreen('home');setRole('host');notice('loginNotice','Вы вышли из кабинета.','success')}
-function home(){showScreen('home');renderQrPanels()}
+async function logout(){if(!ctx.client)return;busy($('changeTeacherAccount'),true);
+ try{const {error}=await ctx.client.auth.signOut({scope:'local'});if(error)throw error;teacherSession(null);cleanupRoom();storage.del('host-room');showScreen('home');setRole('host');$('loginEmail').focus();notice('loginNotice','Можно войти в другой аккаунт.','success')}
+ catch(error){notice('loginNotice',error.message,'error')}
+ finally{busy($('changeTeacherAccount'),false)}
+}
+function home(){showScreen('home');renderQrPanels();resumeOffer()}
 async function loadCatalog(){try{
  ctx.quizzes=await rpc('org_next_catalog');renderCatalog();await loadLegacy();
 }catch(e){notice('quizNotice',e.message,'error');$('quizList').innerHTML='<p class="placeholder">Не удалось загрузить наборы.</p>'}}
@@ -220,7 +238,7 @@ function updateClocks(){if(ctx.room?.phase==='countdown'){
  }
  if(ctx.room?.phase!=='question')return;const seconds=remaining(ctx.room.ends_at);text('playerTimer',seconds);text('hostTimer',seconds);if(seconds===0){for(const b of qa('#gameContent [data-answer],#gameContent [data-submit-rich],#gameContent #richSpot'))b.disabled=true}}
 async function restore(){if(!ctx.client)return;try{
- const data=await ctx.client.auth.getSession();if(!data.data.session)return;
+ const data=await ctx.client.auth.getSession();if(data.error)throw data.error;const session=data.data.session;if(!session){teacherSession(null);return}
  const incoming=new URLSearchParams(location.search).get('room');
  if(incoming&&/^[A-F0-9]{8}$/i.test(incoming)){
    const code=incoming.toUpperCase();$('joinCode').value=code;
@@ -234,10 +252,15 @@ async function restore(){if(!ctx.client)return;try{
      }
    }catch(error){notice('joinNotice','Комната готова к подключению. Подтвердите вход.');}
  }
- const code=storage.get('room');if(code){ctx.roomCode=code;showScreen('game');await refreshRoom(false);if(ctx.room)return;cleanupRoom()}
- const isAdmin=await rpc('org_quiz_is_admin_check');if(isAdmin){await enterStudio()}else{showScreen('home')}
+ resumeOffer();
+ const isAdmin=await rpc('org_quiz_is_admin_check');teacherSession(isAdmin?session:null);
+ // Credentials restore access; the user chooses when to open the cabinet.
+ // An explicit room link still joins, while a normal visit keeps the entry page.
  }catch{showScreen('home')}}
 function attach(){q('#logoHome').addEventListener('click',home);
+ setRole(storage.get('entry-role')==='host'?'host':'player');
+ $('changeTeacherAccount').onclick=logout;$('resumeGameButton').onclick=resumeGame;
+ $('togglePassword').onclick=()=>{const visible=$('loginPassword').type==='password';$('loginPassword').type=visible?'text':'password';$('togglePassword').setAttribute('aria-pressed',String(visible));$('togglePassword').setAttribute('aria-label',visible?'Скрыть пароль':'Показать пароль')};
  // The welcome page now has no redundant left-hand navigation.
  $('homeQrOpen').onclick=()=>openQrDialog();$('studioQrOpen').onclick=()=>openQrDialog(ctx.roomCode);
  $('homeQrCopy').onclick=()=>copyQrLink();$('qrCopy').onclick=()=>copyQrLink(activeQrCode);
@@ -387,3 +410,4 @@ async function init(){attach();if(!window.supabase?.createClient){notice('joinNo
  await restore();
 }
 window.addEventListener('DOMContentLoaded',init);
+window.addEventListener('pageshow',event=>{if(event.persisted)restore()});

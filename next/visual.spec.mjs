@@ -325,3 +325,148 @@ test('Realtime refresh does not erase a partially entered free-text answer',asyn
  await expect(page.locator('#richTextAnswer')).toHaveValue('');
 });
 
+
+
+// Auth fixtures exercise navigation only; no real accounts or quiz data are created.
+async function authFixture(page,{signedIn=true,admin=true}={}){
+ await page.addInitScript(({signedIn})=>{
+  if(localStorage.getItem('qa-auth')===null)localStorage.setItem('qa-auth',signedIn?'yes':'no');
+ },{signedIn});
+ await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:`
+  const session=()=>localStorage.getItem('qa-auth')==='yes'?{access_token:'fixture-only',user:{id:'qa-teacher',email:'teacher@example.test',is_anonymous:false}}:null;
+  const query={select(){return this},eq(){return this},is(){return this},in(){return this},order(){return this},limit(){return this},maybeSingle:async()=>({data:null,error:null}),then(resolve,reject){return Promise.resolve({data:[],error:null}).then(resolve,reject)}};
+  window.supabase={createClient:()=>({
+   auth:{
+    getSession:async()=>({data:{session:session()},error:null}),
+    signInWithPassword:async()=>{localStorage.setItem('qa-auth','yes');return {data:{session:session(),user:session().user},error:null}},
+    signOut:async(options)=>{localStorage.setItem('qa-signout-scope',options?.scope||'global');localStorage.setItem('qa-auth','no');return {error:null}}
+   },
+   rpc:async(name,args)=>{
+    if(name==='org_quiz_is_admin_check')return {data:`+JSON.stringify(admin)+`,error:null};
+    if(name==='qwiz_studio')return {data:args.p_action==='overview'?{topics:[],builds:[]}:{items:[],total:0},error:null};
+    if(name==='qwiz_host_rooms')return {data:[],error:null};
+    if(name==='qwiz_student_identity')return {data:{registered:true,full_name:'Тестовый участник'},error:null};
+    if(name==='org_next_state')return {data:{code:'ABCDEF12',room_id:'qa-room',title:'Проверка возврата',phase:'lobby',index:-1,total:4,teams:[{id:'qa-team',name:'Команда',players:1,score:0}],players:[],me:{id:'qa-player',team_id:'qa-team'}},error:null};
+    return {data:[],error:null}
+   },
+   from:()=>query,
+   channel:()=>({topic:'realtime:org-next-ABCDEF12',on(){return this},subscribe(){return this},send:async()=>({})}),
+   removeChannel:async()=>({})
+  })};
+ `}));
+}
+test('Saved teacher session keeps entry on reload and opens cabinet only by choice',async({page})=>{
+ await authFixture(page);
+ await page.goto('http://127.0.0.1:8080/next/');
+ await page.getByRole('tab',{name:'Преподаватель'}).click();
+ await expect(page.locator('#hostSession')).toBeVisible();
+ await expect(page.locator('#loginForm')).toBeHidden();
+ await expect(page.locator('#homeView')).toBeVisible();
+ await expect(page).toHaveURL(/\/next\/$/);
+ await page.reload();
+ await expect(page.locator('#hostSession')).toBeVisible();
+ await expect(page.locator('#roleHost')).toHaveAttribute('aria-selected','true');
+ await page.setViewportSize({width:1440,height:900});
+ await page.screenshot({path:'visual-artifacts/entry-saved-teacher-1440.png',fullPage:true});
+ await page.setViewportSize({width:375,height:844});
+ await page.screenshot({path:'visual-artifacts/entry-saved-teacher-375.png',fullPage:true});
+ await page.getByRole('link',{name:'Открыть кабинет'}).click();
+ await expect(page).toHaveURL(/workspace\.html$/);
+ await expect(page.locator('#connText')).toContainText('Кабинет подключён');
+ await page.getByRole('link',{name:'На главную',exact:true}).click();
+ await expect(page.locator('#homeView')).toBeVisible();
+ await expect(page.locator('#hostSession')).toBeVisible();
+ expect(await page.evaluate(()=>localStorage.getItem('qa-auth'))).toBe('yes');
+});
+test('Explicit password login still opens cabinet and preserves access on return',async({page})=>{
+ await authFixture(page,{signedIn:false});
+ await page.goto('http://127.0.0.1:8080/next/');
+ await page.getByRole('tab',{name:'Преподаватель'}).click();
+ await page.locator('#loginEmail').fill('teacher@example.test');
+ await page.locator('#loginPassword').fill('fixture-password');
+ await page.locator('#loginButton').click();
+ await expect(page).toHaveURL(/workspace\.html$/);
+ await page.getByRole('link',{name:'На главную',exact:true}).click();
+ await expect(page.locator('#hostSession')).toBeVisible();
+ await expect(page.locator('#loginPassword')).toHaveValue('');
+});
+test('Changing account stays on entry and signs out only the current session',async({page})=>{
+ await authFixture(page);
+ await page.goto('http://127.0.0.1:8080/next/');
+ await page.getByRole('tab',{name:'Преподаватель'}).click();
+ await page.locator('#changeTeacherAccount').click();
+ await expect(page.locator('#loginForm')).toBeVisible();
+ await expect(page.locator('#hostSession')).toBeHidden();
+ await expect(page.locator('#loginEmail')).toBeFocused();
+ expect(await page.evaluate(()=>localStorage.getItem('qa-signout-scope'))).toBe('local');
+ await page.reload();
+ await expect(page.locator('#loginForm')).toBeVisible();
+ await expect(page.locator('#homeView')).toBeVisible();
+});
+test('A saved student room is offered without taking over the entry page',async({page})=>{
+ await authFixture(page,{admin:false});
+ await page.goto('http://127.0.0.1:8080/next/');
+ await page.evaluate(()=>sessionStorage.setItem('org2:room','ABCDEF12'));
+ await page.reload();
+ await expect(page.locator('#homeView')).toBeVisible();
+ await expect(page.locator('#resumeGame')).toBeVisible();
+ await page.locator('#resumeGameButton').click();
+ await expect(page.locator('#gameView')).toBeVisible();
+ await expect(page.locator('#gameContent')).toContainText('Вы в игре.');
+ await page.locator('#logoHome').click();
+ await expect(page.locator('#homeView')).toBeVisible();
+ await page.reload();
+ await expect(page.locator('#homeView')).toBeVisible();
+ await expect(page.locator('#resumeGame')).toBeVisible();
+});
+test('Explicit room QR links still connect registered players directly',async({page})=>{
+ await authFixture(page,{admin:false});
+ await page.goto('http://127.0.0.1:8080/next/?room=abcdef12');
+ await expect(page.locator('#gameView')).toBeVisible();
+ await expect(page.locator('#gameContent')).toContainText('Вы в игре.');
+});
+test('Non-admin session and rejected teacher login cannot open cabinet',async({page})=>{
+ await authFixture(page,{admin:false});
+ await page.goto('http://127.0.0.1:8080/next/');
+ await page.getByRole('tab',{name:'Преподаватель'}).click();
+ await expect(page.locator('#hostSession')).toBeHidden();
+ await page.locator('#loginEmail').fill('student@example.test');
+ await page.locator('#loginPassword').fill('fixture-password');
+ await page.locator('#loginButton').click();
+ await expect(page.locator('#loginNotice')).toContainText('нет прав преподавателя');
+ await expect(page.locator('#homeView')).toBeVisible();
+ await expect(page).not.toHaveURL(/workspace\.html/);
+});
+test('Password visibility toggle is keyboard accessible and preserves input',async({page})=>{
+ await page.getByRole('tab',{name:'Преподаватель'}).click();
+ await page.locator('#loginPassword').fill('fixture-only');
+ await page.getByRole('button',{name:'Показать пароль'}).focus();
+ await page.keyboard.press('Enter');
+ await expect(page.locator('#loginPassword')).toHaveAttribute('type','text');
+ await expect(page.getByRole('button',{name:'Скрыть пароль'})).toHaveAttribute('aria-pressed','true');
+ await page.keyboard.press('Enter');
+ await expect(page.locator('#loginPassword')).toHaveAttribute('type','password');
+ await expect(page.locator('#loginPassword')).toHaveValue('fixture-only');
+});
+test('Reduced motion disables decorative and dialog animation without hiding content',async({page})=>{
+ await page.emulateMedia({reducedMotion:'reduce'});
+ await page.reload();
+ await expect(page.locator('#entryPanel')).toBeVisible();
+ expect(await page.locator('#entryPanel').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
+ expect(await page.locator('.hero-spark').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
+ await page.locator('#homeQrOpen').click();
+ await expect(page.locator('#qrDialog')).toBeVisible();
+ expect(await page.locator('#qrDialog').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
+ await page.keyboard.press('Escape');
+ await expect(page.locator('#qrDialog')).toBeHidden();
+});
+test('Classic entry also stays on home with a saved teacher session',async({page})=>{
+ await authFixture(page);
+ await page.goto('http://127.0.0.1:8080/');
+ await expect(page.locator('#teacherToggle')).toHaveText('Мой кабинет');
+ await expect(page.locator('#homeView')).toBeVisible();
+ await expect(page.locator('#teacherView')).toBeHidden();
+ await page.reload();
+ await expect(page.locator('#teacherToggle')).toHaveText('Мой кабинет');
+ await expect(page.locator('#homeView')).toBeVisible();
+});

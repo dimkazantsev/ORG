@@ -90,9 +90,9 @@ jobs:
           site="${PAGES_URL%/}"
           echo "Checking GitHub Pages at $site"
           for attempt in $(seq 1 12); do
-            if curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/index.html?release=20261022-6-$GITHUB_RUN_ID-$attempt" -o /tmp/org-published.html &&
-               grep -q 'data-build="20261022.6"' /tmp/org-published.html &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/app.js?v=20261009-qa6" -o /tmp/org-published.js &&
+            if curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/index.html?release=20261022-7-$GITHUB_RUN_ID-$attempt" -o /tmp/org-published.html &&
+               grep -q 'data-build="20261022.7"' /tmp/org-published.html &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/app.js?v=20261022-motion1" -o /tmp/org-published.js &&
                grep -q 'org_quiz_archive_history' /tmp/org-published.js &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/studio-2026.css?v=20261022-4" -o /tmp/org-published-studio.css &&
                grep -q -- '--studio-radius' /tmp/org-published-studio.css &&
@@ -100,7 +100,7 @@ jobs:
                grep -q -- '--q-blue' /tmp/org-published-uipromax.css &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/index.html?release=$GITHUB_RUN_ID" -o /tmp/org-next-index.html &&
                grep -q 'QWIZ-PARTY — командный квиз' /tmp/org-next-index.html &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/app.js?v=11" -o /tmp/org-next-app.js &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/app.js?v=12" -o /tmp/org-next-app.js &&
                grep -q 'org_next_answer' /tmp/org-next-app.js &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/app.css?v=7" -o /tmp/org-next-style.css &&
                grep -q -- '--mint' /tmp/org-next-style.css &&

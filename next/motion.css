@@ -1,0 +1,81 @@
+/* QWIZ-PARTY · motion, emphasis and entry choices. No animation runtime. */
+:root{--motion-fast:160ms;--motion-ui:240ms;--motion-enter:520ms;--ease-out:cubic-bezier(.16,1,.3,1)}
+@keyframes qwiz-enter{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes qwiz-panel{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:translateY(0)}}
+@keyframes qwiz-spark{from{opacity:0;transform:rotate(-24deg) scale(.72)}to{opacity:1;transform:rotate(12deg) scale(1)}}
+@keyframes qwiz-dialog{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes qwiz-spin{to{transform:rotate(360deg)}}
+:where(.btn,.primary-button,.small-button,.primary,.primary-action,.soft-btn,.button-secondary,.nav-link,.topic-chip,.option,.rich-choice,.qr-click,.header-link,.profile-link){
+ transition:color var(--motion-fast),background-color var(--motion-fast),border-color var(--motion-fast),box-shadow var(--motion-ui),transform var(--motion-ui) var(--ease-out);
+}
+:where(.btn,.primary-button,.small-button,.primary,.primary-action,.soft-btn,.button-secondary):active:not(:disabled){transform:translateY(1px) scale(.985)}
+:where(.btn,.primary-button,.primary,.primary-action)[aria-busy="true"]::after{content:"";display:inline-block;flex:none;width:16px;height:16px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:qwiz-spin .7s linear infinite}
+:where(.btn,.primary-button)[aria-busy="true"]>.ui-icon{display:none}
+:where(.btn,.primary-button,.small-button,.header-link)>.ui-icon{transition:transform var(--motion-ui) var(--ease-out)}
+:where(.btn,.primary-button,.small-button,a){text-decoration:none}
+.welcome-head{animation:qwiz-enter var(--motion-enter) var(--ease-out) both}
+.entry{position:relative;isolation:isolate;animation:qwiz-enter var(--motion-enter) 90ms var(--ease-out) both;box-shadow:0 20px 65px -28px #7040db35,0 1px 3px #26213705}
+.entry::before{content:"";position:absolute;inset:-1px 28px auto;height:2px;background:linear-gradient(90deg,transparent,#bda4f4,var(--accent),#d7c3fd,transparent);border-radius:50%;pointer-events:none}
+.welcome-head h1 em{position:relative;display:inline-block;isolation:isolate}
+.welcome-head h1 em::after{content:"";position:absolute;left:0;right:-3px;bottom:.03em;height:.17em;background:var(--lavender);transform:rotate(-1.5deg);z-index:-1;border-radius:35% 55% 30% 40%}
+.welcome-kicker{padding:8px 12px;border:1px solid #dfd1f6;background:#f4efff;border-radius:999px;letter-spacing:.09em}
+.welcome-features{gap:10px}
+.welcome-features>span{padding:7px 11px;border:1px solid var(--line);border-radius:999px;background:#ffffffa6}
+.hero-spark{color:#b496eb;animation:qwiz-spark 900ms 160ms var(--ease-out) both}
+.switch{position:relative;isolation:isolate}
+.switch::before{content:"";position:absolute;inset:5px auto 5px 5px;width:calc(50% - 7.5px);border-radius:11px;background:var(--accent);box-shadow:0 4px 12px #7040db20;transition:transform var(--motion-ui) var(--ease-out);z-index:-1}
+.switch:has(#roleHost[aria-selected="true"])::before{transform:translateX(calc(100% + 5px))}
+.switch button[aria-selected="true"]{background:transparent;box-shadow:none}
+#playerEntry:not([hidden]),#hostEntry:not([hidden]){animation:qwiz-panel var(--motion-ui) var(--ease-out)}
+.entry-submit{box-shadow:0 7px 18px -8px #7040db75;min-height:52px}
+.entry-foot{border-top:1px solid var(--line);padding-top:18px}
+.password-field{position:relative;display:block}
+.password-field input{padding-right:56px}
+.password-field button{position:absolute;right:3px;top:50%;transform:translateY(-50%);width:44px;min-height:44px;border:0;border-radius:8px;background:transparent;color:var(--subtle);display:grid;place-items:center}
+.password-field button:hover{background:var(--accent-soft);color:var(--accent)}
+.password-field button[aria-pressed="false"] .eye-slash{display:none}
+.host-session{display:grid;justify-items:start;gap:18px;padding:22px;border-radius:17px;background:linear-gradient(145deg,#f5efff,#fbf9ff);border:1px solid #e3d7f8}
+.session-check{display:grid;place-items:center;width:42px;height:42px;border-radius:14px;background:#e6d9ff;color:var(--accent)}
+.session-caption{display:block;font-size:9px;letter-spacing:.12em;font-weight:750;color:var(--accent)}
+.host-session strong{display:block;margin-top:7px;max-width:100%;font-size:15px;overflow-wrap:anywhere}
+.host-session>div{min-width:0;max-width:100%}
+.host-session p{font-size:12px;color:var(--subtle);line-height:1.7;margin-top:10px}
+.host-session .entry-submit{width:100%;font-size:13px}
+.session-switch{justify-self:center;min-height:44px;padding:8px 5px;background:transparent;border:0;border-radius:8px;color:var(--subtle);font-size:11px;text-decoration:underline;text-underline-offset:4px}
+.session-switch:hover{color:var(--accent)}
+.resume-game{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px;margin-bottom:22px;background:var(--accent-soft);border:1px solid #e3d7f8;border-radius:13px}
+.resume-game>div{min-width:0}
+.resume-game span{font-size:10px;color:var(--subtle)}
+.resume-game strong{display:block;color:var(--accent);font-size:14px;letter-spacing:.08em}
+.resume-game .btn{flex:none;min-height:44px;padding:9px 12px;font-size:11px}
+.resume-game .btn span{color:inherit}
+.page:not([hidden])>.page-head,.profile-shell,.projection-question h1,#gameContent>h1{animation:qwiz-panel 320ms var(--ease-out)}
+dialog[open]{animation:qwiz-dialog 250ms var(--ease-out)}
+dialog::backdrop{background:#29203b55;backdrop-filter:blur(5px)}
+.nav-link.selected{box-shadow:inset 3px 0 0 var(--accent)}
+.top-tools a.small-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;color:var(--subtle)}
+#gameContent .option:nth-child(2) .letter{background:#f6e9f3;color:#9c457c}
+#gameContent .option:nth-child(3) .letter{background:#fff0e1;color:#a16327}
+#gameContent .option:nth-child(4) .letter{background:#e8f3ee;color:#367457}
+.game-card .meter{border-radius:12px;padding:12px 16px;background:var(--accent-soft)}
+body.studio-rebuild #homeView .hero-card{animation:qwiz-enter var(--motion-enter) var(--ease-out) both}
+body.studio-rebuild #homeView .access-card{animation:qwiz-enter var(--motion-enter) 90ms var(--ease-out) both}
+@media(hover:hover) and (pointer:fine){
+ :where(.btn-dark,.primary-button,.primary,.primary-action):hover:not(:disabled){transform:translateY(-2px);box-shadow:0 10px 24px -12px #7040db85}
+ :where(.entry-submit,.header-link):hover>.ui-icon:last-child{transform:translate(2px,-2px)}
+ :where(.topic-chip,.qr-click):hover:not(:disabled){transform:translateY(-2px);box-shadow:0 6px 18px -12px #7040db65}
+ #gameContent button.option:hover:not(:disabled){transform:translateX(3px);box-shadow:0 5px 18px -12px #7040db50}
+}
+@media(max-width:560px){
+ .welcome-kicker{font-size:8px;padding:7px 10px}
+ .welcome-features>span{font-size:10px;padding:6px 9px;gap:6px}
+ .host-session{padding:18px;gap:14px}
+ .host-session strong{font-size:13px}
+ .top-tools .small-button{width:44px;min-width:44px;min-height:44px;padding:0}
+ .top-tools .small-button>span{display:none}
+ .top .brand{font-size:13px;gap:7px}
+ .top .brand small{font-size:6px;letter-spacing:.1em}
+}
+@media(prefers-reduced-motion:reduce){
+ *,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}

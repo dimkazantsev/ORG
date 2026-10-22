@@ -15,9 +15,17 @@ function showView(name){
 function msg(el,text,kind=""){el.textContent=text;el.dataset.kind=kind}
 function code(){return ("ORG"+Math.random().toString(36).slice(2,6)).toUpperCase()}
 
-$("teacherToggle").onclick=()=>showView("teacher");
-$("brandHome").onclick=()=>showView("home");
-$("openModerator").onclick=()=>showView("teacher");
+let teacherEntryTask=null;
+let teacherRequested=false;
+async function openTeacher(){
+  teacherRequested=true;showView("teacher");
+  if(!state.teacherUser)return;
+  if(!teacherEntryTask)teacherEntryTask=enterTeacher().catch(error=>{teacherEntryTask=null;msg($("teacherLoginMessage"),humanError(error.message))});
+  return teacherEntryTask;
+}
+$("teacherToggle").onclick=openTeacher;
+$("brandHome").onclick=()=>{teacherRequested=false;showView("home")};
+$("openModerator").onclick=openTeacher;
 document.querySelectorAll("[data-role-tab]").forEach(btn=>btn.onclick=()=>{
   document.querySelectorAll("[data-role-tab]").forEach(x=>x.classList.toggle("active",x===btn));
   $("participantAccess").classList.toggle("hidden",btn.dataset.roleTab!=="participant");
@@ -356,7 +364,8 @@ $("teacherLoginForm").addEventListener("submit",async e=>{
   if(adminErr||!isAdmin){await sb.auth.signOut();msg($("teacherLoginMessage"),"У этой учётной записи нет прав преподавателя.");return}
   state.teacherUser=data.user;
   await sb.rpc("org_party_set_profile",{p_role:"moderator",p_display_name:data.user.email||"Модератор",p_avatar_seed:"moderator",p_preferences:{}});
-  await enterTeacher();
+  $("teacherPassword").value="";
+  await openTeacher();
 });
 
 async function enterTeacher(){
@@ -754,14 +763,15 @@ function statusLabel(s){return ({lobby:"Лобби",countdown:"Отсчёт",rou
 function humanError(s=""){if(s.includes("CAPTAIN_ONLY"))return"За эту команду отвечает только капитан.";if(s.includes("BLIND_TEXT_REQUIRED"))return"Напишите ответ текстом.";if(s.includes("EVENT_COUNTDOWN_RUNNING"))return"Дождитесь окончания объявления события.";if(s.includes("SESSION_NOT_FOUND"))return"Комната не найдена или уже закрыта.";if(s.includes("TIME_EXPIRED"))return"Время на ответ истекло.";if(s.includes("QUESTION_NOT_ACTIVE"))return"Этот вопрос уже закрыт.";if(s.includes("STEAL_ALREADY_USED"))return"Перехват для этого вопроса уже использован.";if(s.includes("STEAL_REQUIRES_WRONG_ANSWER"))return"Перехват можно открыть только после ошибочного ответа.";if(s.includes("STEAL_NOT_SUPPORTED_FOR_TYPE"))return"Для этого типа задания перехват недоступен.";if(s.includes("STEAL_ALREADY_WON"))return"Перехват уже выиграла другая команда.";if(s.includes("TEAM_ALREADY_SCORED"))return"Ваша команда уже получила очки за этот вопрос.";if(s.includes("TEAM_ALREADY_ATTEMPTED_STEAL"))return"Команда уже использовала попытку перехвата.";if(s.includes("RESCUE_ALREADY_USED"))return"Эта команда уже использовала своё спасение.";if(s.includes("PLAYER_NOT_ELIGIBLE"))return"Этого игрока сейчас нельзя спасти.";if(s.includes("PLAYER_ELIMINATED"))return"Выбывший игрок не может использовать эту механику.";if(s.includes("POWER_NOT_ENOUGH"))return"Недостаточно командной силы.";if(s.includes("POWER_ALREADY_USED_THIS_QUESTION"))return"Команда уже использовала способность на этом вопросе.";if(s.includes("POWER_USE_BEFORE_ANSWER"))return"Способность нужно активировать до ответа команды.";if(s.includes("POWER_NOT_AVAILABLE"))return"Банк силы сейчас недоступен.";if(s.includes("HINT_NOT_AVAILABLE"))return"Для этого задания безопасная подсказка недоступна.";if(s.includes("Anonymous sign-ins are disabled"))return"Анонимный вход студентов отключён в Supabase.";return s}
 function escapeHtml(v=""){return String(v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
 
-// Восстанавливаем преподавательскую сессию только если пользователь уже авторизован.
+// Restore access without taking the user away from the entry page.
 (async()=>{
-  const {data:{session}}=await sb.auth.getSession();
-  if(session && !session.user.is_anonymous){
-    state.teacherUser=session.user;
-    const {data}=await sb.rpc("org_quiz_is_admin_check");
-    if(data){showView("teacher");await enterTeacher()}
-  }
+  try{
+    const {data:{session}}=await sb.auth.getSession();
+    if(session?.user && !session.user.is_anonymous){
+      const {data,error}=await sb.rpc("org_quiz_is_admin_check");
+      if(!error && data){state.teacherUser=session.user;$("teacherToggle").textContent="Мой кабинет";if(teacherRequested)await openTeacher()}
+    }
+  }catch(error){console.warn("Could not restore teacher access",error.message)}
 })();
 
 

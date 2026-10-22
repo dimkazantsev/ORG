@@ -7,11 +7,12 @@
 <title>QWIZ-PARTY — командный квиз</title>
 <meta name="description" content="Командный квиз: вопросы, комнаты, игроки и результаты.">
 <link rel="preload" href="./assets/manrope-variable.ttf" as="font" type="font/ttf" crossorigin>
-<link rel="stylesheet" href="./theme.css?v=lavender-1">
+<link rel="stylesheet" href="./theme.css?v=lavender-2">
 <link rel="stylesheet" href="./app.css?v=lavender-1">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="./vendor/qrcode.min.js"></script>
-<script defer src="./app.js?v=11"></script>
+<script defer src="./app.js?v=12"></script>
+<link rel="stylesheet" href="./motion.css?v=1">
 </head>
 <body data-design="lavender-20261022"><a class="skip-link" href="#mainContent">К содержимому</a>
 <header class="topbar">
@@ -41,6 +42,7 @@
     </div>
     <div id="playerEntry" role="tabpanel" aria-labelledby="rolePlayer">
      <div class="entry-heading"><div><h2>Присоединяйтесь</h2><p class="entry-desc">Ваша команда уже ждёт.</p></div><span class="entry-step">ПО КОДУ</span></div>
+     <div class="resume-game" id="resumeGame" hidden><div><span>Вы уже в игре</span><strong id="resumeCode"></strong></div><button type="button" class="btn" id="resumeGameButton">Продолжить <span aria-hidden="true">→</span></button></div>
      <form class="stack" id="joinForm">
       <label class="code-label" for="joinCode">Код комнаты
        <input id="joinCode" placeholder="A1B2C3D4" inputmode="text" maxlength="8" autocapitalize="characters" autocomplete="off" spellcheck="false" pattern="[a-fA-F0-9]{8}" title="Восемь символов: цифры и латинские буквы A–F" aria-describedby="codeHint" required>
@@ -55,10 +57,16 @@
      <p id="joinNotice" class="notice" role="status" aria-live="polite"></p>
     </div>
     <div id="hostEntry" role="tabpanel" aria-labelledby="roleHost" hidden>
-     <div class="entry-heading"><div><h2>Игра по вашим правилам</h2><p class="entry-desc">Войдите, чтобы подготовить и провести квиз.</p></div></div>
+     <div class="entry-heading"><div><h2>Игра по вашим правилам</h2><p class="entry-desc" id="hostEntryDescription">Войдите, чтобы подготовить и провести квиз.</p></div></div>
+     <div class="host-session" id="hostSession" hidden>
+      <span class="session-check"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg></span>
+      <div><span class="session-caption">ВЫ УЖЕ ВОШЛИ</span><strong id="hostSessionEmail"></strong><p>Вопросы, сборки и пульт управления ждут вас в кабинете.</p></div>
+      <a class="btn btn-dark entry-submit" href="./workspace.html" id="openWorkspace">Открыть кабинет <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"></path></svg></a>
+      <button class="session-switch" type="button" id="changeTeacherAccount">Войти в другой аккаунт</button>
+     </div>
      <form class="stack" id="loginForm">
       <label for="loginEmail">Электронная почта<input type="email" id="loginEmail" autocomplete="username" required placeholder="name@example.com"></label>
-      <label for="loginPassword">Пароль<input type="password" id="loginPassword" autocomplete="current-password" required placeholder="Введите пароль"></label>
+      <label for="loginPassword">Пароль<span class="password-field"><input type="password" id="loginPassword" autocomplete="current-password" required placeholder="Введите пароль"><button type="button" id="togglePassword" aria-label="Показать пароль" aria-pressed="false"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle><path class="eye-slash" d="m3 3 18 18"></path></svg></button></span></label>
       <button class="btn btn-dark entry-submit" type="submit" id="loginButton">Открыть кабинет <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"></path></svg></button>
      </form>
      <p id="loginNotice" class="notice" role="status" aria-live="polite"></p>

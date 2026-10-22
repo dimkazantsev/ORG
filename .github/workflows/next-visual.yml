@@ -4,6 +4,7 @@ on:
     paths:
       - 'next/**'
       - 'index.html'
+      - 'app.js'
       - 'studio-2026.css'
       - 'ui-ux-pro-max.css'
       - '.github/workflows/next-visual.yml'
