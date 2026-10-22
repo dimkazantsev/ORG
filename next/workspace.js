@@ -326,7 +326,7 @@ async function loadRooms(){try{const list=await rpc('qwiz_host_rooms');state.hos
 async function launch(){disable('launchButton',true);msg('launchMessage','');
  try{if(!$('launchBuild').value)throw Error('Выберите сборку.');
  const created=await rpc('qwiz_prepare_room',{p_build:$('launchBuild').value,p_title:$('launchTitle').value.trim()||null,p_teams:Number($('launchTeams').value)});
- msg('launchMessage','Комната '+created.code+' создана. Вопросов: '+created.total_questions+(created.issues?.length?' · есть вопросы к подготовке':'') );
+ msg('launchMessage','Комната '+created.code+' создана. '+(created.issues?.length?'Можно собирать команды; вопросы добавьте перед началом.':'Вопросов: '+created.total_questions));
  await loadRooms();await selectRoom(created.code)}
  catch(e){msg('launchMessage',e.message,true)}finally{disable('launchButton',false)}}
 function subscribeRoom(code){if(state.channel){state.db.removeChannel(state.channel);state.channel=null}
@@ -338,10 +338,10 @@ function subscribeRoom(code){if(state.channel){state.db.removeChannel(state.chan
 }
 async function selectRoom(code){state.roomCode=code;sessionStorage.setItem('qwiz-host-room',code);
  $('liveConsole').hidden=false;subscribeRoom(code);await refreshLive();
- $('liveConsole').scrollIntoView({behavior:'smooth',block:'start'})}
-async function refreshLive(){if(!state.roomCode||state.roomBusy)return;state.roomBusy=true;
- try{const s=await rpc('org_next_state',{p_code:state.roomCode});if(s.server_now)state.clockOffset=Date.parse(s.server_now)-Date.now();state.room=s;renderLive(s);msg('liveMessage','')}
- catch(e){msg('liveMessage',e.message,true)}finally{state.roomBusy=false}}
+ $('liveConsole').scrollIntoView({behavior:'instant',block:'start'})}
+async function refreshLive(){if(!state.roomCode)return;if(state.roomBusy){state.roomRefreshQueued=true;return;}state.roomBusy=true;const code=state.roomCode;
+ try{const s=await rpc('org_next_state',{p_code:code});if(code!==state.roomCode)return;if(s.server_now)state.clockOffset=Date.parse(s.server_now)-Date.now();state.room=s;renderLive(s);msg('liveMessage','')}
+ catch(e){msg('liveMessage',e.message,true)}finally{state.roomBusy=false;if(state.roomRefreshQueued){state.roomRefreshQueued=false;queueMicrotask(refreshLive);}}}
 function renderLive(s){
  const key=s.phase+':'+s.index;if(key!==state.liveKey){state.liveKey=key;if(s.phase==='result')QwizStage.audio.play('reveal');else if(s.phase==='finished')QwizStage.audio.play(s.activity?.sound||'fanfare')}
  $('liveClock').innerHTML=['question','result'].includes(s.phase)?QwizStage.clockMarkup(s,'liveTimer'):'';QwizStage.updateClock(s,state.clockOffset,document,'liveTimer',false);
@@ -359,81 +359,13 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  $('liveRanking').innerHTML=(s.teams||[]).slice().sort((a,b)=>b.score-a.score).map((t,i)=>
   '<div class="live-line"><span>'+ (i+1)+'. '+esc(t.name)+'</span><strong>'+esc(t.score)+'</strong></div>').join('');
  $('liveRoster').innerHTML=(s.players||[]).map(p=>'<div class="live-line"><span>'+esc(p.name)+'</span><small>'+
- esc(s.teams.find(t=>t.id===p.team_id)?.name||'—')+'</small></div>').join('');
- renderTeamManager(s);
-}
-function teamMemberMarkup(p,s){
- const options='<option value="">Без команды</option>'+(s.teams||[]).map(t=>'<option value="'+esc(t.id)+'" '+(t.id===p.team_id?'selected':'')+'>'+esc(t.name)+'</option>').join('');
- return '<div class="team-member" draggable="'+(s.phase==='lobby')+'" data-player-id="'+esc(p.id)+'">'+
-  (window.QwizTeams?QwizTeams.avatar(p.avatar):'')+
-  '<div class="team-member-name">'+esc(p.name)+'<small>'+esc(p.group||'')+'</small></div>'+
-  (s.phase==='lobby'?'<select data-team-player="'+esc(p.id)+'" aria-label="Команда участника '+esc(p.name)+'">'+options+'</select>':'')+
-  '</div>';
-}
-function renderTeamManager(s){
- const teams=s.teams||[],players=s.players||[],issues=Array.isArray(s.setup_issues)?s.setup_issues:[];
- const unassigned=players.filter(p=>!p.team_id),mode=s.team_mode||'random';
- $('teamManager').hidden=!s.host;
- if(!s.host)return;
- $('teamMode').value=mode;$('teamCount').value=teams.length;
- const ready=s.phase==='lobby'&&Number(s.total)>0&&!issues.length&&!unassigned.length;
- $('liveStart').disabled=s.phase==='lobby'&&!ready;
- $('roomReadinessTitle').textContent=ready?'Можно начать · '+s.total+' вопросов':
-   'Подготовка · '+Number(s.total||0)+' вопросов';
- $('roomReadinessText').textContent=issues.map(x=>x.reason||'Нужно подготовить вопросы').join('; ')||
-   (unassigned.length?'Сначала назначьте команды '+unassigned.length+' участникам.':
-    Number(s.total||0)?'Вопросы и составы готовы.':'Добавьте вопросы в раунд и обновите комнату.');
- const lobby=s.phase==='lobby';for(const id of ['shuffleTeams','applyTeamSettings','teamMode','teamCount','refreshRoomContent'])$(id).disabled=!lobby;
- const pool=$('teamPool');pool.hidden=!(mode==='manual'&&unassigned.length>0);
- $('teamPoolMembers').innerHTML=unassigned.map(p=>teamMemberMarkup(p,s)).join('')||'<p class="team-empty">Все участники распределены.</p>';
- $('teamGrid').innerHTML=teams.map(t=>{
-  const list=players.filter(p=>p.team_id===t.id);
-  return '<article class="team-card" data-drop-team="'+esc(t.id)+'"><div class="team-card-head">'+
-    QwizStage.icon(t,true)+'<div><h4>'+esc(t.name)+'</h4><small>'+list.length+' участников</small></div>'+
-    '<button type="button" class="team-qr-button" data-team-qr="'+esc(t.id)+'" aria-label="QR-приглашение в команду '+esc(t.name)+'">'+
-    '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zm6 0v3m-3 3h4m-4-3v3"/></svg></button></div>'+
-    '<div class="team-members">'+(list.map(p=>teamMemberMarkup(p,s)).join('')||'<p class="team-empty">Пока нет участников</p>')+'</div></article>';
- }).join('');
-}
-async function teamAdmin(action,params={}){
- if(!state.room)return;
- msg('teamMessage','');
- try{
-  await rpc('qwiz_team_admin',{p_room:state.room.room_id,p_action:action,p_input:params});
-  state.channel?.send({type:'broadcast',event:'team',payload:{room:state.roomCode}})?.catch(()=>{});
-  await refreshLive();
-  msg('teamMessage',action==='shuffle'?'Участники распределены поровну.':
-   action==='move'?'Участник переведён в команду.':
-   action==='refresh_content'?'Список вопросов обновлён.':'Настройки команд применены.');
- }catch(e){msg('teamMessage',e.message,true)}
-}
-function teamDragBind(root){
- root.addEventListener('dragstart',e=>{
-  const player=e.target.closest('.team-member[draggable="true"]');if(!player)return;
-  state.teamDrag=player.dataset.playerId;player.classList.add('is-dragging');
-  if(e.dataTransfer){e.dataTransfer.effectAllowed='move';e.dataTransfer.setData('text/plain',state.teamDrag)}
- });
- root.addEventListener('dragend',()=>{state.teamDrag=null;all('.is-dragging').forEach(x=>x.classList.remove('is-dragging'))});
- root.addEventListener('dragover',e=>{
-  const target=e.target.closest('[data-drop-team]');if(!target||!state.teamDrag)return;
-  e.preventDefault();e.dataTransfer.dropEffect='move';target.classList.add('is-drop-target');
- });
- root.addEventListener('dragleave',e=>{const target=e.target.closest('[data-drop-team]');if(target&&!target.contains(e.relatedTarget))target.classList.remove('is-drop-target')});
- root.addEventListener('drop',e=>{
-  const target=e.target.closest('[data-drop-team]');if(!target||!state.teamDrag)return;
-  e.preventDefault();const id=state.teamDrag;state.teamDrag=null;target.classList.remove('is-drop-target');
-  teamAdmin('move',{player_id:id,team_id:target.dataset.dropTeam});
- });
- root.addEventListener('change',e=>{
-  const input=e.target.closest('[data-team-player]');if(input)teamAdmin('move',{player_id:input.dataset.teamPlayer,team_id:input.value||null});
- });
-}
+ esc(s.teams.find(t=>t.id===p.team_id)?.name||'Ожидает распределения')+'</small></div>').join('');renderTeamManager(s);}
 async function control(action){if(!state.room)return;for(const id of ['liveStart','liveReveal','liveNext','liveFinish'])disable(id,true);
  try{if(action==='finish'&&!confirm('Завершить игру?'))return;
  await rpc('org_next_advance',{p_room:state.room.room_id,p_action:action});
  state.channel?.send({type:'broadcast',event:'phase',payload:{room:state.roomCode}})?.catch(()=>{});
  await refreshLive()}catch(e){msg('liveMessage',e.message,true)}
- finally{for(const id of ['liveStart','liveReveal','liveNext','liveFinish'])disable(id,false)}}
+ finally{for(const id of ['liveStart','liveReveal','liveNext','liveFinish'])disable(id,false);if(state.room)roomReadiness(state.room);}}
 function projection(){const u=new URL('./presenter.html',location.href);if(state.roomCode)u.searchParams.set('room',state.roomCode);
  window.open(u.toString(),'qwiz_party_public_screen','noopener,width=1280,height=760')}
 async function copyRoom(){const u=new URL('./',location.href);u.searchParams.set('room',state.roomCode);
