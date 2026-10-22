@@ -245,3 +245,20 @@ test('Two additional country flag mechanics remain validated server-side',()=>{
  assert.match(sql,/flag_visual/);assert.match(sql,/'country','picker','colors','symbols','fragments'/);
  assert.match(seed,/Expected 36 curated questions/);
 });
+
+test('Sound and sixth flag mechanism preserve secure flag scoring',()=>{
+ const w=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const stage=readFileSync(new URL('./stage.js',import.meta.url),'utf8');
+ const sql=readFileSync(new URL('./migrations/qwiz_flags_find_errors.sql',import.meta.url),'utf8');
+ const seed=readFileSync(new URL('./migrations/qwiz_flags_find_errors_seed24.sql',import.meta.url),'utf8');
+ const audit=readFileSync(new URL('./migrations/qwiz_flags_find_errors_audit.sql',import.meta.url),'utf8');
+ assert.match(w,/\['errors','Поиск ошибок на флагах',true\]/);
+ assert.match(w,/savedBeforeBoot=readPosition/);
+ assert.match(w,/data-error-image/);
+ assert.match(w,/solution\.error_kind='mislabeled'/);
+ assert.match(stage,/qwiz-audio-preference-v1/);
+ assert.match(stage,/victory:/);assert.match(stage,/jazz:/);assert.match(stage,/suspense:/);
+ assert.match(stage,/uiIcon\(name\)/);
+ assert.match(sql,/flag_mode/);assert.match(sql,/\'country\',\'picker\',\'colors\',\'symbols\',\'fragments\',\'errors\'/);
+ assert.match(seed,/Expected 24 stage-6 questions/);assert.match(audit,/intentional_errors/);
+});
