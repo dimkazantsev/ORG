@@ -3,6 +3,9 @@ on:
   push:
     paths:
       - 'next/**'
+      - 'index.html'
+      - 'studio-2026.css'
+      - 'ui-ux-pro-max.css'
       - '.github/workflows/next-visual.yml'
   workflow_dispatch:
 jobs:
