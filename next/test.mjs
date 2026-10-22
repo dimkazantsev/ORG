@@ -175,3 +175,19 @@ test('Flags subcategories are a metadata filter, not duplicated topic tables',()
  assert.match(seed,/40 UN-member flags x 2 approved mechanics = 80 questions/);
  assert.match(seed,/raise exception 'Проверка качества пилотной партии/);
 });
+
+test('Pilot SVG manifest contains exactly 40 original-country flags',()=>{
+ const manifest=JSON.parse(readFileSync(new URL('./assets/flags-world/catalog.json',import.meta.url),'utf8'));
+ assert.equal(manifest.target_countries,195);
+ assert.equal(manifest.pilot_countries,40);
+ assert.equal(manifest.countries.length,40);
+ const codes=new Set();
+ for(const country of manifest.countries){
+  assert.match(country.iso2,/^[A-Z]{2}$/);
+  assert.ok(!codes.has(country.iso2),'Duplicate ISO '+country.iso2);
+  codes.add(country.iso2);
+  const svg=readFileSync(new URL('./assets/flags-world/'+country.iso2.toLowerCase()+'.svg',import.meta.url),'utf8');
+  assert.match(svg,/<svg\b/i);
+  assert.doesNotMatch(svg,/<script\b|javascript:/i);
+ }
+});
