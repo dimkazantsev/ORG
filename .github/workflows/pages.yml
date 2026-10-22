@@ -107,7 +107,7 @@ jobs:
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/ui-ux-pro-max.css?v=20261022-6" -o /tmp/org-published-uipromax.css &&
                grep -q -- '--q-blue' /tmp/org-published-uipromax.css &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/index.html?release=$GITHUB_RUN_ID" -o /tmp/org-next-index.html &&
-               grep -q 'QWIZ-PARTY — командный квиз' /tmp/org-next-index.html &&
+               grep -q 'QWIZ-PARTY — Командная викторина' /tmp/org-next-index.html &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/app.js?v=13" -o /tmp/org-next-app.js &&
                grep -q 'org_next_answer' /tmp/org-next-app.js &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/motion.css?v=2" -o /tmp/qwiz-motion.css &&
