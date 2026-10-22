@@ -4,10 +4,10 @@
 <meta name="theme-color" content="#faf9fd"><title>QWIZ-PARTY — Студия преподавателя</title>
 <link rel="preload" href="./assets/manrope-variable.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="./theme.css?v=lavender-2">
-<link rel="stylesheet" href="./workspace.css?v=flag-modes-1">
+<link rel="stylesheet" href="./workspace.css?v=colors-3">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="./stage.css?v=1"><script defer src="./stage.js?v=1"></script>
-<script defer src="./vendor/qrcode.min.js"></script><script defer src="./workspace.js?v=flags-modes-1"></script>
+<link rel="stylesheet" href="./stage.css?v=1"><script defer src="./stage.js?v=colors-3"></script>
+<script defer src="./vendor/qrcode.min.js"></script><script defer src="./workspace.js?v=colors-3"></script>
 <link rel="stylesheet" href="./motion.css?v=2">
 </head><body class="studio-polish" data-design="lavender-20261022"><a class="skip-link" href="#mainContent">К содержимому</a>
 <header class="top"><div class="top-wrap"><a class="brand" href="./"><span class="brand-mark"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M24 15.5a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0Z" stroke="currentColor" stroke-width="3.5"/><path d="m19.5 20 5 5" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span><span>QWIZ<span class="brand-mid">-</span>PARTY<small>СТУДИЯ ПРЕПОДАВАТЕЛЯ</small></span></a>
@@ -105,10 +105,10 @@
 <dialog class="edit-dialog" id="cardDialog"><form id="cardForm" method="dialog"><div class="dialog-head"><div><span class="eyebrow">РЕДАКТОР РАУНДА</span><h2>Настройка карточки</h2></div><button type="button" class="icon-btn" aria-label="Закрыть окно" data-close="cardDialog"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"></path></svg></button></div>
  <div class="dialog-body"><label>Название карточки<input id="cardTitle" maxlength="120" required></label>
  <label>Иконка раунда<select id="cardIcon">
- <option value="▦">▦ Вопросы</option><option value="◉">◉ Начало</option><option value="♫">♫ Музыка</option>
- <option value="▥">▥ Статистика</option><option value="♙">♙ Игроки</option><option value="✦">✦ Бонус</option>
- <option value="⇄">⇄ Дуэль</option><option value="★">★ Финал</option><option value="⚑">⚑ Флаги</option>
- <option value="⌖">⌖ География</option><option value="☷">☷ Порядок</option><option value="◆">◆ Логика</option>
+ <option value="▦">Вопросы</option><option value="◉">Начало</option><option value="♫">Музыка</option>
+ <option value="▥">Статистика</option><option value="♙">Игроки</option><option value="✦">Бонус</option>
+ <option value="⇄">Дуэль</option><option value="★">Финал</option><option value="⚑">Флаги</option>
+ <option value="⌖">География</option><option value="☷">Порядок</option><option value="◆">Логика</option>
  </select></label><div id="cardRoundSettings"><label>Тема<select id="cardTopic"><option value="">Без темы</option></select></label>
  <details id="cardModesDetails" class="card-mode-details"><summary>Механики внутри темы <span id="cardModesInfo" class="small-help">Все доступные</span></summary><p class="small-help">Выберите, какие вопросы попадут в раунд. Отбор выполняется на сервере при запуске игры.</p><div id="cardFlagModes" class="card-mode-grid"></div></details>
  <div class="two-inputs"><label>Вопросов<input id="cardCount" type="number" min="1" max="100" value="5"></label><label>Время на вопрос (сек.)<input id="cardSeconds" type="number" min="10" max="120" value="30"></label></div>
