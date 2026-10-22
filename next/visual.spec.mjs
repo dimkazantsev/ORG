@@ -718,6 +718,7 @@ test('Sound defaults to on and includes at least 10 selectable tones',async({pag
  await page.goto('http://127.0.0.1:8080/next/workspace.html');
  const audio=await page.evaluate(()=>({enabled:QwizStage.audio.enabled,patterns:QwizStage.audio.play.toString()}));
  expect(audio.enabled).toBe(true);
+ await page.locator('[data-section="builder"]').click();
  await page.locator('#newBuild').click();
  await page.locator('#roundCards [data-edit-card="1"]').click();
  expect(await page.locator('#cardSound option').count()).toBeGreaterThanOrEqual(11);
