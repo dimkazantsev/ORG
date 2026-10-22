@@ -465,3 +465,12 @@ body.studio-rebuild .new-studio-link{display:inline-flex;align-items:center;min-
 body.studio-rebuild :is(input,select,textarea){border-color:var(--control-border)!important}
 
 body.studio-rebuild #homeView :is(.primary,.big-btn,.button-primary){background:var(--q-blue)!important;border-color:var(--q-blue)!important;box-shadow:none!important;color:white!important}
+
+/* Scope the entry geometry above older ID-based studio rules. */
+body.studio-rebuild #homeView .hero-card{padding:22px 0!important;background:transparent!important;border:0!important;box-shadow:none!important;min-height:500px!important;border-radius:0!important}
+body.studio-rebuild #homeView #homeAccess{display:block!important;min-height:0!important;padding:32px!important;background:white!important;border:1px solid var(--q-line)!important;box-shadow:0 16px 55px #49337609!important}
+body.studio-rebuild #homeView .role-switch{display:grid!important;grid-template-columns:1fr 1fr!important;gap:5px!important;background:var(--q-blue-soft)!important;max-width:none!important}
+body.studio-rebuild #homeView .role-tab{width:100%!important;text-align:center!important;font-size:12px!important}
+body.studio-rebuild #homeView .access-heading h2{font-size:28px!important;font-weight:650!important}
+body.studio-rebuild #homeView .access-support{margin-top:24px!important}
+@media(max-width:760px){body.studio-rebuild #homeView .hero-card{padding:0!important;min-height:0!important}body.studio-rebuild #homeView #homeAccess{padding:24px!important}}
