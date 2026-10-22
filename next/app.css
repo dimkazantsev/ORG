@@ -368,6 +368,3 @@ button.option:hover:not(:disabled){background:var(--accent-soft);border-color:va
 .game-card .option{font-size:15px}}
 
 @media(max-width:380px){.header-link span{display:none}.profile-link,.header-link{min-width:44px;min-height:44px}.header-end{gap:4px}}
-
-/* Flags: crisp 2-4 stripe tiles in question choices */
-.flag-stripe-art{display:flex;overflow:hidden;width:min(100%,230px);height:100px;margin:0 auto;border:1px solid #dbd3e6;border-radius:5px;box-shadow:0 1px 3px #2215311a;flex-shrink:0}.flag-stripe-art.horizontal{flex-direction:column}.flag-stripe-art.vertical{flex-direction:row}.flag-stripe-art>span{flex:1;min-height:0;min-width:0}
