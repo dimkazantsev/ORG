@@ -1,0 +1,73 @@
+/* QWIZ-PARTY / Team Arcade. Lavender design tokens, no bitmap icons. */
+.arcade-palette-heading{margin:15px 0 10px}
+.arcade-palette{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.arcade-palette button{display:flex;align-items:center;justify-content:flex-start;gap:9px;background:#f9f7ff;border:1px solid #ded9f1;padding:13px 12px;color:#302a47;font-weight:750;min-height:54px}
+.arcade-palette button:hover{background:#eeebfa;border-color:#b8a9ee}
+.arcade-palette button svg,.card-library button svg{width:20px;height:20px;flex:none;stroke-width:1.75}
+.arcade-settings{background:#f9f7ff;border:1px solid #e5def6;border-radius:14px;padding:17px;margin:16px 0}
+.arcade-settings h3{margin:0 0 10px;font-size:16px}
+.arcade-shell{--arcade-ink:#26233c;--arcade-purple:#7457cb;--arcade-lilac:#e8dfff;color:var(--arcade-ink);position:relative;isolation:isolate}
+.arcade-shell,.arcade-wallet-panel,.arcade-host-panel{font-family:inherit}
+.arcade-shell *{box-sizing:border-box}
+.arcade-kicker{display:inline-flex;align-items:center;gap:6px;font-size:11px;line-height:1.4;color:#7b62b9;text-transform:uppercase;font-weight:850;letter-spacing:.1em}
+.arcade-shell h2{font-size:clamp(25px,3.8vw,44px);line-height:1.12;margin:7px 0 10px;font-weight:850;letter-spacing:-.035em;color:var(--arcade-ink)}
+.arcade-shell p{color:#736b81;line-height:1.5}
+.arcade-shell .arcade-lead{margin-bottom:19px;font-size:14px}
+.arcade-head{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.arcade-countdown{font-size:clamp(26px,5vw,49px);font-weight:850;letter-spacing:-.07em;font-variant-numeric:tabular-nums;color:#7654cc}
+.arcade-countdown[data-urgent="true"]{color:#cb4865}
+.arcade-scene{background:linear-gradient(138deg,#faf8ff,#f1edff);border:1px solid #e5ddfa;border-radius:21px;padding:22px;min-height:154px;overflow:hidden}
+.arcade-player .arcade-scene{margin:12px 0}
+.arcade-projection .arcade-scene{max-width:1000px;margin:18px auto;border-radius:28px;padding:35px;min-height:260px}
+.arcade-scene svg{display:block;max-width:100%;margin:auto}
+.arcade-rocket-art{width:100%;height:153px;transform:translateX(calc(var(--arcade-progress,0)*.3%));transition:transform .4s cubic-bezier(.2,.7,.3,1)}
+.arcade-rocket-art .arcade-flame{transform-origin:0 50%;animation:arcade-flare .19s ease-in-out infinite alternate}
+@keyframes arcade-flare{to{transform:scaleX(.7)}}
+.arcade-rope{display:flex;align-items:center;gap:0;width:100%;margin:30px 0;height:16px;border:2px solid #ccc4e7;border-radius:16px;background:linear-gradient(90deg,#9270d4,#e6ac83,#6cbee4);position:relative}
+.arcade-rope:after{content:"";position:absolute;left:var(--arcade-progress,50%);top:-13px;width:29px;height:39px;transform:translateX(-50%);background:#fff;border:4px solid #59469d;border-radius:12px;box-shadow:0 4px 10px #3d327b30;transition:left .35s}
+.arcade-tap-btn{appearance:none;display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:110px;border:0;border-radius:22px;background:linear-gradient(130deg,#8766dd,#6043b5);color:#fff;font:850 clamp(24px,5vw,37px)/1.1 inherit;box-shadow:0 12px 0 #4b338d,0 20px 35px #6651b53d;cursor:pointer;touch-action:manipulation;user-select:none;-webkit-tap-highlight-color:transparent;transition:transform .1s,box-shadow .1s}
+.arcade-tap-btn:active{transform:translateY(8px) scale(.994);box-shadow:0 4px 0 #4b338d,0 8px 15px #6651b533}
+.arcade-tap-btn:focus-visible,.arcade-store button:focus-visible{outline:3px solid #9279ef;outline-offset:3px}
+.arcade-tap-btn:disabled{opacity:.42;box-shadow:none;cursor:not-allowed;transform:none}
+.arcade-tap-caption{display:block;text-align:center;font-size:12px;margin:22px 0 8px;color:#716788}
+.arcade-ranks{display:grid;gap:9px;margin:15px 0}
+.arcade-rank{display:grid;grid-template-columns:minmax(86px,1fr) minmax(75px,2fr) 60px;gap:10px;align-items:center;color:var(--arcade-ink);font-size:13px}
+.arcade-rank-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:750}
+.arcade-rank-track{height:13px;border-radius:999px;background:#eae6f4;overflow:hidden}
+.arcade-rank-fill{width:var(--arcade-value,0%);height:100%;background:var(--arcade-team-color,#9a78e0);border-radius:inherit;transition:width .45s}
+.arcade-rank-score{text-align:right;font-variant-numeric:tabular-nums;font-weight:850}
+.arcade-alert{border:1px solid #e3dcf4;background:#f8f5ff;padding:11px 15px;border-radius:12px;font-size:13px;color:#514365}
+.arcade-alert[data-error="true"]{border-color:#eab7c3;background:#fff4f6;color:#9d3b54}
+.arcade-question{margin:16px 0;background:#fff;border:1px solid #e4dcf4;border-radius:17px;padding:17px}
+.arcade-question h3{font-size:clamp(17px,3vw,24px);line-height:1.3;margin:10px 0 15px}
+.arcade-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.arcade-choices button{min-height:52px;background:#f8f6ff;border:1px solid #dad1ef;border-radius:12px;color:#353048;font:inherit;font-weight:720;cursor:pointer;padding:8px 10px;text-align:left;display:flex;align-items:center;gap:8px}
+.arcade-choices button:hover:not(:disabled){background:#e9e1ff}
+.arcade-choices button:disabled{cursor:default;opacity:.5}
+.arcade-choice-image{max-height:55px;max-width:100px;object-fit:contain}
+.arcade-choice-letter{flex:none;border-radius:6px;background:#e7e0f6;padding:5px 8px}
+.arcade-reveal{padding:12px 14px;border-radius:13px;background:#eff8f1;color:#236449;margin-top:12px;font-weight:700}
+.arcade-badges{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
+.arcade-award{font-size:12px;color:#624a26;border:1px solid #f0dfaf;background:#fff9e9;border-radius:99px;padding:6px 11px;font-weight:750}
+.arcade-wallet-panel,.arcade-host-panel{background:#fff;border:1px solid #e5def6;border-radius:17px;padding:17px;margin:15px 0}
+.arcade-wallet-title{display:flex;justify-content:space-between;align-items:center;gap:10px;font-weight:820;font-size:16px;color:#33294a;margin-bottom:12px}
+.arcade-wallet-total{display:inline-flex;align-items:center;border-radius:99px;background:#fff4d9;color:#805717;padding:6px 11px;font-variant-numeric:tabular-nums}
+.arcade-store{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.arcade-store button{display:grid;align-content:center;gap:3px;text-align:left;padding:12px;background:#f9f7ff;border:1px solid #dfd8ef;border-radius:12px;font:inherit;min-height:85px;color:#45385b;cursor:pointer}
+.arcade-store button strong{font-size:13px}
+.arcade-store button span{font-size:11px;color:#84749a}
+.arcade-store button:disabled{opacity:.55;cursor:default}
+.arcade-projection{text-align:center;max-width:1100px;margin:auto}
+.arcade-projection h2{font-size:clamp(38px,5.8vw,72px)}
+.arcade-projection .arcade-rank{font-size:clamp(14px,2vw,23px);grid-template-columns:minmax(130px,1fr) minmax(110px,3fr) 95px}
+.arcade-projection .arcade-rank-track{height:20px}
+.arcade-projection .arcade-countdown{font-size:clamp(46px,8vw,110px)}
+.arcade-king{display:grid;place-items:center;font-size:clamp(32px,6vw,74px);min-height:120px;color:#7654cc}
+.arcade-captain-ready{font-size:clamp(20px,5vw,42px);font-weight:850;color:#7654cc;margin:15px 0}
+.arcade-captain-ready.go{color:#16875e;animation:arcade-go .36s both}
+@keyframes arcade-go{from{transform:scale(.85);opacity:.4}to{transform:scale(1);opacity:1}}
+.arcade-host-panel .arcade-shell h2{font-size:24px}
+.arcade-host-panel .arcade-scene{min-height:90px;padding:11px}
+.arcade-host-panel .arcade-rank{grid-template-columns:130px 1fr 50px}
+@media(max-width:760px){.arcade-palette{grid-template-columns:repeat(2,minmax(0,1fr))}.arcade-store{grid-template-columns:1fr}.arcade-choices{grid-template-columns:1fr}.arcade-scene{padding:12px}.arcade-rank{grid-template-columns:85px 1fr 40px;gap:6px}.arcade-tap-btn{min-height:96px}.arcade-rank-name{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.arcade-shell *{animation:none!important;transition:none!important}}
