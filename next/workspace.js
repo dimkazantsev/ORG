@@ -87,7 +87,9 @@ function renderQuestions(){
  $('bankItems').innerHTML=state.questions.length?state.questions.map(q=>'<article class="question-row">'+
   '<div><div class="question-meta"><span class="chip">'+esc(titleKind(q.solution?.flag_mode))+'</span><span class="chip lilac">'+esc(nameTopic(q.topic_id))+'</span><span class="chip">★ '+esc(q.difficulty)+'</span></div>'+
   '<h3>'+esc(q.prompt)+'</h3><p>'+(q.tags?.includes('fw:published')?'Проверен · доступен для игры':'Черновик · не участвует в раундах')+'</p></div>'+
-  '<button class="small-button" data-edit-question="'+esc(q.id)+'">Изменить</button></article>').join(''):
+  '<div class="question-actions"><button class="small-button" data-edit-question="'+esc(q.id)+'">Изменить</button>'+
+  (!q.tags?.includes('fw:published')?'<button class="small-button" data-publish-question="'+esc(q.id)+'" title="После проверки правильного ответа и изображения">Опубликовать</button>':'')+
+  '</div></article>').join(''):
   '<div class="empty">Вопросов пока нет. Выберите тему и добавьте первый вопрос.</div>';
  if(state.activePage==='bank')animateView($('bankItems'),[{opacity:.35,transform:'translateY(12px)'},{opacity:1,transform:'translateY(0)'}],{duration:420});
 }
@@ -311,7 +313,16 @@ function wire(){
  $('bankPrevious').onclick=()=>{state.bankOffset=Math.max(0,state.bankOffset-state.bankPageSize);loadQuestions()};
  $('bankNext').onclick=()=>{if(state.bankOffset+state.bankPageSize<state.questionTotal){state.bankOffset+=state.bankPageSize;loadQuestions()}};
  $('newTopic').onclick=()=>{$('topicDialog').showModal();$('topicName').focus()};$('topicForm').onsubmit=saveTopic;$('newQuestion').onclick=()=>editQuestion();
- $('bankItems').onclick=e=>{const b=e.target.closest('[data-edit-question]');if(b)editQuestion(b.dataset.editQuestion)};
+ $('bankItems').onclick=async e=>{
+  const publish=e.target.closest('[data-publish-question]');
+  if(publish){
+   publish.disabled=true;
+   try{await studio('flag_publish',{id:publish.dataset.publishQuestion});await loadQuestions()}
+   catch(err){msg('bankMessage',err.message,true);publish.disabled=false}
+   return;
+  }
+  const b=e.target.closest('[data-edit-question]');if(b)editQuestion(b.dataset.editQuestion)
+ };
  $('editKind').onchange=()=>answerEditor($('editKind').value,null);
  $('questionForm').onsubmit=saveQuestion;
  $('newBuild').onclick=newBuild;$('generalSettings').onclick=generalSettings;$('generalForm').onsubmit=saveGeneralSettings;
