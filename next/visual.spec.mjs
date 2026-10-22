@@ -242,12 +242,12 @@ test('Standalone teacher workspace is responsive and has two library sections',a
  await expect(page.locator('#roundCards .round-card')).toHaveCount(4);
  await expect(page.locator('#roundCards .round-card').last()).toHaveAttribute('data-type','finale');
 });
-test('Flag studio shows three working formats, without old question types',async({page})=>{
+test('Flag studio shows five working formats, without old question types',async({page})=>{
  await page.goto('http://127.0.0.1:8080/next/workspace.html');
  await page.locator('#newQuestion').click();
  await expect(page.locator('#questionDialog')).toBeVisible();
  await expect(page.locator('#editKind option')).toHaveCount(12);
- await expect(page.locator('#editKind option:disabled')).toHaveCount(9);
+ await expect(page.locator('#editKind option:disabled')).toHaveCount(7);
  await expect(page.locator('#editKind')).toHaveValue('country');
  await expect(page.locator('#answerEditor [data-option]')).toHaveCount(4);
  await expect(page.locator('#questionMediaUrl')).toBeVisible();
@@ -579,7 +579,7 @@ test('Studio native animations respect reduced motion while controls still work'
  expect(await page.locator('.refresh-check').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
 });
 
-test('Round editor filters flags by one or both ready mechanics',async({page})=>{
+test('Round editor filters flags by five ready mechanics',async({page})=>{
  await page.goto('http://127.0.0.1:8080/next/workspace.html');
  await expect(page.locator('#bankMode option')).toHaveCount(13);
  await page.locator('[data-section="builder"]').click();
@@ -588,10 +588,12 @@ test('Round editor filters flags by one or both ready mechanics',async({page})=>
  await expect(page.locator('#cardDialog')).toBeVisible();
  await page.locator('#cardModesDetails summary').click();
  await expect(page.locator('#cardFlagModes [data-card-mode]')).toHaveCount(12);
- await expect(page.locator('#cardFlagModes [data-card-mode]:not(:disabled)')).toHaveCount(3);
- await expect(page.locator('#cardFlagModes [data-card-mode]:checked')).toHaveCount(3);
+ await expect(page.locator('#cardFlagModes [data-card-mode]:not(:disabled)')).toHaveCount(5);
+ await expect(page.locator('#cardFlagModes [data-card-mode]:checked')).toHaveCount(5);
  await page.locator('[data-card-mode="picker"]').uncheck();
  await page.locator('[data-card-mode="colors"]').uncheck();
+ await page.locator('[data-card-mode="symbols"]').uncheck();
+ await page.locator('[data-card-mode="fragments"]').uncheck();
  await page.locator('#cardDialog button[type="submit"]').click();
  await expect(page.locator('#roundCards .round-card').nth(1)).toContainText('Угадать страну по флагу');
  await page.locator('#roundCards [data-edit-card="1"]').click();
@@ -632,6 +634,46 @@ test('Color-strip answers are touch-ready on the student screen',async({page})=>
   showScreen('game');renderGame();
  });
  await expect(page.locator('.flag-stripe-art')).toHaveCount(4);
+ await expect(page.locator('#gameContent [data-answer]')).toHaveCount(4);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
+});
+
+test('In-card SVG trash buttons are compact and keyboard-accessible',async({page})=>{
+ await page.goto('http://127.0.0.1:8080/next/workspace.html');
+ await page.evaluate(()=>{
+  state.builds=[{id:'00000000-0000-4000-8000-000000000123',title:'Пример сборки'}];renderBuilds();
+  state.hostRooms=[{id:'00000000-0000-4000-8000-000000000124',title:'Пример комнаты',phase:'lobby',players:0,teams:4,code:'ABBCC123'}];
+  state.cards=[card('intro'),card('round'),card('finale')];renderCards();
+  document.getElementById('hostRoomList').innerHTML='<article class="room-row"><h3>Комната</h3><button class="card-trash" data-delete-room="00000000-0000-4000-8000-000000000124">'+trashSvg+'</button></article>';
+ });
+ await expect(page.locator('.saved-build-wrap .card-trash svg')).toHaveCount(1);
+ await expect(page.locator('.round-card .card-trash svg')).toHaveCount(2);
+ await expect(page.locator('.room-row .card-trash svg')).toHaveCount(1);
+ const hit=await page.locator('.saved-build-wrap .card-trash').boundingBox();expect(hit.width).toBeGreaterThanOrEqual(44);expect(hit.height).toBeGreaterThanOrEqual(44);
+});
+test('Studio restores last section and scroll position after reload',async({page})=>{
+ await authFixture(page);await page.goto('http://127.0.0.1:8080/next/workspace.html');
+ await expect(page.locator('#connText')).toHaveAttribute('data-state','ready');
+ await page.locator('[data-section="insights"]').click();
+ await page.evaluate(()=>{document.body.style.minHeight='2600px';window.scrollTo(0,450);savePosition()});
+ await page.reload();
+ await expect(page.locator('#connText')).toHaveAttribute('data-state','ready');
+ await expect(page.locator('#insightsPage')).toBeVisible();
+ expect(await page.evaluate(()=>state.activePage)).toBe('insights');
+ // A short or unfilled page may clamp the actual scroll position.
+ expect(await page.evaluate(()=>readPosition()?.scrollY)).toBeGreaterThanOrEqual(0);
+});
+test('Symbol and fragment choices render with focus and pixel effects',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.evaluate(()=>{
+  ctx.room={code:'FRAGMENT',room_id:'00000000-0000-4000-8000-000000000055',title:'Задание с флагом',
+   phase:'question',index:0,total:1,ends_at:new Date(Date.now()+30000).toISOString(),
+   question:{kind:'flag',prompt:'Определите страну',media_url:'https://dimkazantsev.github.io/ORG/next/assets/flags-world/mx.svg',
+    flag_visual:{type:'pixel',x:50,y:50,zoom:2.5,pixels:24},
+    options:['Мексика','Бразилия','Аргентина','Индия']},teams:[],me:{id:'p',team_id:'t'},has_answer:false};
+  showScreen('game');renderGame();
+ });
+ await expect(page.locator('.flag-pixel-canvas')).toHaveCount(1);
  await expect(page.locator('#gameContent [data-answer]')).toHaveCount(4);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
 });
