@@ -48,7 +48,7 @@ function signal(event){
 }
 function scheduleRefresh(delay=800){if(ctx.refreshTimer)clearTimeout(ctx.refreshTimer);ctx.refreshTimer=setTimeout(()=>refreshRoom(false),delay)}
 async function refreshRoom(showError=true){if(!ctx.roomCode||ctx.refreshing||!ctx.client)return;
- ctx.refreshing=true;try{const data=await rpc('org_next_state',{p_code:ctx.roomCode});ctx.lastRefresh=Date.now();dataState(data);if(showError){notice('hostNotice','');notice('gameNotice','')}}catch(error){if(showError){notice('hostNotice',error.message,'error');notice('gameNotice',error.message,'error')}}finally{ctx.refreshing=false}}
+ ctx.refreshing=true;try{const data=await rpc('qwiz_party_state',{p_code:ctx.roomCode});ctx.lastRefresh=Date.now();dataState(data);if(showError){notice('hostNotice','');notice('gameNotice','')}}catch(error){if(showError){notice('hostNotice',error.message,'error');notice('gameNotice',error.message,'error')}}finally{ctx.refreshing=false}}
 async function joinRoom(event){event.preventDefault();const button=$('joinButton');busy(button,true);notice('joinNotice','Подключение…');
  try{await ensureAuth();const code=$('joinCode').value.trim().toUpperCase();const name=$('joinName').value.trim();const group=$('joinGroup').value.trim();
   if(!/^[A-F0-9]{8}$/.test(code))throw Error('Код комнаты должен содержать восемь символов.');
@@ -211,7 +211,7 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
 }
 async function advance(action){const s=ctx.room;if(!s)return;busy($('host'+({start:'Start',reveal:'Reveal',next:'Next',finish:'Finish'})[action]),true);notice('hostNotice','');
  try{if(action==='finish'&&!confirm('Завершить эту игру?'))return;
-  await rpc('org_next_advance',{p_room:s.room_id,p_action:action});signal('phase');await refreshRoom();if(action==='finish')tab('results');
+  await rpc('qwiz_party_control',{p_room:s.room_id,p_action:action});signal('phase');await refreshRoom();if(action==='finish')tab('results');
  }catch(e){notice('hostNotice',e.message,'error')}finally{for(const b of ['hostStart','hostReveal','hostNext','hostFinish'])busy($(b),false)}}
 async function assign(playerId,teamId){if(!ctx.room||ctx.room.phase!=='lobby')return;try{await rpc('org_next_assign',{p_room:ctx.room.room_id,p_player:playerId,p_team:teamId});signal('team');await refreshRoom()}catch(e){notice('hostNotice',e.message,'error')}}
 async function submitAnswer(choice){if(ctx.mode!=='game'||!ctx.room||ctx.room.phase!=='question'||ctx.room.has_answer)return;const buttons=qa('[data-answer]');buttons.forEach(x=>busy(x,true));
