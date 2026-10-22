@@ -31,7 +31,7 @@ window.QwizArcade=(()=>{
   (kind==='player'?'<button type="button" class="arcade-tap-btn" data-arcade-tap>'+escape(m.cta)+'</button><span class="arcade-tap-caption" data-arcade-personal>Ждём команды…</span>':'')+
   '<div class="arcade-alert" role="status" aria-live="polite" data-arcade-alert>Подключаем результаты…</div><div class="arcade-badges" data-arcade-badges></div></div>';
  }
- function stop(kind){const tr=ui[kind];if(!tr)return;if(tr.interval)clearInterval(tr.interval);if(tr.clock)clearInterval(tr.clock);if(tr.flushTimer)clearTimeout(tr.flushTimer);tr.closed=true;ui[kind]=null;}
+ function stop(kind){const tr=ui[kind];if(!tr)return;if(tr.interval)clearInterval(tr.interval);if(tr.clock)clearInterval(tr.clock);if(tr.flushTimer)clearTimeout(tr.flushTimer);if(tr.onClick)tr.root?.removeEventListener('click',tr.onClick);tr.closed=true;ui[kind]=null;}
  async function fetchState(tr){if(tr.closed||tr.fetching)return;tr.fetching=true;const id=tr.key;
   try{const {data,error}=await tr.client.rpc('qwiz_arcade_state',{p_code:tr.code});if(error)throw error;if(tr.closed||tr.key!==id)return;
    tr.view=data;tr.offset=Date.parse(data.server_now)-Date.now();paint(tr);if(tr.kind==='player')paintWallet(data);
@@ -86,14 +86,14 @@ window.QwizArcade=(()=>{
   stop(kind);
   const tr={kind,key,root,code,roomId,client,mode,offset:0,closed:false,fetching:false,pending:0,sending:false,view:null,flushTimer:null,qkey:''};
   ui[kind]=tr;root.innerHTML=rootMarkup(mode,kind);
-  if(kind==='player'){root.addEventListener('click',e=>{
+  if(kind==='player'){tr.onClick=e=>{
     if(e.target.closest('[data-arcade-tap]'))tap(tr);
     const opt=e.target.closest('[data-arcade-answer]');if(opt)answer(tr,Number(opt.dataset.arcadeAnswer));
-   });}
+   };root.addEventListener('click',tr.onClick);}
   fetchState(tr);tr.interval=setInterval(()=>fetchState(tr),kind==='screen'?1300:1600);
   tr.clock=setInterval(()=>tick(tr),120);
  }
- function tap(tr){const v=tr.view;if(!v||!v.running||!v.mine)return;
+ function tap(tr){const v=tr.view;if(tr.closed||!v||!v.running||!v.mine)return;
   const now=currentTime(tr),end=Date.parse(v.ends_at)||0;
   if(now>end)return;
   if(v.mode==='blitz'&&now>(Date.parse(v.capture_until)||0))return;
@@ -111,7 +111,7 @@ window.QwizArcade=(()=>{
   }catch(e){showMessage(tr,e.message||'Не удалось засчитать нажатие',true);tr.alertOverride=Date.now()+2500;}
   finally{tr.sending=false;if(tr.pending&&!tr.flushTimer&&!tr.closed)tr.flushTimer=setTimeout(()=>flush(tr),750)}
  }
- async function answer(tr,choice){if(tr.answerBusy)return;tr.answerBusy=true;
+ async function answer(tr,choice){if(tr.closed||tr.answerBusy)return;tr.answerBusy=true;
   try{const {data,error}=await tr.client.rpc('qwiz_arcade_action',{p_room:tr.roomId,p_action:'answer',p_choice:choice});if(error)throw error;
    showMessage(tr,data.correct?'Правильный ответ! +80 очков и достижение.':'Ответ неверный. Ход переходит следующей команде.',!data.correct);
    tr.alertOverride=Date.now()+3500;await fetchState(tr);
