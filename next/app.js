@@ -324,7 +324,9 @@ function attach(){q('#logoHome').addEventListener('click',home);
  $('refreshRoom').onclick=()=>refreshRoom();$('copyInvite').onclick=copyInvite;
  $('exportResults').onclick=exportResults;
  $('hostPlayers').addEventListener('change',e=>{const input=e.target.closest('[data-team-for]');if(input)assign(input.dataset.teamFor,input.value)});
- $('gameSound').onclick=async()=>{const on=await QwizStage.audio.toggle();$('gameSound').textContent=on?'♫ Звук включён':'♫ Звук';$('gameSound').setAttribute('aria-pressed',String(on))};
+ QwizStage.iconLabel($('gameSound'),QwizStage.audio.enabled?'Звук включён':'Звук выключен',QwizStage.audio.enabled?'volume':'muted');
+ $('gameSound').setAttribute('aria-pressed',String(QwizStage.audio.enabled));
+ $('gameSound').onclick=async()=>{const on=await QwizStage.audio.toggle();QwizStage.iconLabel($('gameSound'),on?'Звук включён':'Звук выключен',on?'volume':'muted');$('gameSound').setAttribute('aria-pressed',String(on))};
  $('leaveGame').onclick=()=>{cleanupRoom();home()};
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ctx.roomCode)scheduleRefresh(200)});
  addQuestion();
@@ -424,7 +426,7 @@ async function openPresenterWindow(){
  'success');
 }
 
-async function init(){attach();if(!window.supabase?.createClient){notice('joinNotice','Не удалось загрузить Supabase. Проверьте подключение к интернету.','error');notice('loginNotice','Не удалось загрузить Supabase.','error');return}
+async function init(){attach();QwizStage.decorateControls();if(!window.supabase?.createClient){notice('joinNotice','Не удалось загрузить Supabase. Проверьте подключение к интернету.','error');notice('loginNotice','Не удалось загрузить Supabase.','error');return}
  ctx.client=window.supabase.createClient(URL_SUPABASE,KEY_SUPABASE);
  await restore();
 }
