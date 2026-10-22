@@ -154,7 +154,7 @@ begin
       raise exception 'Последней карточкой должен быть финал'; end if;
    return jsonb_build_object('id',v_id,'cards',v_pos);
  else raise exception 'Неизвестная команда студии'; end if;
-end $function$
+end $function$;
 
 CREATE OR REPLACE FUNCTION public.qwiz_launch_build(p_build uuid, p_title text DEFAULT NULL::text, p_teams integer DEFAULT 4)
  RETURNS jsonb
@@ -236,7 +236,7 @@ begin
  insert into public.qwiz_room_builds(room_id,build_id,timeline) values(v_room,p_build,v_timeline);
  return jsonb_build_object('code',v_code,'room_id',v_room,'total_questions',jsonb_array_length(v_questions),
    'total_cards',jsonb_array_length(v_timeline));
-end $function$
+end $function$;
 
 -- Validate internal mechanical examples before committing.
 do $verify$ begin
