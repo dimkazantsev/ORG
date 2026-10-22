@@ -18,7 +18,7 @@ const supported=new Set(['single','boolean','multi','match','order','sequence','
 const titleKind=id=>kinds.find(x=>x[0]===id)?.[1]||id;
 const icons={round:'▦',intro:'◉',break:'♫',team_stats:'▥',player_stats:'♙',bonus:'✦',duel:'⇄',finale:'★'};
 const titles={round:'Раунд вопросов',intro:'Начало игры',break:'Музыкальная пауза',team_stats:'Рейтинг команд',player_stats:'Статистика игроков',bonus:'Бонусная активность',duel:'Дуэль команд',finale:'Финал игры'};
-const state={db:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',dragFrom:null};
+const state={db:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,bankOffset:0,bankPageSize:25,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',dragFrom:null};
 function msg(id,text='',isError=false){const el=$(id);if(!el)return;el.textContent=text;el.classList.toggle('error',!!isError)}
 function disable(id,value){const el=$(id);if(el)el.disabled=value}
 function fmt(x){return Number(x||0).toLocaleString('ru-RU')}
@@ -42,9 +42,13 @@ function renderTopics(){
  $('topicChips').innerHTML=items.map(t=>'<button type="button" class="topic-chip '+($('bankTopic').value===t.id?'current':'')+'" data-topic="'+esc(t.id)+'">'+esc(t.name)+'</button>').join('');
 }
 async function loadQuestions(){
- const input={search:$('bankSearch').value.trim().slice(0,90),topic_id:$('bankTopic').value,kind:$('bankKind').value,sort:$('bankSort').value,offset:0};
+ const input={search:$('bankSearch').value.trim().slice(0,90),topic_id:$('bankTopic').value,kind:$('bankKind').value,sort:$('bankSort').value,offset:state.bankOffset,limit:state.bankPageSize};
  try{const data=await studio('questions',input);state.questions=data.items||[];state.questionTotal=data.total||0;
   $('navQuestionCount').textContent=fmt(state.questionTotal);$('questionsTotal').textContent='('+fmt(state.questionTotal)+')';
+  const totalPages=Math.max(1,Math.ceil(state.questionTotal/state.bankPageSize));
+  $('bankPageInfo').textContent='Страница '+(Math.floor(state.bankOffset/state.bankPageSize)+1)+' из '+totalPages;
+  $('bankPrevious').disabled=state.bankOffset===0;
+  $('bankNext').disabled=state.bankOffset+state.bankPageSize>=state.questionTotal;
   renderQuestions();renderTopics();msg('bankMessage','');
  }catch(e){msg('bankMessage',e.message,true)}
 }
@@ -248,9 +252,11 @@ function wire(){
  for(const b of all('[data-section]'))b.onclick=()=>section(b.dataset.section);
  $('signOut').onclick=signOut;
  $('refreshAll').onclick=async()=>{await overview();await loadRooms();if(state.roomCode)await refreshLive()};
- $('bankSearch').oninput=()=>{clearTimeout(state.bankTimer);state.bankTimer=setTimeout(loadQuestions,350)};
- for(const id of ['bankTopic','bankKind','bankSort'])$(id).onchange=loadQuestions;
- $('topicChips').onclick=e=>{const b=e.target.closest('[data-topic]');if(!b)return;$('bankTopic').value=b.dataset.topic;loadQuestions()};
+ $('bankSearch').oninput=()=>{clearTimeout(state.bankTimer);state.bankOffset=0;state.bankTimer=setTimeout(loadQuestions,350)};
+ for(const id of ['bankTopic','bankKind','bankSort'])$(id).onchange=()=>{state.bankOffset=0;loadQuestions()};
+ $('topicChips').onclick=e=>{const b=e.target.closest('[data-topic]');if(!b)return;$('bankTopic').value=b.dataset.topic;state.bankOffset=0;loadQuestions()};
+ $('bankPrevious').onclick=()=>{state.bankOffset=Math.max(0,state.bankOffset-state.bankPageSize);loadQuestions()};
+ $('bankNext').onclick=()=>{if(state.bankOffset+state.bankPageSize<state.questionTotal){state.bankOffset+=state.bankPageSize;loadQuestions()}};
  $('newTopic').onclick=()=>{$('topicDialog').showModal();$('topicName').focus()};$('topicForm').onsubmit=saveTopic;$('newQuestion').onclick=()=>editQuestion();
  $('bankItems').onclick=e=>{const b=e.target.closest('[data-edit-question]');if(b)editQuestion(b.dataset.editQuestion)};
  $('editKind').onchange=()=>answerEditor($('editKind').value,null);
