@@ -13,7 +13,7 @@ const flagModes=[
  ['colors','Цвета и полосы',true],
  ['symbols','Символы и гербы',true],
  ['fragments','Скрытые фрагменты и пиксели',true],
- ['errors','Поиск ошибок',false],
+ ['errors','Поиск ошибок на флагах',true],
  ['similar','Похожие флаги',false],
  ['assemble','Сборка флага',false],
  ['multiple','Несколько правильных ответов',false],
@@ -191,6 +191,17 @@ async function saveTopic(e){e.preventDefault();
 function answerEditor(mode,question){
  const opts=question?.options||[],sol=question?.solution||{};
  const count=4;
+ if(mode==='errors'){
+  const choices=Array.from({length:4},(_,i)=>{
+   const value=typeof opts[i]==='object'&&opts[i]?opts[i]:{};
+   return '<div class="flag-option-editor">'+
+    '<label>Вариант '+String.fromCharCode(65+i)+' · ссылка на флаг SVG<input data-error-image="'+i+'" type="url" required value="'+esc(value.image_url||'')+'" placeholder="https://…/fr.svg"></label>'+
+    '<label>Подпись под флагом<input data-error-label="'+i+'" required maxlength="110" value="'+esc(value.label||'')+'" placeholder="Название государства"></label></div>';
+  }).join('');
+  $('answerEditor').innerHTML='<div class="answer-fields"><p class="small-help">Покажите четыре изображения с названиями стран. Только одна подпись должна быть ошибочной; этот вариант выбирается правильным ответом. Остальные три подписи должны точно соответствовать флагам.</p>'+choices+
+    '<label>Вариант с ошибкой<select id="correctAnswer">'+Array.from({length:4},(_,i)=>'<option value="'+i+'" '+(Number(sol.correct||0)===i?'selected':'')+'>'+String.fromCharCode(65+i)+'</option>').join('')+'</select></label></div>';
+  return;
+ }
  if(mode==='colors'){
   const orientation=opts[0]?.orientation||'horizontal';
   const sequence=Array.from({length:4},(_,i)=>{
@@ -242,17 +253,20 @@ async function saveQuestion(event){
  const mode=$('editKind').value;
  if(!flagModes.some(([id,,ready])=>id===mode&&ready)){msg('questionSaveMessage','Эта механика ещё не подключена к игровому движку.',true);return}
  const isUrl=value=>/^https:\/\/[^/?#]+\/\S+$/i.test(value);
- const options=mode==='colors'?Array.from({length:4},(_,i)=>({
+ const options=mode==='errors'?Array.from({length:4},(_,i)=>({
+  image_url:$('answerEditor').querySelector('[data-error-image="'+i+'"]')?.value.trim()||'',
+  label:$('answerEditor').querySelector('[data-error-label="'+i+'"]')?.value.trim()||''
+ })):mode==='colors'?Array.from({length:4},(_,i)=>({
   orientation:$('colorOrientation').value,
   stripes:all('[data-stripe]',$('answerEditor')).filter(input=>input.dataset.stripe.startsWith(i+':')).map(input=>input.value)
  })):mode==='picker'?all('[data-flag-image]',$('answerEditor')).map(input=>({image_url:input.value.trim()})):
   all('[data-option]',$('answerEditor')).map(input=>input.value.trim());
- const labels=mode==='colors'?all('[data-color-label]',$('answerEditor')).map(input=>input.value.trim()):
+ const labels=mode==='errors'?options.map(o=>o.label):mode==='colors'?all('[data-color-label]',$('answerEditor')).map(input=>input.value.trim()):
   mode==='picker'?all('[data-flag-label]',$('answerEditor')).map(input=>input.value.trim()):options;
  if(options.length!==4||labels.some(v=>!v)||new Set(labels.map(x=>x.toLocaleLowerCase('ru-RU'))).size!==4){
   msg('questionSaveMessage','Нужно четыре разных и заполненных варианта.',true);return
  }
- if(mode==='picker'&&(options.some(x=>!isUrl(x.image_url))||new Set(options.map(x=>x.image_url)).size!==4)){
+ if(['picker','errors'].includes(mode)&&(options.some(x=>!isUrl(x.image_url))||new Set(options.map(x=>x.image_url)).size!==4)){
   msg('questionSaveMessage','Для каждого варианта нужна своя корректная HTTPS-ссылка на флаг.',true);return
  }
  const solution={correct:Number($('correctAnswer').value),flag_mode:mode};
