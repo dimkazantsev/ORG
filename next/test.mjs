@@ -164,7 +164,7 @@ test('Flags subcategories are a metadata filter, not duplicated topic tables',()
  assert.match(h,/id="bankMode"/);
  assert.match(h,/id="cardModesDetails"/);
  assert.match(w,/data-card-mode/);
- assert.match(w,/flag_modes:selected.length===3/);
+ assert.match(w,/flag_modes:selected.length===flagModes\.filter\(x=>x\[2\]\)\.length/);
  assert.match(w,/studio\('flag_publish'/);
  assert.match(migration,/q\.solution->>'flag_mode'=p_input->>'mode'/);
  assert.match(migration,/b\.solution->>'flag_mode' in \(select jsonb_array_elements_text\(v_modes\)\)/);
@@ -227,4 +227,21 @@ test('Colors are ready as a third server-checked flag mechanic',()=>{
  assert.match(sql,/build_delete/);
  assert.match(sql,/'country','picker','colors'/);
  assert.match(seed,/Expected 20 color questions/);
+});
+
+test('Two additional country flag mechanics remain validated server-side',()=>{
+ const workspace=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const stage=readFileSync(new URL('./stage.js',import.meta.url),'utf8');
+ const p=readFileSync(new URL('./question-preview.js',import.meta.url),'utf8');
+ const sql=readFileSync(new URL('./migrations/qwiz_flags_symbols_fragments.sql',import.meta.url),'utf8');
+ const seed=readFileSync(new URL('./migrations/qwiz_flags_symbols_fragments_first_set.sql',import.meta.url),'utf8');
+ assert.match(workspace,/\['symbols','Символы и гербы',true\]/);
+ assert.match(workspace,/\['fragments','Скрытые фрагменты и пиксели',true\]/);
+ assert.match(workspace,/id="visualZoom"/);
+ assert.match(workspace,/restorePosition/);assert.match(workspace,/data-delete-build/);
+ assert.match(workspace,/data-delete-room/);assert.match(workspace,/data-delete-card/);
+ assert.match(stage,/hydrateFlagVisuals/);assert.match(stage,/flagVisualContent/);
+ assert.match(p,/isVisual\?QwizStage\.flagVisualContent/);
+ assert.match(sql,/flag_visual/);assert.match(sql,/'country','picker','colors','symbols','fragments'/);
+ assert.match(seed,/Expected 36 curated questions/);
 });
