@@ -23,7 +23,7 @@ test('Role switch reveals host login without hiding form labels',async({page})=>
  await page.setViewportSize({width:390,height:844});
  await page.getByRole('tab',{name:'Преподаватель'}).click();
  await expect(page.getByLabel('Электронная почта')).toBeVisible();
- await expect(page.getByLabel('Пароль')).toBeVisible();
+ await expect(page.getByLabel('Пароль',{exact:true})).toBeVisible();
  await expect(page.getByRole('tabpanel',{name:'Участник'})).toBeHidden();
  await page.getByRole('tab',{name:'Участник'}).click();
  await expect(page.getByRole('textbox',{name:'Код комнаты',exact:true})).toBeVisible();
@@ -176,6 +176,7 @@ test('Local font is shared by all four screens',async({page})=>{
 });
 
 test('Classic entry retains its form and new studio link',async({page})=>{
+ await page.emulateMedia({reducedMotion:'reduce'});
  await page.goto('http://127.0.0.1:8080/');
  for(const width of [375,768,1440]){
   await page.setViewportSize({width,height:920});
@@ -469,4 +470,20 @@ test('Classic entry also stays on home with a saved teacher session',async({page
  await page.reload();
  await expect(page.locator('#teacherToggle')).toHaveText('Мой кабинет');
  await expect(page.locator('#homeView')).toBeVisible();
+});
+
+test('Entrance motion ends in a stable layout and keeps role controls available',async({page})=>{
+ await page.emulateMedia({reducedMotion:'no-preference'});
+ await page.reload();
+ const motion=await page.locator('#entryPanel').evaluate(async el=>{
+  const animations=el.getAnimations();
+  const finite=animations.every(a=>Number.isFinite(a.effect.getTiming().iterations));
+  await Promise.all(animations.map(a=>a.finished));
+  return {finite,opacity:getComputedStyle(el).opacity,transform:getComputedStyle(el).transform};
+ });
+ expect(motion.finite).toBe(true);
+ expect(motion.opacity).toBe('1');
+ await page.getByRole('tab',{name:'Преподаватель'}).click();
+ await expect(page.getByLabel('Пароль',{exact:true})).toBeVisible();
+ await expect(page.getByRole('tab',{name:'Преподаватель'})).toBeFocused();
 });

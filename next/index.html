@@ -66,7 +66,7 @@
      </div>
      <form class="stack" id="loginForm">
       <label for="loginEmail">Электронная почта<input type="email" id="loginEmail" autocomplete="username" required placeholder="name@example.com"></label>
-      <label for="loginPassword">Пароль<span class="password-field"><input type="password" id="loginPassword" autocomplete="current-password" required placeholder="Введите пароль"><button type="button" id="togglePassword" aria-label="Показать пароль" aria-pressed="false"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle><path class="eye-slash" d="m3 3 18 18"></path></svg></button></span></label>
+      <div class="password-control"><label for="loginPassword">Пароль</label><div class="password-field"><input type="password" id="loginPassword" autocomplete="current-password" required placeholder="Введите пароль"><button type="button" id="togglePassword" aria-label="Показать пароль" aria-pressed="false"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12Z"></path><circle cx="12" cy="12" r="3"></circle><path class="eye-slash" d="m3 3 18 18"></path></svg></button></div></div>
       <button class="btn btn-dark entry-submit" type="submit" id="loginButton">Открыть кабинет <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"></path></svg></button>
      </form>
      <p id="loginNotice" class="notice" role="status" aria-live="polite"></p>

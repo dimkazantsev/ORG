@@ -44,6 +44,7 @@ jobs:
           test -s next/profile.css
           test -s next/assets/animals.svg
           test -s next/theme.css
+          test -s next/motion.css
           test -s next/assets/manrope-variable.ttf
           test -s next/migrations/qwiz_advance_variable_collision_fix.sql
           node --check next/workspace.js
@@ -102,6 +103,8 @@ jobs:
                grep -q 'QWIZ-PARTY — командный квиз' /tmp/org-next-index.html &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/app.js?v=12" -o /tmp/org-next-app.js &&
                grep -q 'org_next_answer' /tmp/org-next-app.js &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/motion.css?v=1" -o /tmp/qwiz-motion.css &&
+               grep -q 'qwiz-enter' /tmp/qwiz-motion.css &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/app.css?v=7" -o /tmp/org-next-style.css &&
                grep -q -- '--mint' /tmp/org-next-style.css &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/presenter.html" -o /tmp/org-next-presenter.html &&
