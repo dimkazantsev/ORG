@@ -292,7 +292,7 @@ async function init(){
   $('connText').textContent='● Кабинет подключён';
   await overview();await loadRooms();
   const code=sessionStorage.getItem('qwiz-host-room');if(code){section('rooms');await selectRoom(code)}
-  state.roomTimer=setInterval(()=>{if(state.roomCode&&!document.hidden)refreshLive()},6000);
+  state.roomTimer=setInterval(()=>{if(state.roomCode&&!document.hidden)refreshLive()},12000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.roomCode)refreshLive()});
  }catch(e){$('connText').textContent=e.message;$('bankItems').innerHTML='<div class="empty">'+esc(e.message)+' <a href="./">Вернуться ко входу</a></div>'}
 }
