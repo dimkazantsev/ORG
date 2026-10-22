@@ -18,8 +18,8 @@ async function mock(page,room,{host=true,registered=false}={}){
  if(name==='qwiz_studio'&&args.p_action==='questions')return {data:{items:[],total:0}};
  if(name==='qwiz_host_rooms')return {data:[{code:s.code,title:s.title,phase:s.phase,players:s.players.length,teams:s.teams.length}]};
  if(name==='qwiz_prepare_room')return {data:{code:s.code,room_id:s.room_id,total_questions:s.total,issues:s.setup_issues}};
- if(name==='org_next_state')return {data:s};
- if(name==='qwiz_public_screen')return {data:{...s,players:[],lobby_teams:s.teams.map(t=>({...t,members:s.players.filter(p=>p.team_id===t.id).length}))}};
+ if(name==='qwiz_party_state')return {data:s};
+ if(name==='qwiz_party_projection')return {data:{...s,players:[],lobby_teams:s.teams.map(t=>({...t,members:s.players.filter(p=>p.team_id===t.id).length}))}};
  if(name==='qwiz_team_admin'){
   if(window.failMove&&args.p_action==='move')return {error:{message:'Перенос не сохранён. Повторите попытку.'}};
   if(args.p_action==='move'){const p=s.players.find(p=>p.id===args.p_input.player_id);p.team_id=args.p_input.team_id;}
@@ -74,15 +74,15 @@ test('Team QR opens an accessible dialog with the exact team link',async({page})
 });
 test('Classroom board renders 15 habitat icons and locally generated QR codes',async({page})=>{
  const s=fixture(15,30);await mock(page,s,{host:false});await page.setViewportSize({width:1440,height:900});await page.goto(base+'presenter.html?room=AABBCCDD');
- await expect(page.locator('.team-board-card')).toHaveCount(15);await expect(page.locator('.team-board-qr canvas')).toHaveCount(15);await expect(page.locator('#projectionMain')).not.toContainText('Тестовый Студент');
- expect(await page.locator('.team-board-heading use').evaluateAll(nodes=>new Set(nodes.map(n=>n.getAttribute('href'))).size)).toBe(15);
+ await expect(page.locator('.team-board-card')).toHaveCount(16);await expect(page.locator('.team-board-qr canvas')).toHaveCount(16);await expect(page.locator('#projectionMain')).not.toContainText('Тестовый Студент');
+ expect(await page.locator('.team-board-heading use').evaluateAll(nodes=>new Set(nodes.map(n=>n.getAttribute('href'))).size)).toBe(12);
  expect(await page.locator('.team-board-card').last().evaluate(el=>el.getBoundingClientRect().bottom)).toBeLessThan(900);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);await page.screenshot({path:'visual-artifacts/teams-projector-15.png',fullPage:true,animations:'disabled'});
 });
 test('Classroom membership refresh keeps QR elements stable',async({page})=>{
- await mock(page,fixture(),{host:false});await page.goto(base+'presenter.html?room=AABBCCDD');await expect(page.locator('.team-board-card')).toHaveCount(5);
+ await mock(page,fixture(),{host:false});await page.goto(base+'presenter.html?room=AABBCCDD');await expect(page.locator('.team-board-card')).toHaveCount(6);
  await page.evaluate(()=>{window.firstQr=document.querySelector('.team-board-qr canvas');window.fixture.lobby_teams=window.fixture.teams.map((t,i)=>({...t,members:i===0?7:6}));render(window.fixture);});
- await expect(page.locator('.board-count').first()).toHaveText('7 участников');expect(await page.evaluate(()=>window.firstQr===document.querySelector('.team-board-qr canvas'))).toBe(true);
+ await expect(page.locator('.team-board-card:not(.team-board-global) .board-count').first()).toHaveText('7 участников');expect(await page.evaluate(()=>window.firstQr===document.querySelector('.team-board-qr canvas'))).toBe(true);
 });
 test('Team invitation joins the exact team and gives the newcomer a personal QR',async({page})=>{
  await mock(page,fixture(5,0),{host:false});await page.goto(base+'?room=AABBCCDD&team='+uid(3)+'&via='+uid(111));await expect(page.locator('#teamInvitationNotice')).toBeVisible();
