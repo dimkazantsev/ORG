@@ -29,32 +29,19 @@ begin
   if (select count(distinct lower(btrim(v.value))) from jsonb_array_elements_text(p_options) v)<>4 then return false;end if;
   return true;
  elsif v_mode='colors' then
-   if jsonb_typeof(p_solution->'option_labels')<>'array'
-      or jsonb_array_length(p_solution->'option_labels')<>4 then return false;end if;
-   if (select count(distinct btrim(x.value)) from jsonb_array_elements_text(p_solution->'option_labels') x)<>4 then return false;end if;
-   if exists(select 1 from jsonb_array_elements(p_options) as o
-       where jsonb_typeof(o.value)<>'object' or o.value ? 'label'
-         or o.value->>'orientation' not in ('horizontal','vertical')
-         or jsonb_typeof(o.value->'stripes')<>'array'
-         or jsonb_array_length(o.value->'stripes') not between 2 and 4
-         or exists(select 1 from jsonb_array_elements_text(o.value->'stripes') as s
-           where s.value !~ '^#[0-9a-fA-F]{6}
-  if jsonb_typeof(p_solution->'option_labels')<>'array' or
-     jsonb_array_length(p_solution->'option_labels')<>4 then return false;end if;
-  if (select count(distinct lower(btrim(v.value))) from jsonb_array_elements_text(p_solution->'option_labels') v)<>4 then return false;end if;
-  if exists(select 1 from jsonb_array_elements(p_options) v
-      where jsonb_typeof(v.value)<>'object' or
-      coalesce(v.value->>'image_url','') !~ '^https://[^ ]+[.]svg([?][^ ]*)?$' or
-      v.value ? 'label') then return false;end if;
-  if (select count(distinct v.value->>'image_url') from jsonb_array_elements(p_options) v)<>4 then return false;end if;
+  if jsonb_typeof(p_solution->'option_labels')<>'array'
+     or jsonb_array_length(p_solution->'option_labels')<>4 then return false;end if;
+  if (select count(distinct btrim(x.value)) from jsonb_array_elements_text(p_solution->'option_labels') x)<>4 then return false;end if;
+  if exists(select 1 from jsonb_array_elements(p_options) o
+     where jsonb_typeof(o.value)<>'object' or o.value ? 'label'
+     or o.value->>'orientation' not in ('horizontal','vertical')
+     or jsonb_typeof(o.value->'stripes')<>'array'
+     or jsonb_array_length(o.value->'stripes') not between 2 and 4
+     or exists(select 1 from jsonb_array_elements_text(o.value->'stripes') s
+          where s.value !~ '^#[0-9a-fA-F]{6}')) then return false;end if;
+  if (select count(distinct value) from jsonb_array_elements(p_options))<>4 then return false;end if;
+  if (select count(distinct o.value->>'orientation') from jsonb_array_elements(p_options) o)<>1 then return false;end if;
   return true;
- end if;
- return false;
-end $function$
-)) then return false;end if;
-   if (select count(distinct value) from jsonb_array_elements(p_options))<>4 then return false;end if;
-   if (select count(distinct o.value->>'orientation') from jsonb_array_elements(p_options) o)<>1 then return false;end if;
-   return true;
  elsif v_mode='picker' then
   if jsonb_typeof(p_solution->'option_labels')<>'array' or
      jsonb_array_length(p_solution->'option_labels')<>4 then return false;end if;
@@ -67,7 +54,8 @@ end $function$
   return true;
  end if;
  return false;
-end $function$;
+end $function$
+;
 CREATE OR REPLACE FUNCTION public.qwiz_studio(p_action text, p_input jsonb DEFAULT '{}'::jsonb)
  RETURNS jsonb
  LANGUAGE plpgsql
