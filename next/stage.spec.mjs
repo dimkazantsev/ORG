@@ -81,7 +81,7 @@ test('Final card has a trophy, readable controls and appropriate settings',async
 });
 test('Moderator Next is available in question and answer and uses the protected RPC',async({page})=>{
  await workspace(page);await page.evaluate(s=>{window.fixture={...s,room_id:'room',players:[],teams:[]};state.roomCode=s.code;state.room=window.fixture;document.getElementById('liveConsole').hidden=false;section('rooms');renderLive(window.fixture)},state());
- await expect(page.locator('#liveNext')).toBeVisible();await expect(page.locator('#liveNext')).toContainText('ответ');await page.locator('#liveNext').click();await expect(page.locator('#livePhase')).toHaveText('Разбор');await expect(page.locator('#liveNext')).toBeVisible();
+ await expect(page.locator('#liveNext')).toBeVisible();await expect(page.locator('#liveNext')).toContainText('ответ');await page.locator('#liveNext').click();await expect(page.locator('#livePhase')).toHaveText('Разбор ответа');await expect(page.locator('#liveNext')).toBeVisible();
  expect(await page.evaluate(()=>window.actions.some(([name,args])=>name==='org_next_advance'&&args.p_action==='next'))).toBe(true);
 });
 test('Broken illustration still leaves a drawing in the moving frame',async({page})=>{

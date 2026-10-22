@@ -59,6 +59,7 @@ function questionScene(state){
 }
 function render(state){
  clearError();$('projectionRoom').textContent=state.code||'';
+ $('projectionPlay').hidden=!state.code;$('projectionPlay').href=link(state.code);
  const key=[state.code,state.phase,state.index,state.activity?.title,state.activity?.type,state.activity?.settings?.arcade_mode].join(':');
  if(key===ctx.renderKey){
   if(state.phase==='lobby')QwizTeams.board($('projectionTeamBoard'),state.lobby_teams||[],state.code);
@@ -96,7 +97,7 @@ function subscribe(){if(ctx.channel)ctx.client.removeChannel(ctx.channel);
  if('BroadcastChannel' in window){ctx.local=new BroadcastChannel('qwiz-projector-'+room);ctx.local.onmessage=()=>refresh()}
 }
 async function init(){
- $('projectionFullscreen').onclick=async()=>{try{if(document.fullscreenElement)await document.exitFullscreen();else await document.documentElement.requestFullscreen()}catch{showError('Используйте F11 для полноэкранного режима.')}};
+ QwizStage.bindFullscreen($('projectionFullscreen'));
  QwizStage.decorateControls();
  QwizStage.iconLabel($('projectionSound'),QwizStage.audio.enabled?'Звук включён':'Звук выключен',QwizStage.audio.enabled?'volume':'muted');
  $('projectionSound').setAttribute('aria-pressed',String(QwizStage.audio.enabled));
@@ -104,7 +105,7 @@ async function init(){
  $('projectionVolume').oninput=e=>QwizStage.audio.setVolume(Number(e.target.value)/100);
  if(!room){setup();return}
  if(!/^[A-F0-9]{8}$/.test(room)){showError('Некорректный код');setup();return}
- if(!window.supabase?.createClient){showError('Не удалось подключить Supabase');return}
+ if(!window.supabase?.createClient){showError('Не удалось подключиться к игре');return}
  ctx.client=window.supabase.createClient(SUPABASE_URL,KEY);
  subscribe();await refresh();
  setInterval(()=>{if(!document.hidden)refresh()},3000);

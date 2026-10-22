@@ -1,6 +1,8 @@
 /* QWIZ-PARTY · Lavender · workspace layouts and states. */
 *{box-sizing:border-box}
 html{min-width:320px}
+.studio-starting .layout{visibility:hidden}
+.workspace-loading{max-width:1440px;margin:28px auto;padding:0 24px;color:var(--muted);text-align:center}
 body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.6 var(--font)}
 h1,h2,h3,p{margin:0}
 h1,h2,h3{line-height:1.2;letter-spacing:-.045em}
@@ -418,11 +420,13 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 /* QWIZ: a consistent, accessible inline trash action on each card, not a second detached button. */
 .saved-build-wrap{display:block;position:relative;min-width:0}
 .saved-build-wrap .saved-build{display:flex;width:100%;padding-right:58px;min-height:124px;text-align:left}
-.room-row{position:relative;padding-right:66px}
+.room-row{position:relative}
+.room-row-actions{align-self:center;flex:none}
+.room-row .card-trash{position:static;flex:none}
 .round-card{position:relative;padding-top:46px}
 .card-trash{position:absolute;right:12px;top:12px;width:44px;height:44px;border:1px solid transparent;background:transparent;border-radius:12px;display:inline-grid;place-items:center;cursor:pointer;color:#a05f76;z-index:2;transition:background .15s,border-color .15s,color .15s}
 .card-trash:hover{color:#a4234f;background:#fff0f5;border-color:#e7bbcc}
 .card-trash:focus-visible{outline:3px solid #aa8ae7;outline-offset:2px}
 .card-trash svg{width:20px;height:20px;pointer-events:none}
 .round-trash{top:9px;right:10px}
-@media(max-width:600px){.saved-build-wrap{display:block}.room-row{padding-right:60px}.card-trash{width:44px;height:44px}}
+@media(max-width:600px){.saved-build-wrap{display:block}.card-trash{width:44px;height:44px}}

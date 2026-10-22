@@ -63,7 +63,7 @@ function wire(){
 }
 async function init(){
  wire();drawAvatars('registerAvatars',s.registrationAvatar);
- if(!window.supabase?.createClient){message('authMessage','Нет соединения с Supabase.',true);showAuth();return}
+ if(!window.supabase?.createClient){message('authMessage','Нет соединения с игрой.',true);showAuth();return}
  s.db=window.supabase.createClient(PROFILE_SUPABASE_URL,KEY);
  try{await ensureAnon();if(new URLSearchParams(location.search).has('pair')){showAuth();await claimPair()}else await reload();
  }catch(error){showAuth();message('authMessage',error.message,true)}

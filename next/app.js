@@ -28,7 +28,7 @@ async function resumeGame(){
 }
 function tab(name){ctx.visibleTab=name;for(const id of ['library','room','results'])$(id+'Tab').hidden=id!==name;for(const el of qa('[data-tab]'))el.setAttribute('aria-current',name===el.dataset.tab?'page':'false');text('studioHeading',({library:'Библиотека',room:'Провести игру',results:'Результаты'})[name]);text('studioDescription',({library:'Все наборы вопросов в одном месте.',room:'Комната, команды и управление раундами.',results:'Командный рейтинг и результаты.'})[name]);if(name==='results')renderResults();if(name==='room')renderRoom()}
 function busy(button,active){if(!button)return;button.disabled=active;button.setAttribute('aria-busy',String(active))}
-async function rpc(name,params={}){if(!ctx.client)throw Error('Нет соединения с Supabase. Проверьте загрузку библиотеки.');const {data,error}=await ctx.client.rpc(name,params);if(error)throw Error(error.message||'Ошибка запроса');return data}
+async function rpc(name,params={}){if(!ctx.client)throw Error('Нет соединения с игрой. Проверьте подключение к интернету.');const {data,error}=await ctx.client.rpc(name,params);if(error)throw Error(error.message||'Ошибка запроса');return data}
 async function ensureAuth(){const {data:{session},error}=await ctx.client.auth.getSession();if(error)throw Error(error.message);if(session)return session;const r=await ctx.client.auth.signInAnonymously();if(r.error)throw Error(r.error.message);return r.data.session}
 function dataState(room){if(room?.server_now)ctx.clockOffset=Date.parse(room.server_now)-Date.now();ctx.room=room; if(!room)return;renderQrPanels();connectRoom(room.code); if(ctx.mode==='studio'){renderRoom();renderResults()}else if(ctx.mode==='game')renderGame()}
 function cleanupRoom(){if(ctx.channel){ctx.client?.removeChannel(ctx.channel);ctx.channel=null}ctx.room=null;ctx.roomCode=null;storage.del('room');renderQrPanels();}
@@ -100,7 +100,7 @@ async function createRoom(event){event.preventDefault();busy($('createRoomButton
  const code=await rpc('org_next_create_room',{p_quiz:quiz,p_title:$('roomTitle').value.trim(),p_teams:Number($('roomTeamCount').value)});
  ctx.roomCode=code;storage.set('host-room',code);renderQrPanels();await refreshRoom();renderRoom();notice('createRoomNotice','');
  }catch(error){notice('createRoomNotice',error.message,'error')}finally{busy($('createRoomButton'),false)}}
-function phaseText(phase){return ({lobby:'Ожидание',question:'Вопрос',result:'Разбор',finished:'Завершена'})[phase]||phase}
+function phaseText(phase){return QwizStage.phaseLabel(phase)}
 function remaining(date){if(!date)return 0;return Math.max(0,Math.ceil((Date.parse(date)-Date.now()-ctx.clockOffset)/1000))}
 function teamMarkup(teams){return (teams||[]).slice().sort((a,b)=>b.score-a.score).map((t,i)=>'<div class="team-row"><div><span class="team-flag">'+(i+1)+'</span> <strong>'+esc(t.name)+'</strong> <small>· '+esc(t.players)+' чел.</small></div><b>'+esc(t.score)+'</b></div>').join('')||'<p class="muted">Команд пока нет.</p>'}
 function renderRoom(){if(ctx.mode!=='studio')return;const s=ctx.room;const has=!!(s&&ctx.roomCode);
@@ -337,7 +337,8 @@ function attach(){q('#logoHome').addEventListener('click',home);
  QwizStage.iconLabel($('gameSound'),QwizStage.audio.enabled?'Звук включён':'Звук выключен',QwizStage.audio.enabled?'volume':'muted');
  $('gameSound').setAttribute('aria-pressed',String(QwizStage.audio.enabled));
  $('gameSound').onclick=async()=>{const on=await QwizStage.audio.toggle();QwizStage.iconLabel($('gameSound'),on?'Звук включён':'Звук выключен',on?'volume':'muted');$('gameSound').setAttribute('aria-pressed',String(on))};
- $('leaveGame').onclick=()=>{cleanupRoom();home()};
+ QwizStage.bindFullscreen($('gameFullscreen'));
+ $('leaveGame').onclick=async()=>{await QwizStage.exitFullscreen();cleanupRoom();home()};
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ctx.roomCode)scheduleRefresh(200)});
  addQuestion();
  setInterval(()=>{if(ctx.roomCode&&!document.hidden)refreshRoom(false)},20000);
@@ -436,7 +437,7 @@ async function openPresenterWindow(){
  'success');
 }
 
-async function init(){attach();QwizStage.decorateControls();if(!window.supabase?.createClient){notice('joinNotice','Не удалось загрузить Supabase. Проверьте подключение к интернету.','error');notice('loginNotice','Не удалось загрузить Supabase.','error');return}
+async function init(){attach();QwizStage.decorateControls();if(!window.supabase?.createClient){notice('joinNotice','Не удалось подключиться к игре. Проверьте подключение к интернету.','error');notice('loginNotice','Не удалось подключиться к игре.','error');return}
  ctx.client=window.supabase.createClient(URL_SUPABASE,KEY_SUPABASE);
  await restore();
 }

@@ -87,6 +87,12 @@ button:has(>.unified-icon) .unified-icon{pointer-events:none}
 .flag-choice-with-label{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;min-width:0;width:100%}
 .flag-choice-with-label .flag-choice-art{max-width:100%;object-fit:contain}
 .flag-choice-label{display:block;max-width:100%;font-size:clamp(12px,1.6vw,16px);line-height:1.35;font-weight:700;text-align:center;overflow-wrap:anywhere}
+/* Percentage-sized flag artwork needs a definite flex width, including before image decode. */
+.option>span:last-child,.rich-choice>span:last-child,.projection-option>span:last-child{flex:1;min-width:0}
+.preview-choice>.flag-choice-with-label,.preview-choice>.preview-striped{flex:1;min-width:0}
+html:fullscreen{overflow-y:auto}
+.quiz-focus .topbar,.quiz-focus .footer,html:fullscreen:has(#gameView:not([hidden])) .topbar,html:fullscreen:has(#gameView:not([hidden])) .footer{display:none}
+.quiz-focus #gameView,.quiz-focus #gameContent{max-width:100%}
 .memory-frame .question-picture{display:flex;align-items:center;justify-content:center}
 .memory-frame [data-memory-study]{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
 .memory-frame [data-memory-study] img{max-height:80%;object-fit:contain}

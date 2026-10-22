@@ -7,11 +7,11 @@
 <title>QWIZ-PARTY — экран аудитории</title>
 <link rel="preload" href="./assets/manrope-variable.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="./theme.css?v=lavender-2">
-<link rel="stylesheet" href="./presenter.css?v=colors-4">
+<link rel="stylesheet" href="./presenter.css?v=ui-recovery-20261023-1">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="./vendor/qrcode.min.js"></script>
-<link rel="stylesheet" href="./stage.css?v=flags12-1"><script defer src="./stage.js?v=flags12-1"></script>
-<script defer src="./presenter.js?v=flags12-1"></script>
+<link rel="stylesheet" href="./stage.css?v=ui-recovery-20261023-1"><script defer src="./stage.js?v=ui-recovery-20261023-1"></script>
+<script defer src="./presenter.js?v=ui-recovery-20261023-1"></script>
 <link rel="stylesheet" href="./motion.css?v=2">
 <link rel="stylesheet" href="./teams.css?v=1"><script defer src="./teams.js?v=1"></script>
 <link rel="stylesheet" href="./arcade.css?v=1"><script defer src="./arcade.js?v=1"></script>
@@ -21,12 +21,13 @@
 <header class="projection-header">
  <div class="projection-brand"><span class="brand-square" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M24 15.5a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0Z" stroke="currentColor" stroke-width="3.5"/><path d="m19.5 20 5 5" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span><span>QWIZ<span class="brand-dash">-</span>PARTY</span></div>
  <div id="projectionRoom" class="projection-room"></div>
+ <a id="projectionPlay" class="fullscreen-control" href="./" hidden>Играть на этом устройстве →</a>
 </header>
 <main id="projectionMain" >
 <div class="projection-loading"><h1>Подключаем экран аудитории</h1><p>Ожидание состояния игры.</p></div>
 </main>
 <footer class="projection-footer">
- <span>QWIZ-PARTY · Экран аудитории</span>
+ <span>Экран аудитории · Отвечайте на своём устройстве</span>
  <div class="stage-audio-control"><label class="stage-volume">Громкость<input id="projectionVolume" type="range" min="0" max="100" value="45" aria-label="Громкость звуков"></label><button id="projectionSound" aria-pressed="false" type="button" class="fullscreen-control">♫ Включить звук</button></div>
  <button id="projectionFullscreen" type="button" class="fullscreen-control">⛶ На весь экран</button>
 </footer>

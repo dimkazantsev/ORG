@@ -290,14 +290,14 @@ async function saveQuestion(event){
    const pictures=['similar','multiple','geo'].includes(mode);
    options=pictures?all('[data-new-image]',$('answerEditor')).map(x=>({image_url:x.value.trim()})):all('[data-new-text]',$('answerEditor')).map(x=>x.value.trim());
    const labels=pictures?all('[data-new-label]',$('answerEditor')).map(x=>x.value.trim()):options;
-   if(labels.some(x=>!x)||new Set(labels.map(x=>x.toLowerCase())).size!==4||pictures&&(options.some(x=>!isUrl(x.image_url))||new Set(options.map(x=>x.image_url)).size!==4)){msg('questionSaveMessage','Нужны четыре разных заполненных варианта и корректные HTTPS-ссылки.',true);return}
+   if(labels.some(x=>!x)||new Set(labels.map(x=>x.toLowerCase())).size!==4||pictures&&(options.some(x=>!isUrl(x.image_url))||new Set(options.map(x=>x.image_url)).size!==4)){msg('questionSaveMessage','Нужны четыре разных заполненных варианта и корректные защищённые ссылки.',true);return}
    if(pictures)solution.option_labels=labels;
    if(mode==='multiple'){
     kind='multi';solution.correct_indices=all('[data-new-correct]',$('answerEditor')).filter(x=>x.checked).map(x=>Number(x.dataset.newCorrect));
     if(solution.correct_indices.length<2||solution.correct_indices.length>3){msg('questionSaveMessage','Отметьте два или три правильных варианта.',true);return}
    }else solution.correct=Number($('correctAnswer').value);
    if(['memory','geo'].includes(mode)){
-    solution.media_url=$('newMediaUrl').value.trim();if(!isUrl(solution.media_url)){msg('questionSaveMessage','Укажите HTTPS-ссылку на SVG.',true);return}
+    solution.media_url=$('newMediaUrl').value.trim();if(!isUrl(solution.media_url)){msg('questionSaveMessage','Укажите защищённую ссылку на изображение флага.',true);return}
    }
    if(mode==='memory')solution.flag_memory={seconds:Number($('memorySeconds').value)};
    if(mode==='history'){
@@ -305,7 +305,7 @@ async function saveQuestion(event){
    }
   }
   const illustration=$('editIllustration').value.trim();
-  if(illustration&&mode!=='memory'){if(!isUrl(illustration)){msg('questionSaveMessage','Для иллюстрации нужна HTTPS-ссылка.',true);return}solution.illustration_url=illustration}
+  if(illustration&&mode!=='memory'){if(!isUrl(illustration)){msg('questionSaveMessage','Для иллюстрации нужна защищённая ссылка.',true);return}solution.illustration_url=illustration}
   disable('questionSubmit',true);
   try{await studio('question_save',{id:state.editingQuestion||undefined,kind,topic_id:$('editTopic').value||null,prompt:$('editPrompt').value.trim(),options,solution,difficulty:Number($('editDifficulty').value),explanation:$('editExplanation').value.trim()});$('questionDialog').close();await loadQuestions()}
   catch(error){msg('questionSaveMessage',error.message,true)}finally{disable('questionSubmit',false)}return;
@@ -324,14 +324,14 @@ async function saveQuestion(event){
   msg('questionSaveMessage','Нужно четыре разных и заполненных варианта.',true);return
  }
  if(['picker','errors'].includes(mode)&&(options.some(x=>!isUrl(x.image_url))||new Set(options.map(x=>x.image_url)).size!==4)){
-  msg('questionSaveMessage','Для каждого варианта нужна своя корректная HTTPS-ссылка на флаг.',true);return
+  msg('questionSaveMessage','Для каждого варианта нужна своя корректная защищённая ссылка на флаг.',true);return
  }
  const solution={correct:Number($('correctAnswer').value),flag_mode:mode};
  if(mode==='errors')solution.error_kind='mislabeled';
  if(mode==='picker'||mode==='colors')solution.option_labels=labels;
  const mediaUrl=$('questionMediaUrl')?.value.trim()||'';
  if(['country','symbols','fragments'].includes(mode)){
-  if(!isUrl(mediaUrl)){msg('questionSaveMessage','Укажите HTTPS-ссылку на изображение флага.',true);return}
+  if(!isUrl(mediaUrl)){msg('questionSaveMessage','Укажите защищённую ссылку на изображение флага.',true);return}
   solution.media_url=mediaUrl;
   if(mode!=='country'){
    const type=mode==='symbols'?'symbol':$('visualType').value;
@@ -344,7 +344,7 @@ async function saveQuestion(event){
   }
  }
  const illustration=$('editIllustration').value.trim();
- if(illustration){if(!isUrl(illustration)){msg('questionSaveMessage','Для иллюстрации нужна HTTPS-ссылка.',true);return}solution.illustration_url=illustration}
+ if(illustration){if(!isUrl(illustration)){msg('questionSaveMessage','Для иллюстрации нужна защищённая ссылка.',true);return}solution.illustration_url=illustration}
  disable('questionSubmit',true);
  try{
   await studio('question_save',{id:state.editingQuestion||undefined,kind:'flag',
@@ -422,7 +422,7 @@ function saveGeneralSettings(event){
  $('generalDialog').close();renderCards();msg('buildMessage','Общие настройки применены. Сохраните сборку, чтобы использовать их в игре.');QwizStage.audio.play('accept');
 }
 function renderBuilds(){$('savedBuilds').innerHTML=state.builds.length?state.builds.map(b=>
- '<div class="saved-build-wrap"><button type="button" class="saved-build" data-load-build="'+esc(b.id)+'"><span>СОХРАНЁННАЯ СБОРКА</span><strong>'+esc(b.title)+'</strong><span>Редактировать →</span></button><button type="button" class="card-trash" data-delete-build="'+esc(b.id)+'" title="Удалить сборку" aria-label="Удалить сборку '+esc(b.title)+'">'+trashSvg+'</button></div>').join(''):'<div class="empty">Сборок пока нет. Создайте первую.</div>'}
+ '<div class="saved-build-wrap"><button type="button" class="saved-build" data-load-build="'+esc(b.id)+'"><span>Сохранённая сборка</span><strong>'+esc(QwizStage.capitalize(b.title))+'</strong><span>Редактировать →</span></button><button type="button" class="card-trash" data-delete-build="'+esc(b.id)+'" title="Удалить сборку" aria-label="Удалить сборку '+esc(b.title)+'">'+trashSvg+'</button></div>').join(''):'<div class="empty">Сборок пока нет. Создайте первую.</div>'}
 async function deleteBuild(id){
  const build=state.builds.find(b=>b.id===id);if(!build)return;
  if(!confirm('Удалить сборку «'+build.title+'»? Сыгранные комнаты и результаты сохранятся.'))return;
@@ -453,7 +453,7 @@ async function saveBuild(){disable('saveBuild',true);msg('buildMessage','Сох�
  await overview();savePosition();msg('buildMessage','Сборка сохранена. Её можно запустить с любого вашего устройства.');}
  catch(e){msg('buildMessage',e.message,true)}finally{disable('saveBuild',false)}}
 async function loadRooms(){try{const list=await rpc('qwiz_host_rooms');state.hostRooms=list;$('hostRoomList').innerHTML=list.length?list.map(r=>
- '<article class="room-row"><div><div class="question-meta"><span class="chip">'+esc(r.phase)+'</span><span class="chip lilac">'+esc(r.code)+'</span></div><h3>'+esc(r.title)+'</h3><p>'+esc(r.players)+' участников · '+esc(r.teams)+' команд</p></div><div class="room-row-actions"><button class="primary-button" data-room="'+esc(r.code)+'">Управлять →</button></div><button type="button" class="card-trash" data-delete-room="'+esc(r.id)+'" title="Удалить комнату" aria-label="Удалить комнату '+esc(r.title)+'">'+trashSvg+'</button></article>').join(''):
+ '<article class="room-row"><div><div class="question-meta"><span class="chip">'+esc(QwizStage.phaseLabel(r.phase))+'</span><span class="chip lilac">'+esc(r.code)+'</span></div><h3>'+esc(QwizStage.capitalize(r.title))+'</h3><p>'+esc(QwizStage.countLabel(r.players,{one:'участник',few:'участника',many:'участников',other:'участника'}))+' · '+esc(QwizStage.countLabel(r.teams,{one:'команда',few:'команды',many:'команд',other:'команды'}))+'</p></div><div class="room-row-actions"><button class="primary-button" data-room="'+esc(r.code)+'">Управлять →</button><button type="button" class="card-trash" data-delete-room="'+esc(r.id)+'" title="Удалить комнату" aria-label="Удалить комнату '+esc(r.title)+'">'+trashSvg+'</button></div></article>').join(''):
  '<div class="empty">Создайте комнату из сохранённой сборки.</div>';
  }catch(e){msg('launchMessage',e.message,true)}}
 async function launch(){disable('launchButton',true);msg('launchMessage','');
@@ -480,7 +480,7 @@ function renderLive(s){
  $('liveClock').innerHTML=['question','result'].includes(s.phase)?QwizStage.clockMarkup(s,'liveTimer'):'';QwizStage.updateClock(s,state.clockOffset,document,'liveTimer',false);
 $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  $('livePlayers').textContent=(s.players||[]).length;$('liveTeams').textContent=(s.teams||[]).length;
- $('livePhase').textContent=({lobby:'Ожидание',question:'Вопрос',result:'Разбор',finished:'Финал',countdown:'5…4…3…',intermission:'Активность'})[s.phase]||s.phase;
+ $('livePhase').textContent=QwizStage.phaseLabel(s.phase);
  $('liveAnswers').textContent=s.answers_count||0;
  $('liveStart').hidden=s.phase!=='lobby';$('liveReveal').hidden=true;
  $('liveNext').hidden=!['question','result','intermission'].includes(s.phase);$('liveNext').textContent=s.phase==='question'?'Далее: открыть ответ →':s.phase==='intermission'?'Продолжить →':'Следующий вопрос →';$('liveFinish').hidden=s.phase==='finished';
@@ -594,12 +594,13 @@ function wire(){
  for(const b of all('[data-close]'))b.onclick=()=>$(b.dataset.close).close();
  for(const dialog of all('dialog'))dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()});
 }
+function workspaceReady(){document.documentElement.classList.remove('studio-starting');$('workspaceLoading').hidden=true}
 async function init(){
  // Read before wiring listeners or awaiting Supabase. The previous code overwrote
  // sessionStorage with the default 'bank' state during initial scroll/layout.
  const savedBeforeBoot=readPosition();
  restoringView=true;
- wire();animatePage($('bankPage'));
+ wire();
  fillSelect($('bankMode'),flagModes.map(([id,title])=>[id,title]),'Все механики');
  const select=$('editKind');
  select.replaceChildren();
@@ -608,9 +609,9 @@ async function init(){
   option.disabled=!ready;select.add(option);
  }
  select.value='country';
- for(let i=1;i<=15;i++)$('launchTeams').add(createOption(String(i),i+' '+(i===1?'команда':'команд')));
+ for(let i=1;i<=15;i++)$('launchTeams').add(createOption(String(i),QwizStage.countLabel(i,{one:'команда',few:'команды',many:'команд',other:'команды'})));
  $('launchTeams').value='4';
- if(!window.supabase?.createClient){connection('error','Не удалось подключиться');return}
+ if(!window.supabase?.createClient){connection('error','Не удалось подключиться');workspaceReady();return}
  state.db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
  try{const {data:{session}}=await state.db.auth.getSession();if(!session)throw Error('Войдите как преподаватель на главной.');
   if(!await rpc('org_quiz_is_admin_check'))throw Error('У вас нет прав преподавателя.');
@@ -628,5 +629,6 @@ async function init(){
   setInterval(()=>{if(!state.room||document.hidden)return;const s=state.room;if(['question','result'].includes(s.phase)){const left=QwizStage.updateClock(s,state.clockOffset,document,'liveTimer');if(left===0&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}}else if(s.phase==='countdown'&&Date.parse(s.ends_at)<=Date.now()+state.clockOffset&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}},250);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.roomCode)refreshLive()});
  }catch(e){restoringView=false;connection('error',e.message);$('bankItems').innerHTML='<div class="empty">'+esc(e.message)+' <a href="./">Вернуться ко входу</a></div>'}
+ finally{workspaceReady()}
 }
 window.addEventListener('DOMContentLoaded',init);

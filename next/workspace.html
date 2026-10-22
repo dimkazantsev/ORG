@@ -1,13 +1,13 @@
 <!doctype html>
-<html lang="ru"><head>
+<html lang="ru" class="studio-starting"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#faf9fd"><title>QWIZ-PARTY — Студия преподавателя</title>
 <link rel="preload" href="./assets/manrope-variable.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="./theme.css?v=lavender-2">
-<link rel="stylesheet" href="./workspace.css?v=flags12-1">
+<link rel="stylesheet" href="./workspace.css?v=ui-recovery-20261023-1">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="./stage.css?v=flags12-1"><script defer src="./stage.js?v=flags12-1"></script>
-<script defer src="./vendor/qrcode.min.js"></script><script defer src="./workspace.js?v=flags12-1"></script>
+<link rel="stylesheet" href="./stage.css?v=ui-recovery-20261023-1"><script defer src="./stage.js?v=ui-recovery-20261023-1"></script>
+<script defer src="./vendor/qrcode.min.js"></script><script defer src="./workspace.js?v=ui-recovery-20261023-1"></script>
 <link rel="stylesheet" href="./motion.css?v=2">
 <link rel="stylesheet" href="./teams.css?v=1"><script defer src="./teams.js?v=1"></script><script defer src="./workspace-teams.js?v=1"></script>
 <link rel="stylesheet" href="./arcade.css?v=1"><script defer src="./arcade.js?v=1"></script>
@@ -20,6 +20,7 @@
  <button type="button" class="small-button" id="studioSound" aria-pressed="true">Звук включён</button>
  <button type="button" class="small-button" id="signOut" aria-label="Выйти из аккаунта" title="Выйти из аккаунта"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H4V3h5M14 7l5 5-5 5M8 12h12"></path></svg><span>Выйти</span></button>
 </div></div></header>
+<p id="workspaceLoading" class="workspace-loading" role="status">Восстанавливаем кабинет…</p>
 <div class="layout">
 <aside class="nav"><div class="nav-title">Библиотека</div>
 <button type="button" data-section="bank" class="nav-link selected"><span class="nav-symbol"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"></path></svg></span> Вопросы <span class="nav-count" id="navQuestionCount">0</span></button>
@@ -105,7 +106,7 @@
 <dialog class="edit-dialog" id="questionDialog"><form id="questionForm" method="dialog"><div class="dialog-head"><div><span class="eyebrow">БАНК ВОПРОСОВ</span><h2 id="questionDialogTitle">Новый вопрос</h2></div><button type="button" class="icon-btn" aria-label="Закрыть окно" data-close="questionDialog"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"></path></svg></button></div>
  <div class="dialog-body"><label>Механика «Флаги мира»<select id="editKind"></select><span class="small-help">Старые форматы удалены из нового конструктора. Поэтапно подключаем 12 утверждённых механик.</span></label><label>Тема<select id="editTopic"><option value="">Без темы</option></select></label>
  <label>Текст вопроса<textarea id="editPrompt" rows="3" maxlength="3000" required></textarea></label>
- <label>Иллюстрация к вопросу<input id="editIllustration" type="url" placeholder="https://…"><span class="small-help">Публичная HTTPS-ссылка на рисунок. Без ссылки появится фирменная иллюстрация.</span></label><div id="answerEditor"></div><label>Пояснение после ответа<textarea id="editExplanation" rows="2" maxlength="3000" placeholder="Необязательно"></textarea></label>
+ <label>Иллюстрация к вопросу<input id="editIllustration" type="url" placeholder="https://…"><span class="small-help">Общедоступная защищённая ссылка на рисунок. Без ссылки появится фирменная иллюстрация.</span></label><div id="answerEditor"></div><label>Пояснение после ответа<textarea id="editExplanation" rows="2" maxlength="3000" placeholder="Необязательно"></textarea></label>
  <label>Сложность<select id="editDifficulty"><option value="1">1 · Лёгкая</option><option value="2" selected>2 · Обычная</option><option value="3">3 · Средняя</option><option value="4">4 · Сложная</option><option value="5">5 · Экспертная</option></select></label></div>
  <div class="dialog-footer"><span id="questionSaveMessage" class="message" role="status"></span><button type="button" class="secondary-button" data-close="questionDialog">Отмена</button><button type="submit" class="primary-button" id="questionSubmit">Сохранить</button></div></form></dialog>
 <dialog class="edit-dialog" id="cardDialog"><form id="cardForm" method="dialog"><div class="dialog-head"><div><span class="eyebrow">РЕДАКТОР РАУНДА</span><h2>Настройка карточки</h2></div><button type="button" class="icon-btn" aria-label="Закрыть окно" data-close="cardDialog"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"></path></svg></button></div>

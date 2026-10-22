@@ -3,6 +3,9 @@
 window.QwizStage=(()=>{
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const fmt=n=>Number(n||0).toLocaleString('ru-RU');
+ const capitalize=value=>{const text=String(value??'');return text.charAt(0).toLocaleUpperCase('ru-RU')+text.slice(1)};
+ const countLabel=(value,forms)=>Number(value||0).toLocaleString('ru-RU')+' '+forms[new Intl.PluralRules('ru').select(Number(value)||0)];
+ const phaseLabel=phase=>({lobby:'Ожидание участников',question:'Вопрос',result:'Разбор ответа',finished:'Игра завершена',countdown:'Подготовка',intermission:'Перерыв'})[phase]||'Ожидание данных';
  const habitats=[['forest','Лес','#278563'],['reef','Коралловый риф','#bb537e'],['savanna','Саванна','#a97920'],['mountains','Горы','#6962c4'],['arctic','Арктика','#2484a6'],['desert','Пустыня','#c46b38'],['jungle','Джунгли','#4b872c'],['ocean','Океан','#356cc1'],['wetland','Болото','#80822b'],['island','Остров','#229b8e'],['cave','Пещера','#8b678c'],['river','Река','#3494bc'],['meadow','Луг','#bb5b38'],['volcano','Вулкан','#c34d59'],['mangrove','Мангры','#97673e']];
  const fillCut=t=>{const size=Math.max(0,Number(t.members??t.players)||0),answered=Math.min(size,Math.max(0,Number(t.answered)||0));return size&&answered?Math.max(0,94-88*answered/size):100};
  function icon(t,full=false){
@@ -203,11 +206,11 @@ window.QwizStage=(()=>{
  }
  function assemblyPalette(q){
   const colors=q.flag_assembly?.colors||{};
-  return '<div class="assembly-palette">'+(q.options||[]).map(name=>'<span><i style="background:'+esc(/^#[0-9a-f]{6}$/i.test(colors[name])?colors[name]:'#888888')+'" aria-hidden="true"></i>'+esc(name)+'</span>').join('')+'</div>';
+  return '<div class="assembly-palette">'+(q.options||[]).map(name=>'<span><i style="background:'+esc(/^#[0-9a-f]{6}$/i.test(colors[name])?colors[name]:'#888888')+'" aria-hidden="true"></i>'+esc(capitalize(name))+'</span>').join('')+'</div>';
  }
  function assemblyMarkup(q,locked=false){
   const vertical=q.flag_assembly?.orientation==='vertical';
-  return '<p class="muted-small">Расположите полосы '+(vertical?'слева направо':'сверху вниз')+'. Каждый цвет используется один раз.</p><div class="assembly-preview flag-stripe-art '+(vertical?'vertical':'horizontal')+'" role="img" aria-label="Собираемый флаг">'+(q.options||[]).map(()=>'<span></span>').join('')+'</div><div class="rich-rows">'+(q.options||[]).map((_,i)=>'<label class="rich-row"><span>Полоса '+(i+1)+'</span><select class="rich-order"'+(locked?' disabled':'')+'><option value="">Выберите цвет</option>'+(q.options||[]).map((name,k)=>'<option value="'+k+'">'+esc(name)+'</option>').join('')+'</select></label>').join('')+'</div>';
+  return '<p class="muted-small">Расположите полосы '+(vertical?'слева направо':'сверху вниз')+'. Каждый цвет используется один раз.</p><div class="assembly-preview flag-stripe-art '+(vertical?'vertical':'horizontal')+'" role="img" aria-label="Собираемый флаг">'+(q.options||[]).map(()=>'<span></span>').join('')+'</div><div class="rich-rows">'+(q.options||[]).map((_,i)=>'<label class="rich-row"><span>Полоса '+(i+1)+'</span><select class="rich-order"'+(locked?' disabled':'')+'><option value="">Выберите цвет</option>'+(q.options||[]).map((name,k)=>'<option value="'+k+'">'+esc(capitalize(name))+'</option>').join('')+'</select></label>').join('')+'</div>';
  }
  function hydrateAssembly(root,q){
   if(!q.flag_assembly)return;
@@ -224,6 +227,27 @@ window.QwizStage=(()=>{
   const urls=(Array.isArray(answer?.sources)?answer.sources:[]).filter(url=>typeof url==='string'&&/^https:\/\//i.test(url));
   return urls.length?'<p class="answer-sources">'+urls.map((url,i)=>'<a href="'+esc(url)+'" target="_blank" rel="noopener noreferrer">Источник'+(urls.length>1?' '+(i+1):'')+'</a>').join(' · ')+'</p>':'';
  }
+ async function exitFullscreen(){
+  document.documentElement.classList.remove('quiz-focus');
+  if(document.fullscreenElement)try{await document.exitFullscreen()}catch{}
+  document.dispatchEvent(new Event('quizfullscreenchange'));
+ }
+ function bindFullscreen(button){
+  if(!button)return;
+  const root=document.documentElement;
+  const active=()=>!!document.fullscreenElement||root.classList.contains('quiz-focus');
+  const update=()=>{iconLabel(button,active()?'Вернуть обычный вид':'На весь экран','full');button.setAttribute('aria-pressed',String(active()))};
+  button.onclick=async()=>{
+   if(active())await exitFullscreen();
+   else if(root.requestFullscreen&&document.fullscreenEnabled!==false){try{await root.requestFullscreen()}catch{root.classList.add('quiz-focus')}}
+   else root.classList.add('quiz-focus');
+   update();
+  };
+  document.addEventListener('fullscreenchange',update);
+  document.addEventListener('quizfullscreenchange',update);
+  document.addEventListener('keydown',event=>{if(event.key==='Escape'&&root.classList.contains('quiz-focus')){root.classList.remove('quiz-focus');update()}});
+  update();
+ }
  function questionStats(rows){
   const scored=(rows||[]).filter(x=>x.participants>0&&x.correct_rate!=null);
   const items=(list,errors=false)=>list.map(x=>'<li><span class="insight-question-number">'+(Number(x.index)+1)+'</span><div><strong>'+esc(x.prompt)+'</strong><small>'+x.correct+' из '+x.participants+' верно · '+x.incorrect+' ошибок · '+x.unanswered+' без ответа</small></div><b title="'+(errors?'Доля ошибочных ответов':'Доля правильных ответов')+'">'+fmt(errors?(x.incorrect_rate??100-x.correct_rate):x.correct_rate)+'%</b></li>').join('');
@@ -231,5 +255,5 @@ window.QwizStage=(()=>{
   const hardest=scored.filter(x=>x.answered>0).sort((a,b)=>(b.incorrect_rate??100-b.correct_rate)-(a.incorrect_rate??100-a.correct_rate)||b.incorrect-a.incorrect||a.index-b.index).slice(0,3);
   return '<div class="question-insights"><section><h2>Знаем лучше всего</h2><p>Три вопроса с наибольшей долей верных ответов.</p><ol>'+items(best)+'</ol></section><section><h2>Чаще ошибались</h2><p>Три вопроса с наибольшей долей ошибок. Пропуски считаются отдельно.</p><ol>'+items(hardest,true)+'</ol></section></div><details class="all-question-stats"><summary>Все вопросы · '+rows.length+'</summary><ol>'+items(rows)+'</ol></details>';
  }
- return{esc,fmt,habitats,icon,teamTile,teams,patchTeams,progress,leaderboard,illustration,hydrateIllustrations,clockMarkup,updateClock,audio,questionStats,stripeOption,flagVisualContent,hydrateFlagVisuals,uiIcon,iconLabel,decorateControls,updateMemory,assemblyPalette,assemblyMarkup,hydrateAssembly,sourceLinks};
+ return{esc,fmt,habitats,icon,teamTile,teams,patchTeams,progress,leaderboard,illustration,hydrateIllustrations,clockMarkup,updateClock,audio,questionStats,stripeOption,flagVisualContent,hydrateFlagVisuals,uiIcon,iconLabel,decorateControls,updateMemory,assemblyPalette,assemblyMarkup,hydrateAssembly,sourceLinks,capitalize,countLabel,phaseLabel,bindFullscreen,exitFullscreen};
 })();
