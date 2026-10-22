@@ -19,3 +19,20 @@
 @media(min-width:1280px){.team-board{grid-template-columns:repeat(5,minmax(0,1fr))}.team-board:has(.team-board-card:nth-child(11)){gap:10px}.team-board:has(.team-board-card:nth-child(11)) .team-board-card{padding:10px}.team-board:has(.team-board-card:nth-child(11)) .team-board-qr img,.team-board:has(.team-board-card:nth-child(11)) .team-board-qr canvas{width:116px!important;height:116px!important}.team-board:has(.team-board-card:nth-child(11)) .team-board-heading{margin-bottom:4px;min-height:34px}.team-board:has(.team-board-card:nth-child(11)) .team-board-heading .habitat-icon{width:32px;height:32px}}
 @media(max-width:600px){.team-controls{padding:14px;gap:10px}.team-controls label{min-width:130px}.team-controls button{flex:1}.team-manager-head,.room-readiness{flex-direction:column}.room-readiness-actions{flex-shrink:1}.team-card{padding:14px}.my-team-panel{align-items:stretch;flex-direction:column;padding:14px}.team-invite-button{width:100%}.team-qr-dialog{padding:18px}.team-dialog-head h2{font-size:19px}.team-board{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.team-board-card{padding:10px}.team-board-heading{flex-direction:column;gap:4px}.team-board-qr{padding:4px}.projection-lobby.has-team-entry{grid-template-columns:1fr}.projection-lobby.has-team-entry .projection-qr{display:none}.team-member select{min-height:44px}}
 @media(prefers-reduced-motion:reduce){.team-card,.team-board-card{transition:none}.team-board-card:hover{transform:none}}
+.projection-lobby.has-team-entry .projection-qr{min-height:0;min-width:0;aspect-ratio:1}
+@media(min-width:1280px){
+.projection-shell:has(.team-board-card:nth-child(11)) .projection-lobby.has-team-entry{padding:8px 0;gap:20px;grid-template-columns:1fr 100px;position:relative}
+.projection-shell:has(.team-board-card:nth-child(11)) .projection-lobby h1{font-size:34px;margin:8px 0}
+.projection-shell:has(.team-board-card:nth-child(11)) .projection-lobby p{font-size:13px;margin:8px 0}
+.projection-shell:has(.team-board-card:nth-child(11)) .projection-lobby .projection-code{position:absolute;right:132px;top:8px;font-size:22px;margin:0;padding:8px 12px}
+.projection-shell:has(.team-board-card:nth-child(11)) .projection-lobby .projection-qr{width:100px;height:100px;padding:8px}
+.projection-shell:has(.team-board-card:nth-child(11)) .projection-qr :is(img,canvas){max-width:82px!important;max-height:82px!important}
+.projection-shell:has(.team-board-card:nth-child(11)) .projection-team-entry{margin-top:12px}
+.projection-shell:has(.team-board-card:nth-child(11)) .projection-team-entry>h2{font-size:18px;margin-bottom:5px}
+.projection-shell:has(.team-board-card:nth-child(11)) .projection-team-entry>p{margin-bottom:12px;font-size:12px}
+.team-board:has(.team-board-card:nth-child(11)) .team-board-card{padding:8px}
+.team-board:has(.team-board-card:nth-child(11)) .team-board-heading{min-height:28px}
+.team-board:has(.team-board-card:nth-child(11)) .team-board-qr{padding:4px}
+.team-board:has(.team-board-card:nth-child(11)) .team-board-qr :is(img,canvas){width:clamp(88px,11vh,116px)!important;height:clamp(88px,11vh,116px)!important}
+.team-board:has(.team-board-card:nth-child(11)) .board-count{margin-top:6px;font-size:11px}
+}
