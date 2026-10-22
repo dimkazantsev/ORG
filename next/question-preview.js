@@ -12,13 +12,13 @@ function optionMarkup(option,index){
  const letter='<b class="preview-letter">'+String.fromCharCode(65+index)+'</b>';
  if(typeof option==='string')return letter+'<span>'+esc(option)+'</span>';
  if(option?.stripes)return letter+stripesMarkup(option);
- if(/^https:\/\//.test(option?.image_url||''))return letter+'<img class="preview-flag" src="'+esc(option.image_url)+'" alt="Флаг, вариант '+String.fromCharCode(65+index)+'" loading="lazy">';
+ if(/^https:\/\//.test(option?.image_url||''))return letter+'<span class="flag-choice-with-label"><img class="preview-flag" src="'+esc(option.image_url)+'" alt="Флаг, вариант '+String.fromCharCode(65+index)+'" loading="lazy">'+(typeof option.label==='string'?'<span class="flag-choice-label">'+esc(option.label)+'</span>':'')+'</span>';
  return letter+'<span>Вариант '+String.fromCharCode(65+index)+'</span>';
 }
 window.addEventListener('message',e=>{
  if(e.origin!==location.origin||e.source!==window.opener||e.data?.type!=='qwiz-preview-data')return;
  const {question:q,index,total}=e.data;if(!q)return;
- $('previewMode').textContent=({country:'Страна по флагу',picker:'Флаг по названию',colors:'Цвета и полосы',symbols:'Символы и гербы',fragments:'Фрагменты и пиксели'})[q.solution?.flag_mode]||'Флаги мира';
+ $('previewMode').textContent=({country:'Страна по флагу',picker:'Флаг по названию',colors:'Цвета и полосы',symbols:'Символы и гербы',fragments:'Фрагменты и пиксели',errors:'Поиск ошибок на флагах'})[q.solution?.flag_mode]||'Флаги мира';
  $('previewPosition').textContent='Вопрос '+index+' из '+total;
  $('previewPrompt').textContent=q.prompt||'Без текста';
  const isVisual=['symbols','fragments'].includes(q.solution?.flag_mode);
