@@ -1,30 +1,33 @@
 <!doctype html>
 <html lang="ru"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#f6f8f9"><title>QWIZ-PARTY — Студия преподавателя</title>
-<link rel="stylesheet" href="./workspace.css?v=2">
+<meta name="theme-color" content="#faf9fd"><title>QWIZ-PARTY — Студия преподавателя</title>
+<link rel="preload" href="./assets/manrope-variable.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="./theme.css?v=lavender-1">
+<link rel="stylesheet" href="./workspace.css?v=lavender-1">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="./vendor/qrcode.min.js"></script><script defer src="./workspace.js?v=4"></script>
-</head><body>
-<header class="top"><div class="top-wrap"><a class="brand" href="./"><span class="brand-mark">Q</span><span>QWIZ<span class="brand-mid">-</span>PARTY<small>СТУДИЯ ПРЕПОДАВАТЕЛЯ</small></span></a>
-<div class="top-tools"><span class="connection" id="connText">Проверка подключения…</span><button type="button" class="small-button" id="refreshAll">↻ Обновить</button><button type="button" class="small-button" id="signOut">Выйти</button></div></div></header>
+</head><body data-design="lavender-20261022"><a class="skip-link" href="#mainContent">К содержимому</a>
+<header class="top"><div class="top-wrap"><a class="brand" href="./"><span class="brand-mark"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M24 15.5a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0Z" stroke="currentColor" stroke-width="3.5"/><path d="m19.5 20 5 5" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span><span>QWIZ<span class="brand-mid">-</span>PARTY<small>СТУДИЯ ПРЕПОДАВАТЕЛЯ</small></span></a>
+<div class="top-tools"><span class="connection" id="connText">Проверка подключения…</span><button type="button" class="small-button" id="refreshAll"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5M6 7a7 7 0 0 1 12-1l2 3M4 15l2 3a7 7 0 0 0 12-1"></path></svg> Обновить</button><button type="button" class="small-button" id="signOut"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H4V3h5M14 7l5 5-5 5M8 12h12"></path></svg><span>Выйти</span></button></div></div></header>
 <div class="layout">
-<aside class="nav"><div class="nav-title">РАБОЧЕЕ ПРОСТРАНСТВО</div>
-<button type="button" data-section="bank" class="nav-link selected"><span class="nav-symbol">▦</span> Вопросы <span class="nav-count" id="navQuestionCount">0</span></button>
-<button type="button" data-section="builder" class="nav-link"><span class="nav-symbol">◫</span> Сборки и раунды</button>
-<button type="button" data-section="rooms" class="nav-link"><span class="nav-symbol">▶</span> Проведение</button>
-<button type="button" data-section="insights" class="nav-link"><span class="nav-symbol">▥</span> Аналитика</button>
-<div class="nav-end"><div class="nav-hint">Один кабинет на любом устройстве. Комнаты синхронизируются через сервер.</div><a href="./presenter.html" target="_blank" rel="noopener" class="nav-project">Открыть экран аудитории ↗</a></div></aside>
-<main class="content">
+<aside class="nav"><div class="nav-title">Библиотека</div>
+<button type="button" data-section="bank" class="nav-link selected"><span class="nav-symbol"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"></path></svg></span> Вопросы <span class="nav-count" id="navQuestionCount">0</span></button>
+<button type="button" data-section="builder" class="nav-link"><span class="nav-symbol"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 10 5-10 5L2 8l10-5ZM2 12l10 5 10-5M2 16l10 5 10-5"></path></svg></span> Сборки и раунды</button>
+<div class="nav-title nav-title-game">Игра и результаты</div>
+<button type="button" data-section="rooms" class="nav-link"><span class="nav-symbol"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 4 12 8-12 8V4Z"></path></svg></span> Проведение</button>
+<button type="button" data-section="insights" class="nav-link"><span class="nav-symbol"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M12 20V4M20 20v-7"></path></svg></span> Аналитика</button>
+<div class="nav-end"><details class="studio-help"><summary>Как провести игру</summary><p>Сохраните сборку, создайте комнату и откройте пульт на телефоне или планшете.</p></details><button type="button" id="showPublicScreen" class="nav-project"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v13H3zM8 21h8M12 17v4"></path></svg><span>Экран аудитории</span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"></path></svg></button></div></aside>
+<main class="content" id="mainContent">
 <section class="page" id="bankPage">
- <div class="page-head"><div><span class="eyebrow">БИБЛИОТЕКА / 01</span><h1>Банк вопросов</h1><p>Темы, форматы, поиск и редактирование в одном месте.</p></div><button class="primary-button" id="newQuestion">+ Создать вопрос</button></div>
+ <div class="page-head"><div><span class="eyebrow">ВАША КОЛЛЕКЦИЯ</span><h1>Банк вопросов</h1><p>Хорошая игра начинается с интересного вопроса.</p></div><button class="primary-button" id="newQuestion"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg> Создать вопрос</button></div>
  <div class="filter-panel"><label class="search-label">Поиск по вопросам<input id="bankSearch" type="search" placeholder="Введите слова из вопроса…" autocomplete="off"></label>
  <label>Тема<select id="bankTopic"><option value="">Все темы</option></select></label>
  <label>Тип<select id="bankKind"><option value="">Все типы</option></select></label>
  <label>Сортировка<select id="bankSort"><option value="newest">Сначала новые</option><option value="oldest">Сначала старые</option><option value="difficulty">По сложности</option></select></label></div>
  <div class="section-head"><h2>Темы</h2><button class="text-button" id="newTopic">+ Добавить тему</button></div>
  <div class="topic-chips" id="topicChips"></div>
- <div class="section-head"><h2>Вопросы <span class="subtle" id="questionsTotal"></span></h2><span class="small-help">Первые 100 результатов · фильтры применяются на сервере</span></div>
+ <div class="section-head"><h2>Вопросы <span class="subtle" id="questionsTotal"></span></h2><span class="small-help">По 25 вопросов на странице</span></div>
  <div id="bankItems" class="question-list"><div class="empty">Загрузка вопросов…</div></div>
  <nav class="bank-pager" aria-label="Страницы банка вопросов">
  <button type="button" class="small-button" id="bankPrevious">← Предыдущая</button>
@@ -33,7 +36,7 @@
  <p id="bankMessage" class="message" role="status"></p>
 </section>
 <section class="page" id="builderPage" hidden>
- <div class="page-head"><div><span class="eyebrow">БИБЛИОТЕКА / 02</span><h1>Сборки и раунды</h1><p>Соберите программу игры из карточек в нужном порядке.</p></div><button class="primary-button" id="newBuild">+ Новая сборка</button></div>
+ <div class="page-head"><div><span class="eyebrow">КОНСТРУКТОР ИГРЫ</span><h1>Сборки и раунды</h1><p>Соберите программу игры из карточек в нужном порядке.</p></div><button class="primary-button" id="newBuild"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg> Новая сборка</button></div>
  <div class="saved-area"><div class="section-head"><h2>Сохранённые игры</h2><span class="small-help">Доступны на всех ваших устройствах</span></div><div id="savedBuilds" class="saved-builds"><div class="empty">Пока нет сохранённых сборок.</div></div></div>
  <div class="composer" id="composer" hidden><div class="composer-head">
  <label>Название сборки<input id="buildTitle" placeholder="Например, Большая игра: 7 раундов" maxlength="140"></label>
@@ -69,7 +72,7 @@
  <div class="metric-grid" id="insightMetrics"></div>
  <div class="panel"><div class="section-head"><h2>Рейтинг участников</h2><label class="sort-label">Сортировка<select id="studentSort"><option value="score">По очкам</option><option value="correct">По правильным</option><option value="games">По играм</option><option value="answers">По ответам</option><option value="accuracy">По точности</option></select></label></div>
  <div class="student-table-scroll"><table class="student-table"><thead><tr><th>№</th><th>Участник</th><th>Группа</th><th>Игр</th><th>Ответов</th><th>Верных</th><th>Точность</th><th>Баллы</th></tr></thead><tbody id="studentRows"></tbody></table></div></div>
- <div class="panel"><h2>Достижения по ответам</h2><p class="small-help">Диаграмма строится по реальным суммарным значениям из завершённых и текущих комнат.</p><div id="studentChart" class="chart"></div></div>
+ <div class="panel"><h2>Достижения по ответам</h2><p class="small-help">Сравните достижения участников во всех ваших играх.</p><div id="studentChart" class="chart"></div></div>
  <div class="panel" style="margin-top:14px"><h2>Учебные группы</h2>
  <p class="small-help">Доля верных ответов по каждой группе, с учётом всех её игр.</p>
  <div id="groupChart" class="chart"></div></div>
@@ -77,22 +80,21 @@
  <div class="panel" style="margin-top:14px"><h2>Вопросы: самые популярные</h2><p class="small-help">Показаны вопросы с наибольшим количеством ответов и процентом правильных.</p><div id="questionChart" class="chart"></div></div>
 </section>
 </main>
-<aside class="context-panel"><div class="context-card"><span class="eyebrow">QWIZ-PARTY</span><h3>Как начать занятие</h3><p>Откройте сборку, создайте комнату и запустите на планшете пульт ведущего. На экран в аудитории выведите отдельное окно.</p></div>
-<div class="context-card lavender"><h3>Два экрана</h3><p>Компьютер показывает вопросы, телефон управляет тем же состоянием. Пароль преподавателя требуется только для пульта.</p><button type="button" id="showPublicScreen" class="secondary-button">Открыть публичный экран ↗</button></div></aside>
+
 </div>
 <dialog class="edit-dialog" id="topicDialog"><form id="topicForm" method="dialog">
-<div class="dialog-head"><div><span class="eyebrow">БИБЛИОТЕКА</span><h2>Новая тема</h2></div><button type="button" class="icon-btn" data-close="topicDialog">✕</button></div>
+<div class="dialog-head"><div><span class="eyebrow">БИБЛИОТЕКА</span><h2>Новая тема</h2></div><button type="button" class="icon-btn" aria-label="Закрыть окно" data-close="topicDialog"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"></path></svg></button></div>
 <div class="dialog-body"><label>Название темы<input id="topicName" maxlength="90" minlength="2" required placeholder="Флаги, портреты, кино, наука…"></label>
 <label>Категория<select id="topicCategory"><option>Общие знания</option><option>География</option><option>История</option><option>Культура и искусство</option><option>Лица и биографии</option><option>Кино и музыка</option><option>Наука и техника</option><option>Логика</option><option>Спорт</option><option>Политика и общество</option></select></label></div>
 <div class="dialog-footer"><span class="message" id="topicNotice" role="status"></span><button type="button" class="secondary-button" data-close="topicDialog">Отмена</button><button type="submit" class="primary-button">Создать тему</button></div>
 </form></dialog>
-<dialog class="edit-dialog" id="questionDialog"><form id="questionForm" method="dialog"><div class="dialog-head"><div><span class="eyebrow">БАНК ВОПРОСОВ</span><h2 id="questionDialogTitle">Новый вопрос</h2></div><button type="button" class="icon-btn" data-close="questionDialog">✕</button></div>
+<dialog class="edit-dialog" id="questionDialog"><form id="questionForm" method="dialog"><div class="dialog-head"><div><span class="eyebrow">БАНК ВОПРОСОВ</span><h2 id="questionDialogTitle">Новый вопрос</h2></div><button type="button" class="icon-btn" aria-label="Закрыть окно" data-close="questionDialog"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"></path></svg></button></div>
  <div class="dialog-body"><label>Тип вопроса<select id="editKind"></select></label><label>Тема<select id="editTopic"><option value="">Без темы</option></select></label>
  <label>Текст вопроса<textarea id="editPrompt" rows="3" maxlength="3000" required></textarea></label>
  <div id="answerEditor"></div><label>Пояснение после ответа<textarea id="editExplanation" rows="2" maxlength="3000" placeholder="Необязательно"></textarea></label>
  <label>Сложность<select id="editDifficulty"><option value="1">1 · Лёгкая</option><option value="2" selected>2 · Обычная</option><option value="3">3 · Средняя</option><option value="4">4 · Сложная</option><option value="5">5 · Экспертная</option></select></label></div>
  <div class="dialog-footer"><span id="questionSaveMessage" class="message" role="status"></span><button type="button" class="secondary-button" data-close="questionDialog">Отмена</button><button type="submit" class="primary-button" id="questionSubmit">Сохранить</button></div></form></dialog>
-<dialog class="edit-dialog" id="cardDialog"><form id="cardForm" method="dialog"><div class="dialog-head"><div><span class="eyebrow">РЕДАКТОР РАУНДА</span><h2>Настройка карточки</h2></div><button type="button" class="icon-btn" data-close="cardDialog">✕</button></div>
+<dialog class="edit-dialog" id="cardDialog"><form id="cardForm" method="dialog"><div class="dialog-head"><div><span class="eyebrow">РЕДАКТОР РАУНДА</span><h2>Настройка карточки</h2></div><button type="button" class="icon-btn" aria-label="Закрыть окно" data-close="cardDialog"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M6 18 18 6"></path></svg></button></div>
  <div class="dialog-body"><label>Название карточки<input id="cardTitle" maxlength="120" required></label>
  <label>Иконка раунда<select id="cardIcon">
  <option value="▦">▦ Вопросы</option><option value="◉">◉ Начало</option><option value="♫">♫ Музыка</option>

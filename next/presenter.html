@@ -3,17 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#f7f9f7">
+<meta name="theme-color" content="#faf9fd">
 <title>QWIZ-PARTY — экран аудитории</title>
-<link rel="stylesheet" href="./presenter.css?v=4">
+<link rel="preload" href="./assets/manrope-variable.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="./theme.css?v=lavender-1">
+<link rel="stylesheet" href="./presenter.css?v=lavender-1">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="./vendor/qrcode.min.js"></script>
 <script defer src="./presenter.js?v=7"></script>
 </head>
-<body>
+<body data-design="lavender-20261022">
 <div class="projection-shell" id="projectionShell">
 <header class="projection-header">
- <div class="projection-brand"><span class="brand-square" aria-hidden="true">Q</span><span>QWIZ<span class="brand-dash">-</span>PARTY</span></div>
+ <div class="projection-brand"><span class="brand-square" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M24 15.5a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0Z" stroke="currentColor" stroke-width="3.5"/><path d="m19.5 20 5 5" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span><span>QWIZ<span class="brand-dash">-</span>PARTY</span></div>
  <div id="projectionRoom" class="projection-room"></div>
 </header>
 <main id="projectionMain" aria-live="polite" aria-atomic="true">

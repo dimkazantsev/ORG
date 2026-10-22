@@ -6,12 +6,11 @@
   <meta name="theme-color" content="#f8fafc">
   <meta name="color-scheme" content="light">
   <title>ORG/PARTY — квиз-платформа</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preload" href="./next/assets/manrope-variable.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="./next/theme.css?v=lavender-1">
   <link rel="stylesheet" href="./styles.css?v=20261009-1">
     <link rel="stylesheet" href="./studio-2026.css?v=20261022-4">
-  <link rel="stylesheet" href="./ui-ux-pro-max.css?v=20261022-5">
+  <link rel="stylesheet" href="./ui-ux-pro-max.css?v=20261022-6">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script src="./lib/d3.v7.min.js"></script>
@@ -26,11 +25,11 @@
       <span class="brand-sigil" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="9" stroke="currentColor" stroke-width="3.8"/><path d="M16 7v18" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg></span>
       <span class="brand-copy"><strong>ORG<span class="brand-slash">/</span>PARTY</strong><small>Квиз-платформа</small></span>
     </button>
-    <div class="top-actions">
+    <div class="top-actions"><a href="./next/" class="new-studio-link">QWIZ-PARTY ↗</a>
       <button id="soundToggle" class="icon-btn" title="Включить или выключить звук" aria-label="Переключить звук">♫</button>
       <span class="live-chip"><i></i> ИГРА В РЕАЛЬНОМ ВРЕМЕНИ</span>
       <button id="teacherToggle" class="soft-btn">Модератор</button>
-      <span id="releaseVersion" class="release-version" data-build="20261022.5" title="Версия ORG Studio / 22.10.2026">v2026.10.22.5</span>
+      <span id="releaseVersion" class="release-version" data-build="20261022.6" title="Версия ORG Studio / 22.10.2026">v2026.10.22.6</span>
     </div>
   </header>
 
@@ -39,8 +38,8 @@
       <div class="landing-grid">
         <article class="hero-card">
           <div class="hero-eyebrow"><span class="hero-eyebrow-line"></span> КОМАНДНЫЙ КВИЗ В РЕАЛЬНОМ ВРЕМЕНИ</div>
-          <h1>Не просто квиз.<br><em>Командная игра.</em></h1>
-          <p>Всё для интеллектуальной игры в одном месте: вопросы, раунды, командный азарт и результаты в реальном времени.</p>
+          <h1>Ваша команда.<br><em>Ваша игра.</em></h1>
+          <p>Вопросы, которые объединяют. Отвечайте, обсуждайте и побеждайте вместе.</p>
           <div class="home-hero-actions">
             <button class="primary" id="heroJoin" type="button">Присоединиться <span aria-hidden="true">↗</span></button>
             <button class="button-secondary" id="heroHost" type="button">Провести игру <span aria-hidden="true">→</span></button>
@@ -65,7 +64,7 @@
             <button class="role-tab" data-role-tab="moderator" type="button">Преподаватель</button>
           </div>
           <div id="participantAccess">
-            <div class="access-heading"><div><div class="access-kicker">ВХОД В КОМНАТУ</div><h2>Присоединиться<br>к игре</h2><p class="access-intro">Введите код преподавателя и свои данные.</p></div></div>
+            <div class="access-heading"><div><div class="access-kicker">ВХОД В КОМНАТУ</div><h2>Присоединяйтесь</h2><p class="access-intro">Введите код преподавателя и свои данные.</p></div></div>
             <form id="joinForm" class="stack">
               <label>Код комнаты<input id="joinCode" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Например, ORG123" required></label>
               <label>Имя и фамилия<input id="joinName" autocomplete="name" placeholder="Иван Иванов" required></label>
@@ -75,7 +74,7 @@
             </form>
           </div>
           <div id="moderatorAccess" class="hidden">
-            <div class="access-heading"><div><div class="access-kicker">КАБИНЕТ ПРЕПОДАВАТЕЛЯ</div><h2>Провести<br>квиз</h2></div></div>
+            <div class="access-heading"><div><div class="access-kicker">КАБИНЕТ ПРЕПОДАВАТЕЛЯ</div><h2>Провести игру</h2></div></div>
             <p class="subcopy">Создавайте наборы вопросов, распределяйте команды и управляйте игрой из единого кабинета.</p>
             <button id="openModerator" class="primary big-btn" type="button">Открыть кабинет <span aria-hidden="true">→</span></button>
           </div>

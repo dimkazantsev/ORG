@@ -1,0 +1,34 @@
+/* QWIZ-PARTY · Lavender / 2026. Shared across every application screen. */
+@font-face{font-family:Manrope;src:url('./assets/manrope-variable.ttf') format('truetype');font-style:normal;font-weight:200 800;font-display:swap}
+:root{
+ color-scheme:light;
+ --font:Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+ --bg:#faf9fd;--surface:#fff;--paper:#fff;
+ --ink:#262137;--subtle:#625d73;--muted:#716a80;--line:#e8e3f0;
+ --accent:#7040db;--accent-hover:#5b2bc2;--accent-soft:#f0e9ff;
+ --lavender:#eee7fd;--lavender-strong:#dbcbfa;--violet:#eee7fd;
+ --dark:var(--accent);--dark-hover:var(--accent-hover);
+ --mint:var(--lavender-strong);--mint-light:var(--accent-soft);
+ --lilac:var(--lavender);--lilac-strong:var(--accent);--green:var(--accent);
+ --success:#246647;--success-soft:#e9f6ee;--danger:#b12b4a;--red:var(--danger);--danger-soft:#fff0f3;
+ --radius:20px;--radius-sm:12px;--shadow:0 16px 55px #49337609;
+ --ease:cubic-bezier(.2,.7,.2,1);
+ font-family:var(--font);font-synthesis:none;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{min-width:320px;scroll-behavior:smooth;scroll-padding-top:100px}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.6;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit}
+button,a{-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button{cursor:pointer}
+button:disabled{cursor:not-allowed}
+[hidden]{display:none!important}
+input,select,textarea{accent-color:var(--accent)}
+::selection{background:var(--lavender-strong);color:var(--ink)}
+:where(button,a,input,select,textarea):focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+:where(h1,h2,h3){text-wrap:balance}
+:where(p){text-wrap:pretty}
+.ui-icon{display:inline-block;flex:none;width:20px;height:20px;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.skip-link{position:fixed;z-index:99;top:12px;left:12px;transform:translateY(-150%);padding:12px 20px;border-radius:12px;background:var(--accent);color:white;text-decoration:none}
+.skip-link:focus{transform:none}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}

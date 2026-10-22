@@ -89,7 +89,7 @@ test('Projection screen only renders questions and never host controls',async({p
  await page.screenshot({path:'visual-artifacts/presenter-1440.png',fullPage:true});
 });
 
-test('Welcome has one clear entry form, no duplicate navigation, and a QR beside it',async({page})=>{
+test('Welcome pairs one entry form with a compact phone entry below the introduction',async({page})=>{
   await page.setViewportSize({width:1440,height:900});
   await expect(page.locator('#homeView .welcome-layout')).toBeVisible();
   await expect(page.locator('#homeView .welcome-head')).toBeVisible();
@@ -100,8 +100,9 @@ test('Welcome has one clear entry form, no duplicate navigation, and a QR beside
   const form=await page.locator('#entryPanel').boundingBox();
   const qr=await page.locator('#homeQrCard').boundingBox();
   expect(form && qr).toBeTruthy();
-  expect(Math.abs(qr.y-form.y)).toBeLessThan(5);
-  expect(qr.x).toBeGreaterThan(form.x);
+  expect(qr.x).toBeLessThan(form.x);
+  expect(qr.y).toBeGreaterThan(form.y);
+  expect(qr.width).toBeLessThan(650);
 });
 
 test('At narrow widths, the entry form appears before the optional welcome banner',async({page})=>{
@@ -140,6 +141,49 @@ test('Entry fonts do not request Google Fonts on startup',async({page})=>{
  const loaded=await page.evaluate(()=>performance.getEntriesByType('resource').map(r=>r.name));
  expect(loaded.some(url=>url.includes('fonts.googleapis.com'))).toBe(false);
  expect(loaded.some(url=>url.includes('fonts.gstatic.com'))).toBe(false);
+});
+
+test('Every redesigned screen fits small phones, tablets and desktops',async({page})=>{
+ for(const route of ['','workspace.html','profile.html','presenter.html']){
+  await page.goto('http://127.0.0.1:8080/next/'+route,{waitUntil:'domcontentloaded'});
+  for(const width of [320,375,768,1024,1440]){
+   await page.setViewportSize({width,height:920});
+   expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth),route+' at '+width).toBeLessThanOrEqual(2);
+   if(width===1440||width===375)await page.screenshot({path:'visual-artifacts/lavender-'+(route||'home').replace('.html','')+'-'+width+'.png',fullPage:true});
+  }
+ }
+});
+
+test('Phone studio navigation and editor remain usable with touch and keyboard',async({page})=>{
+ await page.setViewportSize({width:375,height:812});
+ await page.goto('http://127.0.0.1:8080/next/workspace.html');
+ const sizes=await page.locator('.nav-link').evaluateAll(nodes=>nodes.map(n=>({width:n.getBoundingClientRect().width,height:n.getBoundingClientRect().height})));
+ expect(sizes.every(s=>s.width>=44&&s.height>=44)).toBe(true);
+ await page.locator('#newQuestion').click();
+ await expect(page.locator('#questionDialog')).toBeVisible();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
+ await page.keyboard.press('Escape');
+ await expect(page.locator('#questionDialog')).toBeHidden();
+});
+
+test('Local font is shared by all four screens',async({page})=>{
+ for(const route of ['','workspace.html','profile.html','presenter.html']){
+  await page.goto('http://127.0.0.1:8080/next/'+route,{waitUntil:'domcontentloaded'});
+  await page.evaluate(()=>document.fonts.ready);
+  const style=await page.evaluate(()=>({font:getComputedStyle(document.body).fontFamily,loaded:document.fonts.check('16px Manrope')}));
+  expect(style.font).toContain('Manrope');expect(style.loaded).toBe(true);
+ }
+});
+
+test('Classic entry retains its form and new studio link',async({page})=>{
+ await page.goto('http://127.0.0.1:8080/');
+ for(const width of [375,768,1440]){
+  await page.setViewportSize({width,height:920});
+  await expect(page.locator('#joinForm')).toBeVisible();
+  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
+ }
+ await expect(page.getByRole('link',{name:'QWIZ-PARTY'})).toHaveAttribute('href','./next/');
+ await page.screenshot({path:'visual-artifacts/classic-lavender-1440.png',fullPage:true});
 });
 
 
@@ -252,3 +296,4 @@ test('Realtime refresh does not erase a partially entered free-text answer',asyn
  await page.evaluate(()=>{ctx.room.index=3;renderGame()});
  await expect(page.locator('#richTextAnswer')).toHaveValue('');
 });
+

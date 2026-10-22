@@ -43,6 +43,8 @@ jobs:
           test -s next/profile.js
           test -s next/profile.css
           test -s next/assets/animals.svg
+          test -s next/theme.css
+          test -s next/assets/manrope-variable.ttf
           test -s next/migrations/qwiz_advance_variable_collision_fix.sql
           node --check next/workspace.js
           node --check next/profile.js
@@ -52,7 +54,7 @@ jobs:
           test -s next/migrations/qwiz_never_leak_rich_solutions.sql
           grep -q 'class="studio-rebuild"' index.html
           grep -q 'studio-2026.css?v=20261022-4' index.html
-          grep -q 'ui-ux-pro-max.css?v=20261022-5' index.html
+          grep -q 'ui-ux-pro-max.css?v=20261022-6' index.html
           grep -q -- '--q-blue' ui-ux-pro-max.css
           grep -q -- '--studio-radius' studio-2026.css
           grep -q 'id="teacherView"' index.html
@@ -88,13 +90,13 @@ jobs:
           site="${PAGES_URL%/}"
           echo "Checking GitHub Pages at $site"
           for attempt in $(seq 1 12); do
-            if curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/index.html?release=20261022-5-$GITHUB_RUN_ID-$attempt" -o /tmp/org-published.html &&
-               grep -q 'data-build="20261022.5"' /tmp/org-published.html &&
+            if curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/index.html?release=20261022-6-$GITHUB_RUN_ID-$attempt" -o /tmp/org-published.html &&
+               grep -q 'data-build="20261022.6"' /tmp/org-published.html &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/app.js?v=20261009-qa6" -o /tmp/org-published.js &&
                grep -q 'org_quiz_archive_history' /tmp/org-published.js &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/studio-2026.css?v=20261022-4" -o /tmp/org-published-studio.css &&
                grep -q -- '--studio-radius' /tmp/org-published-studio.css &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/ui-ux-pro-max.css?v=20261022-5" -o /tmp/org-published-uipromax.css &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/ui-ux-pro-max.css?v=20261022-6" -o /tmp/org-published-uipromax.css &&
                grep -q -- '--q-blue' /tmp/org-published-uipromax.css &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/index.html?release=$GITHUB_RUN_ID" -o /tmp/org-next-index.html &&
                grep -q 'QWIZ-PARTY — командный квиз' /tmp/org-next-index.html &&
@@ -120,3 +122,4 @@ jobs:
           done
           echo 'Published build could not be verified after deployment.'
           exit 1
+

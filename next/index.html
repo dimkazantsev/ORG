@@ -3,97 +3,77 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#f7f8f4">
+<meta name="theme-color" content="#faf9fd">
 <title>QWIZ-PARTY — командный квиз</title>
 <meta name="description" content="Командный квиз: вопросы, комнаты, игроки и результаты.">
-<link rel="stylesheet" href="./app.css?v=7">
+<link rel="preload" href="./assets/manrope-variable.ttf" as="font" type="font/ttf" crossorigin>
+<link rel="stylesheet" href="./theme.css?v=lavender-1">
+<link rel="stylesheet" href="./app.css?v=lavender-1">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="./vendor/qrcode.min.js"></script>
 <script defer src="./app.js?v=11"></script>
 </head>
-<body>
+<body data-design="lavender-20261022"><a class="skip-link" href="#mainContent">К содержимому</a>
 <header class="topbar">
  <div class="shell row">
   <button type="button" class="brand" id="logoHome" aria-label="Вернуться на главную">
-   <span class="brand-mark" aria-hidden="true">Q</span>
+   <span class="brand-mark"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M24 15.5a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0Z" stroke="currentColor" stroke-width="3.5"/><path d="m19.5 20 5 5" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span>
    <span><span class="brand-name">QWIZ<span>-</span>PARTY</span><span class="brand-tag">ИНТЕЛЛЕКТУАЛЬНЫЕ ИГРЫ</span></span>
   </button>
-  <div class="header-end"><a class="header-link" href="./presenter.html" target="_blank" rel="noopener">Экран аудитории ↗</a><span class="header-caption"><i class="status-dot" aria-hidden="true"></i>Интеллектуальные игры онлайн</span></div>
+  <nav class="header-end" aria-label="Быстрые ссылки"><a class="profile-link" href="./profile.html" aria-label="Мой профиль" title="Мой профиль"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 21v-2a7 7 0 0 0-14 0v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8"></path></svg><span>Мой профиль</span></a><a class="header-link" href="./presenter.html" aria-label="Экран аудитории" title="Экран аудитории" target="_blank" rel="noopener"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v13H3zM8 21h8M12 17v4"></path></svg><span>Экран аудитории</span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"></path></svg></a></nav>
  </div>
 </header>
-<main class="shell">
+<main class="shell" id="mainContent">
 <section class="view" id="homeView">
-  <div class="welcome">
-    <header class="welcome-head">
-      <div class="welcome-kicker"><span class="welcome-kicker-dot"></span> КОМАНДНЫЙ КВИЗ</div>
-      <h1>Ваша игра начинается здесь.</h1>
-      <p>Участнику нужен код комнаты. Преподавателю — вход в кабинет.</p>
-    </header>
-    <div class="welcome-layout">
-      <div class="entry" id="entryPanel">
-        <div class="switch" role="tablist" aria-label="Способ входа">
-          <button type="button" role="tab" id="rolePlayer" aria-selected="true" aria-controls="playerEntry">Участник</button>
-          <button type="button" role="tab" id="roleHost" aria-selected="false" aria-controls="hostEntry">Преподаватель</button>
-        </div>
-        <div id="playerEntry" role="tabpanel" aria-labelledby="rolePlayer">
-          <div class="entry-heading"><div><h2>Войти в комнату</h2><p class="entry-desc">Введите данные, чтобы присоединиться к команде.</p></div><span class="entry-step">01 / 02</span></div>
-          <form class="stack" id="joinForm">
-            <label class="code-label" for="joinCode">Код комнаты
-              <input id="joinCode" placeholder="A1B2C3D4" inputmode="text" maxlength="8" autocapitalize="characters" autocomplete="off" spellcheck="false" pattern="[a-fA-F0-9]{8}" title="Восемь символов: цифры и латинские буквы A–F" aria-describedby="codeHint" required>
-            </label>
-            <p class="field-hint" id="codeHint">Восьмизначный код покажет преподаватель.</p>
-            <div class="entry-person">
-              <label for="joinName">Имя и фамилия
-                <input id="joinName" autocomplete="name" placeholder="Иван Иванов" minlength="2" maxlength="100" required>
-              </label>
-              <label for="joinGroup">Учебная группа <span class="optional">необязательно</span>
-                <input id="joinGroup" placeholder="Например, ПУ-231" maxlength="50">
-              </label>
-            </div>
-            <button class="btn btn-dark entry-submit" type="submit" id="joinButton">Присоединиться к игре <span aria-hidden="true">↗</span></button>
-          </form>
-          <p id="joinNotice" class="notice" role="status" aria-live="polite"></p>
-        </div>
-        <div id="hostEntry" role="tabpanel" aria-labelledby="roleHost" hidden>
-          <div class="entry-heading"><div><h2>Кабинет преподавателя</h2><p class="entry-desc">Управляйте комнатами, вопросами и трансляцией на проектор.</p></div></div>
-          <form class="stack" id="loginForm">
-            <label for="loginEmail">Электронная почта
-              <input type="email" id="loginEmail" autocomplete="username" required placeholder="name@example.com">
-            </label>
-            <label for="loginPassword">Пароль
-              <input type="password" id="loginPassword" autocomplete="current-password" required placeholder="Введите пароль">
-            </label>
-            <button class="btn btn-dark entry-submit" type="submit" id="loginButton">Открыть кабинет <span aria-hidden="true">↗</span></button>
-          </form>
-          <p id="loginNotice" class="notice" role="status" aria-live="polite"></p>
-        </div>
-        <div class="entry-foot"><span class="entry-foot-dot"></span><span>Регистрация участника не требуется</span></div>
+ <div class="welcome">
+  <div class="welcome-layout">
+   <header class="welcome-head">
+    <div class="welcome-kicker"><span class="welcome-kicker-dot" aria-hidden="true"></span> МЕСТО ДЛЯ ХОРОШЕЙ ИГРЫ</div>
+    <h1>Ваша команда.<br><em>Ваша игра.</em></h1>
+    <p>Вопросы, которые объединяют.<br>Отвечайте, обсуждайте и побеждайте вместе.</p>
+    <div class="welcome-features"><span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 10 5-10 5L2 8l10-5ZM2 12l10 5 10-5M2 16l10 5 10-5"></path></svg> До 15 команд</span><span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2h8a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2ZM11 18h2"></path></svg> На любом устройстве</span></div>
+    <svg class="hero-spark" viewBox="0 0 120 120" fill="none" aria-hidden="true"><path d="M60 4v112M4 60h112M20 20l80 80M20 100l80-80" stroke="currentColor" stroke-width="13"/></svg>
+   </header>
+   <div class="entry" id="entryPanel">
+    <div class="switch" role="tablist" aria-label="Способ входа">
+     <button type="button" role="tab" id="rolePlayer" aria-selected="true" aria-controls="playerEntry">Участник</button>
+     <button type="button" role="tab" id="roleHost" aria-selected="false" aria-controls="hostEntry">Преподаватель</button>
+    </div>
+    <div id="playerEntry" role="tabpanel" aria-labelledby="rolePlayer">
+     <div class="entry-heading"><div><h2>Присоединяйтесь</h2><p class="entry-desc">Ваша команда уже ждёт.</p></div><span class="entry-step">ПО КОДУ</span></div>
+     <form class="stack" id="joinForm">
+      <label class="code-label" for="joinCode">Код комнаты
+       <input id="joinCode" placeholder="A1B2C3D4" inputmode="text" maxlength="8" autocapitalize="characters" autocomplete="off" spellcheck="false" pattern="[a-fA-F0-9]{8}" title="Восемь символов: цифры и латинские буквы A–F" aria-describedby="codeHint" required>
+      </label>
+      <p class="field-hint" id="codeHint">Восемь символов с экрана преподавателя.</p>
+      <div class="entry-person">
+       <label for="joinName">Имя и фамилия<input id="joinName" autocomplete="name" placeholder="Иван Иванов" minlength="2" maxlength="100" required></label>
+       <label for="joinGroup"><span>Группа <span class="optional">необязательно</span></span><input id="joinGroup" placeholder="ПУ-231" maxlength="50"></label>
       </div>
-      <aside class="home-qr-column" aria-label="Вход по QR-коду">
-        <div class="qr-card" id="homeQrCard">
-          <div class="qr-card-header">
-            <span class="qr-badge">АЛЬТЕРНАТИВНЫЙ ВХОД</span>
-            <span class="qr-symbol" aria-hidden="true">↗</span>
-          </div>
-          <h2>Войти с телефона</h2>
-          <p id="homeQrText">Отсканируйте QR-код камерой телефона, чтобы открыть страницу игры.</p>
-          <button type="button" class="qr-click" id="homeQrOpen" aria-label="Увеличить QR-код на весь экран">
-            <span id="homeQr" class="qr-render"></span>
-            <span class="qr-hint">Нажмите, чтобы увеличить</span>
-          </button>
-          <div class="qr-bottom">
-            <span id="homeQrCode" class="qr-code-label">QWIZ-PARTY</span>
-            <button type="button" class="qr-copy-link" id="homeQrCopy">Скопировать ссылку <span aria-hidden="true">↗</span></button>
-          </div>
-        </div>
-      </aside>
+      <button class="btn btn-dark entry-submit" type="submit" id="joinButton">Присоединиться к игре <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"></path></svg></button>
+     </form>
+     <p id="joinNotice" class="notice" role="status" aria-live="polite"></p>
     </div>
-    <div class="welcome-footer">
-      <span><span class="footer-tick">✓</span> До 15 команд</span>
-      <span><span class="footer-tick">✓</span> Телефон, планшет или ПК</span>
-      <span><span class="footer-tick">✓</span> Вопросы на втором экране</span>
+    <div id="hostEntry" role="tabpanel" aria-labelledby="roleHost" hidden>
+     <div class="entry-heading"><div><h2>Игра по вашим правилам</h2><p class="entry-desc">Войдите, чтобы подготовить и провести квиз.</p></div></div>
+     <form class="stack" id="loginForm">
+      <label for="loginEmail">Электронная почта<input type="email" id="loginEmail" autocomplete="username" required placeholder="name@example.com"></label>
+      <label for="loginPassword">Пароль<input type="password" id="loginPassword" autocomplete="current-password" required placeholder="Введите пароль"></label>
+      <button class="btn btn-dark entry-submit" type="submit" id="loginButton">Открыть кабинет <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"></path></svg></button>
+     </form>
+     <p id="loginNotice" class="notice" role="status" aria-live="polite"></p>
     </div>
+    <div class="entry-foot"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"></path></svg> <span>Для входа в игру регистрация не нужна</span></div>
+   </div>
+   <aside class="home-qr-column" aria-label="Вход по QR-коду">
+    <div class="qr-card" id="homeQrCard">
+     <div class="qr-copy"><span class="qr-badge">ПРОДОЛЖИТЬ НА ТЕЛЕФОНЕ</span><h2>Квиз всегда под рукой</h2><p id="homeQrText">Наведите камеру на QR-код и откройте игру.</p><span id="homeQrCode" class="qr-code-label">QWIZ-PARTY</span><button type="button" class="qr-copy-link" id="homeQrCopy">Скопировать ссылку <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"></path></svg></button></div>
+     <button type="button" class="qr-click" id="homeQrOpen" aria-label="Увеличить QR-код на весь экран"><span id="homeQr" class="qr-render"></span><span class="qr-hint">Увеличить <svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"></path></svg></span></button>
+    </div>
+   </aside>
   </div>
+  <div class="welcome-footer"><span><b>01</b> Получите код комнаты</span><span><b>02</b> Присоединитесь к команде</span><span><b>03</b> Играйте вместе</span></div>
+ </div>
 </section>
 <section id="studioView" class="view" hidden>
 <div class="workspace">
@@ -178,6 +158,6 @@
  <p id="qrDialogCode" class="qr-dialog-code"></p><p class="qr-dialog-hint">Откройте камеру телефона и наведите на код.</p>
  <div class="control-row"><button type="button" class="btn" id="qrCopy">Скопировать ссылку</button><button type="button" class="btn btn-dark" id="qrDone">Закрыть</button></div>
 </dialog>
-<footer class="footer"><div class="shell row"><span>QWIZ-PARTY © 2026 · Версия 4</span><span>Вопросы, команды, результаты.</span></div></footer>
+<footer class="footer"><div class="shell row"><span>QWIZ-PARTY © 2026 · Дизайн Lavender</span><span>Вопросы, команды, результаты.</span></div></footer>
 </body>
 </html>
