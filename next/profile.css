@@ -106,7 +106,7 @@ body{font-family:var(--font)}
 .big-avatar{background:var(--lavender)}
 .login-chip{background:var(--accent-soft);color:var(--accent)}
 .qr-private p{color:var(--subtle)}
-input{font-size:16px;border-color:#c6bdd4;border-radius:11px}
+input{font-size:16px;border-color:var(--control-border);border-radius:11px}
 input:focus{border-color:var(--accent);outline-color:var(--accent)}
 .message{color:var(--accent)}
 .message.error{color:var(--danger)}

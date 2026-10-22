@@ -208,7 +208,7 @@ body.studio-rebuild .access-card :is(label,.stack label) {font-size:12px!importa
 }
 body.studio-rebuild .access-card .stack input {background:#fff!important;
   height:50px!important;
-  border-color:#c6bdd4!important;
+  border-color:var(--control-border)!important;
   font-size:16px!important;
 }
 body.studio-rebuild .access-card .big-btn {min-height:54px!important;margin-top:12px!important;}
@@ -541,3 +541,5 @@ body.studio-rebuild .new-studio-link{display:inline-flex;align-items:center;min-
 @media(max-width:1000px){body.studio-rebuild .landing-grid{grid-template-columns:1fr 1fr!important;gap:28px!important}body.studio-rebuild .hero-card h1{font-size:clamp(40px,5.5vw,60px)!important}body.studio-rebuild .access-card{padding:25px!important}body.studio-rebuild .shell{padding:36px 24px 50px!important}}
 @media(max-width:760px){body.studio-rebuild .landing-grid{grid-template-columns:1fr!important;gap:26px!important}body.studio-rebuild .hero-card{min-height:0!important;padding:0!important}body.studio-rebuild .hero-card h1{margin:20px 0 18px!important;font-size:clamp(40px,8vw,57px)!important}body.studio-rebuild .hero-card>p{font-size:14px!important}body.studio-rebuild .home-hero-actions,body.studio-rebuild .home-hero-bottom{display:none!important}body.studio-rebuild .access-card{padding:26px!important}body.studio-rebuild .home-value-grid{grid-template-columns:1fr!important;gap:0!important;margin-top:30px!important}body.studio-rebuild .home-value-grid>div{min-height:0!important;padding:18px 0!important}body.studio-rebuild .shell{padding:28px 20px 45px!important}body.studio-rebuild .new-studio-link{font-size:9px;padding:8px}body.studio-rebuild .top-actions .live-chip{display:none!important}}
 @media(max-width:420px){body.studio-rebuild .shell{padding:26px 16px 40px!important}body.studio-rebuild .access-card{padding:22px!important}body.studio-rebuild .access-heading h2{font-size:26px!important}body.studio-rebuild .hero-eyebrow{font-size:8px!important}body.studio-rebuild .new-studio-link{display:none}}
+
+body.studio-rebuild :is(input,select,textarea){border-color:var(--control-border)!important}

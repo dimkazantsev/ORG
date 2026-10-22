@@ -4,7 +4,7 @@
  color-scheme:light;
  --font:Manrope,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
  --bg:#faf9fd;--surface:#fff;--paper:#fff;
- --ink:#262137;--subtle:#625d73;--muted:#716a80;--line:#e8e3f0;
+ --ink:#262137;--subtle:#625d73;--muted:#6b627b;--line:#e8e3f0;--control-border:#9788ab;
  --accent:#7040db;--accent-hover:#5b2bc2;--accent-soft:#f0e9ff;
  --lavender:#eee7fd;--lavender-strong:#dbcbfa;--violet:#eee7fd;
  --dark:var(--accent);--dark-hover:var(--accent-hover);

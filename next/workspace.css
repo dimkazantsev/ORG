@@ -13,7 +13,7 @@ button:disabled{opacity:.42;cursor:not-allowed}
 a{color:var(--green)}
 [hidden]{display:none!important}
 :where(button,a,input,select,textarea):focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-input,select,textarea{width:100%;min-width:0;padding:12px 13px;border-radius:11px;border:1px solid #dce5e2;color:var(--ink);background:#fff}
+input,select,textarea{width:100%;min-width:0;padding:12px 13px;border-radius:11px;border:1px solid var(--control-border);color:var(--ink);background:#fff}
 input::placeholder{color:#9aa6a3}
 label{font-weight:650;font-size:12px;display:grid;gap:7px;min-width:0}
 .top{border-bottom:1px solid var(--line)}

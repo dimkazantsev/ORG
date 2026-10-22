@@ -65,7 +65,7 @@ label{display:grid;gap:7px;min-width:0;font-size:12px}
 .stack{display:grid;gap:17px}
 .entry-person{display:grid;grid-template-columns:1.1fr .9fr;gap:12px}
 .entry-person input,#hostEntry input{min-height:50px}
-#joinCode{height:64px;background:var(--bg);font:700 24px/1.2 var(--font);letter-spacing:.16em;padding:16px;border-color:#b5a6cc;caret-color:var(--accent)}
+#joinCode{height:64px;background:var(--bg);font:700 24px/1.2 var(--font);letter-spacing:.16em;padding:16px;border-color:var(--control-border);caret-color:var(--accent)}
 #joinCode::placeholder{color:#91839f;letter-spacing:.14em}
 .field-hint{font-size:11px;color:var(--muted);margin-top:-9px}
 .optional{font-size:10px;font-weight:450;color:var(--muted)}
@@ -334,7 +334,7 @@ label{display:grid;gap:7px;min-width:0;font-size:12px}
 .btn-lime:hover:not(:disabled){background:var(--lavender-strong);border-color:#c6adee;color:var(--accent-hover)}
 .btn:hover:not(:disabled){border-color:#cbb8ec}
 .btn-dark:hover:not(:disabled){background:var(--accent-hover);border-color:var(--accent-hover)}
-input,select,textarea{border-color:#c6bdd4;font-size:16px;min-height:46px}
+input,select,textarea{border-color:var(--control-border);font-size:16px;min-height:46px}
 input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px #7040db0c}
 label{color:var(--subtle);font-weight:600}
 .game-card{border-radius:26px;box-shadow:var(--shadow)}
