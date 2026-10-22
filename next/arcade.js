@@ -22,7 +22,7 @@ window.QwizArcade=(()=>{
   return '<div class="arcade-king" aria-hidden="true"><svg viewBox="0 0 120 120" width="114" height="114" fill="none" stroke="#8165d3" stroke-width="6" stroke-linejoin="round"><path d="M61 10 25 69h31l-6 41 45-67H62l-1-33Z"/></svg></div>';
  }
  function rankMarkup(v){const teams=v?.teams||[],max=Math.max(1,...teams.map(t=>Number(t.points)||0));
-  return teams.map((t,i)=>'<div class="arcade-rank"><span class="arcade-rank-name" title="'+escape(t.name)+'">'+escape(t.name)+'</span><div class="arcade-rank-track"><div class="arcade-rank-fill" style="--arcade-value:'+Math.max(0,100*(Number(t.points)||0)/max).toFixed(2)+'%;--arcade-team-color:'+COLORS[i%COLORS.length]+'"></div></div><span class="arcade-rank-score">'+(v.mode==='captain'?(t.points>0?'✓':'—'):Number(t.points||0).toFixed(1))+'</span></div>').join('');
+  return teams.map((t,i)=>'<div class="arcade-rank"><span class="arcade-rank-name" title="'+escape(t.name)+'">'+escape(t.name)+'</span><div class="arcade-rank-track"><div class="arcade-rank-fill" style="--arcade-value:'+Math.max(0,100*(Number(t.points)||0)/max).toFixed(2)+'%;--arcade-team-color:'+COLORS[i%COLORS.length]+'"></div></div><span class="arcade-rank-score">'+(v.mode==='captain'?(t.points>0?(10000-Number(t.points)).toFixed(0)+' мс':'—'):Number(t.points||0).toFixed(1))+'</span></div>').join('');
  }
  function rootMarkup(mode,kind='player'){const m=META[mode];return '<div class="arcade-shell arcade-'+kind+'" data-arcade-root="'+mode+'">'+
   '<div class="arcade-head"><div><span class="arcade-kicker">QWIZ-PARTY · КОМАНДНОЕ ИСПЫТАНИЕ</span><h2>'+escape(m.title)+'</h2></div><span class="arcade-countdown" data-arcade-clock>—</span></div>'+
@@ -51,9 +51,9 @@ window.QwizArcade=(()=>{
   const valid=v.running&&now<end,claim=v.mode==='blitz'&&now<capture;
   const list=tr.root.querySelector('[data-arcade-ranks]');if(list)list.innerHTML=rankMarkup(v);
   sceneProgress(tr,v);
-  const mine=v.mine||{},myTeam=mine.team_id,leader=(v.teams||[]).find(t=>t.place===1&&Number(t.points)>0),canAnswer=v.mode==='blitz'&&valid&&!claim&&leader?.id===myTeam&&!v.answered_at&&v.question;
+  const mine=v.mine||{},myTeam=mine.team_id,leader=(v.teams||[]).find(t=>t.place===1&&Number(t.points)>0),canAnswer=v.mode==='blitz'&&valid&&!claim&&v.blitz_eligible_team===myTeam&&v.answer_correct!==true&&v.question;
   const qroot=tr.root.querySelector('[data-arcade-question]');
-  if(qroot){const qkey=v.question?JSON.stringify([v.question.prompt,v.answered_at,canAnswer,v.question.correct]):'';
+  if(qroot){const qkey=v.question?JSON.stringify([v.question.prompt,v.answered_at,v.blitz_attempts,canAnswer,v.question.correct]):'';
    if(tr.qkey!==qkey){tr.qkey=qkey;qroot.hidden=!v.question;qroot.innerHTML=v.question?promptMarkup(v.question,tr.kind==='player'&&canAnswer,v.question.correct!==null&&v.question.correct!==undefined):'';}
   }
   const tap=tr.root.querySelector('[data-arcade-tap]');
@@ -66,7 +66,7 @@ window.QwizArcade=(()=>{
   const badges=tr.root.querySelector('[data-arcade-badges]');if(badges)badges.innerHTML=(v.awards||[]).slice(0,12).map(a=>'<span class="arcade-award">'+escape(a.title)+' · +'+Number(a.credits)+' жет.</span>').join('');
   const status=v.awarded_at?'Результат зафиксирован. Награды зачислены.':
    !v.running?'Соревнование завершено.':
-   v.mode==='blitz'?(claim?'Борьба за право ответа.':v.answered_at?'Ответ '+(v.answer_correct?'верный!':'неверный.')+' Ожидаем ведущего.':canAnswer?'Ваш ход! Ответьте на блиц-вопрос.':'Вопрос открыт команде-победителю.') :
+   v.mode==='blitz'?(claim?'Борьба за право ответа.':v.answer_correct===true?'Правильный ответ! Блиц завершён.':v.blitz_eligible_team===null?'Попытки закончились.':canAnswer?'Ваш ход! Ответьте на блиц-вопрос.':'Право ответа у команды '+escape((v.teams||[]).find(t=>t.id===v.blitz_eligible_team)?.name||'лидера')+'.') :
    v.mode==='captain'&&now<Date.parse(v.started_at)+3000?'Не нажимайте до сигнала — фальстарт лишает попытки.':
    !valid?'Время вышло. Ведущий продолжит игру.':'Идёт командная битва! Показатели обновляются автоматически.';
   if(!tr.alertOverride||Date.now()>tr.alertOverride)showMessage(tr,status);
@@ -98,22 +98,22 @@ window.QwizArcade=(()=>{
   if(now>end)return;
   if(v.mode==='blitz'&&now>(Date.parse(v.capture_until)||0))return;
   if(v.mode==='captain'){sendTap(tr,1);return;}
-  tr.pending=Math.min(35,tr.pending+1);
+  tr.pending=Math.min(24,tr.pending+1);
   if(!tr.flushTimer)tr.flushTimer=setTimeout(()=>flush(tr),750);
  }
  async function flush(tr){if(tr.closed)return;tr.flushTimer=null;if(tr.sending||!tr.pending)return;
-  const amount=Math.min(12,tr.pending);tr.pending-=amount;await sendTap(tr,amount);
+  const amount=Math.min(6,tr.pending);tr.pending-=amount;await sendTap(tr,amount);
   if(tr.pending&&!tr.flushTimer)tr.flushTimer=setTimeout(()=>flush(tr),700);
  }
  async function sendTap(tr,count){if(tr.sending||tr.closed)return;tr.sending=true;
   try{const {data,error}=await tr.client.rpc('qwiz_arcade_action',{p_room:tr.roomId,p_action:'tap',p_count:count});if(error)throw error;
    if(data?.false_start){showMessage(tr,'Фальстарт! Попытка капитана использована.',true);tr.alertOverride=Date.now()+3000;}
   }catch(e){showMessage(tr,e.message||'Не удалось засчитать нажатие',true);tr.alertOverride=Date.now()+2500;}
-  finally{tr.sending=false}
+  finally{tr.sending=false;if(tr.pending&&!tr.flushTimer&&!tr.closed)tr.flushTimer=setTimeout(()=>flush(tr),750)}
  }
  async function answer(tr,choice){if(tr.answerBusy)return;tr.answerBusy=true;
   try{const {data,error}=await tr.client.rpc('qwiz_arcade_action',{p_room:tr.roomId,p_action:'answer',p_choice:choice});if(error)throw error;
-   showMessage(tr,data.correct?'Правильный ответ! +80 очков и достижение.':'Ответ неверный. Бонусные очки не начислены.',!data.correct);
+   showMessage(tr,data.correct?'Правильный ответ! +80 очков и достижение.':'Ответ неверный. Ход переходит следующей команде.',!data.correct);
    tr.alertOverride=Date.now()+3500;await fetchState(tr);
   }catch(e){showMessage(tr,e.message||'Ответ отклонён',true);tr.alertOverride=Date.now()+3200}
   finally{tr.answerBusy=false}
