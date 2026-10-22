@@ -117,7 +117,7 @@ function renderResults(){if(ctx.mode!=='studio')return;const s=ctx.room;text('re
 function flagOptionHtml(value,index){
  const bands=QwizStage.stripeOption(value);if(bands)return bands;
  if(value&&typeof value==='object'&&typeof value.image_url==='string'&&/^https:\/\//i.test(value.image_url)){
-  return '<img class="flag-choice-art" src="'+esc(value.image_url)+'" alt="Флаг, вариант '+String.fromCharCode(65+index)+'" loading="lazy" decoding="async">';
+  return '<span class="flag-choice-with-label"><img class="flag-choice-art" src="'+esc(value.image_url)+'" alt="Флаг, вариант '+String.fromCharCode(65+index)+'" loading="lazy" decoding="async">'+(typeof value.label==='string'?'<span class="flag-choice-label">'+esc(value.label)+'</span>':'')+'</span>';
  }
  return '<span>'+esc(typeof value==='object'?value?.label||'':value)+'</span>';
 }
