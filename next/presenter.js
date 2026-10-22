@@ -23,15 +23,31 @@ function setup(){
  $('projectionJoin').onsubmit=e=>{e.preventDefault();const code=$('projectionCode').value;
  if(!/^[A-F0-9]{8}$/.test(code))return;const url=new URL(location.href);url.searchParams.set('room',code);location.assign(url.toString())};
 }
+const jingles={
+ fanfare:[[523,0,.15],[659,.14,.15],[784,.28,.18],[1047,.47,.35]],
+ synth:[[330,0,.15],[494,.17,.13],[659,.30,.19],[988,.49,.25]],
+ funny:[[440,0,.12],[310,.14,.10],[550,.27,.10],[245,.40,.17],[735,.61,.16]],
+ start:[[610,0,.12],[830,.13,.18]],
+ end:[[770,0,.12],[510,.15,.2]],
+ pop:[[640,0,.085]],round:[[523,0,.13],[783,.17,.23]]
+};
 function tone(kind){
- if(!ctx.sound)return;
+ if(!ctx.sound||kind==='none')return;
  try{
   ctx.audio ||= new (window.AudioContext||window.webkitAudioContext)();
-  const now=ctx.audio.currentTime;const osc=ctx.audio.createOscillator(),g=ctx.audio.createGain();
-  osc.type=kind==='end'?'triangle':'sine';osc.frequency.setValueAtTime(kind==='end'?350:510,now);
-  osc.frequency.exponentialRampToValueAtTime(kind==='end'?180:790,now+.23);
-  g.gain.setValueAtTime(.001,now);g.gain.exponentialRampToValueAtTime(.07,now+.03);g.gain.exponentialRampToValueAtTime(.001,now+.35);
-  osc.connect(g).connect(ctx.audio.destination);osc.start(now);osc.stop(now+.36);
+  if(ctx.audio.state==='suspended')ctx.audio.resume().catch(()=>{});
+  const pattern=jingles[kind]||jingles.round;
+  const now=ctx.audio.currentTime+.02;
+  for(const [pitch,offset,duration] of pattern){
+   const osc=ctx.audio.createOscillator(),gain=ctx.audio.createGain();
+   osc.type=kind==='funny'?'square':kind==='synth'?'sawtooth':'sine';
+   osc.frequency.setValueAtTime(pitch,now+offset);
+   gain.gain.setValueAtTime(.0001,now+offset);
+   gain.gain.linearRampToValueAtTime(.045,now+offset+.024);
+   gain.gain.exponentialRampToValueAtTime(.001,now+offset+duration);
+   osc.connect(gain);gain.connect(ctx.audio.destination);
+   osc.start(now+offset);osc.stop(now+offset+duration+.02);
+  }
  }catch{}
 }
 function ranking(rows,key){
@@ -48,6 +64,7 @@ function finalShow(state){
   ranking(isTeams?teams:players,isTeams?'name':'nickname')+'</div>';
 }
 function render(state){clearError();$('projectionRoom').textContent=state.code||'';
+ const phaseChanged=state.phase!==ctx.lastPhase;ctx.lastPhase=state.phase;
  if(state.phase==='lobby'){
   $('projectionMain').innerHTML='<section class="projection-lobby"><div><div class="projection-eyebrow">КОМНАТА ОТКРЫТА</div>'+
    '<h1>Присоединяйтесь!</h1><p>Наведите камеру на QR-код или введите код комнаты на телефоне.</p>'+
@@ -55,12 +72,14 @@ function render(state){clearError();$('projectionRoom').textContent=state.code||
   qr($('projectionQr'),link(state.code));return;
  }
  if(state.phase==='finished'){
+  if(phaseChanged)tone('fanfare');
   finalShow(state);
   if(!ctx.finalTimer)ctx.finalTimer=setInterval(()=>{ctx.finalStep++;if(ctx.last?.phase==='finished')finalShow(ctx.last)},11000);
   return;
  }
  if(ctx.finalTimer){clearInterval(ctx.finalTimer);ctx.finalTimer=null}
  if(state.phase==='countdown'){
+  if(phaseChanged)tone(state.round_sound||'fanfare');
   const left=seconds(state.ends_at);
   $('projectionMain').innerHTML='<div class="countdown-scene"><span class="projection-eyebrow">СЛЕДУЮЩИЙ РАУНД</span><h1>Приготовьтесь!</h1><div class="countdown-number" id="countdownNumber">'+left+'</div><p>Вопрос появится после обратного отсчёта.</p></div>';
   return;
@@ -69,7 +88,7 @@ function render(state){clearError();$('projectionRoom').textContent=state.code||
   const activity=state.activity||{};
   const title=escapeText(activity.title||'Дополнительная активность');
   const type=activity.type||'break';
-  if(ctx.previousQuestion!==-3){tone('end');ctx.previousQuestion=-3}
+  if(phaseChanged){tone(activity.sound||'funny');ctx.previousQuestion=-3}
   let extras='';
   if(type==='team_stats')extras=ranking(state.teams||[],'name');
   if(type==='player_stats')extras=ranking(state.players||[],'nickname');
@@ -81,12 +100,16 @@ function render(state){clearError();$('projectionRoom').textContent=state.code||
  }
  if(!state.question){$('projectionMain').innerHTML='<div class="projection-loading"><h1>Следующий раунд</h1><p>Смотрите на экран.</p></div>';return}
  const q=state.question,round=q.topic||'Раунд вопросов';
- if(ctx.previousQuestion!==state.index){tone('start');ctx.previousQuestion=state.index}
+ if(ctx.previousQuestion!==state.index){tone('pop');ctx.previousQuestion=state.index}
+ if(phaseChanged&&state.phase==='result')tone('end')
  $('projectionMain').innerHTML='<section class="projection-question"><div class="projection-topline"><span class="projection-count">'+
  escapeText(round.toUpperCase())+' · ВОПРОС '+(state.index+1)+' / '+state.total+'</span>'+
  '<span class="projection-timer" id="projectionTimer">'+(state.phase==='question'?seconds(state.ends_at)+' сек.':'Ответы приняты')+'</span></div>'+
  '<h1>'+escapeText(q.prompt)+'</h1>'+
- (typeof q.media_url==='string'&&/^https:\/\//i.test(q.media_url)?'<div class="projection-media"><img src="'+escapeText(q.media_url)+'" alt="Иллюстрация к вопросу"></div>':'')+
+ (typeof q.media_url==='string'&&/^https:\/\//i.test(q.media_url)?(
+ q.kind==='audio'?'<audio class="projection-audio" controls preload="none" src="'+escapeText(q.media_url)+'"></audio>':
+ q.kind==='video'?'<video class="projection-video" controls preload="metadata" src="'+escapeText(q.media_url)+'"></video>':
+ '<div class="projection-media"><img src="'+escapeText(q.media_url)+'" alt="Иллюстрация к вопросу"></div>'):'')+
  '<div class="projection-options">'+(Array.isArray(q.options)?q.options:[]).map((v,i)=>
  '<div class="projection-option"><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+escapeText(v)+'</span></div>').join('')+'</div></section>';
 }
