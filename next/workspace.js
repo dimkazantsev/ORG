@@ -486,12 +486,13 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  $('livePause').hidden=false;$('livePause').disabled=!['countdown','question','result'].includes(s.phase);$('livePause').textContent=s.paused?'▶ Продолжить':'⏸ Пауза';$('livePause').setAttribute('aria-pressed',String(!!s.paused));
  $('liveNext').hidden=false;$('liveNext').disabled=!!s.paused||!['question','result','intermission'].includes(s.phase);$('liveNext').textContent='Далее →';$('liveReveal').hidden=true;$('liveFinish').hidden=false;$('liveFinish').disabled=s.phase==='finished';
  $('liveQuestion').textContent=s.phase==='intermission'?(s.activity?.title||'Дополнительная активность')+
-  ' · нажмите «Следующий вопрос», чтобы продолжить':
+  ' · следующий этап откроется автоматически (можно перейти вручную)':
   s.phase==='countdown'?'Серверный обратный отсчёт: 5 секунд':
   s.question?s.question.prompt+' · '+(s.index+1)+' / '+s.total:
   s.phase==='finished'?'Игра завершена. Итоги на экране аудитории.':'Ожидание начала игры.';
+ const boosts=new Map((s.public_stats?.teams||[]).map(t=>[t.id,t.boost]));
  $('liveRanking').innerHTML=(s.teams||[]).slice().sort((a,b)=>b.score-a.score).map((t,i)=>
-  '<div class="live-line"><span>'+ (i+1)+'. '+esc(t.name)+'</span><strong>'+esc(t.score)+'</strong></div>').join('');
+  '<div class="live-line"><span>'+ (i+1)+'. '+esc(t.name)+' '+(boosts.get(t.id)?'<b class="team-boost-chip" title="Усиление этого раунда">✦ '+esc(boosts.get(t.id).title)+'</b>':'')+'</span><strong>'+esc(t.score)+'</strong></div>').join('');
  const stats=s.public_stats||{};const latest=(stats.question_stats||[]).at(-1);const completed=Math.max(0,s.index+1);
  $('liveRoundStats').textContent='Вопрос '+completed+' / '+s.total+' · Ответов '+(s.answers_count||0)+(latest?' · Верных '+latest.correct+'/'+latest.answered:'')+(s.paused?' · Игра на паузе':'');
  $('liveRoster').innerHTML=(s.players||[]).map(p=>'<div class="live-line"><span>'+esc(p.name)+'</span><small>'+
