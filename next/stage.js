@@ -29,14 +29,50 @@ window.QwizStage=(()=>{
   if(root.dataset.progressKey!==key||!root.querySelector('.habitat-grid')){root.innerHTML=teams(rows);root.dataset.progressKey=key}else patchTeams(root,rows);
  }
  function leaderboard(rows,limit=10){return rows?.length?'<ol class="player-leaderboard">'+rows.slice(0,limit).map((p,i)=>'<li><span class="player-place">'+(p.position||i+1)+'</span><strong>'+esc(p.nickname||'Игрок')+'</strong><span class="player-correct">'+fmt(p.correct)+' верных</span><b>'+fmt(p.score)+'</b></li>').join('')+'</ol>':'<p class="stage-empty">Рейтинг появится после первых ответов.</p>'}
+ function flagVisualContent(url,visual,revealed=false){
+  if(typeof url!=='string'||!/^https:\/\//i.test(url)||!visual||!['symbol','crop','pixel'].includes(visual.type))return '';
+  const x=Math.max(10,Math.min(90,Number(visual.x)||50)),y=Math.max(10,Math.min(90,Number(visual.y)||50));
+  const zoom=Math.max(1.5,Math.min(4,Number(visual.zoom)||2.5));
+  const pixels=Math.max(14,Math.min(48,Number(visual.pixels)||24));
+  const style='--focus-x:'+x+'%;--focus-y:'+y+'%;--focus-zoom:'+zoom+';';
+  return '<div class="flag-visual-frame '+(revealed?'is-revealed':'is-obscured')+'" data-visual="'+esc(visual.type)+'" style="'+style+'">'+
+    '<img class="flag-visual-image" src="'+esc(url)+'" alt="'+(revealed?'Полный флаг государства':'Фрагмент флага без названия государства')+'" decoding="async" loading="eager">'+
+    (!revealed&&visual.type==='pixel'?'<canvas class="flag-pixel-canvas" data-pixels="'+pixels+'" role="img" aria-label="Пикселизированный флаг"></canvas>':'')+'</div>';
+ }
+ function hydrateFlagVisuals(root=document){
+  for(const canvas of root.querySelectorAll('.flag-pixel-canvas:not([data-ready])')){
+   const image=canvas.parentElement?.querySelector('.flag-visual-image');
+   if(!image)continue;
+   const draw=()=>{
+    if(!image.naturalWidth||!image.naturalHeight)return;
+    const w=480,h=260,small=document.createElement('canvas');
+    const size=Math.max(14,Math.min(48,Number(canvas.dataset.pixels)||24));
+    small.width=size;small.height=Math.max(8,Math.round(size*h/w));canvas.width=w;canvas.height=h;
+    const low=small.getContext('2d'),large=canvas.getContext('2d');
+    if(!low||!large)return;
+    low.fillStyle='#ffffff';low.fillRect(0,0,small.width,small.height);
+    const scale=Math.min(small.width/image.naturalWidth,small.height/image.naturalHeight);
+    const iw=image.naturalWidth*scale,ih=image.naturalHeight*scale;
+    low.drawImage(image,(small.width-iw)/2,(small.height-ih)/2,iw,ih);
+    large.imageSmoothingEnabled=false;large.drawImage(small,0,0,w,h);
+    canvas.dataset.ready='true';
+   };
+   if(image.complete)draw();else image.addEventListener('load',draw,{once:true});
+  }
+ }
  function illustration(q,answer,content=''){
-  const source=q.kind==='hotspot'?q.media_url:q.illustration_url||(!['audio','video'].includes(q.kind)?q.media_url:'');
+  const source=q.flag_visual?.type?q.media_url:q.kind==='hotspot'?q.media_url:q.illustration_url||(!['audio','video'].includes(q.kind)?q.media_url:'');
+  if(q.flag_visual?.type&&typeof source==='string'&&/^https:\/\//i.test(source)){
+   const revealed=!!answer;
+   return '<figure class="question-frame flag-question-frame"><div class="question-picture">'+flagVisualContent(source,q.flag_visual,revealed)+'</div><figcaption>'+(revealed?'Полный флаг государства':'Определите государство по детали флага')+'</figcaption></figure>';
+  }
   const url=typeof source==='string'&&/^https:\/\//i.test(source)?source:'';
   const drawing='<svg class="question-art quiz-drawing" viewBox="0 0 640 260" aria-hidden="true"><path d="M95 214c-23-39 10-71 30-99s-2-66 40-78 64 9 97-3 92-8 123 15 73-1 105 19 31 62 49 82-2 62-34 69-375 17-410-5Z" fill="#e8ddfc"/><ellipse cx="320" cy="220" rx="128" ry="12" fill="#d5c4f4"/><path d="m232 65 170-13 17 150-169 13-18-150Z" fill="#fff"/><path d="m232 65 18 150 77-24 75 11 17-150-88 24-99-11Z" fill="none" stroke="#7646cd" stroke-width="5" stroke-linejoin="round"/><path d="m327 191 4-115M267 100l39 7m-35 16 31 6m-28 16 30 5m49-49 36-9m-36 31 39-9m-39 32 42-9" stroke="#b49adf" stroke-width="5" stroke-linecap="round"/><path d="m171 152 5-18 5 18 18 5-18 5-5 18-5-18-18-5 18-5Zm288-87 3-13 4 13 13 4-13 3-4 13-3-13-13-3 13-4Z" fill="#a27adf"/><circle cx="443" cy="185" r="11" fill="#f2bb62"/><circle cx="206" cy="53" r="7" fill="#9165d5"/></svg>';
   const spot=answer?.hotspot,marker=spot?'<span class="answer-hotspot" data-x="'+Math.max(0,Math.min(100,Number(spot.x)))+'" data-y="'+Math.max(0,Math.min(100,Number(spot.y)))+'" data-radius="'+Math.max(0,Math.min(50,Number(spot.radius)))+'" aria-label="Правильная область"></span>':'';
   return '<figure class="question-frame"><div class="frame-orbit" aria-hidden="true"><i></i><i></i></div><div class="question-picture">'+(content||(url?'<img class="question-art" src="'+esc(url)+'" alt="Иллюстрация к вопросу">':drawing))+marker+'</div><figcaption>'+(url?'Иллюстрация к вопросу':'Время открытий')+'</figcaption></figure>';
  }
  function hydrateIllustrations(root=document){
+  hydrateFlagVisuals(root);
   for(const img of root.querySelectorAll('.question-picture img')){
    const picture=img.closest('.question-picture'),marker=picture.querySelector('.answer-hotspot');
    const fit=()=>{if(!marker||!img.naturalWidth)return;const box={width:picture.clientWidth,height:picture.clientHeight},scale=Math.min(box.width/img.naturalWidth,box.height/img.naturalHeight),w=img.naturalWidth*scale,h=img.naturalHeight*scale;
@@ -82,5 +118,5 @@ window.QwizStage=(()=>{
   const hardest=scored.filter(x=>x.answered>0).sort((a,b)=>(b.incorrect_rate??100-b.correct_rate)-(a.incorrect_rate??100-a.correct_rate)||b.incorrect-a.incorrect||a.index-b.index).slice(0,3);
   return '<div class="question-insights"><section><h2>Знаем лучше всего</h2><p>Три вопроса с наибольшей долей верных ответов.</p><ol>'+items(best)+'</ol></section><section><h2>Чаще ошибались</h2><p>Три вопроса с наибольшей долей ошибок. Пропуски считаются отдельно.</p><ol>'+items(hardest,true)+'</ol></section></div><details class="all-question-stats"><summary>Все вопросы · '+rows.length+'</summary><ol>'+items(rows)+'</ol></details>';
  }
- return{esc,fmt,habitats,icon,teamTile,teams,patchTeams,progress,leaderboard,illustration,hydrateIllustrations,clockMarkup,updateClock,audio,questionStats,stripeOption};
+ return{esc,fmt,habitats,icon,teamTile,teams,patchTeams,progress,leaderboard,illustration,hydrateIllustrations,clockMarkup,updateClock,audio,questionStats,stripeOption,flagVisualContent,hydrateFlagVisuals};
 })();
