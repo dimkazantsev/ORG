@@ -10,7 +10,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const flagModes=[
  ['country','Угадать страну по флагу',true],
  ['picker','Выбрать флаг по названию',true],
- ['colors','Цвета и полосы',false],
+ ['colors','Цвета и полосы',true],
  ['symbols','Символы и гербы',false],
  ['fragments','Скрытые фрагменты и пиксели',false],
  ['errors','Поиск ошибок',false],
@@ -23,6 +23,25 @@ const flagModes=[
 ];
 const titleKind=id=>flagModes.find(x=>x[0]===id)?.[1]||'Флаги мира';
 const icons={round:'▦',intro:'◉',break:'♫',team_stats:'▥',player_stats:'♙',bonus:'✦',duel:'⇄',finale:'★'};
+const cardSvgPaths={
+ round:'<rect x="3" y="3" width="7" height="7" rx="1.4"/><rect x="14" y="3" width="7" height="7" rx="1.4"/><rect x="3" y="14" width="7" height="7" rx="1.4"/><rect x="14" y="14" width="7" height="7" rx="1.4"/>',
+ intro:'<circle cx="12" cy="12" r="8.5"/><path d="m10 8 6 4-6 4z"/>',
+ break:'<path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/>',
+ team_stats:'<circle cx="9" cy="8" r="3"/><path d="M3.5 20v-2c0-3 2-5 5.5-5s5.5 2 5.5 5v2M17 5a3 3 0 0 1 0 6M17 14c2.5 0 4 2 4 4v2"/>',
+ player_stats:'<circle cx="12" cy="7" r="4"/><path d="M4.5 21v-2c0-4.2 3-7 7.5-7s7.5 2.8 7.5 7v2"/>',
+ bonus:'<path d="m12 2 2.6 6.4L21 11l-6.4 2.6L12 20l-2.6-6.4L3 11l6.4-2.6L12 2Z"/>',
+ duel:'<path d="m4 7 4-4m0 0 4 4M8 3v12M20 17l-4 4m0 0-4-4m4 4V9"/>',
+ finale:'<path d="M7 4h10v7c0 7-10 7-10 0V4ZM7 7H3v3c0 3 3 5 6 5m8-8h4v3c0 3-3 5-6 5m-3 2v4m-4 0h8"/>',
+ flag:'<path d="M5 21V3m0 1c5-3 8 2 15-1v11c-7 3-10-2-15 1"/>',
+ map:'<circle cx="12" cy="12" r="9"/><path d="m15.8 8.2-2.7 4.9-4.9 2.7 2.7-4.9 4.9-2.7z"/>',
+ list:'<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/>',
+ logic:'<path d="m12 2 9 10-9 10L3 12l9-10z"/>'
+};
+const glyphToCardIcon={'▦':'round','◉':'intro','♫':'break','▥':'team_stats','♙':'player_stats','✦':'bonus','⇄':'duel','★':'finale','⚑':'flag','⌖':'map','☷':'list','◆':'logic'};
+function cardIconSvg(type,glyph=null){
+ const key=glyphToCardIcon[glyph]||type;
+ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(cardSvgPaths[key]||cardSvgPaths.round)+'</svg>';
+}
 const titles={round:'Раунд вопросов',intro:'Начало игры',break:'Музыкальная пауза',team_stats:'Рейтинг команд',player_stats:'Статистика игроков',bonus:'Бонусная активность',duel:'Дуэль команд',finale:'Финал игры'};
 const buildDefaults={count:5,seconds:30,answer_seconds:10,order:'random',offset:0,team_cap:null,player_cap:null,sound:'fanfare',lead_seconds:5};
 const state={db:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,bankOffset:0,bankPageSize:25,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',dragFrom:null,clockOffset:0,liveKey:'',lastDeadlineRefresh:0};
@@ -83,11 +102,46 @@ async function loadQuestions(){
   renderQuestions();renderTopics();msg('bankMessage','');
  }catch(e){msg('bankMessage',e.message,true)}
 }
+let previewWindow=null,previewPage=[],previewOffset=0,previewIndex=0,previewTotal=0;
+function previewFilter(offset){
+ return {search:$('bankSearch').value.trim().slice(0,90),topic_id:$('bankTopic').value,kind:'flag',
+  mode:$('bankMode').value,sort:$('bankSort').value,limit:25,offset};
+}
+function previewSend(){
+ if(!previewWindow||previewWindow.closed||!previewPage[previewIndex])return;
+ previewWindow.postMessage({type:'qwiz-preview-data',question:previewPage[previewIndex],index:previewOffset+previewIndex+1,total:previewTotal},location.origin);
+}
+function previewQuestion(id){
+ const index=state.questions.findIndex(q=>q.id===id);
+ if(index<0)return;
+ previewPage=state.questions.slice();previewIndex=index;previewOffset=state.bankOffset;previewTotal=state.questionTotal;
+ const url=new URL('./question-preview.html',location.href);
+ previewWindow=window.open(url.href,'qwiz_party_question_preview','popup=yes,width=1020,height=780,resizable=yes,scrollbars=yes');
+ if(!previewWindow){msg('bankMessage','Браузер заблокировал окно. Разрешите всплывающие окна для сайта.',true);return}
+ previewWindow.focus();
+}
+window.addEventListener('message',async e=>{
+ if(e.origin!==location.origin||e.source!==previewWindow)return;
+ if(e.data?.type==='qwiz-preview-ready'){previewSend();return}
+ if(e.data?.type==='qwiz-preview-edit'){const question=previewPage[previewIndex];if(question)editQuestion(question.id);return}
+ if(e.data?.type!=='qwiz-preview-step')return;
+ const step=Number(e.data.step)===-1?-1:1;
+ const next=previewIndex+step;
+ if(next>=0&&next<previewPage.length){previewIndex=next;previewSend();return}
+ const target=previewOffset+next;
+ if(target<0||target>=previewTotal)return;
+ try{
+  const offset=Math.floor(target/25)*25;
+  const page=await studio('questions',previewFilter(offset));
+  if(!page.items?.length)return;
+  previewPage=page.items;previewOffset=offset;previewIndex=target-offset;previewSend();
+ }catch(error){msg('bankMessage','Ошибка предпросмотра: '+error.message,true)}
+});
 function renderQuestions(){
  $('bankItems').innerHTML=state.questions.length?state.questions.map(q=>'<article class="question-row">'+
   '<div><div class="question-meta"><span class="chip">'+esc(titleKind(q.solution?.flag_mode))+'</span><span class="chip lilac">'+esc(nameTopic(q.topic_id))+'</span><span class="chip">★ '+esc(q.difficulty)+'</span></div>'+
   '<h3>'+esc(q.prompt)+'</h3><p>'+(q.tags?.includes('fw:published')?'Проверен · доступен для игры':'Черновик · не участвует в раундах')+'</p></div>'+
-  '<div class="question-actions"><button class="small-button" data-edit-question="'+esc(q.id)+'">Изменить</button>'+
+  '<div class="question-actions"><button type="button" class="small-button" data-preview-question="'+esc(q.id)+'">Предпросмотр</button><button type="button" class="small-button" data-edit-question="'+esc(q.id)+'">Изменить</button>'+
   (!q.tags?.includes('fw:published')?'<button class="small-button" data-publish-question="'+esc(q.id)+'" title="После проверки правильного ответа и изображения">Опубликовать</button>':'')+
   '</div></article>').join(''):
   '<div class="empty">Вопросов пока нет. Выберите тему и добавьте первый вопрос.</div>';
@@ -101,6 +155,18 @@ async function saveTopic(e){e.preventDefault();
 function answerEditor(mode,question){
  const opts=question?.options||[],sol=question?.solution||{};
  const count=4;
+ if(mode==='colors'){
+  const orientation=opts[0]?.orientation||'horizontal';
+  const sequence=Array.from({length:4},(_,i)=>{
+   const colors=Array.isArray(opts[i]?.stripes)?opts[i].stripes:['#000000','#dd0000','#ffce00'];
+   return '<div class="color-answer-row"><strong>Вариант '+String.fromCharCode(65+i)+'</strong>'+
+    '<div class="color-chip-inputs">'+colors.slice(0,3).map((color,j)=>'<label>Полоса '+(j+1)+'<input type="color" data-stripe="'+i+':'+j+'" value="'+esc(/^#[0-9a-f]{6}$/i.test(color)?color:'#000000')+'" aria-label="Вариант '+String.fromCharCode(65+i)+', полоса '+(j+1)+'"></label>').join('')+'</div>'+
+    '<label>Описание последовательности для показа ответа<input data-color-label="'+i+'" maxlength="120" required value="'+esc(sol.option_labels?.[i]||'')+'" placeholder="Например: чёрный — красный — жёлтый"></label></div>';
+  }).join('');
+  $('answerEditor').innerHTML='<div class="answer-fields"><label>Направление полос<select id="colorOrientation"><option value="horizontal" '+(orientation==='horizontal'?'selected':'')+'>Горизонтальные · сверху вниз</option><option value="vertical" '+(orientation==='vertical'?'selected':'')+'>Вертикальные · слева направо</option></select></label><p class="small-help">Задайте для каждого варианта три цветные полосы. Студенты увидят цвета, а не текст подсказок.</p>'+sequence+
+   '<label>Правильный вариант<select id="correctAnswer">'+Array.from({length:4},(_,i)=>'<option value="'+i+'" '+(Number(sol.correct||0)===i?'selected':'')+'>'+String.fromCharCode(65+i)+'</option>').join('')+'</select></label></div>';
+  return;
+ }
  const title=mode==='picker'?'Флаги — варианты ответа':'Страны — варианты ответа';
  const content=Array.from({length:count},(_,i)=>{
   const item=opts[i];
@@ -121,7 +187,7 @@ function editQuestion(id=null){
  if(question&&question.kind!=='flag'){msg('bankMessage','Этот старый формат не доступен в новой библиотеке.',true);return}
  state.editingQuestion=question?.id||null;
  $('questionDialogTitle').textContent=question?'Редактирование вопроса':'Создание вопроса';
- $('editKind').value=question?.solution?.flag_mode==='picker'?'picker':'country';
+ $('editKind').value=flagModes.some(x=>x[0]===question?.solution?.flag_mode&&x[2])?question.solution.flag_mode:'country';
  $('editTopic').value=question?.topic_id||state.topics.find(t=>t.name==='Флаги мира')?.id||'';
  $('editPrompt').value=question?.prompt||'';
  $('editIllustration').value=question?.solution?.illustration_url||'';
@@ -134,9 +200,13 @@ async function saveQuestion(event){
  const mode=$('editKind').value;
  if(!flagModes.some(([id,,ready])=>id===mode&&ready)){msg('questionSaveMessage','Эта механика ещё не подключена к игровому движку.',true);return}
  const isUrl=value=>/^https:\/\/[^/?#]+\/\S+$/i.test(value);
- const options=mode==='picker'?all('[data-flag-image]',$('answerEditor')).map(input=>({image_url:input.value.trim()})):
+ const options=mode==='colors'?Array.from({length:4},(_,i)=>({
+  orientation:$('colorOrientation').value,
+  stripes:all('[data-stripe]',$('answerEditor')).filter(input=>input.dataset.stripe.startsWith(i+':')).map(input=>input.value)
+ })):mode==='picker'?all('[data-flag-image]',$('answerEditor')).map(input=>({image_url:input.value.trim()})):
   all('[data-option]',$('answerEditor')).map(input=>input.value.trim());
- const labels=mode==='picker'?all('[data-flag-label]',$('answerEditor')).map(input=>input.value.trim()):options;
+ const labels=mode==='colors'?all('[data-color-label]',$('answerEditor')).map(input=>input.value.trim()):
+  mode==='picker'?all('[data-flag-label]',$('answerEditor')).map(input=>input.value.trim()):options;
  if(options.length!==4||labels.some(v=>!v)||new Set(labels.map(x=>x.toLocaleLowerCase('ru-RU'))).size!==4){
   msg('questionSaveMessage','Нужно четыре разных и заполненных варианта.',true);return
  }
@@ -144,7 +214,7 @@ async function saveQuestion(event){
   msg('questionSaveMessage','Для каждого варианта нужна своя корректная HTTPS-ссылка на флаг.',true);return
  }
  const solution={correct:Number($('correctAnswer').value),flag_mode:mode};
- if(mode==='picker')solution.option_labels=labels;
+ if(mode==='picker'||mode==='colors')solution.option_labels=labels;
  const mediaUrl=$('questionMediaUrl')?.value.trim()||'';
  if(mode==='country'){if(!isUrl(mediaUrl)){msg('questionSaveMessage','Укажите HTTPS-ссылку на изображение флага.',true);return}solution.media_url=mediaUrl}
  const illustration=$('editIllustration').value.trim();
@@ -171,7 +241,7 @@ function cardDesc(c){const settings=c.settings||{};
  if(c.type==='finale')return 'Команды, личный рейтинг и вопросы, которые запомнились';
  return 'Дополнительная активность · настройки в карточке'}
 function renderCards(){ensureFinale();$('roundCards').innerHTML=state.cards.map((c,i)=>{
- const final=c.type==='finale',emblem=final?'<svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M15 7h18v13c0 13-18 13-18 0V7ZM15 11H7v6c0 7 8 10 12 8M33 11h8v6c0 7-8 10-12 8M24 30v10M16 41h16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':esc(c.icon||icons[c.type]);
+ const final=c.type==='finale',emblem=final?'<svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M15 7h18v13c0 13-18 13-18 0V7ZM15 11H7v6c0 7 8 10 12 8M33 11h8v6c0 7-8 10-12 8M24 30v10M16 41h16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':cardIconSvg(c.type,c.icon);
  return '<article class="round-card" data-index="'+i+'" data-type="'+esc(c.type)+'" tabindex="0" role="group" aria-label="'+esc(c.title)+'. Открыть настройки" draggable="'+!final+'"><div class="round-card-heading"><span class="round-icon" aria-hidden="true">'+emblem+'</span><span class="small-help">'+(final?'ФИНАЛ ИГРЫ':'КАРТОЧКА '+(i+1).toString().padStart(2,'0'))+'</span></div><h3>'+esc(c.title)+'</h3><p class="round-sub">'+esc(cardDesc(c))+'</p>'+
  (final?'<div class="finale-card-tags"><span>Команды</span><span>Участники</span><span>3 + 3 вопроса</span></div>':'')+'<div class="round-actions">'+(!final?'<button type="button" data-move="'+i+':-1" aria-label="Раньше" '+(i===0?'disabled':'')+'>←</button><button type="button" data-move="'+i+':1" aria-label="Позже" '+(i>=state.cards.length-2?'disabled':'')+'>→</button>':'')+'<button type="button" class="round-edit" data-edit-card="'+i+'">'+(final?'Настроить финал':'Настроить')+'</button>'+(!final?'<button type="button" data-delete-card="'+i+'" aria-label="Удалить карточку">✕</button>':'')+'</div></article>';
  }).join('');}
@@ -184,9 +254,9 @@ function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{}
  $('cardOrder').value=s.order||'random';$('cardOffset').value=(s.offset||0)+1;
  $('cardTeamCap').value=s.team_cap||'';$('cardPlayerCap').value=s.player_cap||'';
  $('cardSound').value=s.sound||'fanfare';
- const selected=Array.isArray(s.flag_modes)&&s.flag_modes.length?s.flag_modes:['country','picker'];
+ const selected=Array.isArray(s.flag_modes)&&s.flag_modes.length?s.flag_modes:['country','picker','colors'];
  $('cardFlagModes').innerHTML=flagModes.map(([id,name,ready])=>'<label class="check-row flag-mode-item '+(!ready?'unavailable':'')+'"><input type="checkbox" data-card-mode="'+esc(id)+'" '+(selected.includes(id)&&ready?'checked ':'')+(ready?'':'disabled ')+'><span>'+esc(name)+(ready?'':' · скоро')+'</span></label>').join('');
- $('cardModesInfo').textContent=selected.length===1?'Одна механика':selected.length===2?'Две механики':'Выбранные механики';
+ $('cardModesInfo').textContent=selected.length===1?'Одна механика':selected.length===2?'Две механики':'Все доступные механики';
  $('cardModesDetails').open=false;
  $('cardDialog').showModal()}
 function saveCard(event){event.preventDefault();const c=state.cards[state.editingCard];
@@ -202,7 +272,7 @@ function saveCard(event){event.preventDefault();const c=state.cards[state.editin
   order:$('cardOrder').value,offset:Math.max(0,Number($('cardOffset').value)-1),
   team_cap:$('cardTeamCap').value?Number($('cardTeamCap').value):null,
   player_cap:$('cardPlayerCap').value?Number($('cardPlayerCap').value):null,
-  sound:$('cardSound').value,lead_seconds:5,flag_modes:selected.length===2?[]:selected};
+  sound:$('cardSound').value,lead_seconds:5,flag_modes:selected.length===3?[]:selected};
  $('cardDialog').close();renderCards()}
 function generalSettings(){
  const first=state.cards.find(c=>c.type==='round')?.settings||buildDefaults;
@@ -219,7 +289,27 @@ function saveGeneralSettings(event){
  $('generalDialog').close();renderCards();msg('buildMessage','Общие настройки применены. Сохраните сборку, чтобы использовать их в игре.');QwizStage.audio.play('accept');
 }
 function renderBuilds(){$('savedBuilds').innerHTML=state.builds.length?state.builds.map(b=>
- '<button type="button" class="saved-build" data-load-build="'+esc(b.id)+'"><span>СОХРАНЁННАЯ СБОРКА</span><strong>'+esc(b.title)+'</strong><span>Редактировать →</span></button>').join(''):'<div class="empty">Сборок пока нет. Создайте первую.</div>'}
+ '<div class="saved-build-wrap"><button type="button" class="saved-build" data-load-build="'+esc(b.id)+'"><span>СОХРАНЁННАЯ СБОРКА</span><strong>'+esc(b.title)+'</strong><span>Редактировать →</span></button><button type="button" class="small-button delete-small" data-delete-build="'+esc(b.id)+'" aria-label="Удалить сборку '+esc(b.title)+'">Удалить</button></div>').join(''):'<div class="empty">Сборок пока нет. Создайте первую.</div>'}
+async function deleteBuild(id){
+ const build=state.builds.find(b=>b.id===id);if(!build)return;
+ if(!confirm('Удалить сборку «'+build.title+'»? Сыгранные комнаты и результаты сохранятся.'))return;
+ try{
+  await studio('build_delete',{id});
+  if(state.buildId===id){state.buildId=null;$('composer').hidden=true}
+  await overview();
+  msg('buildMessage','Сборка удалена. История сыгранных комнат сохранена.');
+ }catch(error){msg('buildMessage',error.message,true)}
+}
+async function deleteRoom(id){
+ const room=state.hostRooms?.find(x=>x.id===id);if(!room)return;
+ if(!confirm('Убрать комнату «'+room.title+'»? Если в ней уже участвовали студенты, результаты сохранятся в архиве.'))return;
+ try{
+  const result=await rpc('qwiz_remove_room',{p_room:id});
+  if(state.roomCode===room.code){state.roomCode=null;sessionStorage.removeItem('qwiz-host-room');$('liveConsole').hidden=true;if(state.channel)state.db.removeChannel(state.channel);state.channel=null}
+  await loadRooms();
+  msg('launchMessage',result.archived?'Комната убрана из списка. История ответов сохранена.':'Пустая комната удалена.');
+ }catch(error){msg('launchMessage',error.message,true)}
+}
 async function loadBuild(id){try{const r=await studio('build_get',{id});state.buildId=r.build.id;
  $('buildTitle').value=r.build.title;state.cards=r.cards||[];ensureFinale();$('composer').hidden=false;renderCards();section('builder');
  }catch(e){msg('buildMessage',e.message,true)}}
@@ -229,8 +319,8 @@ async function saveBuild(){disable('saveBuild',true);msg('buildMessage','Сох�
   cards:state.cards});state.buildId=result.id;
  await overview();msg('buildMessage','Сборка сохранена. Её можно запустить с любого вашего устройства.');}
  catch(e){msg('buildMessage',e.message,true)}finally{disable('saveBuild',false)}}
-async function loadRooms(){try{const list=await rpc('qwiz_host_rooms');$('hostRoomList').innerHTML=list.length?list.map(r=>
- '<article class="room-row"><div><div class="question-meta"><span class="chip">'+esc(r.phase)+'</span><span class="chip lilac">'+esc(r.code)+'</span></div><h3>'+esc(r.title)+'</h3><p>'+esc(r.players)+' участников · '+esc(r.teams)+' команд</p></div><button class="primary-button" data-room="'+esc(r.code)+'">Управлять →</button></article>').join(''):
+async function loadRooms(){try{const list=await rpc('qwiz_host_rooms');state.hostRooms=list;$('hostRoomList').innerHTML=list.length?list.map(r=>
+ '<article class="room-row"><div><div class="question-meta"><span class="chip">'+esc(r.phase)+'</span><span class="chip lilac">'+esc(r.code)+'</span></div><h3>'+esc(r.title)+'</h3><p>'+esc(r.players)+' участников · '+esc(r.teams)+' команд</p></div><div class="room-row-actions"><button class="primary-button" data-room="'+esc(r.code)+'">Управлять →</button><button class="small-button delete-small" data-delete-room="'+esc(r.id)+'">Удалить</button></div></article>').join(''):
  '<div class="empty">Создайте комнату из сохранённой сборки.</div>';
  }catch(e){msg('launchMessage',e.message,true)}}
 async function launch(){disable('launchButton',true);msg('launchMessage','');
@@ -303,6 +393,10 @@ function renderInsights(){const d=state.insights||{},overview=d.overview||{},stu
 }
 async function signOut(){await state.db.auth.signOut();location.replace('./')}
 function wire(){
+ for(const b of all('#cardPalette [data-card]')){
+  const label=b.textContent.trim().replace(/^[^\s]+\s+/,'');
+  b.innerHTML=cardIconSvg(b.dataset.card)+'<span>'+esc(label)+'</span>';
+ }
  for(const b of all('[data-section]'))b.onclick=()=>section(b.dataset.section);
  $('signOut').onclick=signOut;
  $('refreshAll').onclick=refreshWorkspace;
@@ -314,6 +408,8 @@ function wire(){
  $('bankNext').onclick=()=>{if(state.bankOffset+state.bankPageSize<state.questionTotal){state.bankOffset+=state.bankPageSize;loadQuestions()}};
  $('newTopic').onclick=()=>{$('topicDialog').showModal();$('topicName').focus()};$('topicForm').onsubmit=saveTopic;$('newQuestion').onclick=()=>editQuestion();
  $('bankItems').onclick=async e=>{
+  const preview=e.target.closest('[data-preview-question]');
+  if(preview){previewQuestion(preview.dataset.previewQuestion);return}
   const publish=e.target.closest('[data-publish-question]');
   if(publish){
    publish.disabled=true;
@@ -346,9 +442,12 @@ function wire(){
  if(state.dragFrom!==null)moveCard(state.dragFrom,Number(x.dataset.index));state.dragFrom=null});
  $('roundCards').addEventListener('dragend',()=>{state.dragFrom=null;all('.round-card').forEach(x=>x.classList.remove('dragging','drop-here'))});
  $('cardForm').onsubmit=saveCard;$('saveBuild').onclick=saveBuild;
- $('savedBuilds').onclick=e=>{const b=e.target.closest('[data-load-build]');if(b)loadBuild(b.dataset.loadBuild)};
+ $('savedBuilds').onclick=e=>{const d=e.target.closest('[data-delete-build]');if(d){deleteBuild(d.dataset.deleteBuild);return}
+  const b=e.target.closest('[data-load-build]');if(b)loadBuild(b.dataset.loadBuild)};
  $('launchButton').onclick=launch;$('reloadRooms').onclick=loadRooms;
- $('hostRoomList').onclick=e=>{const b=e.target.closest('[data-room]');if(b)selectRoom(b.dataset.room)};
+ // Team setup handlers are owned by workspace-teams.js; no duplicate listeners here.
+ $('hostRoomList').onclick=e=>{const d=e.target.closest('[data-delete-room]');if(d){deleteRoom(d.dataset.deleteRoom);return}
+  const b=e.target.closest('[data-room]');if(b)selectRoom(b.dataset.room)};
  $('liveStart').onclick=()=>control('start');$('liveReveal').onclick=()=>control('reveal');
  $('liveNext').onclick=()=>control('next');$('liveFinish').onclick=()=>control('finish');
  $('copyRoomUrl').onclick=copyRoom;$('openScreen').onclick=projection;$('showPublicScreen').onclick=projection;

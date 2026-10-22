@@ -242,12 +242,12 @@ test('Standalone teacher workspace is responsive and has two library sections',a
  await expect(page.locator('#roundCards .round-card')).toHaveCount(4);
  await expect(page.locator('#roundCards .round-card').last()).toHaveAttribute('data-type','finale');
 });
-test('Flag studio shows two working formats, without old question types',async({page})=>{
+test('Flag studio shows three working formats, without old question types',async({page})=>{
  await page.goto('http://127.0.0.1:8080/next/workspace.html');
  await page.locator('#newQuestion').click();
  await expect(page.locator('#questionDialog')).toBeVisible();
  await expect(page.locator('#editKind option')).toHaveCount(12);
- await expect(page.locator('#editKind option:disabled')).toHaveCount(10);
+ await expect(page.locator('#editKind option:disabled')).toHaveCount(9);
  await expect(page.locator('#editKind')).toHaveValue('country');
  await expect(page.locator('#answerEditor [data-option]')).toHaveCount(4);
  await expect(page.locator('#questionMediaUrl')).toBeVisible();
@@ -588,13 +588,50 @@ test('Round editor filters flags by one or both ready mechanics',async({page})=>
  await expect(page.locator('#cardDialog')).toBeVisible();
  await page.locator('#cardModesDetails summary').click();
  await expect(page.locator('#cardFlagModes [data-card-mode]')).toHaveCount(12);
- await expect(page.locator('#cardFlagModes [data-card-mode]:not(:disabled)')).toHaveCount(2);
- await expect(page.locator('#cardFlagModes [data-card-mode]:checked')).toHaveCount(2);
+ await expect(page.locator('#cardFlagModes [data-card-mode]:not(:disabled)')).toHaveCount(3);
+ await expect(page.locator('#cardFlagModes [data-card-mode]:checked')).toHaveCount(3);
  await page.locator('[data-card-mode="picker"]').uncheck();
+ await page.locator('[data-card-mode="colors"]').uncheck();
  await page.locator('#cardDialog button[type="submit"]').click();
  await expect(page.locator('#roundCards .round-card').nth(1)).toContainText('Угадать страну по флагу');
  await page.locator('#roundCards [data-edit-card="1"]').click();
  await page.locator('#cardModesDetails summary').click();
  await expect(page.locator('[data-card-mode="country"]')).toBeChecked();
  await expect(page.locator('[data-card-mode="picker"]')).not.toBeChecked();
+});
+
+test('Standalone preview switches question with keyboard and mouse',async({page,context})=>{
+ await page.goto('http://127.0.0.1:8080/next/workspace.html');
+ await page.evaluate(()=>{
+   state.questions=[
+    {id:'00000000-0000-4000-8000-000000000101',kind:'flag',topic_id:'x',prompt:'Флаг какой страны?',options:['Франция','Россия','Италия','Германия'],solution:{flag_mode:'country',correct:1,media_url:'https://example.com/ru.svg'},tags:['fw:published'],difficulty:2},
+    {id:'00000000-0000-4000-8000-000000000102',kind:'flag',topic_id:'x',prompt:'Какой порядок полос?',options:[{orientation:'horizontal',stripes:['#000000','#dd0000','#ffce00']},{orientation:'horizontal',stripes:['#ffce00','#dd0000','#000000']}],solution:{flag_mode:'colors',correct:0,option_labels:['чёрный — красный — жёлтый','жёлтый — красный — чёрный']},tags:['fw:published'],difficulty:2}
+   ];
+   state.questionTotal=2;renderQuestions();
+ });
+ const next=context.waitForEvent('page');
+ await page.locator('[data-preview-question]').first().click();
+ const preview=await next;await preview.waitForLoadState();
+ await expect(preview.locator('#previewPrompt')).toHaveText('Флаг какой страны?');
+ await preview.keyboard.press('ArrowRight');
+ await expect(preview.locator('#previewPrompt')).toHaveText('Какой порядок полос?');
+ await expect(preview.locator('.preview-striped')).toHaveCount(2);
+ await preview.locator('#previewPrev').click();
+ await expect(preview.locator('#previewPrompt')).toHaveText('Флаг какой страны?');
+});
+test('Color-strip answers are touch-ready on the student screen',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.evaluate(()=>{
+  ctx.room={code:'COLOUR01',room_id:'00000000-0000-4000-8000-000000000055',title:'Цвета',phase:'question',index:0,total:1,
+   ends_at:new Date(Date.now()+30000).toISOString(),question:{kind:'flag',prompt:'Порядок полос флага Германии?',options:[
+   {orientation:'horizontal',stripes:['#000000','#dd0000','#ffce00']},
+   {orientation:'horizontal',stripes:['#ffce00','#dd0000','#000000']},
+   {orientation:'horizontal',stripes:['#dd0000','#ffce00','#000000']},
+   {orientation:'horizontal',stripes:['#000000','#ffce00','#dd0000']}
+   ]},teams:[],me:{id:'p',team_id:'t'},has_answer:false};
+  showScreen('game');renderGame();
+ });
+ await expect(page.locator('.flag-stripe-art')).toHaveCount(4);
+ await expect(page.locator('#gameContent [data-answer]')).toHaveCount(4);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
 });

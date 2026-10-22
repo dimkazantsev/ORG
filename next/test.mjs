@@ -164,7 +164,7 @@ test('Flags subcategories are a metadata filter, not duplicated topic tables',()
  assert.match(h,/id="bankMode"/);
  assert.match(h,/id="cardModesDetails"/);
  assert.match(w,/data-card-mode/);
- assert.match(w,/flag_modes:selected.length===2/);
+ assert.match(w,/flag_modes:selected.length===3/);
  assert.match(w,/studio\('flag_publish'/);
  assert.match(migration,/q\.solution->>'flag_mode'=p_input->>'mode'/);
  assert.match(migration,/b\.solution->>'flag_mode' in \(select jsonb_array_elements_text\(v_modes\)\)/);
@@ -197,4 +197,34 @@ test('World flags manifest contains 193 UN members and two observers with local 
  }
  assert.ok(codes.has('PS')&&codes.has('VA'));
  for(const forbidden of ['XK','TW','EH','CK','NU','HK'])assert.ok(!codes.has(forbidden));
+});
+
+test('Question preview opens dedicated keyboard-navigable popup',()=>{
+ const html=readFileSync(new URL('./question-preview.html',import.meta.url),'utf8');
+ const js=readFileSync(new URL('./question-preview.js',import.meta.url),'utf8');
+ const workspace=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ assert.match(html,/id="previewPrev"/);
+ assert.match(html,/id="previewNext"/);
+ assert.match(js,/ArrowLeft/);assert.match(js,/ArrowRight/);
+ assert.match(js,/e.origin!==location.origin/);
+ assert.match(workspace,/data-preview-question/);
+ assert.match(workspace,/qwiz-preview-ready/);
+});
+test('Colors are ready as a third server-checked flag mechanic',()=>{
+ const w=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const presenter=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
+ const stage=readFileSync(new URL('./stage.js',import.meta.url),'utf8');
+ const sql=readFileSync(new URL('./migrations/qwiz_flags_colors_preview_removal.sql',import.meta.url),'utf8');
+ const seed=readFileSync(new URL('./migrations/qwiz_flags_colors_first_20.sql',import.meta.url),'utf8');
+ assert.match(w,/\['colors','Цвета и полосы',true\]/);
+ assert.match(w,/data-stripe/);assert.match(w,/colorOrientation/);
+ assert.match(app,/QwizStage.stripeOption/);assert.match(presenter,/QwizStage.stripeOption/);
+ assert.match(stage,/function stripeOption/);
+ assert.match(sql,/qwiz_flags_question_valid/);
+ assert.match(sql,/qwiz_remove_room/);
+ assert.match(sql,/qwiz_archived_rooms/);
+ assert.match(sql,/build_delete/);
+ assert.match(sql,/'country','picker','colors'/);
+ assert.match(seed,/Expected 20 color questions/);
 });
