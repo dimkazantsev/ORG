@@ -52,8 +52,8 @@ async function refreshRoom(showError=true){if(!ctx.roomCode||ctx.refreshing||!ct
 async function joinRoom(event){event.preventDefault();const button=$('joinButton');busy(button,true);notice('joinNotice','Подключение…');
  try{await ensureAuth();const code=$('joinCode').value.trim().toUpperCase();const name=$('joinName').value.trim();const group=$('joinGroup').value.trim();
   if(!/^[A-F0-9]{8}$/.test(code))throw Error('Код комнаты должен содержать восемь символов.');
-  await rpc('org_next_join',{p_code:code,p_name:name,p_group:group});
-  ctx.roomCode=code;storage.set('room',code);showScreen('game');await refreshRoom();
+  const request=QwizTeams.joinRequest(code,name,group);await rpc(request.method,request.args);
+  ctx.roomCode=code;storage.set('room',code);showScreen('game');await refreshRoom();signal('team');
   notice('joinNotice','');
  }catch(error){notice('joinNotice',error.message,'error')}finally{busy(button,false)}}
 async function login(event){event.preventDefault();busy($('loginButton'),true);notice('loginNotice','Проверка доступа…');
@@ -159,10 +159,11 @@ function personalResults(s,final=false){
 }
 function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;const me=s.me;const myTeam=(s.teams||[]).find(t=>t.id===me?.team_id);
  text('playerGameTitle',s.title);text('playerTeamName',myTeam?.name||'Команда пока не назначена');$('playerScoreboard').innerHTML=teamMarkup(s.teams);
+ QwizTeams.playerPanel($('playerTeamPanel'),s);
  const el=$('gameContent');
  const cue=s.phase+':'+s.index;if(cue!==ctx.gameCue){ctx.gameCue=cue;if(s.phase==='result')QwizStage.audio.play('reveal');else if(s.phase==='finished')QwizStage.audio.play(s.activity?.sound||'fanfare');else if(s.phase==='question')QwizStage.audio.play('pop')}
  $('playerTeamProgress').hidden=s.phase!=='question';if(s.phase==='question')QwizStage.progress($('playerTeamProgress'),s.public_stats?.teams||[]);
- const renderKey=[s.code,s.index,s.phase,s.has_answer,s.eligible,s.total,s.question?.kind,s.question?.prompt].join(':');
+ const renderKey=[s.code,s.index,s.phase,s.has_answer,s.eligible,s.total,s.question?.kind,s.question?.prompt,me?.team_id].join(':');
  if(ctx.gameRenderKey===renderKey)return;
  ctx.gameRenderKey=renderKey;
  if(s.phase==='lobby'){el.innerHTML='<div class="game-empty"><div class="eyebrow">Вы в комнате '+esc(s.code)+'</div><h1>Вы в игре.</h1><p>Преподаватель собирает участников. Игра начнётся на всех устройствах одновременно.</p><div class="phase-label">'+esc(myTeam?.name||'Ожидание команды')+'</div></div>';text('playerStatus','Подключён. Ожидайте начала.');return}
@@ -192,7 +193,7 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  el.innerHTML='<div class="player-question-top"><span class="eyebrow">Вопрос '+(s.index+1)+' / '+s.total+'</span>'+QwizStage.clockMarkup(s,'playerTimer')+'</div>'+media+'<h1>'+esc(question.prompt)+'</h1>'+clip+
  (s.phase==='result'?'<section class="player-answer answer-reveal" role="status"><span>'+(richKind==='poll'?'ИТОГ ГОЛОСОВАНИЯ':'ПРАВИЛЬНЫЙ ОТВЕТ')+'</span><h2>'+esc(s.answer?.text||gameRichResult(question).replace(/^Правильный ответ: /,''))+'</h2>'+(question.explanation?'<p>'+esc(question.explanation)+'</p>':'')+'</section>'+personalResults(s):optsMarkup+(done?'<p class="notice success">Ваш ответ принят. Ожидайте остальных участников.</p>':time===0?'<p class="notice">Приём ответов завершён.</p>':''));
  QwizStage.updateClock(s,ctx.clockOffset,document,'playerTimer');QwizStage.hydrateIllustrations(el);
- text('playerStatus',!eligible?'Этот раунд не назначен вашей команде или участнику.':s.phase==='result'?'Результат открыт. Скоро следующий вопрос.':done?'Ответ записан на сервере.':'Ваш ответ ещё не отправлен.');
+ text('playerStatus',!eligible?(me?.team_id&&Number(me.entry_question)>s.index?'Вы подключились во время игры. Участвуете со следующего вопроса.':!me?.team_id?'Ожидайте распределения в команду.':'Этот раунд не назначен вашей команде или участнику.'):s.phase==='result'?'Результат открыт. Скоро следующий вопрос.':done?'Ответ записан на сервере.':'Ваш ответ ещё не отправлен.');
 }
 async function advance(action){const s=ctx.room;if(!s)return;busy($('host'+({start:'Start',reveal:'Reveal',next:'Next',finish:'Finish'})[action]),true);notice('hostNotice','');
  try{if(action==='finish'&&!confirm('Завершить эту игру?'))return;
@@ -261,11 +262,11 @@ async function restore(){if(!ctx.client)return;try{
      const profile=await rpc('qwiz_student_identity',{p_action:'me',p_data:{}});
      if(profile?.registered){
        $('joinName').value=profile.full_name;
-       await rpc('org_next_join',{p_code:code,p_name:profile.full_name,p_group:''});
-       ctx.roomCode=code;storage.set('room',code);showScreen('game');await refreshRoom(false);
+       const request=QwizTeams.joinRequest(code,profile.full_name);await rpc(request.method,request.args);
+       ctx.roomCode=code;storage.set('room',code);showScreen('game');await refreshRoom(false);signal('team');
        if(ctx.room)return;
      }
-   }catch(error){notice('joinNotice','Комната готова к подключению. Подтвердите вход.');}
+   }catch(error){notice('joinNotice',error.message||'Не удалось принять приглашение. Подтвердите вход.','error');}
  }
  resumeOffer();
  const isAdmin=await rpc('org_quiz_is_admin_check');teacherSession(isAdmin?session:null);
@@ -273,6 +274,7 @@ async function restore(){if(!ctx.client)return;try{
  // An explicit room link still joins, while a normal visit keeps the entry page.
  }catch{showScreen('home')}}
 function attach(){q('#logoHome').addEventListener('click',home);
+ $('teamInvitationNotice').hidden=!QwizTeams.intent().team;if(QwizTeams.intent().team)setRole('player');
  setRole(storage.get('entry-role')==='host'?'host':'player');
  $('changeTeacherAccount').onclick=logout;$('resumeGameButton').onclick=resumeGame;
  $('togglePassword').onclick=()=>{const visible=$('loginPassword').type==='password';$('loginPassword').type=visible?'text':'password';$('togglePassword').setAttribute('aria-pressed',String(visible));$('togglePassword').setAttribute('aria-label',visible?'Скрыть пароль':'Показать пароль')};

@@ -1,5 +1,5 @@
 'use strict';
-const KEY='sb_publishable_Hv7NgYuVsfKhFuhX_9pl0Q_qXWA2wOr',URL='https://bderfrcfuhnutuoyudje.supabase.co';
+const KEY='sb_publishable_Hv7NgYuVsfKhFuhX_9pl0Q_qXWA2wOr',PROFILE_SUPABASE_URL='https://bderfrcfuhnutuoyudje.supabase.co';
 const $=id=>document.getElementById(id);
 const animals=[['fox','🦊','Лиса'],['owl','🦉','Сова'],['cat','🐱','Кот'],['panda','🐼','Панда'],['otter','🦦','Выдра'],['raccoon','🦝','Енот'],['capybara','🦫','Капибара'],['penguin','🐧','Пингвин'],['koala','🐨','Коала'],['red-panda','🦊','Панда'],['rabbit','🐰','Кролик'],['bear','🐻','Медведь']];
 const s={db:null,me:null,avatar:'fox',registrationAvatar:'fox',pairTimer:null};
@@ -64,7 +64,7 @@ function wire(){
 async function init(){
  wire();drawAvatars('registerAvatars',s.registrationAvatar);
  if(!window.supabase?.createClient){message('authMessage','Нет соединения с Supabase.',true);showAuth();return}
- s.db=window.supabase.createClient(URL,KEY);
+ s.db=window.supabase.createClient(PROFILE_SUPABASE_URL,KEY);
  try{await ensureAnon();if(new URLSearchParams(location.search).has('pair')){showAuth();await claimPair()}else await reload();
  }catch(error){showAuth();message('authMessage',error.message,true)}
 }

@@ -396,6 +396,8 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 #cardRoundSettings{display:grid;gap:16px}[hidden]#cardRoundSettings,[hidden]#cardFinalePreview{display:none}
 @media(max-width:600px){.composer-actions{flex-wrap:wrap}.composer-actions button{flex:1 1 40%}.round-card[data-type="finale"] h3{font-size:23px}.moderator-clock{float:none;margin:16px 0 0;max-width:none}.moderator-clock .stage-clock{text-align:left}.moderator-clock .clock-value{justify-content:flex-start}}
 
+#launchButton{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:12px 20px;background:#7040db;color:#fff;border:1px solid #7040db;border-radius:12px;white-space:normal}
+
 /* Flags mode taxonomy: compact lavender controls without new layout system. */
 .card-mode-details{border:1px solid var(--line);border-radius:13px;padding:12px 14px;background:#faf9fd}
 .card-mode-details summary{display:flex;align-items:center;justify-content:space-between;gap:12px;font-weight:750;cursor:pointer;list-style:none}
