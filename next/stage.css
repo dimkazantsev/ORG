@@ -55,3 +55,8 @@
 .personal-results .question-insights{grid-template-columns:1fr;gap:20px}.personal-results .question-insights section{padding:18px;background:var(--accent-soft,#eee5fb)}.personal-results .question-insights h2{font-size:19px}
 @media(max-width:750px){.question-insights{grid-template-columns:1fr;gap:18px}.question-insights section{padding:18px}}
 @media(max-width:600px){#gameView .game-top .control-row{flex-wrap:wrap}#gameView .game-top .btn{font-size:11px;min-height:44px}#gameView .clock-value strong{font-size:38px}#gameView .stage-clock{min-width:115px}.personal-results .habitat-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.personal-results .habitat-team>strong{font-size:11px}.personal-results .team-detail{font-size:10px}.personal-results .speed-delta{font-size:9px;right:-10px}.player-team-progress{padding:12px}}
+
+/* Native-proportion flag options in interactive multiple-choice cards. */
+.flag-choice-art{display:block;max-width:100%;width:min(170px,100%);height:86px;object-fit:contain;background:white;border:1px solid var(--line,#e8e3f0);border-radius:10px;padding:5px}
+.option-list .option:has(.flag-choice-art){min-height:112px;justify-content:flex-start}
+@media(max-width:620px){.flag-choice-art{width:min(140px,100%);height:72px}}
