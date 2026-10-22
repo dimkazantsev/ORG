@@ -155,3 +155,23 @@ test('Flags of the World starts without legacy question formats or auto-seeding'
  assert.match(resetSql,/qwiz_flags_reset_archive_20261022/);
  assert.match(resetSql,/count\(\*\) from public\.org_next_rooms/);
 });
+
+test('Flags subcategories are a metadata filter, not duplicated topic tables',()=>{
+ const w=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const h=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ const migration=readFileSync(new URL('./migrations/qwiz_flags_mechanics_round_selection.sql',import.meta.url),'utf8');
+ const seed=readFileSync(new URL('./migrations/qwiz_flags_seed_first_40_verified.sql',import.meta.url),'utf8');
+ assert.match(h,/id="bankMode"/);
+ assert.match(h,/id="cardModesDetails"/);
+ assert.match(w,/data-card-mode/);
+ assert.match(w,/flag_modes:selected.length===2/);
+ assert.match(w,/studio\('flag_publish'/);
+ assert.match(migration,/q\.solution->>'flag_mode'=p_input->>'mode'/);
+ assert.match(migration,/b\.solution->>'flag_mode' in \(select jsonb_array_elements_text\(v_modes\)\)/);
+ assert.match(migration,/b\.tags @> array\['fw:published'\]/);
+ assert.match(migration,/not \(b\.id=any\(v_used\)\)/);
+ assert.match(migration,/array_remove\(tags,'fw:published'\)/);
+ assert.match(migration,/public\.qwiz_flags_question_valid/);
+ assert.match(seed,/40 UN-member flags x 2 approved mechanics = 80 questions/);
+ assert.match(seed,/raise exception 'Проверка качества пилотной партии/);
+});
