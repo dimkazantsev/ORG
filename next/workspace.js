@@ -167,7 +167,7 @@ function newBuild(){state.buildId=null;state.cards=[card('intro'),card('round'),
 function appendCard(type='round'){if(state.cards.length>=60){msg('buildMessage','Не больше 60 карточек.',true);return}
  state.cards.splice(Math.max(0,state.cards.length-1),0,card(type));renderCards()}
 function cardDesc(c){const settings=c.settings||{};
- if(c.type==='round')return (c.topic_id?nameTopic(c.topic_id):'Тема не выбрана')+' · '+(Array.isArray(settings.flag_modes)&&settings.flag_modes.length?settings.flag_modes.map(titleKind).join(', '):'Все доступные механики')+' · '+(settings.count||5)+' вопр. · '+(settings.seconds||30)+' сек.';
+ if(c.type==='round')return (c.topic_id?nameTopic(c.topic_id):'Тема не выбрана')+' · '+(Array.isArray(settings.flag_modes)&&settings.flag_modes.length?settings.flag_modes.map(titleKind).join(', '):'Все доступные механики')+' · '+(settings.count||5)+' вопр. · '+(settings.seconds||30)+' сек. · ответ '+(settings.answer_seconds||10)+' сек.';
  if(c.type==='finale')return 'Команды, личный рейтинг и вопросы, которые запомнились';
  return 'Дополнительная активность · настройки в карточке'}
 function renderCards(){ensureFinale();$('roundCards').innerHTML=state.cards.map((c,i)=>{
