@@ -14,11 +14,11 @@ const kinds=[
  ['sequence','Продолжить последовательность'],['hotspot','Найди на картинке'],
  ['puzzle','Головоломка'],['riddle','Загадка'],['auction','Аукцион'],
  ['blitz','Блиц'],['poll','Опрос']];
-const supported=new Set(['single','boolean','flag','portrait','image']);
+const supported=new Set(['single','boolean','multi','match','order','sequence','text','number','date','estimate','riddle','puzzle','blitz','flag','portrait','image','audio','video','map','poll','hotspot']);
 const titleKind=id=>kinds.find(x=>x[0]===id)?.[1]||id;
 const icons={round:'▦',intro:'◉',break:'♫',team_stats:'▥',player_stats:'♙',bonus:'✦',duel:'⇄',finale:'★'};
 const titles={round:'Раунд вопросов',intro:'Начало игры',break:'Музыкальная пауза',team_stats:'Рейтинг команд',player_stats:'Статистика игроков',bonus:'Бонусная активность',duel:'Дуэль команд',finale:'Финал игры'};
-const state={db:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',dragFrom:null};
+const state={db:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,bankOffset:0,bankPageSize:25,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',dragFrom:null};
 function msg(id,text='',isError=false){const el=$(id);if(!el)return;el.textContent=text;el.classList.toggle('error',!!isError)}
 function disable(id,value){const el=$(id);if(el)el.disabled=value}
 function fmt(x){return Number(x||0).toLocaleString('ru-RU')}
@@ -42,9 +42,13 @@ function renderTopics(){
  $('topicChips').innerHTML=items.map(t=>'<button type="button" class="topic-chip '+($('bankTopic').value===t.id?'current':'')+'" data-topic="'+esc(t.id)+'">'+esc(t.name)+'</button>').join('');
 }
 async function loadQuestions(){
- const input={search:$('bankSearch').value.trim().slice(0,90),topic_id:$('bankTopic').value,kind:$('bankKind').value,sort:$('bankSort').value,offset:0};
+ const input={search:$('bankSearch').value.trim().slice(0,90),topic_id:$('bankTopic').value,kind:$('bankKind').value,sort:$('bankSort').value,offset:state.bankOffset,limit:state.bankPageSize};
  try{const data=await studio('questions',input);state.questions=data.items||[];state.questionTotal=data.total||0;
   $('navQuestionCount').textContent=fmt(state.questionTotal);$('questionsTotal').textContent='('+fmt(state.questionTotal)+')';
+  const totalPages=Math.max(1,Math.ceil(state.questionTotal/state.bankPageSize));
+  $('bankPageInfo').textContent='Страница '+(Math.floor(state.bankOffset/state.bankPageSize)+1)+' из '+totalPages;
+  $('bankPrevious').disabled=state.bankOffset===0;
+  $('bankNext').disabled=state.bankOffset+state.bankPageSize>=state.questionTotal;
   renderQuestions();renderTopics();msg('bankMessage','');
  }catch(e){msg('bankMessage',e.message,true)}
 }
@@ -61,31 +65,40 @@ async function saveTopic(e){e.preventDefault();
  }catch(err){msg('topicNotice',err.message,true)}
 }
 function answerEditor(kind,question){
- const opts=question?.options||[];
- const one=supported.has(kind),four=['single','multi','flag','portrait','image'].includes(kind);
- const bo=kind==='boolean', optionCount=bo?2:four?4:0;
- const value=i=>esc(opts[i]??(bo?['Да','Нет'][i]:''));
- const answers=one||kind==='multi';
- if(answers){
- const count=opts.length||optionCount;
- const n=Math.max(2,Math.min(6,count));
- $('answerEditor').innerHTML='<div class="answer-fields"><span class="mini-label">Варианты ответа</span>'+
- Array.from({length:n},(_,i)=>'<label>'+String.fromCharCode(65+i)+'<input data-option="'+i+'" value="'+value(i)+'" required></label>').join('')+
- (kind==='multi'?'<label>Номера правильных вариантов через запятую (например 1,3)<input id="correctIndices" value="'+esc((question?.solution?.correct_indices||[]).map(x=>x+1).join(','))+'" required></label>':
- '<label>Правильный ответ<select id="correctAnswer">'+Array.from({length:n},(_,i)=>'<option value="'+i+'" '+(Number(question?.solution?.correct||0)===i?'selected':'')+'>'+String.fromCharCode(65+i)+'</option>').join('')+'</select></label>')+
- '<p class="small-help">'+(supported.has(kind)?'Поддерживается серверная проверка.':'Тип сохраняется в банке, но ещё не участвует в подсчёте очков.')+'</p></div>';
- if(['flag','portrait','image'].includes(kind)){
-  $('answerEditor').insertAdjacentHTML('beforeend','<label>Изображение (HTTPS-ссылка)<input id="questionMediaUrl" type="url" placeholder="https://..." value="'+esc(question?.solution?.media_url||'')+'"></label>');
+ const opts=question?.options||[], sol=question?.solution||{};
+ const choice=['single','boolean','flag','portrait','image','audio','video','map','poll','multi'].includes(kind);
+ const bo=kind==='boolean',count=Math.max(bo?2:2,Math.min(6,opts.length||(bo?2:4)));
+ if(choice){
+  $('answerEditor').innerHTML='<div class="answer-fields"><span class="mini-label">Варианты ответа</span>'+
+   Array.from({length:count},(_,i)=>'<label>'+String.fromCharCode(65+i)+'<input data-option="'+i+'" value="'+esc(opts[i]??(bo?['Да','Нет'][i]:''))+'" required></label>').join('')+
+   (kind==='poll'?'<p class="small-help">Опрос собирает ответы без начисления очков.</p>':kind==='multi'?
+    '<label>Номера правильных вариантов через запятую (например, 1,3)<input id="correctIndices" value="'+esc((sol.correct_indices||[]).map(x=>x+1).join(','))+'" required></label>':
+    '<label>Правильный вариант<select id="correctAnswer">'+Array.from({length:count},(_,i)=>'<option value="'+i+'" '+(Number(sol.correct||0)===i?'selected':'')+'>'+String.fromCharCode(65+i)+'</option>').join('')+'</select></label>')+
+    '</div>';
+  if(['flag','portrait','image','audio','video','map'].includes(kind))
+    $('answerEditor').insertAdjacentHTML('beforeend','<label>Медиафайл (публичный HTTPS-адрес)<input id="questionMediaUrl" type="url" placeholder="https://..." value="'+esc(sol.media_url||'')+'"></label>');
+  return;
  }
- return;
+ if(['match','order','sequence'].includes(kind)){
+  $('answerEditor').innerHTML='<label>'+(kind==='match'?'Пары «предмет = соответствие», каждая с новой строки':'Элементы в правильном порядке, каждый с новой строки')+
+   '<textarea id="genericItems" rows="6" required placeholder="'+(kind==='match'?'Франция = Париж&#10;Россия = Москва':'Первое событие&#10;Второе событие&#10;Третье событие')+'">'+esc(opts.join('\n'))+'</textarea></label>'+
+   '<p class="small-help">В игре порядок будет перемешан, а соответствия потребуется подобрать.</p>';
+  return;
  }
- if(kind==='match'||kind==='order'||kind==='sequence'){
- const values=opts.length?opts.map(String).join('\n'):'';
- $('answerEditor').innerHTML='<label>'+(kind==='match'?'Пары в формате «левое = правое», каждая с новой строки':'Элементы в правильном порядке, каждый с новой строки')+
- '<textarea id="genericItems" rows="5" placeholder="Элемент 1&#10;Элемент 2">'+esc(values)+'</textarea></label><p class="small-help">Редактор данных типа. Проверка игровых ответов находится в разработке.</p>';return;
+ if(kind==='hotspot'){
+  $('answerEditor').innerHTML='<label>Ссылка на изображение (HTTPS)<input id="questionMediaUrl" type="url" required value="'+esc(sol.media_url||'')+'" placeholder="https://..."></label>'+
+  '<div class="mini-grid"><label>Координата X, %<input type="number" id="hotspotX" min="0" max="100" step="0.1" required value="'+esc(sol.x??50)+'"></label>'+
+  '<label>Координата Y, %<input type="number" id="hotspotY" min="0" max="100" step="0.1" required value="'+esc(sol.y??50)+'"></label>'+
+  '<label>Допуск, %<input type="number" id="hotspotRadius" min="0.1" max="100" step="0.1" required value="'+esc(sol.radius??12)+'"></label></div>';
+  return;
  }
- $('answerEditor').innerHTML='<label>Данные правильного ответа<input id="genericAnswer" placeholder="Введите правильный ответ / значение" value="'+esc(question?.solution?.answer||'')+'"></label>'+
- '<label>Варианты или ресурсы, по одному на строку<textarea id="genericItems" rows="4">'+esc(opts.map(String).join('\n'))+'</textarea></label><p class="small-help">Мультимедиа необходимо загружать по защищённым ссылкам. Этот тип пока сохраняется как шаблон банка.</p>';
+ if(kind==='auction'){
+  $('answerEditor').innerHTML='<p class="small-help">Ставки между командами требуют отдельного сценария и ручного подтверждения ведущего. Этот формат пока не участвует в игровых раундах.</p>';
+  return;
+ }
+ $('answerEditor').innerHTML='<label>Правильный ответ<input id="genericAnswer" required placeholder="Введите ответ" value="'+esc(sol.answer||'')+'"></label>'+
+ (kind==='estimate'?'<label>Допустимое отклонение от числа<input type="number" min="0" step="any" id="answerTolerance" value="'+esc(sol.tolerance??0)+'"></label>':'')+
+ '<p class="small-help">Ответ проверяется сервером: без учёта регистра и лишних пробелов; для числа учитывается заданный допуск.</p>';
 }
 function editQuestion(id=null){const question=state.questions.find(q=>q.id===id)||null;state.editingQuestion=question?.id||null;
  $('questionDialogTitle').textContent=question?'Редактирование вопроса':'Создание вопроса';
@@ -99,18 +112,20 @@ function editQuestion(id=null){const question=state.questions.find(q=>q.id===id)
 async function saveQuestion(event){event.preventDefault();const kind=$('editKind').value;
  const options=all('[data-option]',$('answerEditor')).map(x=>x.value.trim());
  let solution={};
- if(supported.has(kind)){
-  solution={correct:Number($('correctAnswer').value)};
+ if(['single','boolean','flag','portrait','image','audio','video','map','poll','multi'].includes(kind)){
+  solution=kind==='poll'?{}:kind==='multi'?{correct_indices:$('correctIndices').value.split(',').map(x=>Number(x.trim())-1)}:{correct:Number($('correctAnswer').value)};
   const mediaUrl=$('questionMediaUrl')?.value.trim()||'';
   if(mediaUrl){
     if(!/^https:\/\//i.test(mediaUrl)){msg('questionSaveMessage','Изображение должно использовать HTTPS.',true);return}
     solution.media_url=mediaUrl;
   }
  }
- else if(kind==='multi'){solution={correct_indices:$('correctIndices').value.split(',').map(x=>Number(x)-1).filter(x=>Number.isInteger(x)&&x>=0)}}
- else{solution={answer:$('genericAnswer')?.value.trim()||''}}
+ else if(kind==='hotspot'){solution={media_url:$('questionMediaUrl').value.trim(),x:Number($('hotspotX').value),y:Number($('hotspotY').value),radius:Number($('hotspotRadius').value)}}
+ else{solution={answer:$('genericAnswer')?.value.trim()||''};
+ if(kind==='estimate')solution.tolerance=Number($('answerTolerance').value||0)}
+
  if(!options.length&&$('genericItems'))options.splice(0,0,...$('genericItems').value.split('\n').map(x=>x.trim()).filter(Boolean));
- if(supported.has(kind)&&options.some(x=>!x)){msg('questionSaveMessage','Заполните все варианты.',true);return}
+ if(['single','boolean','flag','portrait','image','audio','video','map','poll','multi'].includes(kind)&&options.some(x=>!x)){msg('questionSaveMessage','Заполните все варианты.',true);return}
  disable('questionSubmit',true);
  try{await studio('question_save',{id:state.editingQuestion||undefined,kind,topic_id:$('editTopic').value||null,
   prompt:$('editPrompt').value.trim(),options,solution,
@@ -139,14 +154,14 @@ function renderCards(){ensureFinale();$('roundCards').innerHTML=state.cards.map(
 function moveCard(i,j){if(j<0||j>=state.cards.length-1||i<0||i>=state.cards.length-1)return;
  const [item]=state.cards.splice(i,1);state.cards.splice(j,0,item);renderCards()}
 function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{};
- $('cardTitle').value=c.title;$('cardTopic').value=c.topic_id||'';
+ $('cardTitle').value=c.title;$('cardTopic').value=c.topic_id||'';$('cardIcon').value=c.icon||'▦';
  $('cardCount').value=s.count||5;$('cardSeconds').value=s.seconds||30;
  $('cardOrder').value=s.order||'random';$('cardOffset').value=(s.offset||0)+1;
  $('cardTeamCap').value=s.team_cap||'';$('cardPlayerCap').value=s.player_cap||'';
  $('cardSound').value=s.sound||'fanfare';
  $('cardDialog').showModal()}
 function saveCard(event){event.preventDefault();const c=state.cards[state.editingCard];c.title=$('cardTitle').value.trim();
- c.topic_id=$('cardTopic').value||null;
+ c.topic_id=$('cardTopic').value||null;c.icon=$('cardIcon').value||icons[c.type]||'▦';
  c.settings={count:Number($('cardCount').value),seconds:Number($('cardSeconds').value),
   order:$('cardOrder').value,offset:Math.max(0,Number($('cardOffset').value)-1),
   team_cap:$('cardTeamCap').value?Number($('cardTeamCap').value):null,
@@ -219,7 +234,7 @@ function renderInsights(){const d=state.insights||{},overview=d.overview||{},stu
  $('insightMetrics').innerHTML=[['Комнат',overview.rooms||0],['Завершено',overview.completed||0],['Студентов',students.length],['Ответов',students.reduce((s,x)=>s+Number(x.answers||0),0)]]
   .map(([label,value])=>'<div><span>'+label+'</span><strong>'+fmt(value)+'</strong></div>').join('');
  const key=$('studentSort').value;const rows=students.slice().sort((a,b)=>Number(b[key]||0)-Number(a[key]||0));
- $('studentRows').innerHTML=rows.map((s,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(s.name)+'</td><td>'+esc(s.group)+'</td><td>'+fmt(s.games)+'</td><td>'+fmt(s.answers)+'</td><td>'+fmt(s.correct)+'</td><td>'+fmt(s.score)+'</td></tr>').join('')||'<tr><td colspan="7">Пока нет ответов.</td></tr>';
+ $('studentRows').innerHTML=rows.map((s,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(s.name)+'</td><td>'+esc(s.group)+'</td><td>'+fmt(s.games)+'</td><td>'+fmt(s.answers)+'</td><td>'+fmt(s.correct)+'</td><td>'+fmt(s.accuracy)+'%</td><td>'+fmt(s.score)+'</td></tr>').join('')||'<tr><td colspan="8">Пока нет ответов.</td></tr>';
  const best=Math.max(1,...rows.slice(0,10).map(x=>Number(x.correct||0)));
  $('studentChart').innerHTML=rows.slice(0,10).map(s=>'<div class="bar-row"><span>'+esc(s.name)+'</span><div class="bar-track"><div class="bar-fill" style="width:'+(100*Number(s.correct||0)/best).toFixed(2)+'%"></div></div><strong>'+fmt(s.correct)+'</strong></div>').join('')||'<p class="small-help">Нет данных для диаграммы.</p>';
  const bar=(arr,label)=>arr.length?arr.map(x=>{
@@ -229,6 +244,7 @@ function renderInsights(){const d=state.insights||{},overview=d.overview||{},stu
    '<div class="bar-track" title="'+pct+'% правильных"><div class="bar-fill" style="width:'+pct+'%"></div></div>'+
    '<strong>'+pct+'%</strong></div>';
  }).join(''):'<p class="small-help">Пока нет результатов для расчёта.</p>';
+ $('groupChart').innerHTML=bar(d.groups||[],'name');
  $('topicChart').innerHTML=bar(d.by_topic||[],'topic');
  $('questionChart').innerHTML=bar(d.by_question||[],'prompt');
 }
@@ -237,9 +253,11 @@ function wire(){
  for(const b of all('[data-section]'))b.onclick=()=>section(b.dataset.section);
  $('signOut').onclick=signOut;
  $('refreshAll').onclick=async()=>{await overview();await loadRooms();if(state.roomCode)await refreshLive()};
- $('bankSearch').oninput=()=>{clearTimeout(state.bankTimer);state.bankTimer=setTimeout(loadQuestions,350)};
- for(const id of ['bankTopic','bankKind','bankSort'])$(id).onchange=loadQuestions;
- $('topicChips').onclick=e=>{const b=e.target.closest('[data-topic]');if(!b)return;$('bankTopic').value=b.dataset.topic;loadQuestions()};
+ $('bankSearch').oninput=()=>{clearTimeout(state.bankTimer);state.bankOffset=0;state.bankTimer=setTimeout(loadQuestions,350)};
+ for(const id of ['bankTopic','bankKind','bankSort'])$(id).onchange=()=>{state.bankOffset=0;loadQuestions()};
+ $('topicChips').onclick=e=>{const b=e.target.closest('[data-topic]');if(!b)return;$('bankTopic').value=b.dataset.topic;state.bankOffset=0;loadQuestions()};
+ $('bankPrevious').onclick=()=>{state.bankOffset=Math.max(0,state.bankOffset-state.bankPageSize);loadQuestions()};
+ $('bankNext').onclick=()=>{if(state.bankOffset+state.bankPageSize<state.questionTotal){state.bankOffset+=state.bankPageSize;loadQuestions()}};
  $('newTopic').onclick=()=>{$('topicDialog').showModal();$('topicName').focus()};$('topicForm').onsubmit=saveTopic;$('newQuestion').onclick=()=>editQuestion();
  $('bankItems').onclick=e=>{const b=e.target.closest('[data-edit-question]');if(b)editQuestion(b.dataset.editQuestion)};
  $('editKind').onchange=()=>answerEditor($('editKind').value,null);
@@ -281,7 +299,7 @@ async function init(){
   $('connText').textContent='● Кабинет подключён';
   await overview();await loadRooms();
   const code=sessionStorage.getItem('qwiz-host-room');if(code){section('rooms');await selectRoom(code)}
-  state.roomTimer=setInterval(()=>{if(state.roomCode&&!document.hidden)refreshLive()},6000);
+  state.roomTimer=setInterval(()=>{if(state.roomCode&&!document.hidden)refreshLive()},12000);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.roomCode)refreshLive()});
  }catch(e){$('connText').textContent=e.message;$('bankItems').innerHTML='<div class="empty">'+esc(e.message)+' <a href="./">Вернуться ко входу</a></div>'}
 }

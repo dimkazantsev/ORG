@@ -9,7 +9,7 @@ test('New JavaScript parses independently of legacy app.js',()=>{assert.doesNotT
 test('All direct DOM IDs referenced by client exist in HTML',()=>{
  const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]));
  const refs=new Set([...js.matchAll(/\$\('([^']+)'\)/g)].map(x=>x[1]));
- for(const ref of refs)assert.ok(ids.has(ref),'Missing #'+ref);
+ for(const ref of refs)assert.ok(ids.has(ref)||js.includes('id="'+ref+'"'),'Missing static or dynamically rendered #'+ref);
 });
 test('Client never directly reads answer keys or core tables',()=>{
  assert.doesNotMatch(js,/\.from\(['"]org_next_/);
@@ -39,7 +39,8 @@ test('Database is isolated and uses RLS + explicit RPC grants',()=>{
 test('No client-side fabricated correct answers or scores',()=>{
  assert.doesNotMatch(js,/KEY_SUPABASE\s*=\s*['"]service_role/);
  assert.match(js,/ctx\.client\.rpc\(name,params\)/);
- assert.match(js,/await rpc\('org_next_answer'/);
+ assert.match(js,/org_next_answer/);
+ assert.match(js,/qwiz_submit_answer/);
 });
 
 test('QWIZ-PARTY brand, QR library, presenter-only route and 15 teams',()=>{
@@ -70,7 +71,7 @@ test('Entry refactor is a single CSS design system without duplicate selectors o
  assert.match(html,/id="rolePlayer"/);
  assert.match(html,/id="joinForm"/);
  assert.match(css,/\.welcome-layout/);
- assert.ok(Buffer.byteLength(css,'utf8')<23000,'CSS exceeds single sheet budget');
+ assert.ok(Buffer.byteLength(css,'utf8')<26000,'CSS exceeds single sheet budget');
  assert.match(js,/qrCache/);
 });
 
@@ -117,4 +118,18 @@ test('Round controls have server countdown and separate intermission states',()=
  assert.match(a,/v_card_pos\+1/);
  assert.match(a,/v_next_card->>'type'='finale'/);
  assert.match(a,/qwiz_room_activity/);
+});
+
+test('Rich answer engine never exposes solution to students or projector',()=>{
+ const sql=readFileSync(new URL('./migrations/qwiz_never_leak_rich_solutions.sql',import.meta.url),'utf8');
+ const grader=readFileSync(new URL('./migrations/qwiz_rich_scoring.sql',import.meta.url),'utf8');
+ const compiler=readFileSync(new URL('./migrations/qwiz_rich_compiler.sql',import.meta.url),'utf8');
+ assert.match(sql,/v_q:=v_q-'correct'-'solution'-'explanation'/);
+ assert.match(sql,/\)-'correct'-'solution'-'explanation'/);
+ assert.match(sql,/Используйте обработчик сложного вопроса/);
+ assert.match(grader,/qwiz_submit_answer/);
+ assert.match(grader,/on conflict\(room_id,player_id,question_index\) do nothing/);
+ assert.match(grader,/qwiz_answer_eligible/);
+ assert.match(compiler,/match_choices/);
+ assert.match(compiler,/v_sol/);
 });

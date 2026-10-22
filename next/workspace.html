@@ -2,9 +2,9 @@
 <html lang="ru"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="theme-color" content="#f6f8f9"><title>QWIZ-PARTY — Студия преподавателя</title>
-<link rel="stylesheet" href="./workspace.css?v=1">
+<link rel="stylesheet" href="./workspace.css?v=2">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script defer src="./vendor/qrcode.min.js"></script><script defer src="./workspace.js?v=3"></script>
+<script defer src="./vendor/qrcode.min.js"></script><script defer src="./workspace.js?v=4"></script>
 </head><body>
 <header class="top"><div class="top-wrap"><a class="brand" href="./"><span class="brand-mark">Q</span><span>QWIZ<span class="brand-mid">-</span>PARTY<small>СТУДИЯ ПРЕПОДАВАТЕЛЯ</small></span></a>
 <div class="top-tools"><span class="connection" id="connText">Проверка подключения…</span><button type="button" class="small-button" id="refreshAll">↻ Обновить</button><button type="button" class="small-button" id="signOut">Выйти</button></div></div></header>
@@ -26,6 +26,10 @@
  <div class="topic-chips" id="topicChips"></div>
  <div class="section-head"><h2>Вопросы <span class="subtle" id="questionsTotal"></span></h2><span class="small-help">Первые 100 результатов · фильтры применяются на сервере</span></div>
  <div id="bankItems" class="question-list"><div class="empty">Загрузка вопросов…</div></div>
+ <nav class="bank-pager" aria-label="Страницы банка вопросов">
+ <button type="button" class="small-button" id="bankPrevious">← Предыдущая</button>
+ <span id="bankPageInfo" aria-live="polite">Страница 1</span>
+ <button type="button" class="small-button" id="bankNext">Следующая →</button></nav>
  <p id="bankMessage" class="message" role="status"></p>
 </section>
 <section class="page" id="builderPage" hidden>
@@ -63,9 +67,12 @@
 </section>
 <section class="page" id="insightsPage" hidden><div class="page-head"><div><span class="eyebrow">АНАЛИТИКА / 04</span><h1>Результаты студентов</h1><p>Достижения и ответы во всех ваших проведённых комнатах.</p></div><button class="small-button" id="reloadInsights">↻ Обновить</button></div>
  <div class="metric-grid" id="insightMetrics"></div>
- <div class="panel"><div class="section-head"><h2>Рейтинг участников</h2><label class="sort-label">Сортировка<select id="studentSort"><option value="score">По очкам</option><option value="correct">По правильным</option><option value="games">По играм</option><option value="answers">По ответам</option></select></label></div>
- <div class="student-table-scroll"><table class="student-table"><thead><tr><th>№</th><th>Участник</th><th>Группа</th><th>Игр</th><th>Ответов</th><th>Верных</th><th>Баллы</th></tr></thead><tbody id="studentRows"></tbody></table></div></div>
+ <div class="panel"><div class="section-head"><h2>Рейтинг участников</h2><label class="sort-label">Сортировка<select id="studentSort"><option value="score">По очкам</option><option value="correct">По правильным</option><option value="games">По играм</option><option value="answers">По ответам</option><option value="accuracy">По точности</option></select></label></div>
+ <div class="student-table-scroll"><table class="student-table"><thead><tr><th>№</th><th>Участник</th><th>Группа</th><th>Игр</th><th>Ответов</th><th>Верных</th><th>Точность</th><th>Баллы</th></tr></thead><tbody id="studentRows"></tbody></table></div></div>
  <div class="panel"><h2>Достижения по ответам</h2><p class="small-help">Диаграмма строится по реальным суммарным значениям из завершённых и текущих комнат.</p><div id="studentChart" class="chart"></div></div>
+ <div class="panel" style="margin-top:14px"><h2>Учебные группы</h2>
+ <p class="small-help">Доля верных ответов по каждой группе, с учётом всех её игр.</p>
+ <div id="groupChart" class="chart"></div></div>
  <div class="panel" style="margin-top:14px"><h2>Темы: доля правильных ответов</h2><p class="small-help">Из проведённых игр; чем длиннее полоса, тем выше точность.</p><div id="topicChart" class="chart"></div></div>
  <div class="panel" style="margin-top:14px"><h2>Вопросы: самые популярные</h2><p class="small-help">Показаны вопросы с наибольшим количеством ответов и процентом правильных.</p><div id="questionChart" class="chart"></div></div>
 </section>
@@ -86,7 +93,13 @@
  <label>Сложность<select id="editDifficulty"><option value="1">1 · Лёгкая</option><option value="2" selected>2 · Обычная</option><option value="3">3 · Средняя</option><option value="4">4 · Сложная</option><option value="5">5 · Экспертная</option></select></label></div>
  <div class="dialog-footer"><span id="questionSaveMessage" class="message" role="status"></span><button type="button" class="secondary-button" data-close="questionDialog">Отмена</button><button type="submit" class="primary-button" id="questionSubmit">Сохранить</button></div></form></dialog>
 <dialog class="edit-dialog" id="cardDialog"><form id="cardForm" method="dialog"><div class="dialog-head"><div><span class="eyebrow">РЕДАКТОР РАУНДА</span><h2>Настройка карточки</h2></div><button type="button" class="icon-btn" data-close="cardDialog">✕</button></div>
- <div class="dialog-body"><label>Название карточки<input id="cardTitle" maxlength="120" required></label><label>Тема<select id="cardTopic"><option value="">Без темы</option></select></label>
+ <div class="dialog-body"><label>Название карточки<input id="cardTitle" maxlength="120" required></label>
+ <label>Иконка раунда<select id="cardIcon">
+ <option value="▦">▦ Вопросы</option><option value="◉">◉ Начало</option><option value="♫">♫ Музыка</option>
+ <option value="▥">▥ Статистика</option><option value="♙">♙ Игроки</option><option value="✦">✦ Бонус</option>
+ <option value="⇄">⇄ Дуэль</option><option value="★">★ Финал</option><option value="⚑">⚑ Флаги</option>
+ <option value="⌖">⌖ География</option><option value="☷">☷ Порядок</option><option value="◆">◆ Логика</option>
+ </select></label><label>Тема<select id="cardTopic"><option value="">Без темы</option></select></label>
  <div class="two-inputs"><label>Вопросов<input id="cardCount" type="number" min="1" max="100" value="5"></label><label>Время на вопрос (сек.)<input id="cardSeconds" type="number" min="10" max="120" value="30"></label></div>
  <div class="two-inputs"><label>Порядок<select id="cardOrder"><option value="random">Случайный</option><option value="sequential">По порядку</option><option value="reverse">С конца</option></select></label><label>Начать с номера<input id="cardOffset" type="number" min="1" value="1"></label></div>
  <div class="two-inputs"><label>Лимит команд<input id="cardTeamCap" type="number" min="1" max="15" placeholder="Без ограничения"></label><label>Лимит игроков<input id="cardPlayerCap" type="number" min="1" placeholder="Без ограничения"></label></div>

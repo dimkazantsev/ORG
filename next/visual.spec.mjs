@@ -197,3 +197,58 @@ test('Public display renders server countdown but no answers or admin controls',
  await expect(page.locator('.projection-question')).toHaveCount(0);
  await page.screenshot({path:'visual-artifacts/countdown-1440.png',fullPage:true});
 });
+
+test('Multiple-choice, matching, order and free text are playable at phone size',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ for(const question of [
+  {kind:'multi',prompt:'Выберите два элемента',options:['А','Б','В']},
+  {kind:'match',prompt:'Найдите пары',options:['Страна А','Страна Б'],match_choices:['Город Б','Город А']},
+  {kind:'order',prompt:'Выберите порядок',options:['Третий','Второй','Первый']},
+  {kind:'number',prompt:'Ответьте числом',options:[]},
+  {kind:'hotspot',prompt:'Покажите точку',options:[],media_url:'https://example.com/photo.png'}
+ ]){
+  await page.evaluate(question=>{
+   ctx.room={code:'ABCDEF12',room_id:'00000000-0000-4000-8000-000000000002',title:'Проверка сложных вопросов',phase:'question',index:0,total:5,
+    ends_at:new Date(Date.now()+90000).toISOString(),question,teams:[{id:'a',name:'Команда',score:0}],
+    me:{id:'player',team_id:'a'},has_answer:false,eligible:true};
+   showScreen('game');renderGame();
+  },question);
+  await expect(page.locator('#gameContent [data-submit-rich]')).toBeVisible();
+  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+  expect(overflow).toBeLessThanOrEqual(2);
+  if(question.kind==='multi')await expect(page.locator('#gameContent input[type="checkbox"]')).toHaveCount(3);
+  if(question.kind==='match')await expect(page.locator('#gameContent select.rich-match')).toHaveCount(2);
+  if(question.kind==='order')await expect(page.locator('#gameContent select.rich-order')).toHaveCount(3);
+  if(question.kind==='number')await expect(page.locator('#richTextAnswer')).toBeVisible();
+  if(question.kind==='hotspot')await expect(page.locator('#richSpot')).toBeVisible();
+ }
+ await page.screenshot({path:'visual-artifacts/rich-game-390.png',fullPage:true});
+});
+test('Question editor captures new game mechanics without hidden correct-answer defaults',async({page})=>{
+ await page.goto('http://127.0.0.1:8080/next/workspace.html');
+ await page.locator('#newQuestion').click();
+ await page.locator('#editKind').selectOption('multi');
+ await expect(page.locator('#correctIndices')).toBeVisible();
+ await page.locator('#editKind').selectOption('estimate');
+ await expect(page.locator('#answerTolerance')).toBeVisible();
+ await page.locator('#editKind').selectOption('hotspot');
+ await expect(page.locator('#hotspotRadius')).toBeVisible();
+ await expect(page.locator('#questionMediaUrl')).toBeVisible();
+ await page.locator('#editKind').selectOption('auction');
+ await expect(page.locator('#answerEditor')).toContainText('пока не участвует');
+});
+
+test('Realtime refresh does not erase a partially entered free-text answer',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.evaluate(()=>{
+  ctx.room={code:'ABCDEF12',room_id:'00000000-0000-4000-8000-000000000003',title:'Тест редактирования',phase:'question',index:2,total:5,
+   ends_at:new Date(Date.now()+90000).toISOString(),question:{kind:'text',prompt:'Введите слово',options:[]},
+   teams:[{id:'a',name:'Команда',score:0}],me:{id:'p',team_id:'a'},has_answer:false,eligible:true};
+  showScreen('game');renderGame();
+ });
+ await page.locator('#richTextAnswer').fill('Мой незавершённый ответ');
+ await page.evaluate(()=>renderGame());
+ await expect(page.locator('#richTextAnswer')).toHaveValue('Мой незавершённый ответ');
+ await page.evaluate(()=>{ctx.room.index=3;renderGame()});
+ await expect(page.locator('#richTextAnswer')).toHaveValue('');
+});
