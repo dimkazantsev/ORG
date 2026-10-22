@@ -4,10 +4,10 @@
 <meta name="theme-color" content="#faf9fd"><title>QWIZ-PARTY — Студия преподавателя</title>
 <link rel="preload" href="./assets/manrope-variable.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="./theme.css?v=lavender-2">
-<link rel="stylesheet" href="./workspace.css?v=stage-1">
+<link rel="stylesheet" href="./workspace.css?v=flag-modes-1">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="./stage.css?v=1"><script defer src="./stage.js?v=1"></script>
-<script defer src="./vendor/qrcode.min.js"></script><script defer src="./workspace.js?v=flags-clean-1"></script>
+<script defer src="./vendor/qrcode.min.js"></script><script defer src="./workspace.js?v=flags-modes-1"></script>
 <link rel="stylesheet" href="./motion.css?v=2">
 </head><body class="studio-polish" data-design="lavender-20261022"><a class="skip-link" href="#mainContent">К содержимому</a>
 <header class="top"><div class="top-wrap"><a class="brand" href="./"><span class="brand-mark"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M24 15.5a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0Z" stroke="currentColor" stroke-width="3.5"/><path d="m19.5 20 5 5" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span><span>QWIZ<span class="brand-mid">-</span>PARTY<small>СТУДИЯ ПРЕПОДАВАТЕЛЯ</small></span></a>
@@ -31,6 +31,7 @@
  <div class="page-head"><div><span class="eyebrow">ВАША КОЛЛЕКЦИЯ</span><h1>Флаги мира</h1><p>Чистая библиотека: 193 государства — члена ООН и два наблюдателя. Сначала проверенные изображения, затем вопросы.</p></div><button class="primary-button" id="newQuestion"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg> Создать вопрос</button></div>
  <div class="filter-panel"><label class="search-label">Поиск по вопросам<span class="search-field"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 5 5"></path></svg><input id="bankSearch" type="search" placeholder="Название, тема или слово из вопроса…" autocomplete="off" aria-keyshortcuts="/"><kbd aria-hidden="true">/</kbd></span></label>
  <label>Тема<select id="bankTopic"><option value="">Все темы</option></select></label>
+ <label>Механика<select id="bankMode"><option value="">Все механики</option></select></label>
  <label>Сортировка<select id="bankSort"><option value="newest">Сначала новые</option><option value="oldest">Сначала старые</option><option value="difficulty">По сложности</option></select></label></div>
  <div class="section-head"><h2>Темы</h2><button class="text-button" id="newTopic" hidden>+ Добавить тему</button></div>
  <div class="topic-chips" id="topicChips"></div>
@@ -109,6 +110,7 @@
  <option value="⇄">⇄ Дуэль</option><option value="★">★ Финал</option><option value="⚑">⚑ Флаги</option>
  <option value="⌖">⌖ География</option><option value="☷">☷ Порядок</option><option value="◆">◆ Логика</option>
  </select></label><div id="cardRoundSettings"><label>Тема<select id="cardTopic"><option value="">Без темы</option></select></label>
+ <details id="cardModesDetails" class="card-mode-details"><summary>Механики внутри темы <span id="cardModesInfo" class="small-help">Все доступные</span></summary><p class="small-help">Выберите, какие вопросы попадут в раунд. Отбор выполняется на сервере при запуске игры.</p><div id="cardFlagModes" class="card-mode-grid"></div></details>
  <div class="two-inputs"><label>Вопросов<input id="cardCount" type="number" min="1" max="100" value="5"></label><label>Время на вопрос (сек.)<input id="cardSeconds" type="number" min="10" max="120" value="30"></label></div>
  <div class="two-inputs"><label>Порядок<select id="cardOrder"><option value="random">Случайный</option><option value="sequential">По порядку</option><option value="reverse">С конца</option></select></label><label>Начать с номера<input id="cardOffset" type="number" min="1" value="1"></label></div>
  <div class="two-inputs"><label>Лимит команд<input id="cardTeamCap" type="number" min="1" max="15" placeholder="Без ограничения"></label><label>Лимит игроков<input id="cardPlayerCap" type="number" min="1" placeholder="Без ограничения"></label></div>

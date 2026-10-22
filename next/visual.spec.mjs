@@ -578,3 +578,23 @@ test('Studio native animations respect reduced motion while controls still work'
  await expect(page.locator('#refreshAll')).toHaveAttribute('data-state','done');
  expect(await page.locator('.refresh-check').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
 });
+
+test('Round editor filters flags by one or both ready mechanics',async({page})=>{
+ await page.goto('http://127.0.0.1:8080/next/workspace.html');
+ await expect(page.locator('#bankMode option')).toHaveCount(13);
+ await page.locator('[data-section="builder"]').click();
+ await page.locator('#newBuild').click();
+ await page.locator('#roundCards [data-edit-card="1"]').click();
+ await expect(page.locator('#cardDialog')).toBeVisible();
+ await page.locator('#cardModesDetails summary').click();
+ await expect(page.locator('#cardFlagModes [data-card-mode]')).toHaveCount(12);
+ await expect(page.locator('#cardFlagModes [data-card-mode]:not(:disabled)')).toHaveCount(2);
+ await expect(page.locator('#cardFlagModes [data-card-mode]:checked')).toHaveCount(2);
+ await page.locator('[data-card-mode="picker"]').uncheck();
+ await page.locator('#cardDialog button[type="submit"]').click();
+ await expect(page.locator('#roundCards .round-card').nth(1)).toContainText('Угадать страну по флагу');
+ await page.locator('#roundCards [data-edit-card="1"]').click();
+ await page.locator('#cardModesDetails summary').click();
+ await expect(page.locator('[data-card-mode="country"]')).toBeChecked();
+ await expect(page.locator('[data-card-mode="picker"]')).not.toBeChecked();
+});
