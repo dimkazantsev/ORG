@@ -15,8 +15,11 @@ test('Client never directly reads answer keys or core tables',()=>{
  assert.doesNotMatch(js,/\.from\(['"]org_next_/);
  assert.doesNotMatch(js,/\bquiz_private\b/);
  assert.match(js,/org_next_answer/);
- assert.match(js,/org_next_state/);
- assert.match(js,/org_next_advance/);
+ assert.match(js,/qwiz_party_state/);
+ assert.match(js,/qwiz_party_control/);
+ const overlay=readFileSync(new URL('./migrations/20261023_live_round_boost_votes.sql',import.meta.url),'utf8');
+ assert.match(overlay,/public\.org_next_state\(p_code\)/);
+ assert.match(overlay,/public\.org_next_advance\(p_room,p_action\)/);
 });
 test('Quiz has independently accessible mobile and host routes',()=>{
  for(const name of ['homeView','gameView','studioView','joinForm','loginForm','createRoomForm','quizForm','gameContent','hostControls'])
@@ -54,7 +57,9 @@ test('QWIZ-PARTY brand, QR library, presenter-only route and 15 teams',()=>{
  const presenterJs=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
  const presenterCss=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
  assert.doesNotThrow(()=>new Function(presenterJs));
- assert.match(presenterJs,/qwiz_public_screen/);
+ assert.match(presenterJs,/qwiz_party_projection/);
+ const pauseOverlay=readFileSync(new URL('./migrations/20261023_paused_projection_clock.sql',import.meta.url),'utf8');
+ assert.match(pauseOverlay,/public\.qwiz_public_screen\(p_code\)/);
  assert.doesNotMatch(presenterHtml,/teacher|hostStart|hostReveal|hostFinish/);
  assert.match(presenterCss,/projection-option/);
  const upgrade=readFileSync(new URL('./migrations/20261022_qwiz_party_projection.sql',import.meta.url),'utf8');
@@ -261,4 +266,22 @@ test('Sound and sixth flag mechanism preserve secure flag scoring',()=>{
  assert.match(stage,/uiIcon\(name\)/);
  assert.match(sql,/flag_mode/);assert.match(sql,/\'country\',\'picker\',\'colors\',\'symbols\',\'fragments\',\'errors\'/);
  assert.match(seed,/Expected 24 stage-6 questions/);assert.match(audit,/intentional_errors/);
+});
+
+test('Majority boost votes, host controls, and auto-advance are server-owned',()=>{
+ const migration=readFileSync(new URL('./migrations/20261023_live_round_boost_votes.sql',import.meta.url),'utf8');
+ const arcade=readFileSync(new URL('./arcade.js',import.meta.url),'utf8');
+ const layout=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ for(const name of ['liveStart','livePause','liveNext','liveFinish','liveScreenMirror','liveRoundStats'])
+  assert.match(layout,new RegExp('id="'+name+'"'));
+ assert.match(migration,/winner_votes<=total_members\/2/);
+ assert.match(migration,/create or replace function public\.qwiz_tick/);
+ assert.match(migration,/create or replace function public\.qwiz_vote_boost/);
+ assert.match(migration,/qwiz_round_boost_apply/);
+ assert.match(migration,/if r\.phase='intermission'/);
+ assert.match(arcade,/data-boost-choice/);
+ assert.match(arcade,/qwiz_vote_boost/);
+ assert.match(host,/qwiz_party_control/);
+ assert.doesNotMatch(arcade,/\.from\(['"]qwiz_boost_votes/);
 });
