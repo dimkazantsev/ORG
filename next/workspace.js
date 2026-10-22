@@ -270,6 +270,7 @@ async function saveQuestion(event){
   msg('questionSaveMessage','Для каждого варианта нужна своя корректная HTTPS-ссылка на флаг.',true);return
  }
  const solution={correct:Number($('correctAnswer').value),flag_mode:mode};
+ if(mode==='errors')solution.error_kind='mislabeled';
  if(mode==='picker'||mode==='colors')solution.option_labels=labels;
  const mediaUrl=$('questionMediaUrl')?.value.trim()||'';
  if(['country','symbols','fragments'].includes(mode)){
