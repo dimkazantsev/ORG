@@ -22,158 +22,23 @@ begin
   if (select count(distinct lower(btrim(v.value))) from jsonb_array_elements_text(p_options) v)<>4 then return false;end if;
   return true;
  elsif v_mode in ('symbols','fragments') then
-   if coalesce(p_solution->>'media_url','') !~ '^https://[^ ]+[.]svg([?][^ ]*)?
-  if jsonb_typeof(p_solution->'option_labels')<>'array'
-     or jsonb_array_length(p_solution->'option_labels')<>4 then return false;end if;
-  if (select count(distinct btrim(x.value)) from jsonb_array_elements_text(p_solution->'option_labels') x)<>4 then return false;end if;
+  if coalesce(p_solution->>'media_url','') !~ '^https://[^ ]+[.]svg([?][^ ]*)?$' then return false;end if;
   if exists(select 1 from jsonb_array_elements(p_options) o
-     where jsonb_typeof(o.value)<>'object' or o.value ? 'label'
-     or o.value->>'orientation' not in ('horizontal','vertical')
-     or jsonb_typeof(o.value->'stripes')<>'array'
-     or jsonb_array_length(o.value->'stripes') not between 2 and 4
-     or exists(select 1 from jsonb_array_elements_text(o.value->'stripes') s
-          where s.value !~ '^#[0-9a-fA-F]{6}')) then return false;end if;
-  if (select count(distinct value) from jsonb_array_elements(p_options))<>4 then return false;end if;
-  if (select count(distinct o.value->>'orientation') from jsonb_array_elements(p_options) o)<>1 then return false;end if;
-  return true;
- elsif v_mode='picker' then
-  if jsonb_typeof(p_solution->'option_labels')<>'array' or
-     jsonb_array_length(p_solution->'option_labels')<>4 then return false;end if;
-  if (select count(distinct lower(btrim(v.value))) from jsonb_array_elements_text(p_solution->'option_labels') v)<>4 then return false;end if;
-  if exists(select 1 from jsonb_array_elements(p_options) v
-      where jsonb_typeof(v.value)<>'object' or
-      coalesce(v.value->>'image_url','') !~ '^https://[^ ]+[.]svg([?][^ ]*)?$' or
-      v.value ? 'label') then return false;end if;
-  if (select count(distinct v.value->>'image_url') from jsonb_array_elements(p_options) v)<>4 then return false;end if;
-  return true;
- end if;
- return false;
-end $function$
- then return false;end if;
-   if exists(select 1 from jsonb_array_elements(p_options) o
      where jsonb_typeof(o.value)<>'string' or length(btrim(o.value#>>'{}'))<2) then return false;end if;
-   if (select count(distinct lower(btrim(x.value))) from jsonb_array_elements_text(p_options) x)<>4 then return false;end if;
-   if jsonb_typeof(p_solution->'flag_visual')<>'object' then return false;end if;
-   if v_mode='symbols' and p_solution->'flag_visual'->>'type'<>'symbol' then return false;end if;
-   if v_mode='fragments' and p_solution->'flag_visual'->>'type' not in ('crop','pixel') then return false;end if;
-   if coalesce(p_solution->'flag_visual'->>'x','') !~ '^[0-9]{2}
-  if jsonb_typeof(p_solution->'option_labels')<>'array'
-     or jsonb_array_length(p_solution->'option_labels')<>4 then return false;end if;
-  if (select count(distinct btrim(x.value)) from jsonb_array_elements_text(p_solution->'option_labels') x)<>4 then return false;end if;
-  if exists(select 1 from jsonb_array_elements(p_options) o
-     where jsonb_typeof(o.value)<>'object' or o.value ? 'label'
-     or o.value->>'orientation' not in ('horizontal','vertical')
-     or jsonb_typeof(o.value->'stripes')<>'array'
-     or jsonb_array_length(o.value->'stripes') not between 2 and 4
-     or exists(select 1 from jsonb_array_elements_text(o.value->'stripes') s
-          where s.value !~ '^#[0-9a-fA-F]{6}')) then return false;end if;
-  if (select count(distinct value) from jsonb_array_elements(p_options))<>4 then return false;end if;
-  if (select count(distinct o.value->>'orientation') from jsonb_array_elements(p_options) o)<>1 then return false;end if;
+  if (select count(distinct lower(btrim(x.value))) from jsonb_array_elements_text(p_options) x)<>4 then return false;end if;
+  if jsonb_typeof(p_solution->'flag_visual')<>'object' then return false;end if;
+  if v_mode='symbols' and p_solution->'flag_visual'->>'type'<>'symbol' then return false;end if;
+  if v_mode='fragments' and p_solution->'flag_visual'->>'type' not in ('crop','pixel') then return false;end if;
+  if coalesce(p_solution->'flag_visual'->>'x','') !~ '^[0-9]{2}$'
+    or (p_solution->'flag_visual'->>'x')::int not between 10 and 90 then return false;end if;
+  if coalesce(p_solution->'flag_visual'->>'y','') !~ '^[0-9]{2}$'
+    or (p_solution->'flag_visual'->>'y')::int not between 10 and 90 then return false;end if;
+  if coalesce(p_solution->'flag_visual'->>'zoom','') !~ '^[1-4]([.][0-9]+)?$' then return false;end if;
+  if (p_solution->'flag_visual'->>'zoom')::numeric not between 1.5 and 4 then return false;end if;
+  if v_mode='fragments' and
+    (coalesce(p_solution->'flag_visual'->>'pixels','') !~ '^[0-9]{2}$'
+     or (p_solution->'flag_visual'->>'pixels')::int not between 14 and 48) then return false;end if;
   return true;
- elsif v_mode='picker' then
-  if jsonb_typeof(p_solution->'option_labels')<>'array' or
-     jsonb_array_length(p_solution->'option_labels')<>4 then return false;end if;
-  if (select count(distinct lower(btrim(v.value))) from jsonb_array_elements_text(p_solution->'option_labels') v)<>4 then return false;end if;
-  if exists(select 1 from jsonb_array_elements(p_options) v
-      where jsonb_typeof(v.value)<>'object' or
-      coalesce(v.value->>'image_url','') !~ '^https://[^ ]+[.]svg([?][^ ]*)?$' or
-      v.value ? 'label') then return false;end if;
-  if (select count(distinct v.value->>'image_url') from jsonb_array_elements(p_options) v)<>4 then return false;end if;
-  return true;
- end if;
- return false;
-end $function$
-
-     or (p_solution->'flag_visual'->>'x')::int not between 10 and 90 then return false;end if;
-   if coalesce(p_solution->'flag_visual'->>'y','') !~ '^[0-9]{2}
-  if jsonb_typeof(p_solution->'option_labels')<>'array'
-     or jsonb_array_length(p_solution->'option_labels')<>4 then return false;end if;
-  if (select count(distinct btrim(x.value)) from jsonb_array_elements_text(p_solution->'option_labels') x)<>4 then return false;end if;
-  if exists(select 1 from jsonb_array_elements(p_options) o
-     where jsonb_typeof(o.value)<>'object' or o.value ? 'label'
-     or o.value->>'orientation' not in ('horizontal','vertical')
-     or jsonb_typeof(o.value->'stripes')<>'array'
-     or jsonb_array_length(o.value->'stripes') not between 2 and 4
-     or exists(select 1 from jsonb_array_elements_text(o.value->'stripes') s
-          where s.value !~ '^#[0-9a-fA-F]{6}')) then return false;end if;
-  if (select count(distinct value) from jsonb_array_elements(p_options))<>4 then return false;end if;
-  if (select count(distinct o.value->>'orientation') from jsonb_array_elements(p_options) o)<>1 then return false;end if;
-  return true;
- elsif v_mode='picker' then
-  if jsonb_typeof(p_solution->'option_labels')<>'array' or
-     jsonb_array_length(p_solution->'option_labels')<>4 then return false;end if;
-  if (select count(distinct lower(btrim(v.value))) from jsonb_array_elements_text(p_solution->'option_labels') v)<>4 then return false;end if;
-  if exists(select 1 from jsonb_array_elements(p_options) v
-      where jsonb_typeof(v.value)<>'object' or
-      coalesce(v.value->>'image_url','') !~ '^https://[^ ]+[.]svg([?][^ ]*)?$' or
-      v.value ? 'label') then return false;end if;
-  if (select count(distinct v.value->>'image_url') from jsonb_array_elements(p_options) v)<>4 then return false;end if;
-  return true;
- end if;
- return false;
-end $function$
-
-     or (p_solution->'flag_visual'->>'y')::int not between 10 and 90 then return false;end if;
-   if coalesce(p_solution->'flag_visual'->>'zoom','') !~ '^[1-4]([.][0-9]+)?
-  if jsonb_typeof(p_solution->'option_labels')<>'array'
-     or jsonb_array_length(p_solution->'option_labels')<>4 then return false;end if;
-  if (select count(distinct btrim(x.value)) from jsonb_array_elements_text(p_solution->'option_labels') x)<>4 then return false;end if;
-  if exists(select 1 from jsonb_array_elements(p_options) o
-     where jsonb_typeof(o.value)<>'object' or o.value ? 'label'
-     or o.value->>'orientation' not in ('horizontal','vertical')
-     or jsonb_typeof(o.value->'stripes')<>'array'
-     or jsonb_array_length(o.value->'stripes') not between 2 and 4
-     or exists(select 1 from jsonb_array_elements_text(o.value->'stripes') s
-          where s.value !~ '^#[0-9a-fA-F]{6}')) then return false;end if;
-  if (select count(distinct value) from jsonb_array_elements(p_options))<>4 then return false;end if;
-  if (select count(distinct o.value->>'orientation') from jsonb_array_elements(p_options) o)<>1 then return false;end if;
-  return true;
- elsif v_mode='picker' then
-  if jsonb_typeof(p_solution->'option_labels')<>'array' or
-     jsonb_array_length(p_solution->'option_labels')<>4 then return false;end if;
-  if (select count(distinct lower(btrim(v.value))) from jsonb_array_elements_text(p_solution->'option_labels') v)<>4 then return false;end if;
-  if exists(select 1 from jsonb_array_elements(p_options) v
-      where jsonb_typeof(v.value)<>'object' or
-      coalesce(v.value->>'image_url','') !~ '^https://[^ ]+[.]svg([?][^ ]*)?$' or
-      v.value ? 'label') then return false;end if;
-  if (select count(distinct v.value->>'image_url') from jsonb_array_elements(p_options) v)<>4 then return false;end if;
-  return true;
- end if;
- return false;
-end $function$
- then return false;end if;
-   if (p_solution->'flag_visual'->>'zoom')::numeric not between 1.5 and 4 then return false;end if;
-   if v_mode='fragments' and
-      (coalesce(p_solution->'flag_visual'->>'pixels','') !~ '^[0-9]{2}
-  if jsonb_typeof(p_solution->'option_labels')<>'array'
-     or jsonb_array_length(p_solution->'option_labels')<>4 then return false;end if;
-  if (select count(distinct btrim(x.value)) from jsonb_array_elements_text(p_solution->'option_labels') x)<>4 then return false;end if;
-  if exists(select 1 from jsonb_array_elements(p_options) o
-     where jsonb_typeof(o.value)<>'object' or o.value ? 'label'
-     or o.value->>'orientation' not in ('horizontal','vertical')
-     or jsonb_typeof(o.value->'stripes')<>'array'
-     or jsonb_array_length(o.value->'stripes') not between 2 and 4
-     or exists(select 1 from jsonb_array_elements_text(o.value->'stripes') s
-          where s.value !~ '^#[0-9a-fA-F]{6}')) then return false;end if;
-  if (select count(distinct value) from jsonb_array_elements(p_options))<>4 then return false;end if;
-  if (select count(distinct o.value->>'orientation') from jsonb_array_elements(p_options) o)<>1 then return false;end if;
-  return true;
- elsif v_mode='picker' then
-  if jsonb_typeof(p_solution->'option_labels')<>'array' or
-     jsonb_array_length(p_solution->'option_labels')<>4 then return false;end if;
-  if (select count(distinct lower(btrim(v.value))) from jsonb_array_elements_text(p_solution->'option_labels') v)<>4 then return false;end if;
-  if exists(select 1 from jsonb_array_elements(p_options) v
-      where jsonb_typeof(v.value)<>'object' or
-      coalesce(v.value->>'image_url','') !~ '^https://[^ ]+[.]svg([?][^ ]*)?$' or
-      v.value ? 'label') then return false;end if;
-  if (select count(distinct v.value->>'image_url') from jsonb_array_elements(p_options) v)<>4 then return false;end if;
-  return true;
- end if;
- return false;
-end $function$
-
-      or (p_solution->'flag_visual'->>'pixels')::int not between 14 and 48) then return false;end if;
-   return true;
  elsif v_mode='colors' then
   if jsonb_typeof(p_solution->'option_labels')<>'array'
      or jsonb_array_length(p_solution->'option_labels')<>4 then return false;end if;
