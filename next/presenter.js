@@ -111,7 +111,9 @@ function render(state){clearError();$('projectionRoom').textContent=state.code||
  q.kind==='video'?'<video class="projection-video" controls preload="metadata" src="'+escapeText(q.media_url)+'"></video>':
  '<div class="projection-media"><img src="'+escapeText(q.media_url)+'" alt="Иллюстрация к вопросу"></div>'):'')+
  '<div class="projection-options">'+(Array.isArray(q.options)?q.options:[]).map((v,i)=>
- '<div class="projection-option"><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+escapeText(v)+'</span></div>').join('')+'</div></section>';
+ '<div class="projection-option"><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+escapeText(v)+'</span></div>').join('')+'</div>'+
+ (q.kind==='match'?'<div class="projection-match-bank">'+(q.match_choices||[]).map(x=>'<span>'+escapeText(x)+'</span>').join('')+'</div>':'')+
+ '</section>';
 }
 async function refresh(){if(!ctx.client||!room||ctx.checking)return;ctx.checking=true;
  try{const {data,error}=await ctx.client.rpc('qwiz_public_screen',{p_code:room});if(error)throw Error(error.message);
