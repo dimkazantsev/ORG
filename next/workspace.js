@@ -213,7 +213,13 @@ function answerEditor(mode,question){
  }).join('');
  $('answerEditor').innerHTML='<div class="answer-fields"><span class="mini-label">'+title+'</span>'+content+
  '<label>Правильный вариант<select id="correctAnswer">'+Array.from({length:count},(_,i)=>'<option value="'+i+'" '+(Number(sol.correct||0)===i?'selected':'')+'>'+String.fromCharCode(65+i)+'</option>').join('')+'</select></label></div>'+
- (mode==='country'?'<label>SVG флага (HTTPS)<input id="questionMediaUrl" type="url" required placeholder="https://…/fr.svg" value="'+esc(sol.media_url||'')+'"></label>':
+ (['country','symbols','fragments'].includes(mode)?'<label>SVG флага (HTTPS)<input id="questionMediaUrl" type="url" required placeholder="https://…/fr.svg" value="'+esc(sol.media_url||'')+'"></label>'+
+ (['symbols','fragments'].includes(mode)?'<div class="visual-settings"><span class="mini-label">Как показывать флаг без раскрытия ответа</span>'+
+ (mode==='fragments'?'<label>Способ скрытия<select id="visualType"><option value="crop" '+(sol.flag_visual?.type!=='pixel'?'selected':'')+'>Фрагмент флага</option><option value="pixel" '+(sol.flag_visual?.type==='pixel'?'selected':'')+'>Пикселизация</option></select></label>':'<p class="small-help">Показываем увеличенный символ или герб. Выбирайте страны, где он действительно есть на флаге.</p>')+
+ '<div class="visual-fields"><label>Положение по горизонтали, %<input id="visualX" type="number" min="10" max="90" value="'+esc(sol.flag_visual?.x??50)+'"></label>'+
+ '<label>Положение по вертикали, %<input id="visualY" type="number" min="10" max="90" value="'+esc(sol.flag_visual?.y??50)+'"></label>'+
+ '<label>Увеличение фрагмента<input id="visualZoom" type="number" min="1.5" max="4" step="0.5" value="'+esc(sol.flag_visual?.zoom??2.5)+'"></label>'+
+ (mode==='fragments'?'<label>Размер блоков, пикселей<input id="visualPixels" type="number" min="14" max="48" value="'+esc(sol.flag_visual?.pixels??24)+'"></label>':'')+'</div></div>':''):
  '<p class="small-help">На экране студент увидит изображения без названий стран. Названия нужны только для проверки и раскрытия ответа.</p>');
 }
 function editQuestion(id=null){
@@ -250,7 +256,19 @@ async function saveQuestion(event){
  const solution={correct:Number($('correctAnswer').value),flag_mode:mode};
  if(mode==='picker'||mode==='colors')solution.option_labels=labels;
  const mediaUrl=$('questionMediaUrl')?.value.trim()||'';
- if(mode==='country'){if(!isUrl(mediaUrl)){msg('questionSaveMessage','Укажите HTTPS-ссылку на изображение флага.',true);return}solution.media_url=mediaUrl}
+ if(['country','symbols','fragments'].includes(mode)){
+  if(!isUrl(mediaUrl)){msg('questionSaveMessage','Укажите HTTPS-ссылку на изображение флага.',true);return}
+  solution.media_url=mediaUrl;
+  if(mode!=='country'){
+   const type=mode==='symbols'?'symbol':$('visualType').value;
+   const visual={type,x:Number($('visualX').value),y:Number($('visualY').value),zoom:Number($('visualZoom').value)};
+   if(mode==='fragments')visual.pixels=Number($('visualPixels').value);
+   if(!['symbol','crop','pixel'].includes(type)||visual.x<10||visual.x>90||visual.y<10||visual.y>90||visual.zoom<1.5||visual.zoom>4||!Number.isFinite(visual.zoom)||visual.pixels!==undefined&&(visual.pixels<14||visual.pixels>48)){
+    msg('questionSaveMessage','Некорректные настройки скрытого флага.',true);return;
+   }
+   solution.flag_visual=visual;
+  }
+ }
  const illustration=$('editIllustration').value.trim();
  if(illustration){if(!isUrl(illustration)){msg('questionSaveMessage','Для иллюстрации нужна HTTPS-ссылка.',true);return}solution.illustration_url=illustration}
  disable('questionSubmit',true);
@@ -288,7 +306,7 @@ function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{}
  $('cardOrder').value=s.order||'random';$('cardOffset').value=(s.offset||0)+1;
  $('cardTeamCap').value=s.team_cap||'';$('cardPlayerCap').value=s.player_cap||'';
  $('cardSound').value=s.sound||'fanfare';
- const selected=Array.isArray(s.flag_modes)&&s.flag_modes.length?s.flag_modes:['country','picker','colors'];
+ const selected=Array.isArray(s.flag_modes)&&s.flag_modes.length?s.flag_modes:flagModes.filter(x=>x[2]).map(x=>x[0]);
  $('cardFlagModes').innerHTML=flagModes.map(([id,name,ready])=>'<label class="check-row flag-mode-item '+(!ready?'unavailable':'')+'"><input type="checkbox" data-card-mode="'+esc(id)+'" '+(selected.includes(id)&&ready?'checked ':'')+(ready?'':'disabled ')+'><span>'+esc(name)+(ready?'':' · скоро')+'</span></label>').join('');
  $('cardModesInfo').textContent=selected.length===1?'Одна механика':selected.length===2?'Две механики':'Все доступные механики';
  $('cardModesDetails').open=false;
@@ -306,7 +324,7 @@ function saveCard(event){event.preventDefault();const c=state.cards[state.editin
   order:$('cardOrder').value,offset:Math.max(0,Number($('cardOffset').value)-1),
   team_cap:$('cardTeamCap').value?Number($('cardTeamCap').value):null,
   player_cap:$('cardPlayerCap').value?Number($('cardPlayerCap').value):null,
-  sound:$('cardSound').value,lead_seconds:5,flag_modes:selected.length===3?[]:selected};
+  sound:$('cardSound').value,lead_seconds:5,flag_modes:selected.length===flagModes.filter(x=>x[2]).length?[]:selected};
  $('cardDialog').close();renderCards()}
 function generalSettings(){
  const first=state.cards.find(c=>c.type==='round')?.settings||buildDefaults;
