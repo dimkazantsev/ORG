@@ -142,7 +142,7 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  if(s.phase==='countdown'){
    el.innerHTML='<div class="game-empty"><div class="eyebrow">НОВЫЙ РАУНД</div><h1>Скоро начнём!</h1><p>Вопрос откроется на всех устройствах через <strong id="playerCountdown">'+remaining(s.ends_at)+'</strong> сек.</p></div>';
    text('playerStatus','Общий обратный отсчёт перед раундом.');
-   if(remaining(s.ends_at)===0)rpc('qwiz_release_countdown',{p_code:s.code}).then(()=>scheduleRefresh(350)).catch(()=>{});
+   // The projector releases promptly; players use a staggered fallback to avoid a simultaneous 40-client burst.
    return;
  }
  if(!question){el.innerHTML='<p class="placeholder">Ожидаем вопрос.</p>';return}
@@ -206,9 +206,12 @@ function exportResults(){const s=ctx.room;if(!s)return;const rows=[['Место'
 async function copyInvite(){if(!ctx.roomCode)return;const invite=joinUrl(ctx.roomCode);try{await navigator.clipboard.writeText(invite);notice('hostNotice','Ссылка скопирована.','success')}catch{notice('hostNotice','Ссылка для приглашения: '+invite)}}
 function updateClocks(){if(ctx.room?.phase==='countdown'){
    const n=remaining(ctx.room.ends_at);text('playerCountdown',n);
-   if(n===0 && Date.now()-ctx.releaseAttemptAt>3000){
-    ctx.releaseAttemptAt=Date.now();
-    rpc('qwiz_release_countdown',{p_code:ctx.roomCode}).then(()=>scheduleRefresh(300)).catch(()=>{});
+   if(n===0 && !ctx.releaseTimer){
+    ctx.releaseTimer=setTimeout(()=>{
+     ctx.releaseTimer=null;
+     if(ctx.room?.phase!=='countdown')return;
+     rpc('qwiz_release_countdown',{p_code:ctx.roomCode}).then(()=>scheduleRefresh(400)).catch(()=>{});
+    },1500+Math.floor(Math.random()*2700));
    }
    return;
  }
@@ -274,7 +277,7 @@ function attach(){q('#logoHome').addEventListener('click',home);
  $('leaveGame').onclick=()=>{cleanupRoom();home()};
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ctx.roomCode)scheduleRefresh(200)});
  addQuestion();
- setInterval(()=>{if(ctx.roomCode&&!document.hidden)refreshRoom(false)},12000);
+ setInterval(()=>{if(ctx.roomCode&&!document.hidden)refreshRoom(false)},20000);
  ctx.clock=setInterval(updateClocks,500);
  renderQrPanels();
  const incoming=new URLSearchParams(location.search).get('room');
