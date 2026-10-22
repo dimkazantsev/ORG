@@ -42,3 +42,10 @@
 .team-board-global:hover .team-board-qr,.team-board-global:focus-visible .team-board-qr{transform:scale(1.11)}
 .team-board-global .team-board-qr :is(canvas,img){image-rendering:pixelated;max-width:100%}
 @media(prefers-reduced-motion:reduce){.team-board-global .team-board-qr{transition:none!important;transform:none!important}}
+
+/* Preserve existing team/avatar sizing after restoring the illustrated animal sprites. */
+.team-card-head>.animal-medallion{width:64px;height:64px;flex:none}
+.my-team-identity>.animal-medallion{width:52px;height:52px;flex:none}
+.team-dialog-identity>.animal-medallion{width:58px;height:58px;flex:none}
+.team-board-heading .animal-medallion{width:44px;height:44px;flex:none}
+@media(min-width:1280px){.team-board:has(.team-board-card:nth-child(11)) .team-board-heading .animal-medallion{width:32px;height:32px}}
