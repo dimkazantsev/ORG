@@ -445,13 +445,7 @@ function wire(){
  $('savedBuilds').onclick=e=>{const d=e.target.closest('[data-delete-build]');if(d){deleteBuild(d.dataset.deleteBuild);return}
   const b=e.target.closest('[data-load-build]');if(b)loadBuild(b.dataset.loadBuild)};
  $('launchButton').onclick=launch;$('reloadRooms').onclick=loadRooms;
- $('shuffleTeams').onclick=()=>teamAdmin('shuffle',{count:Number($('teamCount').value),mode:$('teamMode').value});
- $('applyTeamSettings').onclick=()=>teamAdmin('settings',{count:Number($('teamCount').value),mode:$('teamMode').value});
- $('refreshRoomContent').onclick=()=>teamAdmin('refresh_content');
- teamDragBind($('teamGrid'));teamDragBind($('teamPool'));
- $('teamGrid').onclick=e=>{const b=e.target.closest('[data-team-qr]');if(!b||!state.room||!window.QwizTeams)return;
-  const team=(state.room.teams||[]).find(t=>t.id===b.dataset.teamQr);if(team)QwizTeams.showQr({code:state.roomCode,team});
- };
+ // Team setup handlers are owned by workspace-teams.js; no duplicate listeners here.
  $('hostRoomList').onclick=e=>{const d=e.target.closest('[data-delete-room]');if(d){deleteRoom(d.dataset.deleteRoom);return}
   const b=e.target.closest('[data-room]');if(b)selectRoom(b.dataset.room)};
  $('liveStart').onclick=()=>control('start');$('liveReveal').onclick=()=>control('reveal');
