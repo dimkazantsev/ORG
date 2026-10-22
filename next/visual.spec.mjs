@@ -15,7 +15,7 @@ for(const width of [390,768,1440]){
   await expect(page.getByRole('button',{name:'Присоединиться к игре'})).toBeVisible();
   const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
   expect(overflow).toBeLessThanOrEqual(2);
-  await page.screenshot({path:'visual-artifacts/home-'+width+'.png',fullPage:true});
+  await page.screenshot({path:'visual-artifacts/home-'+width+'.png',fullPage:true,animations:'disabled'});
  });
 }
 
@@ -39,7 +39,7 @@ test('Studio workspace remains usable at 390px',async({page})=>{
  await expect(page.locator('#studioView')).toBeVisible();
  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
  expect(overflow).toBeLessThanOrEqual(2);
- await page.screenshot({path:'visual-artifacts/studio-390.png',fullPage:true});
+ await page.screenshot({path:'visual-artifacts/studio-390.png',fullPage:true,animations:'disabled'});
 });
 
 test('Question options remain touch-sized at 390px',async({page})=>{
@@ -56,7 +56,7 @@ test('Question options remain touch-sized at 390px',async({page})=>{
  expect(Math.min(...heights)).toBeGreaterThanOrEqual(44);
  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
  expect(overflow).toBeLessThanOrEqual(2);
- await page.screenshot({path:'visual-artifacts/game-390.png',fullPage:true});
+ await page.screenshot({path:'visual-artifacts/game-390.png',fullPage:true,animations:'disabled'});
 });
 
 test('Home QR is generated locally and can be enlarged',async({page})=>{
@@ -86,7 +86,7 @@ test('Projection screen only renders questions and never host controls',async({p
  await expect(page.locator('#hostControls')).toHaveCount(0);
  await expect(page.locator('#hostTeams')).toHaveCount(0);
  await expect(page.locator('#loginEmail')).toHaveCount(0);
- await page.screenshot({path:'visual-artifacts/presenter-1440.png',fullPage:true});
+ await page.screenshot({path:'visual-artifacts/presenter-1440.png',fullPage:true,animations:'disabled'});
 });
 
 test('Welcome pairs one entry form with a compact phone entry below the introduction',async({page})=>{
@@ -149,7 +149,7 @@ test('Every redesigned screen fits small phones, tablets and desktops',async({pa
   for(const width of [320,375,768,1024,1440]){
    await page.setViewportSize({width,height:920});
    expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth),route+' at '+width).toBeLessThanOrEqual(2);
-   if(width===1440||width===375)await page.screenshot({path:'visual-artifacts/lavender-'+(route||'home').replace('.html','')+'-'+width+'.png',fullPage:true});
+   if(width===1440||width===375)await page.screenshot({path:'visual-artifacts/lavender-'+(route||'home').replace('.html','')+'-'+width+'.png',fullPage:true,animations:'disabled'});
   }
  }
 });
@@ -187,7 +187,7 @@ test('Classic entry retains its form and new studio link',async({page})=>{
  const hero=await page.locator('.hero-card').boundingBox(),form=await page.locator('#homeAccess').boundingBox();
  expect(form.x).toBeGreaterThan(hero.x+hero.width);
  expect(Math.abs(form.y-hero.y)).toBeLessThan(5);
- await page.screenshot({path:'visual-artifacts/classic-lavender-1440.png',fullPage:true});
+ await page.screenshot({path:'visual-artifacts/classic-lavender-1440.png',fullPage:true,animations:'disabled'});
 });
 
 test('Bank renders realistic long questions without overflowing on phones',async({page})=>{
@@ -211,7 +211,7 @@ test('Bank renders realistic long questions without overflowing on phones',async
  for(const width of [375,1440]){
   await page.setViewportSize({width,height:920});
   expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
-  await page.screenshot({path:'visual-artifacts/bank-fixture-'+width+'.png',fullPage:true});
+  await page.screenshot({path:'visual-artifacts/bank-fixture-'+width+'.png',fullPage:true,animations:'disabled'});
  }
 });
 
@@ -231,8 +231,8 @@ test('Standalone teacher workspace is responsive and has two library sections',a
    await expect(page.locator('#bankSearch')).toBeVisible();
    const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
    expect(overflow).toBeLessThanOrEqual(2);
-   if(width===390)await page.screenshot({path:'visual-artifacts/workspace-390.png',fullPage:true});
-   if(width===1440)await page.screenshot({path:'visual-artifacts/workspace-1440.png',fullPage:true});
+   if(width===390)await page.screenshot({path:'visual-artifacts/workspace-390.png',fullPage:true,animations:'disabled'});
+   if(width===1440)await page.screenshot({path:'visual-artifacts/workspace-1440.png',fullPage:true,animations:'disabled'});
  }
  await page.locator('[data-section="builder"]').click();
  await page.locator('#newBuild').click();
@@ -257,7 +257,7 @@ test('Student can see registration and twelve animal avatars',async({page})=>{
  await page.locator('#authRegisterTab').click();
  await expect(page.locator('#registerPanel')).toBeVisible();
  await expect(page.locator('#registerAvatars [data-avatar]')).toHaveCount(12);
- await page.screenshot({path:'visual-artifacts/profile-390.png',fullPage:true});
+ await page.screenshot({path:'visual-artifacts/profile-390.png',fullPage:true,animations:'disabled'});
 });
 test('Public display renders server countdown but no answers or admin controls',async({page})=>{
  await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({
@@ -268,7 +268,7 @@ test('Public display renders server countdown but no answers or admin controls',
  await expect(page.locator('.countdown-number')).toBeVisible();
  await expect(page.locator('#hostControls')).toHaveCount(0);
  await expect(page.locator('.projection-question')).toHaveCount(0);
- await page.screenshot({path:'visual-artifacts/countdown-1440.png',fullPage:true});
+ await page.screenshot({path:'visual-artifacts/countdown-1440.png',fullPage:true,animations:'disabled'});
 });
 
 test('Multiple-choice, matching, order and free text are playable at phone size',async({page})=>{
@@ -295,7 +295,7 @@ test('Multiple-choice, matching, order and free text are playable at phone size'
   if(question.kind==='number')await expect(page.locator('#richTextAnswer')).toBeVisible();
   if(question.kind==='hotspot')await expect(page.locator('#richSpot')).toBeVisible();
  }
- await page.screenshot({path:'visual-artifacts/rich-game-390.png',fullPage:true});
+ await page.screenshot({path:'visual-artifacts/rich-game-390.png',fullPage:true,animations:'disabled'});
 });
 test('Question editor captures new game mechanics without hidden correct-answer defaults',async({page})=>{
  await page.goto('http://127.0.0.1:8080/next/workspace.html');
@@ -368,9 +368,9 @@ test('Saved teacher session keeps entry on reload and opens cabinet only by choi
  await expect(page.locator('#hostSession')).toBeVisible();
  await expect(page.locator('#roleHost')).toHaveAttribute('aria-selected','true');
  await page.setViewportSize({width:1440,height:900});
- await page.screenshot({path:'visual-artifacts/entry-saved-teacher-1440.png',fullPage:true});
+ await page.screenshot({path:'visual-artifacts/entry-saved-teacher-1440.png',fullPage:true,animations:'disabled'});
  await page.setViewportSize({width:375,height:844});
- await page.screenshot({path:'visual-artifacts/entry-saved-teacher-375.png',fullPage:true});
+ await page.screenshot({path:'visual-artifacts/entry-saved-teacher-375.png',fullPage:true,animations:'disabled'});
  await page.getByRole('link',{name:'Открыть кабинет'}).click();
  await expect(page).toHaveURL(/workspace\.html$/);
  await expect(page.locator('#connText')).toContainText('Кабинет подключён');
