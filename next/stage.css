@@ -79,3 +79,11 @@
 .flag-question-frame{box-sizing:border-box;max-width:100%;min-width:0}
 .flag-question-frame .question-picture{box-sizing:border-box;aspect-ratio:auto;width:100%;max-width:100%;min-width:0;min-height:0;height:clamp(160px,38vw,260px)}
 .flag-question-frame .flag-visual-frame{box-sizing:border-box;flex:1 1 auto;width:100%;max-width:480px;min-width:0;height:100%}
+
+/* Unified clean outline icon system, shared by studio / player / public screen. */
+.unified-icon{display:inline-block;width:20px;height:20px;flex:none;vertical-align:middle;stroke-width:1.8;overflow:visible}
+button:has(>.unified-icon){display:inline-flex;align-items:center;justify-content:center;gap:9px}
+button:has(>.unified-icon) .unified-icon{pointer-events:none}
+.flag-choice-with-label{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;min-width:0;width:100%}
+.flag-choice-with-label .flag-choice-art{max-width:100%;object-fit:contain}
+.flag-choice-label{display:block;max-width:100%;font-size:clamp(12px,1.6vw,16px);line-height:1.35;font-weight:700;text-align:center;overflow-wrap:anywhere}
