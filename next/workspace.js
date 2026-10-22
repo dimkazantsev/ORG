@@ -73,7 +73,7 @@ function renderTopics(){
  $('topicChips').innerHTML=items.map(t=>'<button type="button" class="topic-chip '+($('bankTopic').value===t.id?'current':'')+'" data-topic="'+esc(t.id)+'">'+esc(t.name)+'</button>').join('');
 }
 async function loadQuestions(){
- const input={search:$('bankSearch').value.trim().slice(0,90),topic_id:$('bankTopic').value,kind:'flag',sort:$('bankSort').value,offset:state.bankOffset,limit:state.bankPageSize};
+ const input={search:$('bankSearch').value.trim().slice(0,90),topic_id:$('bankTopic').value,kind:'flag',mode:$('bankMode').value,sort:$('bankSort').value,offset:state.bankOffset,limit:state.bankPageSize};
  try{const data=await studio('questions',input);state.questions=data.items||[];state.questionTotal=data.total||0;
   $('navQuestionCount').textContent=fmt(state.questionTotal);$('questionsTotal').textContent='('+fmt(state.questionTotal)+')';
   const totalPages=Math.max(1,Math.ceil(state.questionTotal/state.bankPageSize));
@@ -86,7 +86,7 @@ async function loadQuestions(){
 function renderQuestions(){
  $('bankItems').innerHTML=state.questions.length?state.questions.map(q=>'<article class="question-row">'+
   '<div><div class="question-meta"><span class="chip">'+esc(titleKind(q.solution?.flag_mode))+'</span><span class="chip lilac">'+esc(nameTopic(q.topic_id))+'</span><span class="chip">★ '+esc(q.difficulty)+'</span></div>'+
-  '<h3>'+esc(q.prompt)+'</h3><p>'+('Флаги мира · серверная проверка ответа')+'</p></div>'+
+  '<h3>'+esc(q.prompt)+'</h3><p>'+(q.tags?.includes('fw:published')?'Проверен · доступен для игры':'Черновик · не участвует в раундах')+'</p></div>'+
   '<button class="small-button" data-edit-question="'+esc(q.id)+'">Изменить</button></article>').join(''):
   '<div class="empty">Вопросов пока нет. Выберите тему и добавьте первый вопрос.</div>';
  if(state.activePage==='bank')animateView($('bankItems'),[{opacity:.35,transform:'translateY(12px)'},{opacity:1,transform:'translateY(0)'}],{duration:420});
@@ -158,14 +158,14 @@ async function saveQuestion(event){
  finally{disable('questionSubmit',false)}
 }
 function card(type){return {type,title:titles[type]||'Раунд',icon:icons[type]||'◫',topic_id:null,
- settings:{...buildDefaults}}}
+ settings:{...buildDefaults,flag_modes:[]}}}
 function ensureFinale(){state.cards=state.cards.filter((c,i)=>c.type!=='finale'||i===state.cards.length-1);
  if(!state.cards.some(c=>c.type==='finale'))state.cards.push(card('finale'))}
 function newBuild(){state.buildId=null;state.cards=[card('intro'),card('round'),card('finale')];$('buildTitle').value='';$('composer').hidden=false;renderCards();$('buildTitle').focus()}
 function appendCard(type='round'){if(state.cards.length>=60){msg('buildMessage','Не больше 60 карточек.',true);return}
  state.cards.splice(Math.max(0,state.cards.length-1),0,card(type));renderCards()}
 function cardDesc(c){const settings=c.settings||{};
- if(c.type==='round')return (c.topic_id?nameTopic(c.topic_id):'Тема не выбрана')+' · '+(settings.count||5)+' вопр. · '+(settings.seconds||30)+' сек. · ответ '+(settings.answer_seconds||10)+' сек.';
+ if(c.type==='round')return (c.topic_id?nameTopic(c.topic_id):'Тема не выбрана')+' · '+(Array.isArray(settings.flag_modes)&&settings.flag_modes.length?settings.flag_modes.map(titleKind).join(', '):'Все доступные механики')+' · '+(settings.count||5)+' вопр. · '+(settings.seconds||30)+' сек.';
  if(c.type==='finale')return 'Команды, личный рейтинг и вопросы, которые запомнились';
  return 'Дополнительная активность · настройки в карточке'}
 function renderCards(){ensureFinale();$('roundCards').innerHTML=state.cards.map((c,i)=>{
@@ -182,14 +182,25 @@ function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{}
  $('cardOrder').value=s.order||'random';$('cardOffset').value=(s.offset||0)+1;
  $('cardTeamCap').value=s.team_cap||'';$('cardPlayerCap').value=s.player_cap||'';
  $('cardSound').value=s.sound||'fanfare';
+ const selected=Array.isArray(s.flag_modes)&&s.flag_modes.length?s.flag_modes:['country','picker'];
+ $('cardFlagModes').innerHTML=flagModes.map(([id,name,ready])=>'<label class="check-row flag-mode-item '+(!ready?'unavailable':'')+'"><input type="checkbox" data-card-mode="'+esc(id)+'" '+(selected.includes(id)&&ready?'checked ':'')+(ready?'':'disabled ')+'><span>'+esc(name)+(ready?'':' · скоро')+'</span></label>').join('');
+ $('cardModesInfo').textContent=selected.length===1?'Одна механика':selected.length===2?'Две механики':'Выбранные механики';
+ $('cardModesDetails').open=false;
  $('cardDialog').showModal()}
-function saveCard(event){event.preventDefault();const c=state.cards[state.editingCard];c.title=$('cardTitle').value.trim();
+function saveCard(event){event.preventDefault();const c=state.cards[state.editingCard];
+ const selected=all('[data-card-mode]:checked',$('cardFlagModes')).map(x=>x.dataset.cardMode);
+ if(c.type==='round'&&!selected.length){
+  const first=$('cardFlagModes').querySelector('[data-card-mode]:not(:disabled)');
+  first?.setCustomValidity('Выберите хотя бы одну доступную механику');first?.reportValidity();
+  first?.addEventListener('change',()=>first.setCustomValidity(''),{once:true});return;
+ }
+ c.title=$('cardTitle').value.trim();
  c.topic_id=$('cardTopic').value||null;c.icon=$('cardIcon').value||icons[c.type]||'▦';
  c.settings={...c.settings,count:Number($('cardCount').value),seconds:Number($('cardSeconds').value),answer_seconds:Number($('cardAnswerSeconds').value),
   order:$('cardOrder').value,offset:Math.max(0,Number($('cardOffset').value)-1),
   team_cap:$('cardTeamCap').value?Number($('cardTeamCap').value):null,
   player_cap:$('cardPlayerCap').value?Number($('cardPlayerCap').value):null,
-  sound:$('cardSound').value,lead_seconds:5};
+  sound:$('cardSound').value,lead_seconds:5,flag_modes:selected.length===2?[]:selected};
  $('cardDialog').close();renderCards()}
 function generalSettings(){
  const first=state.cards.find(c=>c.type==='round')?.settings||buildDefaults;
@@ -295,7 +306,7 @@ function wire(){
  $('refreshAll').onclick=refreshWorkspace;
  document.addEventListener('keydown',event=>{if(event.key!=='/'||event.ctrlKey||event.metaKey||event.altKey||event.target.closest('input,textarea,select,[contenteditable="true"]')||document.querySelector('dialog[open]')||state.activePage!=='bank')return;event.preventDefault();$('bankSearch').focus()});
  $('bankSearch').oninput=()=>{clearTimeout(state.bankTimer);state.bankOffset=0;state.bankTimer=setTimeout(loadQuestions,350)};
- for(const id of ['bankTopic','bankSort'])$(id).onchange=()=>{state.bankOffset=0;loadQuestions()};
+ for(const id of ['bankTopic','bankMode','bankSort'])$(id).onchange=()=>{state.bankOffset=0;loadQuestions()};
  $('topicChips').onclick=e=>{const b=e.target.closest('[data-topic]');if(!b)return;$('bankTopic').value=b.dataset.topic;state.bankOffset=0;loadQuestions()};
  $('bankPrevious').onclick=()=>{state.bankOffset=Math.max(0,state.bankOffset-state.bankPageSize);loadQuestions()};
  $('bankNext').onclick=()=>{if(state.bankOffset+state.bankPageSize<state.questionTotal){state.bankOffset+=state.bankPageSize;loadQuestions()}};
@@ -336,6 +347,7 @@ function wire(){
 }
 async function init(){
  wire();animatePage($('bankPage'));
+ fillSelect($('bankMode'),flagModes.map(([id,title])=>[id,title]),'Все механики');
  const select=$('editKind');
  select.replaceChildren();
  for(const [id,label,ready] of flagModes){
