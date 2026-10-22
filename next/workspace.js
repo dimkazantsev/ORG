@@ -104,7 +104,7 @@ function answerEditor(mode,question){
   const item=opts[i];
   if(mode==='picker'){
    const url=typeof item==='object'&&item?item.image_url||'':'';
-   const label=typeof item==='object'&&item?item.label||'':'';
+   const label=sol.option_labels?.[i]||((typeof item==='object'&&item)?item.label||'':'');
    return '<div class="flag-option-editor"><label>Флаг '+String.fromCharCode(65+i)+' · HTTPS-ссылка на SVG<input data-flag-image="'+i+'" type="url" required value="'+esc(url)+'" placeholder="https://…/fr.svg"></label><label>Страна на флаге '+String.fromCharCode(65+i)+'<input data-flag-label="'+i+'" required maxlength="100" value="'+esc(label)+'" placeholder="Название для проверки и разбора"></label></div>';
   }
   return '<label>'+String.fromCharCode(65+i)+' · страна<input data-option="'+i+'" required maxlength="120" value="'+esc(typeof item==='string'?item:'')+'" placeholder="Название страны"></label>';
@@ -132,10 +132,9 @@ async function saveQuestion(event){
  const mode=$('editKind').value;
  if(!flagModes.some(([id,,ready])=>id===mode&&ready)){msg('questionSaveMessage','Эта механика ещё не подключена к игровому движку.',true);return}
  const isUrl=value=>/^https:\/\/[^/?#]+\/\S+$/i.test(value);
- const options=mode==='picker'?all('[data-flag-image]',$('answerEditor')).map((input,i)=>({
-  image_url:input.value.trim(),label:all('[data-flag-label]',$('answerEditor'))[i].value.trim()
- })):all('[data-option]',$('answerEditor')).map(input=>input.value.trim());
- const labels=options.map(v=>typeof v==='string'?v:v.label);
+ const options=mode==='picker'?all('[data-flag-image]',$('answerEditor')).map(input=>({image_url:input.value.trim()})):
+  all('[data-option]',$('answerEditor')).map(input=>input.value.trim());
+ const labels=mode==='picker'?all('[data-flag-label]',$('answerEditor')).map(input=>input.value.trim()):options;
  if(options.length!==4||labels.some(v=>!v)||new Set(labels.map(x=>x.toLocaleLowerCase('ru-RU'))).size!==4){
   msg('questionSaveMessage','Нужно четыре разных и заполненных варианта.',true);return
  }
@@ -143,6 +142,7 @@ async function saveQuestion(event){
   msg('questionSaveMessage','Для каждого варианта нужна своя корректная HTTPS-ссылка на флаг.',true);return
  }
  const solution={correct:Number($('correctAnswer').value),flag_mode:mode};
+ if(mode==='picker')solution.option_labels=labels;
  const mediaUrl=$('questionMediaUrl')?.value.trim()||'';
  if(mode==='country'){if(!isUrl(mediaUrl)){msg('questionSaveMessage','Укажите HTTPS-ссылку на изображение флага.',true);return}solution.media_url=mediaUrl}
  const illustration=$('editIllustration').value.trim();
