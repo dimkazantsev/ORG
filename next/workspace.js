@@ -136,6 +136,18 @@ async function saveTopic(e){e.preventDefault();
 function answerEditor(mode,question){
  const opts=question?.options||[],sol=question?.solution||{};
  const count=4;
+ if(mode==='colors'){
+  const orientation=opts[0]?.orientation||'horizontal';
+  const sequence=Array.from({length:4},(_,i)=>{
+   const colors=Array.isArray(opts[i]?.stripes)?opts[i].stripes:['#000000','#dd0000','#ffce00'];
+   return '<div class="color-answer-row"><strong>Вариант '+String.fromCharCode(65+i)+'</strong>'+
+    '<div class="color-chip-inputs">'+colors.slice(0,3).map((color,j)=>'<label>Полоса '+(j+1)+'<input type="color" data-stripe="'+i+':'+j+'" value="'+esc(/^#[0-9a-f]{6}$/i.test(color)?color:'#000000')+'" aria-label="Вариант '+String.fromCharCode(65+i)+', полоса '+(j+1)+'"></label>').join('')+'</div>'+
+    '<label>Описание последовательности для показа ответа<input data-color-label="'+i+'" maxlength="120" required value="'+esc(sol.option_labels?.[i]||'')+'" placeholder="Например: чёрный — красный — жёлтый"></label></div>';
+  }).join('');
+  $('answerEditor').innerHTML='<div class="answer-fields"><label>Направление полос<select id="colorOrientation"><option value="horizontal" '+(orientation==='horizontal'?'selected':'')+'>Горизонтальные · сверху вниз</option><option value="vertical" '+(orientation==='vertical'?'selected':'')+'>Вертикальные · слева направо</option></select></label><p class="small-help">Задайте для каждого варианта три цветные полосы. Студенты увидят цвета, а не текст подсказок.</p>'+sequence+
+   '<label>Правильный вариант<select id="correctAnswer">'+Array.from({length:4},(_,i)=>'<option value="'+i+'" '+(Number(sol.correct||0)===i?'selected':'')+'>'+String.fromCharCode(65+i)+'</option>').join('')+'</select></label></div>';
+  return;
+ }
  const title=mode==='picker'?'Флаги — варианты ответа':'Страны — варианты ответа';
  const content=Array.from({length:count},(_,i)=>{
   const item=opts[i];
@@ -156,7 +168,7 @@ function editQuestion(id=null){
  if(question&&question.kind!=='flag'){msg('bankMessage','Этот старый формат не доступен в новой библиотеке.',true);return}
  state.editingQuestion=question?.id||null;
  $('questionDialogTitle').textContent=question?'Редактирование вопроса':'Создание вопроса';
- $('editKind').value=question?.solution?.flag_mode==='picker'?'picker':'country';
+ $('editKind').value=flagModes.some(x=>x[0]===question?.solution?.flag_mode&&x[2])?question.solution.flag_mode:'country';
  $('editTopic').value=question?.topic_id||state.topics.find(t=>t.name==='Флаги мира')?.id||'';
  $('editPrompt').value=question?.prompt||'';
  $('editIllustration').value=question?.solution?.illustration_url||'';
@@ -169,9 +181,13 @@ async function saveQuestion(event){
  const mode=$('editKind').value;
  if(!flagModes.some(([id,,ready])=>id===mode&&ready)){msg('questionSaveMessage','Эта механика ещё не подключена к игровому движку.',true);return}
  const isUrl=value=>/^https:\/\/[^/?#]+\/\S+$/i.test(value);
- const options=mode==='picker'?all('[data-flag-image]',$('answerEditor')).map(input=>({image_url:input.value.trim()})):
+ const options=mode==='colors'?Array.from({length:4},(_,i)=>({
+  orientation:$('colorOrientation').value,
+  stripes:all('[data-stripe]',$('answerEditor')).filter(input=>input.dataset.stripe.startsWith(i+':')).map(input=>input.value)
+ })):mode==='picker'?all('[data-flag-image]',$('answerEditor')).map(input=>({image_url:input.value.trim()})):
   all('[data-option]',$('answerEditor')).map(input=>input.value.trim());
- const labels=mode==='picker'?all('[data-flag-label]',$('answerEditor')).map(input=>input.value.trim()):options;
+ const labels=mode==='colors'?all('[data-color-label]',$('answerEditor')).map(input=>input.value.trim()):
+  mode==='picker'?all('[data-flag-label]',$('answerEditor')).map(input=>input.value.trim()):options;
  if(options.length!==4||labels.some(v=>!v)||new Set(labels.map(x=>x.toLocaleLowerCase('ru-RU'))).size!==4){
   msg('questionSaveMessage','Нужно четыре разных и заполненных варианта.',true);return
  }
@@ -179,7 +195,7 @@ async function saveQuestion(event){
   msg('questionSaveMessage','Для каждого варианта нужна своя корректная HTTPS-ссылка на флаг.',true);return
  }
  const solution={correct:Number($('correctAnswer').value),flag_mode:mode};
- if(mode==='picker')solution.option_labels=labels;
+ if(mode==='picker'||mode==='colors')solution.option_labels=labels;
  const mediaUrl=$('questionMediaUrl')?.value.trim()||'';
  if(mode==='country'){if(!isUrl(mediaUrl)){msg('questionSaveMessage','Укажите HTTPS-ссылку на изображение флага.',true);return}solution.media_url=mediaUrl}
  const illustration=$('editIllustration').value.trim();
@@ -219,9 +235,9 @@ function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{}
  $('cardOrder').value=s.order||'random';$('cardOffset').value=(s.offset||0)+1;
  $('cardTeamCap').value=s.team_cap||'';$('cardPlayerCap').value=s.player_cap||'';
  $('cardSound').value=s.sound||'fanfare';
- const selected=Array.isArray(s.flag_modes)&&s.flag_modes.length?s.flag_modes:['country','picker'];
+ const selected=Array.isArray(s.flag_modes)&&s.flag_modes.length?s.flag_modes:['country','picker','colors'];
  $('cardFlagModes').innerHTML=flagModes.map(([id,name,ready])=>'<label class="check-row flag-mode-item '+(!ready?'unavailable':'')+'"><input type="checkbox" data-card-mode="'+esc(id)+'" '+(selected.includes(id)&&ready?'checked ':'')+(ready?'':'disabled ')+'><span>'+esc(name)+(ready?'':' · скоро')+'</span></label>').join('');
- $('cardModesInfo').textContent=selected.length===1?'Одна механика':selected.length===2?'Две механики':'Выбранные механики';
+ $('cardModesInfo').textContent=selected.length===1?'Одна механика':selected.length===2?'Две механики':'Все доступные механики';
  $('cardModesDetails').open=false;
  $('cardDialog').showModal()}
 function saveCard(event){event.preventDefault();const c=state.cards[state.editingCard];
@@ -237,7 +253,7 @@ function saveCard(event){event.preventDefault();const c=state.cards[state.editin
   order:$('cardOrder').value,offset:Math.max(0,Number($('cardOffset').value)-1),
   team_cap:$('cardTeamCap').value?Number($('cardTeamCap').value):null,
   player_cap:$('cardPlayerCap').value?Number($('cardPlayerCap').value):null,
-  sound:$('cardSound').value,lead_seconds:5,flag_modes:selected.length===2?[]:selected};
+  sound:$('cardSound').value,lead_seconds:5,flag_modes:selected.length===3?[]:selected};
  $('cardDialog').close();renderCards()}
 function generalSettings(){
  const first=state.cards.find(c=>c.type==='round')?.settings||buildDefaults;
