@@ -16,7 +16,7 @@ async function fits(page){
  const overflow=await page.locator('#gameContent').evaluate(el=>{const box=el.getBoundingClientRect();return Array.from(el.querySelectorAll('h1,.question-picture,.option,.rich-choice,.rich-row,.rich-send,.assembly-preview,.player-answer')).filter(x=>x.getClientRects().length&&getComputedStyle(x).visibility!=='hidden').map(x=>{const r=x.getBoundingClientRect();return {tag:x.className||x.tagName,bottom:r.bottom-box.bottom,right:r.right-box.right,left:box.left-r.left,overflow:x.scrollHeight-x.clientHeight}}).filter(x=>Math.max(x.bottom,x.right,x.left,x.overflow)>2)});
  expect(overflow).toEqual([]);
 }
-for(const [width,height] of [[320,480],[320,568],[390,844],[768,1024],[667,375]])test('All flag answers fit one screen at '+width+'×'+height,async({page})=>{
+for(const [width,height] of [[320,480],[320,568],[390,844],[768,1024],[667,375],[568,320]])test('All flag answers fit one screen at '+width+'×'+height,async({page})=>{
  await page.setViewportSize({width,height});await setup(page);
  for(const mode of ['similar','assemble','multiple','memory','geo','history']){
   const row=rows.find(x=>x.mode===mode),q={kind:row.kind,prompt:row.prompt,options:row.options,media_url:row.solution.media_url,flag_memory:row.solution.flag_memory,flag_assembly:row.solution.flag_assembly,memory_until:new Date(Date.now()-1).toISOString()};
