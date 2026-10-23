@@ -81,11 +81,11 @@
    '<div class="geo-progress"><span style="width:'+Math.min(100,100*v.index/Math.max(1,v.total))+'%"></span></div>'+
    (done?'<div class="geo-done"><h2>'+(v.finished?'Готово!':'Время вышло')+'</h2><p>Верно: '+v.correct+' из '+v.total+'. Баллы сохранены на сервере.</p></div>':
    '<h2>'+esc(prompt(q))+'</h2>'+hint+img+
-   (geometry&&qmode==='silhouette'?mapMarkup(q.region,false,true):mapMarkup(qmode==='identify'?q.region:null,interactive))+
+   (t.mapError?'<div class="geo-map-loading">Не удалось загрузить карту. <button type="button" data-geo-map-retry>Повторить загрузку</button></div>':(geometry&&qmode==='silhouette'?mapMarkup(q.region,false,true):mapMarkup(qmode==='identify'?q.region:null,interactive)))+
    (interactive?'<p class="geo-tip">Нажмите на нужный субъект. Для мелких регионов приблизьте карту.</p>':options(q)))+
    '<p class="geo-message" role="status" aria-live="polite">'+esc(t.message||'')+'</p>'+
    '<div class="geo-footer"><span>Осталось '+v.remaining+' сек.</span><small>Результат каждого игрока индивидуален</small></div></section>';
-  if(!geometry&&!done&&!t.mapPending){t.mapPending=true;loadMap().then(()=>{t.mapPending=false;roundState(t)}).catch(e=>{t.mapPending=false;t.message='Геометрия недоступна: '+e.message;roundState(t)})}
+  if(!geometry&&!done&&!t.mapPending&&!t.mapError){t.mapPending=true;loadMap().then(()=>{t.mapPending=false;roundState(t)}).catch(e=>{t.mapPending=false;t.mapError=true;t.message='Геометрия недоступна: '+e.message;roundState(t)})}
  }
  async function fetchView(t,answer=null){
   if(t.busy||t.closed)return;
@@ -119,6 +119,7 @@
   const t={root,client:ctx.client||ctx.db,roomId:s.room_id,kind:'player',closed:false,view:null,busy:false,message:'',mapPending:false};sessions.set(key,t);
   root.innerHTML='<section class="geo-game"><h2>Карта России</h2><p>Готовим вашу индивидуальную карту…</p></section>';
   t.onClick=e=>{
+   if(e.target.closest('[data-geo-map-retry]')){t.mapError=false;t.message='Повторяем загрузку карты…';roundState(t);return}
    const zoom=e.target.closest('[data-geo-zoom]');
    if(zoom){const svg=root.querySelector('.geo-map-frame .geo-map-svg');if(!svg)return;
     const action=zoom.dataset.geoZoom;let [x,y,w,h]=svg.getAttribute('viewBox').split(' ').map(Number);
