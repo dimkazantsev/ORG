@@ -177,7 +177,8 @@ function render(state){
   if(!state.paused)QwizStage.updateClock(state,ctx.offset);return;
  }
  ctx.renderKey=key;const previous=ctx.lastPhase;ctx.lastPhase=state.phase;QwizStage.audio.stopMusic();
- if(state.phase!=='intermission'){window.QwizArcade?.stop('screen');window.QwizGeo?.stop('screen')}
+ if(state.phase!=='intermission')window.QwizArcade?.stop('screen');
+ if(state.phase!=='intermission'||state.activity?.settings?.arcade_mode!=='russia_map')window.QwizGeo?.stop('screen');
  if(state.phase==='lobby'){
   $('projectionMain').innerHTML='<section class="projection-lobby has-team-entry"><div><div class="projection-eyebrow">КОМНАТА ОТКРЫТА</div><h1>Присоединяйтесь!</h1><p>Наведите камеру на QR-код или введите код комнаты на телефоне.</p><strong class="projection-code">'+escapeText(state.code)+'</strong></div><div class="projection-qr" id="projectionQr"></div></section><section class="projection-team-entry"><h2>Выберите свою команду</h2><p>Сканируйте QR под её иконкой. Нажмите на карточку, чтобы увеличить код.</p><div class="team-board" id="projectionTeamBoard"></div></section>';qr($('projectionQr'),link(state.code));$('projectionQr').setAttribute('role','button');$('projectionQr').setAttribute('tabindex','0');$('projectionQr').setAttribute('aria-label','Увеличить общий QR-код входа в игру');$('projectionQr').onclick=()=>$('projectionJoinQr').click();$('projectionQr').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('projectionJoinQr').click()}};QwizTeams.board($('projectionTeamBoard'),state.lobby_teams||[],state.code);return;
  }
