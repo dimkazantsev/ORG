@@ -33,6 +33,19 @@ test('Russia personal round loads 89 clickable geometries, accepts answer and re
  await page.locator('#geoBrowserTest [data-geo-zoom="in"]').click();
  const zoom=await page.locator('#geoBrowserTest .geo-map-svg').getAttribute('viewBox');
  expect(zoom).not.toBe('0 0 1120 480');
+ // Touch drag changes the visible map area; two touches also alter zoom level.
+ const gestures=await page.evaluate(()=>{
+  const svg=document.querySelector('#geoBrowserTest .geo-map-frame .geo-map-svg');
+  const before=svg.getAttribute('viewBox');
+  const p=(type,id,x,y)=>svg.dispatchEvent(new PointerEvent(type,{bubbles:true,pointerId:id,pointerType:'touch',clientX:x,clientY:y}));
+  p('pointerdown',1,110,220);p('pointermove',1,155,220);p('pointerup',1,155,220);
+  const afterPan=svg.getAttribute('viewBox');
+  p('pointerdown',1,110,220);p('pointerdown',2,200,220);p('pointermove',2,260,220);
+  const afterPinch=svg.getAttribute('viewBox');p('pointerup',1,110,220);p('pointerup',2,260,220);
+  return {before,afterPan,afterPinch};
+ });
+ expect(gestures.afterPan).not.toBe(gestures.before);
+ expect(gestures.afterPinch).not.toBe(gestures.afterPan);
  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
  expect(overflow).toBeLessThanOrEqual(2);
 });
