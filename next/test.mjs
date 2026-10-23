@@ -293,7 +293,13 @@ test('Shared stage initializes in a browser-like environment without undefined r
  assert.doesNotThrow(()=>runInNewContext(source,{window,document,Intl,Date,localStorage:{getItem:()=>null}}));
  const stage=window.QwizStage;
  assert.ok(stage,'QwizStage exported');
- assert.equal(stage.habitats.length,12);
- assert.ok(stage.icon({position:1,players:5,answered:2}).includes('animals.svg#fox'));
+ assert.equal(stage.habitats.length,15);
+ assert.ok(stage.icon({position:1,players:5,answered:2}).includes('habitats.svg#forest'));
+ assert.ok(stage.icon({position:15,players:5,answered:2}).includes('habitats.svg#mangrove'));
+ assert.ok(!stage.icon({position:1,players:5,answered:2}).includes('animals.svg'));
+ const teamModule=readFileSync(new URL('./teams.js',import.meta.url),'utf8');
+ assert.doesNotThrow(()=>runInNewContext(teamModule,{window,document,Intl,Date,localStorage:{getItem:()=>null}}));
+ assert.ok(window.QwizTeams.avatar('fox').includes('animals.svg#fox'));
+ assert.ok(window.QwizTeams.avatar('owl').includes('animals.svg#owl'));
  assert.equal(typeof stage.audio.stopMusic,'function');
 });
