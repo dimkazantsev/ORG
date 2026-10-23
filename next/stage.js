@@ -8,6 +8,8 @@ window.QwizStage=(()=>{
  const phaseLabel=phase=>({lobby:'Ожидание участников',question:'Вопрос',result:'Разбор ответа',finished:'Игра завершена',countdown:'Подготовка',intermission:'Перерыв'})[phase]||'Ожидание данных';
  const animalNames=['fox','owl','cat','panda','otter','raccoon','capybara','penguin','koala','red-panda','rabbit','bear'];
  const animalLabels=['Лиса','Сова','Кот','Панда','Выдра','Енот','Капибара','Пингвин','Коала','Красная панда','Кролик','Медведь'];
+ // Keep the exported legacy shape: dependent classroom components still read habitats.
+ const habitats=animalNames.map((id,i)=>[id,animalLabels[i],'#9470e2']);
  function icon(t,full=false){
   const n=(Math.max(1,Number(t.position)||1)-1)%animalNames.length;
   const members=Math.max(0,Number(t.members??t.players)||0),answered=Math.min(members,Math.max(0,Number(t.answered)||0));
