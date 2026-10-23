@@ -3,7 +3,7 @@ const HOME='http://127.0.0.1:8080/next/';
 function topology(){
  const geometries=Array.from({length:89},(_,i)=>({type:'Polygon',arcs:[[i]],properties:{id:'region-'+i,name_full:'Субъект '+i,clon:50+i*.3,clat:60}}));
  return {type:'Topology',transform:{scale:[.02,.02],translate:[45,50]},objects:{ru89:{type:'GeometryCollection',geometries}},
-  arcs:Array.from({length:89},(_,i)=>[[i*5,0],[100,0],[0,100],[-100,0]])};
+  arcs:Array.from({length:89},(_,i)=>[[(i%15)*150,Math.floor(i/15)*150],[100,0],[0,100],[-100,0]])};
 }
 test('Russia personal round loads 89 clickable geometries, accepts answer and resumes progress',async({page})=>{
  await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({status:200,contentType:'application/javascript',
