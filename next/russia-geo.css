@@ -38,3 +38,7 @@
 .geo-modes-grid input{accent-color:#713de0}.geo-modes-grid label.disabled{opacity:.55}
 @media(max-width:680px){.geo-game{padding:13px;gap:10px}.geo-header{flex-wrap:wrap}.geo-options{grid-template-columns:1fr}.geo-map-svg{min-height:160px}.geo-projector-stats{grid-template-columns:repeat(2,minmax(0,1fr))}.geo-modes-grid{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.geo-map-svg .geo-region,.geo-progress span{transition:none}}
+
+/* Touch gestures belong to the map itself, not the outer page. */
+.geo-map-frame .geo-map-svg{touch-action:none;user-select:none;-webkit-user-select:none}
+.geo-map-frame .geo-region{cursor:pointer}
