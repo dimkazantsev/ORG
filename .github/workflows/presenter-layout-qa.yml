@@ -1,0 +1,42 @@
+name: QWIZ-PARTY / Audience layout QA
+on:
+  push:
+    paths:
+      - 'next/presenter.*'
+      - 'next/visual.spec.mjs'
+      - '.github/workflows/presenter-layout-qa.yml'
+  pull_request:
+    paths:
+      - 'next/presenter.*'
+      - 'next/visual.spec.mjs'
+      - '.github/workflows/presenter-layout-qa.yml'
+  workflow_dispatch:
+concurrency:
+  group: presenter-layout-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  screenshot-and-geometry:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium browser runner
+        run: |
+          npm install --no-save @playwright/test@1.56.1
+          npx playwright install chromium --with-deps
+      - name: Check audience QR and desktop/mobile geometry
+        run: |
+          mkdir -p visual-artifacts
+          python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/qwiz-layout-server.log 2>&1 &
+          npx playwright test next/visual.spec.mjs --grep "Audience setup compact layout|Audience setup verifies current room" --reporter=list --workers=1
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audience-layout-qa
+          path: visual-artifacts/audience-*.png
+          if-no-files-found: ignore
