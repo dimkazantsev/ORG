@@ -294,6 +294,6 @@ test('Shared stage initializes in a browser-like environment without undefined r
  const stage=window.QwizStage;
  assert.ok(stage,'QwizStage exported');
  assert.equal(stage.habitats.length,12);
- assert.match(stage.icon({position:1,players:5,answered:2}),/animals\\.svg#fox/);
+ assert.ok(stage.icon({position:1,players:5,answered:2}).includes('animals.svg#fox'));
  assert.equal(typeof stage.audio.stopMusic,'function');
 });
