@@ -7,7 +7,7 @@
  const sessions=new Map();
  const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const labels={locate:'Найди субъект',identify:'Определи субъект',capital:'Административный центр',flag:'Узнай по флагу',
-  silhouette:'Узнай по контуру',neighbour:'Соседние субъекты',detective:'Географический детектив',coat:'Герб субъекта'};
+  silhouette:'Узнай по контуру',neighbour:'Соседние субъекты',detective:'Географический детектив',district:'Федеральный округ',coat:'Герб субъекта'};
  let geometry=null,loadPromise=null;
  const project=([lon,lat])=>[(lon-19.5)*6.55,(82-lat)*11.6];
  function arcCoords(t,idx){
@@ -59,6 +59,7 @@
    case 'silhouette':return 'Какой субъект изображён по контуру?';
    case 'neighbour':return 'Какой субъект граничит с «'+q.name+'»?';
    case 'detective':return 'Найдите субъект по подсказкам';
+   case 'district':return 'К какому федеральному округу относится «'+q.name+'»?';
    default:return 'Определите субъект';
   }
  }
