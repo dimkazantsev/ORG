@@ -310,7 +310,12 @@ test('Audience quick-join QR requires a verified active room and links to the st
  const css=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
  assert.match(js,/function setup\(\)/);
  assert.match(js,/qwiz_party_projection/);
- assert.match(js,/data\.phase==='finished'/);
+ assert.match(js,/qwiz_audience_active_room/);
+ assert.match(js,/paintQr\(\)/);
+ assert.match(js,/qr\(\$\('projectionSetupQrImage'\)/);
+ const discovery=readFileSync(new URL('./migrations/20261023_qwiz_audience_active_room.sql',import.meta.url),'utf8');
+ assert.match(discovery,/r\.phase in \('lobby','countdown','question','result','intermission'\)/);
+ assert.match(discovery,/revoke all on function public\.qwiz_audience_active_room/);
  assert.match(js,/function openJoinQr/);
  assert.match(js,/function link\(code\)/);
  assert.match(js,/new URL\('\.\/',location\.href\)/);
