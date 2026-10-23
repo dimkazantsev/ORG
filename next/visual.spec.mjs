@@ -224,6 +224,42 @@ test('Audience can open general link and enter a specific room without teacher l
  await expect(page.locator('#projectionCode')).toHaveValue('ABCDEF12');
 });
 
+test('Audience setup compact layout keeps the room form and QR aligned without oversize gaps',async({page})=>{
+ await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({contentType:'application/javascript',body:
+  'window.supabase={createClient:()=>({rpc:async(_name,args)=>({data:{code:args.p_code,phase:"lobby"},error:null})})};'}));
+ const root='http://127.0.0.1:8080/next/presenter.html';
+ for(const [width,height] of [[1440,810],[1280,720],[768,1024],[390,844]]){
+  await page.setViewportSize({width,height});
+  await page.goto(root);
+  await expect(page.locator('.projection-setup-grid')).toBeVisible();
+  await page.evaluate(()=>document.fonts.ready);
+  const size=await page.evaluate(()=>{
+   const box=selector=>{const x=document.querySelector(selector).getBoundingClientRect();return {x:x.x,y:x.y,width:x.width,height:x.height,right:x.right,bottom:x.bottom}};
+   return {overflow:document.documentElement.scrollWidth-innerWidth,
+    hero:box('.projection-setup h1'),form:box('#projectionJoin'),
+    qr:box('.projection-quick-qr'),input:box('#projectionCode'),
+    subtitle:box('.projection-setup>p'),footer:box('.projection-footer'),
+    heroSize:parseFloat(getComputedStyle(document.querySelector('.projection-setup h1')).fontSize)};
+  });
+  expect(size.overflow,`horizontal overflow at ${width}`).toBeLessThanOrEqual(2);
+  expect(size.heroSize,`oversize headline at ${width}`).toBeLessThanOrEqual(width<=550?47:61);
+  expect(size.form.height,`form height at ${width}`).toBeLessThan(325);
+  expect(size.qr.height,`QR card height at ${width}`).toBeLessThan(325);
+  expect(size.form.bottom,`form visible at ${width}`).toBeLessThan(height+10);
+  if(width>920){
+   expect(Math.abs(size.form.y-size.qr.y)).toBeLessThanOrEqual(2);
+   expect(Math.abs(size.form.height-size.qr.height)).toBeLessThanOrEqual(2);
+   expect(size.input.y-size.form.y,`input excessively low at ${width}`).toBeLessThan(155);
+   expect(size.qr.bottom,`cards need to fit at ${width}`).toBeLessThan(height-35);
+  }else{
+   expect(size.qr.y).toBeGreaterThanOrEqual(size.form.bottom-1);
+  }
+  if(width===1440||width===390){
+   await page.screenshot({path:`visual-artifacts/audience-setup-fixed-${width}.png`,fullPage:true,animations:'disabled'});
+  }
+ }
+});
+
 test('Audience setup verifies current room and shows large player QR without teacher login',async({page})=>{
  await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({contentType:'application/javascript',body:
   'window.checkedRooms=[];window.supabase={createClient:()=>({rpc:async(_name,args)=>{window.checkedRooms.push(args.p_code);return args.p_code==="ABCDEF12"?{data:{code:"ABCDEF12",phase:"lobby"},error:null}:{data:null,error:{message:"not found"}}}})};'}));
@@ -234,7 +270,7 @@ test('Audience setup verifies current room and shows large player QR without tea
  await expect(page.locator('#projectionSetupQrOpen')).toBeEnabled();
  await expect(page.locator('#projectionSetupQrImage canvas')).toHaveCount(1);
  const url=new URL(await page.locator('#projectionSetupQrLink').getAttribute('href'));
- expect(url.pathname).toMatch(/\\/next\\/$/);
+ expect(url.pathname.endsWith('/next/')).toBe(true);
  expect(url.searchParams.get('room')).toBe('ABCDEF12');
  expect(url.pathname).not.toContain('presenter');
  await page.locator('#projectionSetupQrOpen').click();
