@@ -45,6 +45,13 @@ begin
      select array_agg(z.id order by md5(z.id||':'||p.id::text||':'||i::text)) into all_ids
      from (select distinct on (fd) id,fd from public.qwiz_geo_regions
       where fd<>v_region.fd order by fd,id) z;
+    elsif v_mode='capital' then
+     select array_agg(z.id order by md5(z.id||':'||p.id::text||':'||i::text)) into all_ids
+     from (select distinct on (capital) id,capital from public.qwiz_geo_regions
+      where capital<>v_region.capital order by capital,id) z;
+    elsif v_mode='neighbour' then
+     select array_agg(z.id order by md5(z.id||':'||p.id::text||':'||i::text)) into all_ids
+       from public.qwiz_geo_regions z where z.id<>v_answer and not(z.id=any(v_region.neighbors));
     else
      select array_agg(z.id order by md5(z.id||':'||p.id::text||':'||i::text)) into all_ids
        from public.qwiz_geo_regions z where z.id<>v_answer;
