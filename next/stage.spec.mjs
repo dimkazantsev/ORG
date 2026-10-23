@@ -16,15 +16,15 @@ async function workspace(page){
 }
 test('Fifteen distinct habitat icons fit the classroom screen and illustration precedes question',async({page})=>{
  await page.setViewportSize({width:1440,height:1000});await projector(page,state());await expect(page.locator('.habitat-team')).toHaveCount(15);
- const d=await page.evaluate(()=>{const icons=[...document.querySelectorAll('.animal-medallion .team-avatar')];return {symbols:new Set(icons.map(x=>x.querySelector('use').getAttribute('href'))).size,art:document.querySelector('.question-frame').getBoundingClientRect().bottom,question:document.querySelector('.projection-question h1').getBoundingClientRect().top,last:icons.at(-1).getBoundingClientRect().bottom,overflow:document.documentElement.scrollWidth-innerWidth}});
- expect(d.symbols).toBe(12);expect(d.art).toBeLessThan(d.question);expect(d.last).toBeLessThan(1000);expect(d.overflow).toBeLessThanOrEqual(1);
+ const d=await page.evaluate(()=>{const icons=[...document.querySelectorAll('.habitat-icon')];return {symbols:new Set(icons.map(x=>x.querySelector('.habitat-base').getAttribute('href'))).size,art:document.querySelector('.question-frame').getBoundingClientRect().bottom,question:document.querySelector('.projection-question h1').getBoundingClientRect().top,last:icons.at(-1).getBoundingClientRect().bottom,overflow:document.documentElement.scrollWidth-innerWidth}});
+ expect(d.symbols).toBe(15);expect(d.art).toBeLessThan(d.question);expect(d.last).toBeLessThan(1000);expect(d.overflow).toBeLessThanOrEqual(1);
  await page.screenshot({path:'visual-artifacts/question-stage-1440.png',fullPage:true,animations:'disabled'});
 });
 test('Replies fill five segments bottom-up without replacing the illustration',async({page})=>{
  const s=state();s.teams[0].answered=0;await projector(page,s);const first=page.locator('[data-team="team-0"]');
- await expect(first.locator('.animal-medallion .team-avatar')).toHaveCount(1);await page.evaluate(()=>window.originalArt=document.querySelector('.question-frame'));
- await page.evaluate(()=>{window.fixture.teams[0].answered=1;render(window.fixture)});await expect(first.locator('.team-answered')).toHaveText('1');await expect(first.locator('.animal-medallion')).toHaveAttribute('style',/20%/);
- await page.evaluate(()=>{window.fixture.teams[0].answered=5;render(window.fixture)});await expect(first.locator('.team-answered')).toHaveText('5');
+ await expect(first.locator('.habitat-icon')).toHaveCount(1);await page.evaluate(()=>window.originalArt=document.querySelector('.question-frame'));
+ await page.evaluate(()=>{window.fixture.teams[0].answered=1;render(window.fixture)});await expect(first.locator('.team-answered')).toHaveText('1');await expect(first.locator('.habitat-color')).toHaveAttribute('style',/76.4%/);
+ await page.evaluate(()=>{window.fixture.teams[0].answered=5;render(window.fixture)});await expect(first.locator('.team-answered')).toHaveText('5');await expect(first.locator('.habitat-color')).toHaveAttribute('style',/6%/);
  expect(await page.evaluate(()=>window.originalArt===document.querySelector('.question-frame'))).toBe(true);
 });
 test('Numeric absolute timer and time bar decrease together',async({page})=>{

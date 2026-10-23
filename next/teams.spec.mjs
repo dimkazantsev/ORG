@@ -75,7 +75,7 @@ test('Team QR opens an accessible dialog with the exact team link',async({page})
 test('Classroom board renders 15 habitat icons and locally generated QR codes',async({page})=>{
  const s=fixture(15,30);await mock(page,s,{host:false});await page.setViewportSize({width:1440,height:900});await page.goto(base+'presenter.html?room=AABBCCDD');
  await expect(page.locator('.team-board-card')).toHaveCount(15);await expect(page.locator('.team-board-qr canvas')).toHaveCount(15);await expect(page.locator('#projectionMain')).not.toContainText('Тестовый Студент');
- expect(await page.locator('.team-board-heading use').evaluateAll(nodes=>new Set(nodes.map(n=>n.getAttribute('href'))).size)).toBe(12);
+ expect(await page.locator('.team-board-heading .habitat-base').evaluateAll(nodes=>new Set(nodes.map(n=>n.getAttribute('href'))).size)).toBe(15);
  expect(await page.locator('.team-board-card').last().evaluate(el=>el.getBoundingClientRect().bottom)).toBeLessThan(900);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);await page.screenshot({path:'visual-artifacts/teams-projector-15.png',fullPage:true,animations:'disabled'});
 });
