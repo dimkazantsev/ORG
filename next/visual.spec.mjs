@@ -216,82 +216,76 @@ test('Bank renders realistic long questions without overflowing on phones',async
 });
 
 
-test('Audience can open general link and enter a specific room without teacher login',async({page})=>{
+test('Audience opens with QR and no teacher login or manually entered code',async({page})=>{
+ await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({contentType:'application/javascript',body:'window.supabase={createClient:()=>({rpc:async()=>({data:{code:null,phase:null},error:null})})};'}));
  await page.goto('http://127.0.0.1:8080/next/presenter.html');
- await expect(page.getByRole('heading',{name:'Какая игра сегодня?'})).toBeVisible();
+ await expect(page.getByRole('heading',{name:'Присоединяйтесь к игре!'})).toBeVisible();
  await expect(page.locator('#loginEmail')).toHaveCount(0);
+ await expect(page.locator('#projectionSetupQrOpen')).toBeEnabled();
+ await expect(page.locator('#projectionSetupQrImage canvas')).toHaveCount(1);
+ await expect(page.locator('#projectionOpenGame')).toBeDisabled();
+ await expect(page.locator('#projectionSetupQrLink')).toHaveAttribute('href','http://127.0.0.1:8080/next/');
+ await page.locator('.projection-manual-choice summary').click();
  await page.locator('#projectionCode').fill('abcdef12');
  await expect(page.locator('#projectionCode')).toHaveValue('ABCDEF12');
 });
 
-test('Audience setup compact layout keeps the room form and QR aligned without oversize gaps',async({page})=>{
- await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({contentType:'application/javascript',body:
-  'window.supabase={createClient:()=>({rpc:async(_name,args)=>({data:{code:args.p_code,phase:"lobby"},error:null})})};'}));
- const root='http://127.0.0.1:8080/next/presenter.html';
+test('Audience setup compact layout keeps automatic code and QR aligned across four screen sizes',async({page})=>{
+ await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({contentType:'application/javascript',body:'window.supabase={createClient:()=>({rpc:async()=>({data:{code:null,phase:null},error:null})})};'}));
  for(const [width,height] of [[1440,810],[1280,720],[768,1024],[390,844]]){
   await page.setViewportSize({width,height});
-  await page.goto(root);
+  await page.goto('http://127.0.0.1:8080/next/presenter.html');
   await expect(page.locator('.projection-setup-grid')).toBeVisible();
+  await expect(page.locator('#projectionSetupQrImage canvas')).toHaveCount(1);
   await page.evaluate(()=>document.fonts.ready);
   const size=await page.evaluate(()=>{
    const box=selector=>{const x=document.querySelector(selector).getBoundingClientRect();return {x:x.x,y:x.y,width:x.width,height:x.height,right:x.right,bottom:x.bottom}};
-   return {overflow:document.documentElement.scrollWidth-innerWidth,
-    hero:box('.projection-setup h1'),form:box('#projectionJoin'),
-    qr:box('.projection-quick-qr'),input:box('#projectionCode'),
-    subtitle:box('.projection-setup>p'),footer:box('.projection-footer'),
-    heroSize:parseFloat(getComputedStyle(document.querySelector('.projection-setup h1')).fontSize)};
+   return {overflow:document.documentElement.scrollWidth-innerWidth,form:box('.projection-setup-form'),qr:box('.projection-quick-qr'),code:box('#projectionActiveCode'),heroSize:parseFloat(getComputedStyle(document.querySelector('.projection-setup h1')).fontSize)};
   });
-  expect(size.overflow,`horizontal overflow at ${width}`).toBeLessThanOrEqual(2);
-  expect(size.heroSize,`oversize headline at ${width}`).toBeLessThanOrEqual(width<=550?47:61);
-  expect(size.form.height,`form height at ${width}`).toBeLessThan(325);
-  expect(size.qr.height,`QR card height at ${width}`).toBeLessThan(325);
-  expect(size.form.bottom,`form visible at ${width}`).toBeLessThan(height+10);
+  expect(size.overflow,'horizontal overflow at '+width).toBeLessThanOrEqual(2);
+  expect(size.heroSize,'oversize headline at '+width).toBeLessThanOrEqual(width<=550?47:61);
+  expect(size.form.height,'form height at '+width).toBeLessThan(340);
+  expect(size.qr.height,'QR card height at '+width).toBeLessThan(340);
+  expect(size.form.bottom,'form visible at '+width).toBeLessThan(height+10);
   if(width>920){
    expect(Math.abs(size.form.y-size.qr.y)).toBeLessThanOrEqual(2);
    expect(Math.abs(size.form.height-size.qr.height)).toBeLessThanOrEqual(2);
-   expect(size.input.y-size.form.y,`input excessively low at ${width}`).toBeLessThan(155);
-   expect(size.qr.bottom,`cards need to fit at ${width}`).toBeLessThan(height-35);
-  }else{
-   expect(size.qr.y).toBeGreaterThanOrEqual(size.form.bottom-1);
-  }
-  if(width===1440||width===390){
-   await page.screenshot({path:`visual-artifacts/audience-setup-fixed-${width}.png`,fullPage:true,animations:'disabled'});
-  }
+   expect(size.code.y-size.form.y,'automatic code too low at '+width).toBeLessThan(120);
+   expect(size.qr.bottom,'cards need to fit at '+width).toBeLessThan(height-35);
+  }else expect(size.qr.y).toBeGreaterThanOrEqual(size.form.bottom-1);
  }
 });
 
-test('Audience setup verifies current room and shows large player QR without teacher login',async({page})=>{
+test('Audience QR appears immediately and switches to automatic game code without typing',async({page})=>{
  await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({contentType:'application/javascript',body:
-  'window.checkedRooms=[];window.supabase={createClient:()=>({rpc:async(_name,args)=>{window.checkedRooms.push(args.p_code);return args.p_code==="ABCDEF12"?{data:{code:"ABCDEF12",phase:"lobby"},error:null}:{data:null,error:{message:"not found"}}}})};'}));
+  'window.fixtureRoom=null;window.supabase={createClient:()=>({rpc:async(name,args)=>{if(name==="qwiz_audience_active_room")return {data:window.fixtureRoom?{code:window.fixtureRoom,phase:"question",title:"Учебный квиз"}:{code:null,phase:null},error:null};if(name==="qwiz_party_projection")return {data:args.p_code==="A1B2C3D4"?{code:args.p_code,phase:"lobby",title:"Другая комната"}:null,error:args.p_code==="A1B2C3D4"?null:{message:"not found"}};return {data:null,error:null}}})};'}));
  await page.setViewportSize({width:1440,height:900});
  await page.goto('http://127.0.0.1:8080/next/presenter.html');
- await expect(page.locator('#projectionSetupQrOpen')).toBeDisabled();
- await page.locator('#projectionCode').fill('abcdef12');
  await expect(page.locator('#projectionSetupQrOpen')).toBeEnabled();
  await expect(page.locator('#projectionSetupQrImage canvas')).toHaveCount(1);
- const url=new URL(await page.locator('#projectionSetupQrLink').getAttribute('href'));
- expect(url.pathname.endsWith('/next/')).toBe(true);
- expect(url.searchParams.get('room')).toBe('ABCDEF12');
- expect(url.pathname).not.toContain('presenter');
+ await expect(page.locator('#projectionOpenGame')).toBeDisabled();
+ await expect(page.locator('#projectionSetupQrLink')).toHaveAttribute('href','http://127.0.0.1:8080/next/');
  await page.locator('#projectionSetupQrOpen').click();
- await expect(page.locator('#projectionQrDialog')).toBeVisible();
- await expect(page.locator('#projectionQrRoom')).toHaveText('ABCDEF12');
- await expect(page.locator('#projectionQrZoom canvas')).toHaveCount(1);
- await expect(page.locator('#projectionQrLink')).toHaveAttribute('href',url.toString());
+ await expect(page.locator('#projectionQrRoom')).toHaveText('пока не создан');
  await page.locator('#projectionQrClose').click();
- await expect(page.locator('#projectionQrDialog')).toBeHidden();
- await page.locator('#projectionCode').fill('DEADBEEF');
- await expect(page.locator('#projectionSetupQrOpen')).toBeDisabled();
- await expect(page.locator('#projectionInputStatus')).toContainText('Не удалось подтвердить');
- await expect(page.locator('#projectionSetupQrLink')).toBeHidden();
- await page.locator('#projectionCode').fill('ABCDEF12');
+ await page.evaluate(()=>{window.fixtureRoom='ABCDEF12'});
+ await expect(page.locator('#projectionActiveCode')).toHaveText('ABCDEF12',{timeout:12000});
+ await expect(page.locator('#projectionOpenGame')).toBeEnabled();
+ const href=new URL(await page.locator('#projectionSetupQrLink').getAttribute('href'));
+ expect(href.pathname.endsWith('/next/')).toBe(true);
+ expect(href.searchParams.get('room')).toBe('ABCDEF12');
+ await page.locator('#projectionSetupQrOpen').click();
+ await expect(page.locator('#projectionQrRoom')).toHaveText('ABCDEF12');
+ await expect(page.locator('#projectionQrLink')).toHaveAttribute('href',href.toString());
+ await page.locator('#projectionQrClose').click();
+ await page.locator('.projection-manual-choice summary').click();
+ await page.locator('#projectionCode').fill('A1B2C3D4');
  await expect(page.locator('#projectionSetupQrOpen')).toBeEnabled();
+ await page.locator('#projectionJoin button[type="submit"]').click();
+ await expect(page.locator('#projectionActiveCode')).toHaveText('A1B2C3D4');
+ await expect(page.locator('#projectionSetupQrLink')).toHaveAttribute('href',/room=A1B2C3D4/);
  await page.setViewportSize({width:390,height:844});
  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
- await page.screenshot({path:'visual-artifacts/audience-quick-qr-phone.png',fullPage:true,animations:'disabled'});
- await page.reload();
- await expect(page.locator('#projectionCode')).toHaveValue('ABCDEF12');
- await expect(page.locator('#projectionSetupQrOpen')).toBeEnabled();
 });
 
 test('Standalone teacher workspace is responsive and has two library sections',async({page})=>{
