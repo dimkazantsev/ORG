@@ -3,7 +3,7 @@
 // Geography facts/scoring are server-owned. Map source is external and replaceable.
 // Shape geometry source (provisional): prokopenkoad42-creator/karta-rossii; verify upstream reuse terms.
 (()=>{
- const MAP_URL='https://raw.githubusercontent.com/prokopenkoad42-creator/karta-rossii/main/data/regions.topojson';
+ const MAP_URL='https://raw.githubusercontent.com/prokopenkoad42-creator/karta-rossii/ea0c39727c406603402ce35121cc5f52dcdc9e3a/data/regions.topojson';
  const sessions=new Map();
  const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const labels={locate:'Найди субъект',identify:'Определи субъект',capital:'Административный центр',flag:'Узнай по флагу',
@@ -75,7 +75,7 @@
   const q=v.question,done=!q||!v.open;
   let hint='';
   if(q?.mode==='detective')hint='<div class="geo-clues"><span>Подсказка 1: '+esc(q.region_type)+'</span><span>Подсказка 2: '+esc(q.district)+'</span><span>Подсказка 3: центр — '+esc(q.capital)+'</span></div>';
-  const img=q?.mode==='flag'&&q.flag?'<img class="geo-flag" loading="lazy" decoding="async" alt="Флаг субъекта России" src="https://raw.githubusercontent.com/russian-flags/regions/main/assets/'+encodeURIComponent(q.flag)+'/index.svg">':'';
+  const img=q?.mode==='flag'&&q.flag?'<img class="geo-flag" loading="lazy" decoding="async" alt="Флаг субъекта России" src="https://raw.githubusercontent.com/russian-flags/regions/3c411c7b305c678c49798cc610538c66108adbde/assets/'+encodeURIComponent(q.flag)+'/index.svg">':'';
   const qmode=q?.mode||'locate';const interactive=qmode==='locate',silhouette=qmode==='silhouette';
   root.innerHTML='<section class="geo-game"><div class="geo-header"><span>КАРТА РОССИИ / '+esc(labels[qmode]||'Знание регионов')+'</span><strong>'+v.index+' / '+v.total+' пройдено · '+v.score+' очков</strong></div>'+
    '<div class="geo-progress"><span style="width:'+Math.min(100,100*v.index/Math.max(1,v.total))+'%"></span></div>'+
@@ -111,12 +111,24 @@
    update();
   });
  }
+ function modifyView(svg,scale=1,dx=0,dy=0,px=null,py=null){
+  if(!svg)return;
+  const rect=svg.getBoundingClientRect();
+  if(!rect.width||!rect.height)return;
+  let [x,y,w,h]=svg.getAttribute('viewBox').split(' ').map(Number);
+  const u=px===null?.5:Math.max(0,Math.min(1,(px-rect.left)/rect.width));
+  const v=py===null?.5:Math.max(0,Math.min(1,(py-rect.top)/rect.height));
+  const nw=Math.max(55,Math.min(1120,w/Math.max(.4,Math.min(2.5,scale)))),nh=nw*480/1120;
+  x=Math.max(0,Math.min(1120-nw,x+(w-nw)*u-dx*nw/rect.width));
+  y=Math.max(0,Math.min(480-nh,y+(h-nh)*v-dy*nh/rect.height));
+  svg.setAttribute('viewBox',[x,y,nw,nh].join(' '));
+ }
  function mountPlayer(root,s,ctx){
   if(s.phase!=='intermission'||s.activity?.settings?.arcade_mode!=='russia_map')return false;
   const key=s.code+':player',existing=sessions.get(key);
   if(existing&&!existing.closed&&existing.root===root)return true;
   stop('player');
-  const t={root,client:ctx.client||ctx.db,roomId:s.room_id,kind:'player',closed:false,view:null,busy:false,message:'',mapPending:false};sessions.set(key,t);
+  const t={root,client:ctx.client||ctx.db,roomId:s.room_id,kind:'player',closed:false,view:null,busy:false,message:'',mapPending:false,pointers:new Map(),suppressUntil:0};sessions.set(key,t);
   root.innerHTML='<section class="geo-game"><h2>Карта России</h2><p>Готовим вашу индивидуальную карту…</p></section>';
   t.onClick=e=>{
    if(e.target.closest('[data-geo-map-retry]')){t.mapError=false;t.message='Повторяем загрузку карты…';roundState(t);return}
@@ -128,12 +140,53 @@
      x=Math.max(0,Math.min(1120-nw,x+(w-nw)/2));y=Math.max(0,Math.min(480-nh,y+(h-nh)/2));w=nw;h=nh}
     svg.setAttribute('viewBox',[x,y,w,h].join(' '));return;
    }
+   if(e.target.closest('.geo-map-frame')&&Date.now()<t.suppressUntil)return;
    const b=e.target.closest('[data-geo-answer],[data-region]');if(!b||!t.view?.open||t.busy||!t.view?.question)return;
    const selected=b.dataset.geoAnswer||b.dataset.region;
    if(b.dataset.region&&t.view.question.mode!=='locate')return;
    fetchView(t,selected);
   };
   root.addEventListener('click',t.onClick);
+  t.onPointerDown=e=>{
+   const svg=e.target.closest?.('.geo-map-frame .geo-map-svg');if(!svg)return;
+   t.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+   try{svg.setPointerCapture(e.pointerId)}catch{}
+  };
+  t.onPointerMove=e=>{
+   if(!t.pointers.has(e.pointerId))return;
+   const svg=root.querySelector('.geo-map-frame .geo-map-svg');if(!svg)return;
+   const before=[...t.pointers.values()].map(p=>({...p}));
+   const old=t.pointers.get(e.pointerId);const dx=e.clientX-old.x,dy=e.clientY-old.y;
+   t.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+   const now=[...t.pointers.values()];
+   if(Math.abs(dx)+Math.abs(dy)<.5)return;
+   t.suppressUntil=Date.now()+450;
+   if(before.length===1)modifyView(svg,1,dx,dy);
+   else{
+    const dist=p=>Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);
+    const centre=p=>({x:(p[0].x+p[1].x)/2,y:(p[0].y+p[1].y)/2});
+    const previous=centre(before),next=centre(now);
+    modifyView(svg,Math.max(.5,Math.min(2,dist(now)/Math.max(1,dist(before)))),next.x-previous.x,next.y-previous.y,previous.x,previous.y);
+   }
+  };
+  t.onPointerUp=e=>{t.pointers.delete(e.pointerId)};
+  t.onWheel=e=>{
+   const svg=e.target.closest?.('.geo-map-frame .geo-map-svg');if(!svg)return;
+   e.preventDefault();
+   modifyView(svg,e.deltaY<0?1.23:.81,0,0,e.clientX,e.clientY);
+  };
+  t.onKeyDown=e=>{
+   if((e.key!=='Enter'&&e.key!==' ')||!e.target.matches?.('.geo-region[data-region]'))return;
+   e.preventDefault();if(t.busy||!t.view?.open||t.view?.question?.mode!=='locate')return;
+   fetchView(t,e.target.dataset.region);
+  };
+  root.addEventListener('pointerdown',t.onPointerDown);
+  root.addEventListener('pointermove',t.onPointerMove);
+  root.addEventListener('pointerup',t.onPointerUp);
+  root.addEventListener('pointercancel',t.onPointerUp);
+  root.addEventListener('wheel',t.onWheel,{passive:false});
+  root.addEventListener('keydown',t.onKeyDown);
+
   fetchView(t);
   t.interval=setInterval(()=>{if(document.hidden||t.busy)return;if(t.view?.remaining>0)t.view.remaining-=1; if(t.view){const foot=root.querySelector('.geo-footer>span');if(foot)foot.textContent='Осталось '+Math.max(0,t.view.remaining)+' сек.';} if(!t.view||t.view.remaining%5===0)fetchView(t)},1000);
   return true;
@@ -153,6 +206,6 @@
   };
   update();t.interval=setInterval(update,3500);return true;
  }
- function stop(kind){for(const [key,t] of sessions){if(t.kind!==kind)continue;t.closed=true;clearInterval(t.interval);if(t.onClick)t.root?.removeEventListener('click',t.onClick);sessions.delete(key)}}
+ function stop(kind){for(const [key,t] of sessions){if(t.kind!==kind)continue;t.closed=true;clearInterval(t.interval);if(t.onClick)t.root?.removeEventListener('click',t.onClick);for(const [event,handler] of [['pointerdown',t.onPointerDown],['pointermove',t.onPointerMove],['pointerup',t.onPointerUp],['pointercancel',t.onPointerUp],['wheel',t.onWheel],['keydown',t.onKeyDown]])if(handler)t.root?.removeEventListener(event,handler);sessions.delete(key)}}
  window.QwizGeo=Object.freeze({mountPlayer,mountProjector,stop,loadMap,labels,MAP_URL});
 })();
