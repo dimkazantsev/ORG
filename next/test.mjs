@@ -1,6 +1,7 @@
 import {readFileSync} from 'node:fs';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
+import {runInNewContext} from 'node:vm';
 const html=readFileSync(new URL('./index.html',import.meta.url),'utf8');
 const css=readFileSync(new URL('./app.css',import.meta.url),'utf8');
 const js=readFileSync(new URL('./app.js',import.meta.url),'utf8');
@@ -284,4 +285,15 @@ test('Majority boost votes, host controls, and auto-advance are server-owned',()
  assert.match(arcade,/qwiz_vote_boost/);
  assert.match(host,/qwiz_party_control/);
  assert.doesNotMatch(arcade,/\.from\(['"]qwiz_boost_votes/);
+});
+
+test('Shared stage initializes in a browser-like environment without undefined references',()=>{
+ const source=readFileSync(new URL('./stage.js',import.meta.url),'utf8');
+ const window={};const document={addEventListener(){}};
+ assert.doesNotThrow(()=>runInNewContext(source,{window,document,Intl,Date,localStorage:{getItem:()=>null}}));
+ const stage=window.QwizStage;
+ assert.ok(stage,'QwizStage exported');
+ assert.equal(stage.habitats.length,12);
+ assert.match(stage.icon({position:1,players:5,answered:2}),/animals\\.svg#fox/);
+ assert.equal(typeof stage.audio.stopMusic,'function');
 });
