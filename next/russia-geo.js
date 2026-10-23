@@ -150,7 +150,7 @@
   t.onPointerDown=e=>{
    const svg=e.target.closest?.('.geo-map-frame .geo-map-svg');if(!svg)return;
    t.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY});
-   try{svg.setPointerCapture(e.pointerId)}catch{}
+   // Keep the region as the click target; capturing on SVG would swallow selection taps.
   };
   t.onPointerMove=e=>{
    if(!t.pointers.has(e.pointerId))return;
