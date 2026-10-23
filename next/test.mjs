@@ -303,3 +303,20 @@ test('Shared stage initializes in a browser-like environment without undefined r
  assert.ok(window.QwizTeams.avatar('owl').includes('animals.svg#owl'));
  assert.equal(typeof stage.audio.stopMusic,'function');
 });
+
+test('Audience quick-join QR requires a verified active room and links to the student app',()=>{
+ const html=readFileSync(new URL('./presenter.html',import.meta.url),'utf8');
+ const js=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
+ assert.match(js,/function setup\(\)/);
+ assert.match(js,/qwiz_party_projection/);
+ assert.match(js,/data\.phase==='finished'/);
+ assert.match(js,/function openJoinQr/);
+ assert.match(js,/function link\(code\)/);
+ assert.match(js,/new URL\('\.\/',location\.href\)/);
+ assert.match(js,/sessionStorage\.setItem/);
+ for(const id of ['projectionQrDialog','projectionQrZoom','projectionQrLink','projectionQrRoom','projectionQrCopy'])assert.match(html,new RegExp('id="'+id+'"'));
+ assert.match(js,/projectionSetupQrOpen/);
+ assert.match(css,/projection-setup-grid/);
+ assert.doesNotMatch(js,/\.from\(['"]org_next_rooms/);
+});
