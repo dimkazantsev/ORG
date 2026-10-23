@@ -1,0 +1,50 @@
+name: QWIZ-PARTY / Russia geography QA
+on:
+  push:
+    paths:
+      - 'next/russia-geo.*'
+      - 'next/geo.spec.mjs'
+      - 'next/migrations/20261023_geo*'
+      - 'next/workspace.*'
+      - 'next/app.js'
+      - 'next/presenter.*'
+      - '.github/workflows/geo-qa.yml'
+  pull_request:
+    paths:
+      - 'next/russia-geo.*'
+      - 'next/geo.spec.mjs'
+      - 'next/migrations/20261023_geo*'
+      - 'next/workspace.*'
+      - 'next/app.js'
+      - 'next/presenter.*'
+      - '.github/workflows/geo-qa.yml'
+  workflow_dispatch:
+concurrency:
+  group: geo-qa-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Static checks and unit regressions
+        run: |
+          node --check next/russia-geo.js
+          node --check next/workspace.js
+          node --check next/app.js
+          node --check next/presenter.js
+          node --test next/test.mjs
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save @playwright/test@1.56.1
+          npx playwright install chromium --with-deps
+      - name: Individual geography and teacher card browser QA
+        run: |
+          mkdir -p visual-artifacts
+          python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/qwiz-geo-http.log 2>&1 &
+          npx playwright test next/geo.spec.mjs --workers=1 --reporter=list
