@@ -149,7 +149,7 @@
   root.addEventListener('click',t.onClick);
   t.onPointerDown=e=>{
    const svg=e.target.closest?.('.geo-map-frame .geo-map-svg');if(!svg)return;
-   t.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+   t.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY});
    try{svg.setPointerCapture(e.pointerId)}catch{}
   };
   t.onPointerMove=e=>{
@@ -157,8 +157,10 @@
    const svg=root.querySelector('.geo-map-frame .geo-map-svg');if(!svg)return;
    const before=[...t.pointers.values()].map(p=>({...p}));
    const old=t.pointers.get(e.pointerId);const dx=e.clientX-old.x,dy=e.clientY-old.y;
-   t.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY});
+   t.pointers.set(e.pointerId,{...old,x:e.clientX,y:e.clientY});
    const now=[...t.pointers.values()];
+   const dragDistance=Math.hypot(e.clientX-old.startX,e.clientY-old.startY);
+   if(before.length===1&&dragDistance<8)return; // A small normal click must still select a region.
    if(Math.abs(dx)+Math.abs(dy)<.5)return;
    t.suppressUntil=Date.now()+450;
    if(before.length===1)modifyView(svg,1,dx,dy);
