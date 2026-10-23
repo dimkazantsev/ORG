@@ -7,11 +7,11 @@
 <title>QWIZ-PARTY — экран аудитории</title>
 <link rel="preload" href="./assets/manrope-variable.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="./theme.css?v=lavender-2">
-<link rel="stylesheet" href="./presenter.css?v=quiz-live-20261023-1">
+<link rel="stylesheet" href="./presenter.css?v=quiz-qr-20261023-2">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="./vendor/qrcode.min.js"></script>
 <link rel="stylesheet" href="./stage.css?v=quiz-live-20261023-1"><script defer src="./stage.js?v=quiz-live-20261023-1"></script>
-<script defer src="./presenter.js?v=quiz-live-20261023-1"></script>
+<script defer src="./presenter.js?v=quiz-qr-20261023-2"></script>
 <link rel="stylesheet" href="./motion.css?v=2">
 <link rel="stylesheet" href="./teams.css?v=quiz-live-20261023-1"><script defer src="./teams.js?v=quiz-live-20261023-1"></script>
 <link rel="stylesheet" href="./arcade.css?v=quiz-live-20261023-1"><script defer src="./arcade.js?v=quiz-live-20261023-1"></script>
@@ -32,5 +32,5 @@
  <button id="projectionFullscreen" type="button" class="fullscreen-control">⛶ На весь экран</button>
 </footer>
 <p id="projectionError" role="status" class="projection-error" hidden></p>
-<dialog id="projectionQrDialog" class="projection-qr-dialog"><button type="button" id="projectionQrClose">Закрыть ✕</button><div id="projectionQrZoom"></div><p>QR-код текущей игры</p></dialog></div>
+<dialog id="projectionQrDialog" class="projection-qr-dialog" aria-labelledby="projectionQrTitle"><div class="projection-qr-dialog-head"><div><span class="projection-eyebrow">QWIZ-PARTY · ПОДКЛЮЧЕНИЕ</span><h2 id="projectionQrTitle">Вход в игру</h2></div><button type="button" id="projectionQrClose" aria-label="Закрыть QR-код">Закрыть ✕</button></div><div id="projectionQrZoom"></div><p class="projection-qr-room">Комната <strong id="projectionQrRoom"></strong></p><p class="projection-qr-explain">Наведите камеру телефона на QR-код, чтобы открыть страницу подключения участника.</p><a id="projectionQrLink" class="projection-qr-url" target="_blank" rel="noopener"></a><button type="button" id="projectionQrCopy" class="projection-qr-copy">Скопировать ссылку</button><p id="projectionQrCopyStatus" role="status" aria-live="polite"></p></dialog></div>
 </body></html>
