@@ -1,0 +1,145 @@
+'use strict';
+// QWIZ-PARTY interactive Russia geography game.
+// Geography facts/scoring are server-owned. Map source is external and replaceable.
+// Shape geometry source (provisional): prokopenkoad42-creator/karta-rossii; verify upstream reuse terms.
+(()=>{
+ const MAP_URL='https://raw.githubusercontent.com/prokopenkoad42-creator/karta-rossii/main/data/regions.topojson';
+ const sessions=new Map();
+ const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const labels={locate:'Найди субъект',identify:'Определи субъект',capital:'Административный центр',flag:'Узнай по флагу',
+  silhouette:'Узнай по контуру',neighbour:'Соседние субъекты',detective:'Географический детектив',coat:'Герб субъекта'};
+ let geometry=null,loadPromise=null;
+ const project=([lon,lat])=>[(lon-19.5)*6.55,(82-lat)*11.6];
+ function arcCoords(t,idx){
+  const rev=idx<0,arc=t.arcs[rev?~idx:idx];if(!arc)return [];
+  let x=0,y=0;const pts=arc.map(p=>{x+=p[0];y+=p[1];return project([x*t.transform.scale[0]+t.transform.translate[0],y*t.transform.scale[1]+t.transform.translate[1]])});
+  return rev?pts.reverse():pts;
+ }
+ function ring(t,ids){
+  const coords=[];for(const id of ids){const a=arcCoords(t,id);if(coords.length)a.shift();coords.push(...a)}
+  return coords.length?'M'+coords.map(x=>x.map(z=>z.toFixed(1)).join(',')).join('L')+'Z':'';
+ }
+ function shape(t,g){
+  const polys=g.type==='Polygon'?[g.arcs]:g.arcs;
+  return polys.map(p=>p.map(a=>ring(t,a)).join('')).join('');
+ }
+ async function loadMap(){
+  if(geometry)return geometry;
+  if(loadPromise)return loadPromise;
+  loadPromise=fetch(MAP_URL,{mode:'cors',cache:'force-cache'}).then(r=>{if(!r.ok)throw Error('Карта временно недоступна');return r.json()})
+   .then(t=>{
+    const item=t.objects.ru89;
+    if(item.geometries.length!==89)throw Error('В картографическом наборе нет 89 регионов');
+    geometry=item.geometries.map(g=>({id:g.properties.id,path:shape(t,g),name:g.properties.name_full,
+      cx:project([g.properties.clon,g.properties.clat])[0],cy:project([g.properties.clon,g.properties.clat])[1]}));
+    return geometry;
+   }).catch(e=>{loadPromise=null;throw e});
+  return loadPromise;
+ }
+ function mapMarkup(active=null,interactive=false,silhouette=false){
+  if(!geometry)return '<div class="geo-map-loading">Загружаем карту субъектов России…</div>';
+  if(silhouette){
+    const g=geometry.find(z=>z.id===active);
+    return g?'<svg class="geo-map-svg geo-silhouette" viewBox="0 0 1120 480" role="img" aria-label="Контур неизвестного субъекта"><path d="'+g.path+'"/></svg>':'';
+  }
+  const paths=geometry.map(g=>'<path class="geo-region '+(g.id===active?'geo-focus':'')+'" data-region="'+esc(g.id)+'" d="'+g.path+'" aria-label="'+esc(g.name)+'" '+(interactive?'role="button" tabindex="0"':'')+'/>').join('');
+  const targets=interactive?geometry.map(g=>'<circle class="geo-hit" data-region="'+esc(g.id)+'" cx="'+g.cx.toFixed(2)+'" cy="'+g.cy.toFixed(2)+'" r="6.5" aria-label="'+esc(g.name)+'"/>').join(''):'';
+  return '<div class="geo-map-frame"><svg class="geo-map-svg" viewBox="0 0 1120 480" role="group" aria-label="Интерактивная карта субъектов России"><g>'+paths+targets+'</g></svg>'+
+    '<div class="geo-map-zoom"><button type="button" data-geo-zoom="in" aria-label="Приблизить карту">＋</button><button type="button" data-geo-zoom="out" aria-label="Отдалить карту">−</button><button type="button" data-geo-zoom="reset">Сброс</button></div></div>';
+ }
+ function options(q){
+  return '<div class="geo-options">'+(q.options||[]).map(x=>'<button type="button" data-geo-answer="'+esc(x.id)+'">'+esc(x.text)+'</button>').join('')+'</div>';
+ }
+ function prompt(q){
+  switch(q.mode){
+   case 'locate':return 'Найдите на карте: '+q.name;
+   case 'identify':return 'Как называется выделенный субъект?';
+   case 'capital':return 'Какой административный центр у субъекта «'+q.name+'»?';
+   case 'flag':return 'Какому субъекту принадлежит этот флаг?';
+   case 'silhouette':return 'Какой субъект изображён по контуру?';
+   case 'neighbour':return 'Какой субъект граничит с «'+q.name+'»?';
+   case 'detective':return 'Найдите субъект по подсказкам';
+   default:return 'Определите субъект';
+  }
+ }
+ function roundState(t){
+  const v=t.view;if(!v)return;
+  const root=t.root;
+  if(!root?.isConnected){stop(t.kind);return}
+  if(!v.active){root.innerHTML='<div class="geo-wait">Раунд карты завершён.</div>';return}
+  const q=v.question,done=!q||!v.open;
+  let hint='';
+  if(q?.mode==='detective')hint='<div class="geo-clues"><span>Подсказка 1: '+esc(q.region_type)+'</span><span>Подсказка 2: '+esc(q.district)+'</span><span>Подсказка 3: центр — '+esc(q.capital)+'</span></div>';
+  const img=q?.mode==='flag'&&q.flag?'<img class="geo-flag" loading="lazy" decoding="async" alt="Флаг субъекта России" src="https://raw.githubusercontent.com/russian-flags/regions/main/assets/'+encodeURIComponent(q.flag)+'/index.svg">':'';
+  const qmode=q?.mode||'locate';const interactive=qmode==='locate',silhouette=qmode==='silhouette';
+  root.innerHTML='<section class="geo-game"><div class="geo-header"><span>КАРТА РОССИИ / '+esc(labels[qmode]||'Знание регионов')+'</span><strong>'+v.index+' / '+v.total+' пройдено · '+v.score+' очков</strong></div>'+
+   '<div class="geo-progress"><span style="width:'+Math.min(100,100*v.index/Math.max(1,v.total))+'%"></span></div>'+
+   (done?'<div class="geo-done"><h2>'+(v.finished?'Готово!':'Время вышло')+'</h2><p>Верно: '+v.correct+' из '+v.total+'. Баллы сохранены на сервере.</p></div>':
+   '<h2>'+esc(prompt(q))+'</h2>'+hint+img+
+   (geometry&&qmode==='silhouette'?mapMarkup(q.region,false,true):mapMarkup(qmode==='identify'?q.region:null,interactive))+
+   (interactive?'<p class="geo-tip">Нажмите на нужный субъект. Для мелких регионов приблизьте карту.</p>':options(q)))+
+   '<p class="geo-message" role="status" aria-live="polite">'+esc(t.message||'')+'</p>'+
+   '<div class="geo-footer"><span>Осталось '+v.remaining+' сек.</span><small>Результат каждого игрока индивидуален</small></div></section>';
+  if(!geometry&&!done&&!t.mapPending){t.mapPending=true;loadMap().then(()=>{t.mapPending=false;roundState(t)}).catch(e=>{t.mapPending=false;t.message='Геометрия недоступна: '+e.message;roundState(t)})}
+ }
+ async function fetchView(t,answer=null){
+  if(t.busy||t.closed)return;
+  t.busy=true;
+  try{
+   const {data,error}=await t.client.rpc('qwiz_geo_play',{p_room:t.roomId,p_answer:answer});
+   if(error)throw error;
+   t.view=data;t.message=answer===null?'':data.last_correct?'Верно! +100 очков':'Нет, этот ответ неверный.';
+   roundState(t);
+  }catch(e){t.message=e.message||'Нет связи';if(t.root)t.root.innerHTML='<div class="geo-wait">'+esc(t.message)+'</div>'}
+  finally{t.busy=false}
+ }
+ function bindZoom(root){
+  const svg=root.querySelector('.geo-map-svg');if(!svg)return;
+  let box=[0,0,1120,480];
+  const update=()=>svg.setAttribute('viewBox',box.join(' '));
+  root.addEventListener('click',e=>{
+   const z=e.target.closest('[data-geo-zoom]');if(!z)return;
+   const a=z.dataset.geoZoom;
+   if(a==='reset')box=[0,0,1120,480];
+   else{const k=a==='in'?.72:1.38,w=Math.max(62,Math.min(1120,box[2]*k)),h=w*480/1120;
+    box=[Math.max(0,Math.min(1120-w,box[0]+(box[2]-w)/2)),Math.max(0,Math.min(480-h,box[1]+(box[3]-h)/2)),w,h];}
+   update();
+  });
+ }
+ function mountPlayer(root,s,ctx){
+  if(s.phase!=='intermission'||s.activity?.settings?.arcade_mode!=='russia_map')return false;
+  const key=s.code+':player',existing=sessions.get(key);
+  if(existing&&!existing.closed&&existing.root===root)return true;
+  stop('player');
+  const t={root,client:ctx.client||ctx.db,roomId:s.room_id,kind:'player',closed:false,view:null,busy:false,message:'',mapPending:false};sessions.set(key,t);
+  root.innerHTML='<section class="geo-game"><h2>Карта России</h2><p>Готовим вашу индивидуальную карту…</p></section>';
+  t.onClick=e=>{
+   const b=e.target.closest('[data-geo-answer],[data-region]');if(!b||!t.view?.open||t.busy||!t.view?.question)return;
+   const selected=b.dataset.geoAnswer||b.dataset.region;
+   if(b.dataset.region&&t.view.question.mode!=='locate')return;
+   fetchView(t,selected);
+  };
+  root.addEventListener('click',t.onClick);
+  bindZoom(root);
+  fetchView(t);
+  t.interval=setInterval(()=>{if(document.hidden||t.busy)return;if(t.view?.remaining>0)t.view.remaining-=1; if(t.view){const foot=root.querySelector('.geo-footer>span');if(foot)foot.textContent='Осталось '+Math.max(0,t.view.remaining)+' сек.';} if(!t.view||t.view.remaining%5===0)fetchView(t)},1000);
+  return true;
+ }
+ function mountProjector(root,s,client){
+  if(s.phase!=='intermission'||s.activity?.settings?.arcade_mode!=='russia_map')return false;
+  const key=s.code+':screen',existing=sessions.get(key);if(existing&&!existing.closed&&existing.root===root)return true;
+  stop('screen');
+  const t={root,client,kind:'screen',closed:false};sessions.set(key,t);
+  root.innerHTML='<section class="geo-projector"><span class="geo-kicker">ГЕОГРАФИЧЕСКИЙ РАУНД</span><h1>'+esc(s.activity?.title||'Карта России')+'</h1><p>У каждого игрока — индивидуальная карта и случайные задания.</p>'+
+   '<div class="geo-projector-stats"><div><strong id="geoProjCount">—</strong><span>субъектов на игрока</span></div><div><strong id="geoProjPlayers">0</strong><span>в игре</span></div><div><strong id="geoProjAnswered">0</strong><span>ответов</span></div><div><strong id="geoProjTime">—</strong><span>секунд осталось</span></div></div>'+
+   '<p>Найдите регион, столицу, флаг, контур или соседа на своём телефоне. Ответы на общий экран не выводятся.</p></section>';
+  const update=async()=>{if(t.closed||!t.root.isConnected)return;
+   const {data,error}=await client.rpc('qwiz_geo_projection',{p_code:s.code});if(error||!data?.active)return;
+   const set=(id,x)=>{const n=document.getElementById(id);if(n)n.textContent=x};
+   set('geoProjCount',data.count);set('geoProjPlayers',data.players);set('geoProjAnswered',data.answered);set('geoProjTime',data.remaining);
+  };
+  update();t.interval=setInterval(update,3500);return true;
+ }
+ function stop(kind){for(const [key,t] of sessions){if(t.kind!==kind)continue;t.closed=true;clearInterval(t.interval);if(t.onClick)t.root?.removeEventListener('click',t.onClick);sessions.delete(key)}}
+ window.QwizGeo=Object.freeze({mountPlayer,mountProjector,stop,loadMap,labels,MAP_URL});
+})();
