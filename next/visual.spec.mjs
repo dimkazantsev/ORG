@@ -223,6 +223,41 @@ test('Audience can open general link and enter a specific room without teacher l
  await page.locator('#projectionCode').fill('abcdef12');
  await expect(page.locator('#projectionCode')).toHaveValue('ABCDEF12');
 });
+
+test('Audience setup verifies current room and shows large player QR without teacher login',async({page})=>{
+ await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({contentType:'application/javascript',body:
+  'window.checkedRooms=[];window.supabase={createClient:()=>({rpc:async(_name,args)=>{window.checkedRooms.push(args.p_code);return args.p_code==="ABCDEF12"?{data:{code:"ABCDEF12",phase:"lobby"},error:null}:{data:null,error:{message:"not found"}}}})};'}));
+ await page.setViewportSize({width:1440,height:900});
+ await page.goto('http://127.0.0.1:8080/next/presenter.html');
+ await expect(page.locator('#projectionSetupQrOpen')).toBeDisabled();
+ await page.locator('#projectionCode').fill('abcdef12');
+ await expect(page.locator('#projectionSetupQrOpen')).toBeEnabled();
+ await expect(page.locator('#projectionSetupQrImage canvas')).toHaveCount(1);
+ const url=new URL(await page.locator('#projectionSetupQrLink').getAttribute('href'));
+ expect(url.pathname).toMatch(/\\/next\\/$/);
+ expect(url.searchParams.get('room')).toBe('ABCDEF12');
+ expect(url.pathname).not.toContain('presenter');
+ await page.locator('#projectionSetupQrOpen').click();
+ await expect(page.locator('#projectionQrDialog')).toBeVisible();
+ await expect(page.locator('#projectionQrRoom')).toHaveText('ABCDEF12');
+ await expect(page.locator('#projectionQrZoom canvas')).toHaveCount(1);
+ await expect(page.locator('#projectionQrLink')).toHaveAttribute('href',url.toString());
+ await page.locator('#projectionQrClose').click();
+ await expect(page.locator('#projectionQrDialog')).toBeHidden();
+ await page.locator('#projectionCode').fill('DEADBEEF');
+ await expect(page.locator('#projectionSetupQrOpen')).toBeDisabled();
+ await expect(page.locator('#projectionInputStatus')).toContainText('Не удалось подтвердить');
+ await expect(page.locator('#projectionSetupQrLink')).toBeHidden();
+ await page.locator('#projectionCode').fill('ABCDEF12');
+ await expect(page.locator('#projectionSetupQrOpen')).toBeEnabled();
+ await page.setViewportSize({width:390,height:844});
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
+ await page.screenshot({path:'visual-artifacts/audience-quick-qr-phone.png',fullPage:true,animations:'disabled'});
+ await page.reload();
+ await expect(page.locator('#projectionCode')).toHaveValue('ABCDEF12');
+ await expect(page.locator('#projectionSetupQrOpen')).toBeEnabled();
+});
+
 test('Standalone teacher workspace is responsive and has two library sections',async({page})=>{
  await page.goto('http://127.0.0.1:8080/next/workspace.html');
  for(const width of [390,768,1440]){
