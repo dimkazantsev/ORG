@@ -13,16 +13,16 @@ function clearError(){$('projectionError').hidden=true}
 function qr(div,url){if(typeof QRCode==='function'&&div){div.replaceChildren();new QRCode(div,{text:url,width:240,height:240,colorLight:'#fff',colorDark:'#27302b',correctLevel:QRCode.CorrectLevel.M})}}
 function link(code){const u=new URL('./',location.href);u.searchParams.set('room',code);return u.toString()}
 const recentRoomKey='qwiz-presenter-recent-room';
-let qrValidatedCode='';
+const roomPattern=/^[A-F0-9]{8}$/;
+function joinHref(code=''){return roomPattern.test(code||'')?link(code):new URL('./',location.href).toString()}
 function rememberRoom(code){
- try{if(code&&/^[A-F0-9]{8}$/.test(code))sessionStorage.setItem(recentRoomKey,code)}
+ try{if(roomPattern.test(code||''))sessionStorage.setItem(recentRoomKey,code)}
  catch{}
 }
-function openJoinQr(code){
- if(!/^[A-F0-9]{8}$/.test(code||''))return;
- const href=link(code),dialog=$('projectionQrDialog');
+function openJoinQr(code=''){
+ const href=joinHref(code),dialog=$('projectionQrDialog');
  qr($('projectionQrZoom'),href);
- $('projectionQrRoom').textContent=code;
+ $('projectionQrRoom').textContent=roomPattern.test(code||'')?code:'пока не создан';
  $('projectionQrLink').href=href;
  $('projectionQrLink').textContent=href;
  $('projectionQrCopyStatus').textContent='';
@@ -33,70 +33,97 @@ function setup(){
  $('projectionJoinQr').hidden=true;
  const root=$('projectionMain');
  root.innerHTML='<section class="projection-setup"><div class="projection-eyebrow">QWIZ-PARTY / ЭКРАН АУДИТОРИИ</div>'+
- '<h1>Какая игра сегодня?</h1><p>Введите код комнаты, полученный у преподавателя. Вход в кабинет на этом экране не нужен.</p>'+
- '<div class="projection-setup-grid"><form id="projectionJoin" class="projection-setup-form">'+
- '<div class="projection-setup-field"><label for="projectionCode">Код комнаты</label>'+
- '<input id="projectionCode" maxlength="8" pattern="[A-Fa-f0-9]{8}" placeholder="A1B2C3D4" required autocomplete="off" spellcheck="false" inputmode="text"></div>'+
- '<button id="projectionOpenGame" type="submit">Открыть игру →</button><span id="projectionInputStatus" class="projection-input-status" role="status" aria-live="polite">Введите 8-значный код, чтобы проверить комнату и показать QR.</span></form>'+
+ '<h1>Присоединяйтесь к игре!</h1><p>Наведите камеру телефона на QR-код. Код комнаты появится автоматически, когда преподаватель создаст игру.</p>'+
+ '<div class="projection-setup-grid"><section class="projection-setup-form" aria-labelledby="projectionActiveTitle">'+
+ '<div class="projection-current-room"><span id="projectionActiveTitle" class="projection-active-label">ТЕКУЩАЯ ИГРА</span>'+
+ '<strong id="projectionActiveCode" class="projection-active-code" aria-live="polite">— — — — — — — —</strong>'+
+ '<span id="projectionActiveName" class="projection-active-name">Комната ещё не создана</span></div>'+
+ '<button id="projectionOpenGame" type="button" disabled>Открыть игру →</button>'+
+ '<p id="projectionAutoStatus" class="projection-auto-status" role="status" aria-live="polite">Ожидаем запуска игры преподавателем. QR уже доступен.</p>'+
+ '<form id="projectionJoin" class="projection-switch-form"><label for="projectionCode">Другая комната (при необходимости)</label>'+
+ '<div class="projection-switch-row"><input id="projectionCode" maxlength="8" pattern="[A-Fa-f0-9]{8}" placeholder="Код комнаты" autocomplete="off" spellcheck="false" inputmode="text">'+
+ '<button type="submit">Переключиться</button></div>'+
+ '<span id="projectionInputStatus" role="status" aria-live="polite">Вводить код для QR не требуется.</span></form></section>'+
  '<aside class="projection-quick-qr" aria-labelledby="projectionSetupQrTitle"><span class="projection-quick-qr-eyebrow">БЫСТРЫЙ ВХОД</span>'+
  '<h2 id="projectionSetupQrTitle">Подключиться с телефона</h2>'+
- '<button type="button" id="projectionSetupQrOpen" class="projection-quick-qr-button" aria-label="Увеличить QR-код входа в комнату" disabled>'+
- '<span id="projectionSetupQrImage" class="projection-quick-qr-image"><svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 5h14v14H5zM29 5h14v14H29zM5 29h14v14H5zM29 29h7v7h7v7H29zM11 11h2M35 11h2M11 35h2"/></svg></span>'+
- '<span id="projectionSetupQrZoomLabel" class="projection-quick-qr-action">QR появится здесь</span></button>'+
- '<p id="projectionSetupQrHint" class="projection-quick-qr-hint">Для подключения к текущей игре укажите её код слева.</p>'+
- '<a id="projectionSetupQrLink" class="projection-quick-qr-link" hidden>Открыть ссылку игрока ↗</a></aside></div></section>';
- const input=$('projectionCode'),trigger=$('projectionSetupQrOpen'),hint=$('projectionSetupQrHint'),status=$('projectionInputStatus'),linkNode=$('projectionSetupQrLink');
- let latestRequest=0,verifyTimer=null,confirmedCode='';
- const clearQr=()=>{
-  confirmedCode='';qrValidatedCode='';trigger.disabled=true;linkNode.hidden=true;
-  $('projectionSetupQrImage').innerHTML='<svg viewBox="0 0 48 48" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3"><path d="M5 5h14v14H5zM29 5h14v14H29zM5 29h14v14H5zM29 29h7v7h7v7H29zM11 11h2M35 11h2M11 35h2"/></svg>';
-  $('projectionSetupQrZoomLabel').textContent='QR появится здесь';
- };
- async function verify(code,requestId){
-  if(!/^[A-F0-9]{8}$/.test(code))return false;
-  status.textContent='Проверяем комнату…';hint.textContent='Проверяем доступность игры…';
-  if(!window.supabase?.createClient){
-   status.textContent='Сервис временно недоступен. Проверьте подключение.';
-   hint.textContent='Не удалось подтвердить комнату — QR пока недоступен.';return false;
-  }
-  try{
-   if(!ctx.client)ctx.client=window.supabase.createClient(SUPABASE_URL,KEY);
-   const {data,error}=await ctx.client.rpc('qwiz_party_projection',{p_code:code});
-   if(requestId!==latestRequest||input.value!==code)return false;
-   if(error||!data||String(data.code||'').toUpperCase()!==code)throw Error('Комната не найдена');
-   if(data.phase==='finished'){
-    status.textContent='Эта игра уже завершена.';
-    hint.textContent='Введите код действующей игры.';return false;
-   }
-   confirmedCode=code;qrValidatedCode=code;rememberRoom(code);
-   qr($('projectionSetupQrImage'),link(code));trigger.disabled=false;
-   $('projectionSetupQrZoomLabel').textContent='Увеличить QR ↗';
-   hint.textContent='Комната '+code+' · сканируйте и подключайтесь к игре.';
-   linkNode.href=link(code);linkNode.hidden=false;
-   status.textContent='Комната найдена. QR ведёт непосредственно к подключению игрока.';
-   return true;
-  }catch(e){
-   if(requestId!==latestRequest)return false;
-   status.textContent='Не удалось подтвердить комнату. Проверьте код.';
-   hint.textContent='QR появится только для существующей активной комнаты.';
-   return false;
-  }
+ '<button type="button" id="projectionSetupQrOpen" class="projection-quick-qr-button" aria-label="Увеличить QR-код входа в игру">'+
+ '<span id="projectionSetupQrImage" class="projection-quick-qr-image"></span>'+
+ '<span id="projectionSetupQrZoomLabel" class="projection-quick-qr-action">Увеличить QR ↗</span></button>'+
+ '<p id="projectionSetupQrHint" class="projection-quick-qr-hint">QR открыт сразу. Когда появится игра, ссылка обновится автоматически.</p>'+
+ '<a id="projectionSetupQrLink" class="projection-quick-qr-link" target="_blank" rel="noopener">Открыть ссылку игрока ↗</a></aside></div></section>';
+ const input=$('projectionCode'),status=$('projectionInputStatus'),hint=$('projectionSetupQrHint');
+ let selectedCode='',manualPinned=false,checking=false,manualRequest=0,autoRequest=0;
+ let renderedHref='';
+ function paintQr(){
+  const href=joinHref(selectedCode);
+  if(href===renderedHref)return;
+  renderedHref=href;
+  qr($('projectionSetupQrImage'),href);
+  $('projectionSetupQrLink').href=href;
+  hint.textContent=selectedCode
+   ?'Сканируйте: телефон откроет комнату '+selectedCode+'.'
+   :'QR работает без кода и открывает вход в QWIZ-PARTY. Ссылка обновится при создании игры.';
  }
- input.oninput=e=>{
-  e.target.value=e.target.value.toUpperCase().replace(/[^A-F0-9]/g,'');
-  clearTimeout(verifyTimer);latestRequest++;clearQr();
-  const code=e.target.value;
-  status.textContent=code.length===8?'Готовим QR для комнаты…':'Введите 8-значный код комнаты.';
-  hint.textContent=code.length===8?'Проверяем доступность комнаты…':'Для подключения к текущей игре укажите её код слева.';
-  if(code.length===8){const requestId=latestRequest;verifyTimer=setTimeout(()=>verify(code,requestId),350)}
+ function showRoom(code,title='',source='auto'){
+  if(!roomPattern.test(code||''))return;
+  selectedCode=code;rememberRoom(code);
+  $('projectionActiveCode').textContent=code;
+  $('projectionActiveName').textContent=title||'Игра доступна';
+  $('projectionOpenGame').disabled=false;
+  $('projectionAutoStatus').textContent=source==='manual'
+   ?'Комната выбрана вручную. QR обновлён.'
+   :'Комната найдена автоматически. QR ведёт прямо в неё.';
+  paintQr();
+ }
+ function clearAuto(){
+  if(manualPinned)return;
+  selectedCode='';
+  $('projectionActiveCode').textContent='— — — — — — — —';
+  $('projectionActiveName').textContent='Комната ещё не создана';
+  $('projectionOpenGame').disabled=true;
+  $('projectionAutoStatus').textContent='Ожидаем запуска игры преподавателем. QR уже доступен.';
+  paintQr();
+ }
+ function client(){
+  if(!window.supabase?.createClient)return null;
+  if(!ctx.client)ctx.client=window.supabase.createClient(SUPABASE_URL,KEY);
+  return ctx.client;
+ }
+ async function discover(){
+  if(manualPinned||checking||document.hidden)return;
+  const api=client();if(!api){$('projectionAutoStatus').textContent='Нет связи с сервером. Общий QR доступен.';return}
+  checking=true;const stamp=++autoRequest;
+  try{
+   const {data,error}=await api.rpc('qwiz_audience_active_room');
+   if(stamp!==autoRequest||manualPinned)return;
+   if(error)throw Error(error.message||'Сервис недоступен');
+   if(data&&roomPattern.test(data.code)&&data.phase!=='finished')showRoom(data.code,data.title);
+   else clearAuto();
+  }catch(e){
+   if(!selectedCode&&!manualPinned)$('projectionAutoStatus').textContent='Нет связи с комнатами. Общий QR работает, попробуем снова.';
+  }finally{checking=false}
+ }
+ $('projectionOpenGame').onclick=()=>{
+  if(!roomPattern.test(selectedCode))return;
+  const next=new URL(location.href);next.searchParams.set('room',selectedCode);location.assign(next.toString());
  };
- trigger.onclick=()=>openJoinQr(confirmedCode);
+ $('projectionSetupQrOpen').onclick=()=>openJoinQr(selectedCode);
+ input.oninput=e=>{e.target.value=e.target.value.toUpperCase().replace(/[^A-F0-9]/g,'');status.textContent='Ввод не влияет на QR текущей игры.'};
  $('projectionJoin').onsubmit=async e=>{
-  e.preventDefault();const code=input.value;if(!/^[A-F0-9]{8}$/.test(code))return;
-  if(code!==confirmedCode){clearTimeout(verifyTimer);latestRequest++;if(!await verify(code,latestRequest))return}
-  const url=new URL(location.href);url.searchParams.set('room',code);location.assign(url.toString());
+  e.preventDefault();const code=input.value.trim();
+  if(!roomPattern.test(code)){status.textContent='Укажите код из 8 символов.';return}
+  const api=client();if(!api){status.textContent='Подключение к серверу недоступно.';return}
+  const stamp=++manualRequest;status.textContent='Проверяем другую комнату…';
+  try{
+   const {data,error}=await api.rpc('qwiz_party_projection',{p_code:code});
+   if(stamp!==manualRequest||input.value!==code)return;
+   if(error||!data||data.code!==code||data.phase==='finished')throw Error('Комната недоступна');
+   manualPinned=true;showRoom(code,data.title,'manual');status.textContent='Комната выбрана. Можно открыть игру или сканировать QR.';
+  }catch{if(stamp===manualRequest)status.textContent='Комната не найдена или уже завершена.'}
  };
- try{const saved=sessionStorage.getItem(recentRoomKey);if(saved&&/^[A-F0-9]{8}$/.test(saved)){input.value=saved;input.dispatchEvent(new Event('input'))}}catch{}
+ paintQr(); // Always draw a useful QR immediately, without entering a code.
+ void discover();
+ setInterval(discover,8000); // Lightweight one-RPC check, only while the setup screen is visible.
 }
 function tone(kind){QwizStage.audio.play(kind==='end'?'timeup':kind)}
 function ranking(rows,key){
