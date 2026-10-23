@@ -270,7 +270,7 @@ test('Audience setup verifies current room and shows large player QR without tea
  await expect(page.locator('#projectionSetupQrOpen')).toBeEnabled();
  await expect(page.locator('#projectionSetupQrImage canvas')).toHaveCount(1);
  const url=new URL(await page.locator('#projectionSetupQrLink').getAttribute('href'));
- expect(url.pathname).toMatch(/\\/next\\/$/);
+ expect(url.pathname.endsWith('/next/')).toBe(true);
  expect(url.searchParams.get('room')).toBe('ABCDEF12');
  expect(url.pathname).not.toContain('presenter');
  await page.locator('#projectionSetupQrOpen').click();
