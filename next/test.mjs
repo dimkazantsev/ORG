@@ -289,7 +289,7 @@ test('Majority boost votes, host controls, and auto-advance are server-owned',()
 
 test('Shared stage initializes in a browser-like environment without undefined references',()=>{
  const source=readFileSync(new URL('./stage.js',import.meta.url),'utf8');
- const window={};const document={addEventListener(){}};
+ const window={addEventListener(){}};const document={addEventListener(){}};
  assert.doesNotThrow(()=>runInNewContext(source,{window,document,Intl,Date,localStorage:{getItem:()=>null}}));
  const stage=window.QwizStage;
  assert.ok(stage,'QwizStage exported');
