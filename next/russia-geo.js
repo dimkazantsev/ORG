@@ -30,8 +30,11 @@
    .then(t=>{
     const item=t.objects.ru89;
     if(item.geometries.length!==89)throw Error('В картографическом наборе нет 89 регионов');
-    geometry=item.geometries.map(g=>({id:g.properties.id,path:shape(t,g),name:g.properties.name_full,
-      cx:project([g.properties.clon,g.properties.clat])[0],cy:project([g.properties.clon,g.properties.clat])[1]}));
+    geometry=item.geometries.map(g=>{const path=shape(t,g),n=[...path.matchAll(/(-?\d+\.\d+),(-?\d+\.\d+)/g)].map(m=>[Number(m[1]),Number(m[2])]);
+     const xs=n.map(x=>x[0]),ys=n.map(x=>x[1]),x=Math.min(...xs),y=Math.min(...ys),w=Math.max(8,Math.max(...xs)-x),h=Math.max(8,Math.max(...ys)-y);
+     const padding=Math.max(10,Math.max(w,h)*.22);
+     return{id:g.properties.id,path,name:g.properties.name_full,box:[x-padding,y-padding,w+2*padding,h+2*padding].map(z=>+z.toFixed(1)),
+      cx:project([g.properties.clon,g.properties.clat])[0],cy:project([g.properties.clon,g.properties.clat])[1]}});
     return geometry;
    }).catch(e=>{loadPromise=null;throw e});
   return loadPromise;
@@ -40,7 +43,7 @@
   if(!geometry)return '<div class="geo-map-loading">Загружаем карту субъектов России…</div>';
   if(silhouette){
     const g=geometry.find(z=>z.id===active);
-    return g?'<svg class="geo-map-svg geo-silhouette" viewBox="0 0 1120 480" role="img" aria-label="Контур неизвестного субъекта"><path d="'+g.path+'"/></svg>':'';
+    return g?'<svg class="geo-map-svg geo-silhouette" viewBox="'+g.box.join(' ')+'" role="img" aria-label="Контур неизвестного субъекта"><path d="'+g.path+'"/></svg>':'';
   }
   const paths=geometry.map(g=>'<path class="geo-region '+(g.id===active?'geo-focus':'')+'" data-region="'+esc(g.id)+'" d="'+g.path+'" aria-label="'+esc(g.name)+'" '+(interactive?'role="button" tabindex="0"':'')+'/>').join('');
   const targets=interactive?geometry.map(g=>'<circle class="geo-hit" data-region="'+esc(g.id)+'" cx="'+g.cx.toFixed(2)+'" cy="'+g.cy.toFixed(2)+'" r="6.5" aria-label="'+esc(g.name)+'"/>').join(''):'';
@@ -115,13 +118,20 @@
   const t={root,client:ctx.client||ctx.db,roomId:s.room_id,kind:'player',closed:false,view:null,busy:false,message:'',mapPending:false};sessions.set(key,t);
   root.innerHTML='<section class="geo-game"><h2>Карта России</h2><p>Готовим вашу индивидуальную карту…</p></section>';
   t.onClick=e=>{
+   const zoom=e.target.closest('[data-geo-zoom]');
+   if(zoom){const svg=root.querySelector('.geo-map-frame .geo-map-svg');if(!svg)return;
+    const action=zoom.dataset.geoZoom;let [x,y,w,h]=svg.getAttribute('viewBox').split(' ').map(Number);
+    if(action==='reset'){[x,y,w,h]=[0,0,1120,480]}
+    else{const f=action==='in'?.72:1.38;const nw=Math.max(55,Math.min(1120,w*f)),nh=nw*480/1120;
+     x=Math.max(0,Math.min(1120-nw,x+(w-nw)/2));y=Math.max(0,Math.min(480-nh,y+(h-nh)/2));w=nw;h=nh}
+    svg.setAttribute('viewBox',[x,y,w,h].join(' '));return;
+   }
    const b=e.target.closest('[data-geo-answer],[data-region]');if(!b||!t.view?.open||t.busy||!t.view?.question)return;
    const selected=b.dataset.geoAnswer||b.dataset.region;
    if(b.dataset.region&&t.view.question.mode!=='locate')return;
    fetchView(t,selected);
   };
   root.addEventListener('click',t.onClick);
-  bindZoom(root);
   fetchView(t);
   t.interval=setInterval(()=>{if(document.hidden||t.busy)return;if(t.view?.remaining>0)t.view.remaining-=1; if(t.view){const foot=root.querySelector('.geo-footer>span');if(foot)foot.textContent='Осталось '+Math.max(0,t.view.remaining)+' сек.';} if(!t.view||t.view.remaining%5===0)fetchView(t)},1000);
   return true;
