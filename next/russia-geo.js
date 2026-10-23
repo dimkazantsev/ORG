@@ -31,7 +31,8 @@
     const item=t.objects.ru89;
     if(item.geometries.length!==89)throw Error('В картографическом наборе нет 89 регионов');
     geometry=item.geometries.map(g=>{const path=shape(t,g),n=[...path.matchAll(/(-?\d+\.\d+),(-?\d+\.\d+)/g)].map(m=>[Number(m[1]),Number(m[2])]);
-     const xs=n.map(x=>x[0]),ys=n.map(x=>x[1]),x=Math.min(...xs),y=Math.min(...ys),w=Math.max(8,Math.max(...xs)-x),h=Math.max(8,Math.max(...ys)-y);
+     const bounds=n.reduce((a,p)=>[Math.min(a[0],p[0]),Math.min(a[1],p[1]),Math.max(a[2],p[0]),Math.max(a[3],p[1])],[Infinity,Infinity,-Infinity,-Infinity]);
+     const x=bounds[0],y=bounds[1],w=Math.max(8,bounds[2]-x),h=Math.max(8,bounds[3]-y);
      const padding=Math.max(10,Math.max(w,h)*.22);
      return{id:g.properties.id,path,name:g.properties.name_full,box:[x-padding,y-padding,w+2*padding,h+2*padding].map(z=>+z.toFixed(1)),
       cx:project([g.properties.clon,g.properties.clat])[0],cy:project([g.properties.clon,g.properties.clat])[1]}});
