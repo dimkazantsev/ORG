@@ -760,8 +760,8 @@ test('Saved build cards keep identical width and height for short and long names
    expect(rect.buttonHeight).toBeCloseTo(rect.height,0);
    expect(rect.trashRight,'delete inside card at '+width).toBeLessThanOrEqual(rect.x+rect.width);
   }
-  expect(expectedHeight).toBe(208);
-  if(width>540)expect(expectedWidth).toBe(226);
+  expect(Math.abs(expectedHeight-208),'near-208 CSS pixel height').toBeLessThan(0.1);
+  if(width>540)expect(Math.abs(expectedWidth-226),'near-226 CSS pixel width').toBeLessThan(0.1);
   // Action position is identical within each tile regardless of how much the title wraps.
   for(const rect of cardRects)expect(Math.abs(rect.editBottom-rect.y-expectedHeight)).toBeGreaterThan(5);
   await expect(page.locator('#savedBuilds .saved-build-wrap .card-trash')).toHaveCount(3);
