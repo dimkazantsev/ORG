@@ -175,7 +175,7 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  if(s.phase==='finished'){el.innerHTML='<div class="game-empty"><div class="eyebrow">Игра завершена</div><h1>Финальный рейтинг</h1><p>Спасибо за участие. Результаты зафиксированы на сервере.</p>'+personalResults(s,true)+'</div>';text('playerStatus','Игра завершена.');return}
  const question=s.question;
  if(s.phase==='intermission'){
-  if(window.QwizGeo?.mountPlayer(el,s,{client:ctx.db})){
+  if(window.QwizGeo?.mountPlayer(el,s,{client:ctx.client})){
      text('playerStatus','Карта России: индивидуальные задания сохраняются на сервере.');return;
    }
    if(window.QwizArcade?.mountPlayer(el,s,ctx)){
