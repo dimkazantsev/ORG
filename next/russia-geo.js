@@ -162,7 +162,7 @@
    const dragDistance=Math.hypot(e.clientX-old.startX,e.clientY-old.startY);
    if(before.length===1&&dragDistance<8)return; // A small normal click must still select a region.
    if(Math.abs(dx)+Math.abs(dy)<.5)return;
-   t.suppressUntil=Date.now()+450;
+   if(e.pointerType==='touch'||e.pointerType==='pen')t.suppressUntil=Date.now()+450;
    if(before.length===1)modifyView(svg,1,dx,dy);
    else{
     const dist=p=>Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);
