@@ -730,6 +730,47 @@ test('Color-strip answers are touch-ready on the student screen',async({page})=>
  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
 });
 
+test('Saved build cards keep identical width and height for short and long names',async({page})=>{
+ const base='http://127.0.0.1:8080/next/workspace.html';
+ for(const [width,height] of [[1440,900],[768,900],[390,844]]){
+  await page.setViewportSize({width,height});
+  await page.goto(base);
+  await page.locator('[data-section="builder"]').click();
+  await page.evaluate(()=>{
+   state.builds=[
+    {id:'00000000-0000-4000-8000-000000000201',title:'ОРГ'},
+    {id:'00000000-0000-4000-8000-000000000202',title:'Демо · Командные мини-игры'},
+    {id:'00000000-0000-4000-8000-000000000203',title:'Очень длинное название сохранённой сборки с несколькими дополнительными словами для проверки равных размеров карточек'}
+   ];
+   renderBuilds();
+  });
+  await expect(page.locator('#savedBuilds .saved-build-wrap')).toHaveCount(3);
+  const cardRects=await page.locator('#savedBuilds .saved-build-wrap').evaluateAll(cards=>cards.map(card=>{
+   const rect=card.getBoundingClientRect(),button=card.querySelector('.saved-build').getBoundingClientRect();
+   const edit=card.querySelector('.saved-build>span:last-child').getBoundingClientRect();
+   const trash=card.querySelector('.card-trash').getBoundingClientRect();
+   return {x:rect.x,y:rect.y,width:rect.width,height:rect.height,
+    buttonWidth:button.width,buttonHeight:button.height,editBottom:edit.bottom,trashRight:trash.right};
+  }));
+  const expectedWidth=cardRects[0].width,expectedHeight=cardRects[0].height;
+  for(const rect of cardRects){
+   expect(Math.abs(rect.width-expectedWidth),'uniform card widths at '+width).toBeLessThan(1);
+   expect(Math.abs(rect.height-expectedHeight),'uniform card heights at '+width).toBeLessThan(1);
+   expect(rect.buttonWidth).toBeCloseTo(rect.width,0);
+   expect(rect.buttonHeight).toBeCloseTo(rect.height,0);
+   expect(rect.trashRight,'delete inside card at '+width).toBeLessThanOrEqual(rect.x+rect.width);
+  }
+  expect(expectedHeight).toBe(208);
+  if(width>540)expect(expectedWidth).toBe(226);
+  // Action position is identical within each tile regardless of how much the title wraps.
+  for(const rect of cardRects)expect(Math.abs(rect.editBottom-rect.y-expectedHeight)).toBeGreaterThan(5);
+  await expect(page.locator('#savedBuilds .saved-build-wrap .card-trash')).toHaveCount(3);
+  const overflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+  expect(overflow,'no horizontal scroll at '+width).toBeLessThanOrEqual(2);
+  if(width===1440||width===390)await page.screenshot({path:'visual-artifacts/saved-builds-uniform-'+width+'.png',fullPage:true,animations:'disabled'});
+ }
+});
+
 test('In-card SVG trash buttons are compact and keyboard-accessible',async({page})=>{
  await page.goto('http://127.0.0.1:8080/next/workspace.html');
  await page.locator('[data-section="builder"]').click();
