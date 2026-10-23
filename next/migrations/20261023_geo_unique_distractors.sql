@@ -61,6 +61,16 @@ begin
       case when v_mode='capital' then z.capital when v_mode='district' then z.fd else z.name end)
       order by md5(x.id||':'||p.id::text||':'||i::text))
       into v_options from unnest(opts) x(id) join public.qwiz_geo_regions z on z.id=x.id;
+    -- Options for textual answers use opaque one-time tokens. SVG map answers retain region IDs.
+    if v_mode<>'locate' then
+      with tokens as (
+       select x.v->>'id' original,md5(random()::text||clock_timestamp()::text||x.ordinality::text) token,
+       x.v->>'text' label,x.ordinality ord
+       from jsonb_array_elements(v_options) with ordinality x(v,ordinality)
+      )
+      select jsonb_agg(jsonb_build_object('id',token,'text',label) order by ord),
+       max(token) filter(where original=v_answer) into v_options,v_answer from tokens;
+    end if;
     v_tasks:=v_tasks||jsonb_build_array(jsonb_build_object(
       'mode',v_mode,'region',v_id,'answer',v_answer,
       'name',v_region.name,'capital',v_region.capital,
@@ -87,5 +97,12 @@ begin
  'total',v_count,'score',run.score,'correct',run.correct_count,'finished',run.current_index>=v_count,
  'last_correct',case when p_answer is not null then v_hit else null end,
  'last_award',v_award,'question',case when v_open and run.current_index<v_count
- then (run.tasks->run.current_index)-'answer' else null end);
+ then case run.tasks->run.current_index->>'mode'
+ when 'locate' then (run.tasks->run.current_index)-'answer'-'region'-'capital'-'district'-'region_type'-'flag'-'options'
+ when 'identify' then (run.tasks->run.current_index)-'answer'-'name'-'capital'-'district'-'region_type'-'flag'
+ when 'silhouette' then (run.tasks->run.current_index)-'answer'-'name'-'capital'-'district'-'region_type'-'flag'
+ when 'flag' then (run.tasks->run.current_index)-'answer'-'name'-'region'-'capital'-'district'-'region_type'
+ when 'detective' then (run.tasks->run.current_index)-'answer'-'name'-'region'-'flag'
+ else (run.tasks->run.current_index)-'answer'-'region'-'capital'-'district'-'region_type'-'flag'
+ end else null end);
 end $geo$;
