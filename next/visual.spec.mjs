@@ -288,6 +288,32 @@ test('Audience QR appears immediately and switches to automatic game code withou
  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
 });
 
+test('Optional manual room picker keeps label, input and button separated on desktop and mobile',async({page})=>{
+ await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({contentType:'application/javascript',body:'window.supabase={createClient:()=>({rpc:async()=>({data:{code:null,phase:null,title:null},error:null})})};'}));
+ for(const [width,height] of [[1440,900],[768,900],[390,844]]){
+  await page.setViewportSize({width,height});
+  await page.goto('http://127.0.0.1:8080/next/presenter.html');
+  await page.locator('.projection-manual-choice summary').click();
+  await expect(page.locator('#projectionCode')).toBeVisible();
+  const metrics=await page.evaluate(()=>{
+   const rect=sel=>{const r=document.querySelector(sel).getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,height:r.height}};
+   return {label:rect('.projection-switch-form>label'),input:rect('#projectionCode'),button:rect('.projection-switch-row>button'),
+    overflow:document.documentElement.scrollWidth-innerWidth,
+    font:parseFloat(getComputedStyle(document.querySelector('#projectionCode')).fontSize)};
+  });
+  expect(metrics.input.top-metrics.label.bottom,'label/input gap at '+width).toBeGreaterThanOrEqual(6);
+  expect(metrics.input.height,'input height at '+width).toBeLessThanOrEqual(50);
+  expect(metrics.button.height,'button height at '+width).toBeLessThanOrEqual(50);
+  expect(metrics.font,'input font size at '+width).toBeLessThanOrEqual(16);
+  expect(metrics.overflow,'horizontal overflow at '+width).toBeLessThanOrEqual(2);
+  if(width>550)expect(metrics.button.left-metrics.input.right).toBeGreaterThanOrEqual(8);
+  else expect(metrics.button.top-metrics.input.bottom).toBeGreaterThanOrEqual(8);
+  await page.locator('#projectionCode').focus();
+  await expect(page.locator('#projectionCode')).toBeFocused();
+  if(width===1440||width===390)await page.screenshot({path:'visual-artifacts/audience-manual-form-'+width+'.png',fullPage:true,animations:'disabled'});
+ }
+});
+
 test('Standalone teacher workspace is responsive and has two library sections',async({page})=>{
  await page.goto('http://127.0.0.1:8080/next/workspace.html');
  for(const width of [390,768,1440]){
