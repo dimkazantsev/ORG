@@ -584,7 +584,7 @@ function wire(){
  $('cardPalette').onclick=e=>{const b=e.target.closest('[data-card]');if(!b)return;
    if(b.dataset.geo==='russia_map'){
     appendCard('bonus');const c=state.cards[state.cards.length-2];c.title='Карта России · 89 субъектов';c.icon='map';
-    c.settings={...c.settings,arcade_mode:'russia_map',geo_count:15,geo_seconds:180,geo_modes:['locate','identify','capital','flag','silhouette','neighbour','detective']};renderCards();
+    c.settings={...c.settings,arcade_mode:'russia_map',geo_count:15,geo_seconds:180,geo_modes:['locate','identify','capital','flag','silhouette','neighbour','detective','district']};renderCards();
    }else appendCard(b.dataset.card,b.dataset.arcade||null);
   };
  $('arcadePalette').onclick=e=>{const b=e.target.closest('[data-arcade]');if(b)appendCard(b.dataset.card,b.dataset.arcade)};
