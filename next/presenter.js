@@ -40,10 +40,10 @@ function setup(){
  '<span id="projectionActiveName" class="projection-active-name">Комната ещё не создана</span></div>'+
  '<button id="projectionOpenGame" type="button" disabled>Открыть игру →</button>'+
  '<p id="projectionAutoStatus" class="projection-auto-status" role="status" aria-live="polite">Ожидаем запуска игры преподавателем. QR уже доступен.</p>'+
- '<form id="projectionJoin" class="projection-switch-form"><label for="projectionCode">Другая комната (при необходимости)</label>'+
+ '<details class="projection-manual-choice"><summary>Выбрать другую комнату вручную</summary><form id="projectionJoin" class="projection-switch-form"><label for="projectionCode">Код другой комнаты</label>'+
  '<div class="projection-switch-row"><input id="projectionCode" maxlength="8" pattern="[A-Fa-f0-9]{8}" placeholder="Код комнаты" autocomplete="off" spellcheck="false" inputmode="text">'+
  '<button type="submit">Переключиться</button></div>'+
- '<span id="projectionInputStatus" role="status" aria-live="polite">Вводить код для QR не требуется.</span></form></section>'+
+ '<span id="projectionInputStatus" role="status" aria-live="polite">Вводить код для QR не требуется.</span></form></details></section>'+
  '<aside class="projection-quick-qr" aria-labelledby="projectionSetupQrTitle"><span class="projection-quick-qr-eyebrow">БЫСТРЫЙ ВХОД</span>'+
  '<h2 id="projectionSetupQrTitle">Подключиться с телефона</h2>'+
  '<button type="button" id="projectionSetupQrOpen" class="projection-quick-qr-button" aria-label="Увеличить QR-код входа в игру">'+
