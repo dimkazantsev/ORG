@@ -6,15 +6,12 @@ window.QwizStage=(()=>{
  const capitalize=value=>{const text=String(value??'');return text.charAt(0).toLocaleUpperCase('ru-RU')+text.slice(1)};
  const countLabel=(value,forms)=>Number(value||0).toLocaleString('ru-RU')+' '+forms[new Intl.PluralRules('ru').select(Number(value)||0)];
  const phaseLabel=phase=>({lobby:'Ожидание участников',question:'Вопрос',result:'Разбор ответа',finished:'Игра завершена',countdown:'Подготовка',intermission:'Перерыв'})[phase]||'Ожидание данных';
- const animalNames=['fox','owl','cat','panda','otter','raccoon','capybara','penguin','koala','red-panda','rabbit','bear'];
- const animalLabels=['Лиса','Сова','Кот','Панда','Выдра','Енот','Капибара','Пингвин','Коала','Красная панда','Кролик','Медведь'];
- // Keep the exported legacy shape: dependent classroom components still read habitats.
- const habitats=animalNames.map((id,i)=>[id,animalLabels[i],'#9470e2']);
+ const habitats=[['forest','Лес','#278563'],['reef','Коралловый риф','#bb537e'],['savanna','Саванна','#a97920'],['mountains','Горы','#6962c4'],['arctic','Арктика','#2484a6'],['desert','Пустыня','#c46b38'],['jungle','Джунгли','#4b872c'],['ocean','Океан','#356cc1'],['wetland','Болото','#80822b'],['island','Остров','#229b8e'],['cave','Пещера','#8b678c'],['river','Река','#3494bc'],['meadow','Луг','#bb5b38'],['volcano','Вулкан','#c34d59'],['mangrove','Мангры','#97673e']];
+ const fillCut=t=>{const size=Math.max(0,Number(t.members??t.players)||0),answered=Math.min(size,Math.max(0,Number(t.answered)||0));return size&&answered?Math.max(0,94-88*answered/size):100};
  function icon(t,full=false){
-  const n=(Math.max(1,Number(t.position)||1)-1)%animalNames.length;
-  const members=Math.max(0,Number(t.members??t.players)||0),answered=Math.min(members,Math.max(0,Number(t.answered)||0));
-  const pct=full?100:members?Math.round(100*answered/members):0;
-  return '<div class="animal-medallion" role="img" aria-label="'+esc(animalLabels[n]+': '+answered+' из '+members+' ответили')+'" style="--animal-progress:'+pct+'%"><svg class="team-avatar" viewBox="0 0 100 100" aria-hidden="true"><use href="./assets/animals.svg#'+animalNames[n]+'"/></svg></div>';
+  const [id,label,color]=habitats[(Math.max(1,Number(t.position)||1)-1)%15],size=Math.max(0,Number(t.members??t.players)||0),answered=Math.min(size,Math.max(0,Number(t.answered)||0));
+  const seams=Array.from({length:Math.max(0,Math.min(80,size)-1)},(_,i)=>'<path d="M4 '+(94-88*(i+1)/size).toFixed(3)+'H96"/>').join('');
+  return '<svg class="habitat-icon" viewBox="0 0 100 100" role="img" aria-label="'+esc(label)+': '+answered+' из '+size+' ответили" style="--team-color:'+color+'"><use class="habitat-base" href="./assets/habitats.svg#'+id+'"/><g class="habitat-color" style="clip-path:inset('+(full?0:fillCut(t))+'% 0 0)"><use href="./assets/habitats.svg#'+id+'"/></g><g class="habitat-seams" aria-hidden="true">'+seams+'</g></svg>';
  }
  function teamTile(t,{full=false,ranked=false}={}){
   const d=t.speed_delta==null?null:Number(t.speed_delta);
@@ -25,10 +22,9 @@ window.QwizStage=(()=>{
  function patchTeams(root,rows){
   for(const t of rows||[]){
    const el=Array.from(root.querySelectorAll('[data-team]')).find(x=>x.dataset.team===String(t.id||t.position));if(!el)continue;
-   const badge=el.querySelector('.animal-medallion');
-   const members=Math.max(0,Number(t.members??t.players)||0),answered=Math.max(0,Number(t.answered)||0);
-   if(badge){badge.style.setProperty('--animal-progress',members?Math.min(100,100*answered/members)+'%':'0%');badge.setAttribute('aria-label',animalLabels[(Math.max(1,Number(t.position)||1)-1)%animalNames.length]+': '+answered+' из '+members+' ответили')}
-   const count=el.querySelector('.team-answered');if(count)count.textContent=answered;
+   const fill=el.querySelector('.habitat-color');if(fill)fill.style.clipPath='inset('+fillCut(t)+'% 0 0)';
+   const count=el.querySelector('.team-answered');if(count)count.textContent=Number(t.answered||0);
+   el.querySelector('svg')?.setAttribute('aria-label',habitats[(Math.max(1,Number(t.position)||1)-1)%15][1]+': '+Number(t.answered||0)+' из '+Number(t.members??t.players??0)+' ответили');
   }
  }
  function progress(root,rows){
