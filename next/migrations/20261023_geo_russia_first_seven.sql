@@ -55,24 +55,30 @@ begin
    n:=greatest(1,least(89,coalesce((a.settings->>'geo_count')::int,15)));
    modes:=a.settings->'geo_modes';
    if jsonb_typeof(modes) is distinct from 'array' or jsonb_array_length(modes)=0 then
-    modes:='["locate","identify","capital","flag","silhouette","neighbour","detective"]'::jsonb;
+    modes:='["locate","identify","capital","flag","silhouette","neighbour","detective","district"]'::jsonb;
    end if;
    select array_agg(id order by md5(id||':'||p.id::text||':'||p_room::text||':'||a.card_position::text))
      into ids from public.qwiz_geo_regions;
    for i in 1..n loop
     v_id:=ids[i];select * into v_region from public.qwiz_geo_regions where id=v_id;
     v_mode:=modes->>((i-1)%jsonb_array_length(modes));
-    if v_mode not in ('locate','identify','capital','flag','silhouette','neighbour','detective') then v_mode:='locate';end if;
+    if v_mode not in ('locate','identify','capital','flag','silhouette','neighbour','detective','district') then v_mode:='locate';end if;
     if v_mode='neighbour' and cardinality(v_region.neighbors)=0 then v_mode:='locate';end if;
     if v_mode='flag' and v_region.flag is null then v_mode:='identify';end if;
     v_answer:=case when v_mode='neighbour'
        then v_region.neighbors[1+mod(i+length(p.id::text),cardinality(v_region.neighbors))]
        else v_id end;
-    select array_agg(z.id order by md5(z.id||':'||p.id::text||':'||i::text)) into all_ids
+    if v_mode='district' then
+     select array_agg(z.id order by md5(z.id||':'||p.id::text||':'||i::text)) into all_ids
+     from (select distinct on (fd) id,fd from public.qwiz_geo_regions
+      where fd<>v_region.fd order by fd,id) z;
+    else
+     select array_agg(z.id order by md5(z.id||':'||p.id::text||':'||i::text)) into all_ids
        from public.qwiz_geo_regions z where z.id<>v_answer;
+    end if;
     opts:=array[v_answer,all_ids[1],all_ids[2],all_ids[3]];
     select jsonb_agg(jsonb_build_object('id',x.id,'text',
-      case when v_mode='capital' then z.capital else z.name end)
+      case when v_mode='capital' then z.capital when v_mode='district' then z.fd else z.name end)
       order by md5(x.id||':'||p.id::text||':'||i::text))
       into v_options from unnest(opts) x(id) join public.qwiz_geo_regions z on z.id=x.id;
     v_tasks:=v_tasks||jsonb_build_array(jsonb_build_object(
