@@ -459,3 +459,53 @@ body:fullscreen .projection-shell{height:100dvh}
 .projection-screen-ready #projectionPlay,
 .projection-screen-ready #projectionJoinQr{display:none!important}
 .projection-screen-ready .projection-question-only .question-frame img{max-height:min(42vh,500px);object-fit:contain}
+
+
+/* Answer reveal belongs on the shared screen AFTER the server enters result phase.
+   Keep the familiar white/lavender palette; never display keys during a live question. */
+.projection-question-only.is-result{gap:clamp(9px,1.2vw,17px);width:100%}
+.projection-question-only.is-result h1{font-size:clamp(27px,3vw,49px);margin:0;line-height:1.12}
+.projection-question-only.is-result .question-frame{
+ width:min(430px,52%);max-width:430px;margin:0 auto;padding:0
+}
+.projection-question-only.is-result .question-picture{max-height:210px;min-height:0;aspect-ratio:2.4}
+.projection-question-only.is-result .question-art{max-height:180px;object-fit:contain}
+.projection-answer-reveal{width:min(1390px,100%);margin:0 auto;display:grid;gap:clamp(12px,1.5vw,20px);padding:clamp(16px,2vw,27px);background:#f8f5ff;border:1px solid #e0d5f0;border-radius:24px}
+.projection-answer-heading{text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
+.projection-answer-heading>span{color:#7245cb;font-weight:850;font-size:clamp(12px,1.05vw,16px);letter-spacing:.09em}
+.projection-answer-heading>strong{font-size:clamp(25px,2.7vw,48px);line-height:1.13;color:#26203a;overflow-wrap:anywhere}
+.projection-reveal-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(9px,1vw,14px)}
+.projection-reveal-options.has-flag-options{grid-template-columns:repeat(4,minmax(0,1fr))}
+.projection-reveal-option{position:relative;min-width:0;min-height:68px;display:flex;align-items:center;gap:10px;padding:10px 14px;background:#fff;border:2px solid #e4dcf3;border-radius:15px;color:#382d55;font-size:clamp(15px,1.4vw,22px);line-height:1.3}
+.projection-reveal-option.is-correct{border-color:#58ad81;background:#e8f7ee;box-shadow:0 0 0 2px #c6ebd4 inset}
+.projection-reveal-letter{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border-radius:9px;background:#f1eaff;color:#7048be;font-weight:850;font-size:15px}
+.projection-reveal-option.is-correct .projection-reveal-letter{background:#d1efdc;color:#206f42}
+.projection-reveal-option-body{flex:1;min-width:0;overflow-wrap:anywhere}
+.projection-reveal-option-body .flag-choice-with-label{display:flex;justify-content:center;align-items:center}
+.projection-reveal-option-body .flag-choice-art{width:100%;max-width:240px;height:112px;object-fit:contain;padding:3px;border:0;background:#fff}
+.projection-reveal-check{position:absolute;top:7px;right:8px;padding:4px 7px;border-radius:20px;font-size:11px;font-weight:850;color:#216d43;background:#d1efdc}
+.projection-reveal-options.has-flag-options .projection-reveal-option{flex-direction:column;align-items:center;justify-content:center;padding:12px 8px 9px;gap:5px}
+.projection-reveal-options.has-flag-options .projection-reveal-letter{align-self:flex-start}
+.projection-answer-image{display:block;width:min(350px,100%);max-height:210px;object-fit:contain;margin:0 auto}
+.projection-answer-explanation{text-align:center;margin:0;color:#605470;font-size:clamp(14px,1.18vw,19px);line-height:1.4}
+@media(max-width:980px){
+ .projection-reveal-options.has-flag-options{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .projection-reveal-option-body .flag-choice-art{height:91px}
+}
+@media(max-width:620px){
+ .projection-question-only.is-result h1{font-size:clamp(22px,5vw,30px)}
+ .projection-answer-reveal{padding:11px;gap:12px;border-radius:16px}
+ .projection-reveal-option{padding:8px;min-height:58px;font-size:13px}
+ .projection-reveal-options{gap:7px}
+ .projection-reveal-options:not(.has-flag-options){grid-template-columns:1fr}
+ .projection-reveal-option-body .flag-choice-art{height:64px}
+ .projection-reveal-letter{width:26px;height:26px;flex-basis:26px;font-size:12px}
+ .projection-reveal-check{font-size:9px;padding:2px 5px}
+}
+@media(max-height:790px) and (min-width:981px){
+ .projection-question-only.is-result h1{font-size:clamp(25px,2.35vw,42px)}
+ .projection-question-only.is-result .question-frame{max-width:300px}
+ .projection-question-only.is-result .question-picture{max-height:140px}
+ .projection-answer-reveal{padding:14px;gap:10px}
+ .projection-reveal-option-body .flag-choice-art{height:78px}
+}
