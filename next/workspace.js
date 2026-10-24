@@ -437,8 +437,8 @@ function updateCardSelection(){
  }
  const hint=$('insertAfterHint');
  if(hint)hint.textContent=selected<0?'Новые карточки добавляются перед финалом':
-  'Следующая карточка — после «'+state.cards[selected].title+'»'+
-  (selected===state.cards.length-1?' (перед финалом)':'');
+  selected===state.cards.length-1?'Следующая карточка — перед финалом':
+  'Следующая карточка — после «'+state.cards[selected].title+'»';
 }
 function selectCard(index){state.selectedCard=state.cards[index]||null;updateCardSelection()}
 function appendCard(type='round',arcadeMode=null){
