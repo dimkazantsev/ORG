@@ -157,7 +157,15 @@ function gameRichResult(q){
 }
 function personalResults(s,final=false){
  const metrics=s.public_stats||{};
- return '<section class="personal-results"><h2>'+(final?'Рейтинг команд':'Скорость команд')+'</h2>'+QwizStage.teams(metrics.teams||[],{full:true,ranked:true})+'<h2>Личный рейтинг</h2>'+QwizStage.leaderboard(metrics.players||[],final?80:10)+(final&&metrics.question_stats?.length?QwizStage.questionStats(metrics.question_stats):'')+'</section>';
+ const teams=metrics.teams||s.teams||[],players=metrics.players||[];
+ const stats=metrics.question_stats||[];
+ const intro=final?'<div class="player-final-metrics"><span>Команд: '+teams.length+'</span><span>Участников: '+(teams.reduce((n,t)=>n+Number(t.members??t.players??0),0))+'</span><span>Вопросов: '+Number(s.total||stats.length||0)+'</span></div>':'';
+ return '<section class="personal-results'+(final?' player-final-results':'')+'">'+intro+
+ '<h2>'+(final?'Рейтинг команд':'Скорость команд')+'</h2>'+
+ (teams.length?QwizStage.teams(teams,{full:true,ranked:true}):'<p>Пока нет команд</p>')+
+ '<h2>Личный рейтинг</h2>'+
+ (players.length?QwizStage.leaderboard(players,final?80:10):'<p>Пока нет результатов игроков</p>')+
+ (final&&stats.length?QwizStage.questionStats(stats):'')+'</section>';
 }
 function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;const me=s.me;const myTeam=(s.teams||[]).find(t=>t.id===me?.team_id);
  text('playerGameTitle',s.title);text('playerTeamName',myTeam?.name||'Команда пока не назначена');$('playerScoreboard').innerHTML=teamMarkup(s.teams);
