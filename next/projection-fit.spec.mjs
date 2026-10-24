@@ -65,3 +65,28 @@ for(const [width,height] of [[1280,720],[1366,768],[1920,1080],[3840,2160],[7680
   }
  });
 }
+
+
+test('Moderator-controlled music loops across game phases until explicitly disabled',async({page})=>{
+ await page.locator('#projectionSound').click();
+ await page.locator('#projectionSound').click();
+ await page.evaluate(()=>applyProjectionSettings({sound_enabled:true,music_enabled:true,volume:28}));
+ await expect.poll(()=>page.evaluate(()=>!!QwizStage.audio.themeTimer)).toBe(true);
+ const timer=await page.evaluate(()=>QwizStage.audio.themeTimer);
+ await page.evaluate(()=>{
+  ctx.renderKey='';
+  render({code:'A1B2C3D4',phase:'countdown',index:0,total:10,
+   ends_at:new Date(Date.now()+4000).toISOString(),
+   activity:{type:'round_intro',title:'Флаги мира',icon:'flag'},
+   screen_settings:{sound_enabled:true,music_enabled:true,volume:28}});
+  ctx.renderKey='';
+  render({code:'A1B2C3D4',phase:'result',index:0,total:10,
+   question:{prompt:'Страна на флаге?',options:['Россия','Канада']},
+   answer:{indices:[0],text:'Россия'},ends_at:new Date(Date.now()+7000).toISOString(),
+   screen_settings:{sound_enabled:true,music_enabled:true,volume:28}});
+ });
+ await expect.poll(()=>page.evaluate(()=>!!QwizStage.audio.themeTimer)).toBe(true);
+ expect(await page.evaluate(()=>QwizStage.audio.themeTimer)).toBe(timer);
+ await page.evaluate(()=>applyProjectionSettings({sound_enabled:true,music_enabled:false,volume:28}));
+ await expect.poll(()=>page.evaluate(()=>QwizStage.audio.themeTimer===null)).toBe(true);
+});
