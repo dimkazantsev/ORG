@@ -453,3 +453,36 @@ body:fullscreen .projection-shell{height:100dvh}
 .projection-question-only .projection-response-count{text-align:center;color:#7656be;font-size:clamp(14px,1.1vw,18px);font-weight:750}
 .projection-question-only.is-result .projection-question-instruction{background:#e9f5ef;color:#315d48}
 @media(max-width:750px){.projection-question-only{gap:14px}.projection-question-only h1{font-size:clamp(26px,6vw,46px)}.projection-question-only .projection-question-instruction{padding:12px}}
+
+
+/* Dedicated uncluttered projector: setup QR, then question/timer/media only. */
+body.projection-screen-ready{background:#160e41;color:#fff}
+.projection-screen-ready .projection-shell{min-height:100dvh;padding:clamp(18px,2.6vw,40px) clamp(22px,4vw,68px);background:radial-gradient(circle at 83% 9%,#5732b5 0%,transparent 46%),linear-gradient(135deg,#190e46 0%,#302076 55%,#170c44 100%)}
+.projection-screen-ready .projection-header{border-color:#ffffff2c;gap:16px;padding-bottom:12px}
+.projection-screen-ready .projection-brand,.projection-screen-ready .projection-room{color:#fff}
+.projection-screen-ready .projection-room{font-size:clamp(16px,1.65vw,28px);font-family:ui-monospace,Consolas,monospace;letter-spacing:.12em}
+.projection-screen-ready .brand-square{background:#864cf2}
+.projection-screen-ready .projection-footer,.projection-screen-ready #projectionPlay,.projection-screen-ready #projectionJoinQr{display:none!important}
+.projection-screen-ready .projection-lobby{padding:22px 0;gap:30px}
+.projection-screen-ready .projection-lobby h1{font-size:clamp(40px,5vw,88px);color:#fff}
+.projection-screen-ready .projection-lobby p,.projection-screen-ready .projection-lobby .projection-eyebrow{color:#cfc5ff}
+.projection-screen-ready .projection-code{background:#ffffff20;color:#fff}
+.projection-screen-ready .projection-qr{min-height:270px;padding:22px;background:#fff;border:3px solid #ffffff50;border-radius:20px}
+.projection-screen-ready .projection-team-entry{background:#ffffff12;border-color:#ffffff2a;border-radius:22px;padding:22px}
+.projection-screen-ready .projection-team-entry h2{color:#fff}
+.projection-screen-ready .projection-team-entry p{color:#ddd3ff}
+.projection-screen-ready .projection-team-entry .team-board{gap:12px}
+.projection-screen-ready .projection-question-only{max-width:1600px;margin:10px auto;gap:20px}
+.projection-screen-ready .projection-question-only h1{color:#fff;max-width:1250px;font-size:clamp(38px,5vw,85px)}
+.projection-screen-ready .projection-question-only .projection-count,.projection-screen-ready .question-step{color:#e1d5ff}
+.projection-screen-ready .projection-question-only .stage-clock{background:#ffffff1a;border-radius:14px;color:#fff}
+.projection-screen-ready .projection-question-only .projection-question-instruction{background:#ffffff13;color:#f3eafe;border:1px solid #ffffff24}
+.projection-screen-ready .projection-question-only .projection-response-count{color:#e9ddff}
+.projection-screen-ready .projection-question-only .question-frame{background:#ffffff12;border:1px solid #ffffff21;border-radius:18px}
+.projection-screen-ready .projection-question-only .question-frame img{max-height:min(42vh,500px);object-fit:contain}
+.projection-screen-ready .projection-paused{color:#ffedb3}
+@media(max-width:750px){
+ .projection-screen-ready .projection-lobby{display:grid;grid-template-columns:minmax(0,1fr)}
+ .projection-screen-ready .projection-qr{min-height:180px}
+ .projection-screen-ready .projection-question-only h1{font-size:clamp(30px,6.5vw,48px)}
+}
