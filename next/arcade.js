@@ -9,7 +9,10 @@ window.QwizArcade=(()=>{
  };
  const COLORS=['#9470e2','#b58add','#e6a95d','#76ad83','#ea7f9b','#a78be5','#bb86c8'];
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- const BOOSTS=[['headstart','Фора +12','12 очков в начале следующего раунда'],['teamwork','Командный рывок','+3 очка за члена команды, максимум 24'],['momentum','Импульс','+15% к текущим очкам, максимум 30']];
+ const BOOSTS=[['headstart','Фора +12','+12 очков вашей команде'],['teamwork','Командный рывок','+3 за каждого участника, до 24'],['momentum','Импульс','+15% к текущим очкам, до 30']];
+ const HINDRANCES=[['fog','Туман соперника','−5 очков главному сопернику'],['storm','Штормовой заслон','−8 очков главному сопернику'],['drain','Энергетический отток','−12 очков главному сопернику']];
+ const STRATEGIES=[['support','Зелёный маршрут','Усиление собственной команды'],['sabotage','Красный манёвр','Ограничение для главного соперника']];
+ const ALL_VOTES=[...BOOSTS,...HINDRANCES,...STRATEGIES];
   const ui={player:null,screen:null,host:null};let wallet={code:null,client:null,roomId:null,lastFetch:0,busy:false,view:null};
  const isArcade=a=>!!META[a?.settings?.arcade_mode];
  function modeTitle(mode){return META[mode]?.title||'Командная игра'}
@@ -67,16 +70,33 @@ window.QwizArcade=(()=>{
   const badges=tr.root.querySelector('[data-arcade-badges]');if(badges)badges.innerHTML=(v.awards||[]).slice(0,12).map(a=>'<span class="arcade-award">'+escape(a.title)+' · +'+Number(a.credits)+' жет.</span>').join('');
   const vote=v.vote,ballot=tr.root.querySelector('[data-arcade-vote]');
   // The ballot replaces the spent arcade scene on a player's phone; never send it below the viewport.
-  tr.root.querySelector('.arcade-shell.arcade-player')?.classList.toggle('is-boost-voting',Boolean(vote&&tr.kind==='player'));
+  tr.root.querySelector('.arcade-shell.arcade-player')?.classList.toggle('is-boost-voting',Boolean(vote&&tr.kind==='player'&&vote.can_vote));
   if(ballot){
    ballot.hidden=!vote;
    if(vote){
     const champion=(v.teams||[]).find(t=>t.id===vote.winner_team);
     const tally=vote.counts||{},mine=vote.my_choice;
     const remaining=Math.max(0,Math.ceil((Date.parse(vote.vote_ends_at)-currentTime(tr))/1000));
-    ballot.innerHTML='<div class="arcade-vote-title"><span>🏆 ПОБЕДИТЕЛЬ · '+escape(champion?.name||'Команда')+'</span><strong>Усиление на следующий раунд</strong><p>Голосование всех участников команды · требуется больше половины голосов · осталось '+remaining+' с</p></div>'+
-      '<div class="arcade-boost-grid">'+BOOSTS.map(([id,title,description])=>'<button type="button" data-boost-choice="'+id+'" '+(!(tr.kind==='player'&&vote.can_vote&&vote.open&&remaining>0)||tr.voteBusy?'disabled':'')+' class="'+(mine===id?'selected':'')+'"><strong>'+escape(title)+'</strong><span>'+escape(description)+'</span><b>'+Number(tally[id]||0)+' голосов</b></button>').join('')+'</div>'+
-      '<p class="arcade-vote-rule">'+(vote.open?(vote.can_vote?'Выберите одно усиление. Голос можно изменить до конца времени.':'Голосуют только игроки победившей команды.'):'Голосование завершено. Усиление с большинством голосов активируется в следующем раунде; без большинства бонус не выдаётся.')+'</p>';
+    const strategyStage=vote.stage==='strategy';
+    const selections=strategyStage?STRATEGIES:vote.strategy==='sabotage'?HINDRANCES:vote.strategy==='support'?BOOSTS:[];
+    const canChoose=tr.kind==='player'&&vote.can_vote&&vote.open&&remaining>0;
+    const tone=vote.strategy==='sabotage'?'harm':'boost';
+    const title=strategyStage?'Что выбирает команда?':vote.strategy==='sabotage'?'Выберите ограничение сопернику':'Выберите усиление своей команде';
+    const subtitle=strategyStage?'ЭТАП 1 / 2 · СТРАТЕГИЯ': 'ЭТАП 2 / 2 · КОНКРЕТНЫЙ ЭФФЕКТ';
+    ballot.setAttribute('role','dialog');ballot.setAttribute('aria-label','Голосование за командное преимущество');
+    ballot.className='arcade-vote '+(strategyStage?'arcade-vote-strategy ':'arcade-vote-effects ')+(vote.strategy==='sabotage'?'is-harm':'is-boost');
+    ballot.innerHTML='<div class="arcade-vote-title"><span>'+subtitle+' · 🏆 '+escape(champion?.name||'Лидеры')+'</span>'+
+      '<strong>'+escape(title)+'</strong>'+
+      '<p>Решение большинством команды, два этапа за 15 секунд. '+(vote.target_name?'Соперник: '+escape(vote.target_name)+'. ':'')+'Осталось '+remaining+' сек.</p></div>'+
+      (selections.length?'<div class="arcade-boost-grid">'+selections.map(([id,caption,description])=>
+        '<button type="button" data-boost-choice="'+id+'" '+(!canChoose||tr.voteBusy?'disabled':'')+
+        ' data-vote-tone="'+(id==='sabotage'||HINDRANCES.some(item=>item[0]===id)?'harm':'boost')+'"'+
+        ' class="'+(mine===id?'selected':'')+'"><strong>'+escape(caption)+'</strong>'+
+        '<span>'+escape(description)+'</span><b>'+Number(tally[id]||0)+' голосов</b></button>').join('')+'</div>':
+        '<p class="arcade-vote-wait">Большинство не выбрало единую стратегию. Раунд продолжится автоматически.</p>')+
+      '<p class="arcade-vote-rule">'+(canChoose?'Нажмите карточку. До завершения этапа вы можете изменить голос.':
+       vote.can_vote?'Ожидаем голосования команды…':'Голосуют только участники команды-лидера.')+'</p>';
+
    }
   }
   const status=v.awarded_at?'Результат зафиксирован. Награды зачислены.':
@@ -110,7 +130,7 @@ window.QwizArcade=(()=>{
   tr.clock=setInterval(()=>tick(tr),120);
  }
  async function voteBoost(tr,choice){
-  if(tr.closed||tr.voteBusy||!tr.roomId||!BOOSTS.some(x=>x[0]===choice))return;
+  if(tr.closed||tr.voteBusy||!tr.roomId||!ALL_VOTES.some(x=>x[0]===choice))return;
   tr.voteBusy=true;
   try{const {error}=await tr.client.rpc('qwiz_vote_boost',{p_room:tr.roomId,p_choice:choice});
    if(error)throw error;await fetchState(tr)
