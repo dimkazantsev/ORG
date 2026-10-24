@@ -176,7 +176,7 @@ test('Moderator slide cards shrink to content and do not reserve blank height',(
  assert.match(compact,/\.moderator-slide\s*\{[^}]*min-height:0;height:auto/);
  assert.match(compact,/\.moderator-slide-choices\s*\{[^}]*margin:2px 0 0/);
  assert.doesNotMatch(compact,/min-height:290px|margin-top:auto/);
- assert.match(html,/workspace\.css\?v=repeat-flag-20261024-15/);
+ assert.match(html,/workspace\.css\?v=avatar-3d-20261024-16/);
 });
 test('Result lifecycle has automatic expiry with full timeline preview',()=>{
  const timer=readFileSync(new URL('./migrations/20261024_auto_result_transition.sql',import.meta.url),'utf8');
@@ -242,6 +242,36 @@ test('Question about Romanian stripe order reveals the flag picture on projector
  assert.match(roomFlag,/#002B7F/i);
  assert.match(roomFlag,/#FCD116/i);
  assert.match(roomFlag,/#CE1126/i);
+});
+test('Replay remains enabled in finished state after the team readiness check',()=>{
+ const teams=readFileSync(new URL('./workspace-teams.js',import.meta.url),'utf8');
+ const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const page=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ assert.match(teams,/const replay=s\.phase==='finished'/);
+ assert.match(teams,/!replay&&/);
+ assert.match(host,/QwizStage\.iconLabel\(\$\('liveStart'\)/);
+ assert.match(host,/qwiz_repeat_finished_room/);
+ assert.match(page,/id="liveControlsHint"/);
+ assert.match(page,/workspace-teams\.js\?v=avatar-3d-20261024-16/);
+});
+test('3D avatars render in team roster, profile and new optional gallery',()=>{
+ const src=readFileSync(new URL('./teams.js',import.meta.url),'utf8');
+ const profile=readFileSync(new URL('./profile.js',import.meta.url),'utf8');
+ const styles=readFileSync(new URL('./teams.css',import.meta.url),'utf8');
+ const imageSources=readFileSync(new URL('./avatar-art.js',import.meta.url),'utf8');
+ const pages=['index.html','workspace.html','profile.html','presenter.html'];
+ assert.match(src,/naturalWidth>=240/);
+ assert.match(src,/animal-photo/);
+ assert.match(src,/avatar-photo-failed/);
+ assert.match(profile,/Ещё 13 объёмных персонажей/);
+ assert.match(profile,/QwizTeams\.avatar/);
+ assert.match(styles,/\.animal-portrait \.animal-photo/);
+ assert.match(imageSources,/smnandre\/animoon/);
+ assert.match(imageSources,/data:image\/webp;base64,/);
+ for(const filename of pages){
+   const html=readFileSync(new URL('./'+filename,import.meta.url),'utf8');
+   assert.match(html,/avatar-art\.js\?v=avatar-3d-20261024-16/);
+ }
 });
 test('New JavaScript parses independently of legacy app.js',()=>{assert.doesNotThrow(()=>new Function(js));assert.doesNotMatch(html,/\.\/\.\.\/(app\.js|styles\.css)/)});
 test('All direct DOM IDs referenced by client exist in HTML',()=>{
