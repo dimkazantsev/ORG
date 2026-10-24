@@ -496,3 +496,21 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 @media(max-width:540px){
  .saved-builds{grid-template-columns:minmax(0,1fr);grid-auto-rows:208px}
 }
+
+
+/* Room conductor: the projector is a separate display, never an iframe under controls. */
+#liveConsole .live-actions{position:sticky;top:8px;bottom:auto;z-index:32;grid-template-columns:repeat(4,minmax(0,1fr));margin:12px 0;background:#fff;border:1px solid #dfd3f0;box-shadow:0 10px 25px #392c5318}
+#liveConsole .live-actions button{min-height:48px}
+#liveConsole .live-actions button[hidden]{display:none!important}
+.live-projection-link{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:16px 20px;margin:16px 0;border-radius:16px;background:#f7f3ff;border:1px solid #e3d7f2}
+.live-projection-link h3{font-size:15px;margin:0 0 6px}
+.live-projection-link p{margin:0;line-height:1.6;max-width:640px}
+.live-projection-link button{white-space:normal;flex:none}
+#cardGeoSettings{padding:14px;background:#f9f6ff;border:1px solid #e4d9f6;border-radius:13px;margin-top:12px}
+#cardModesDetails:has(#cardGeoSettings:not([hidden])) #cardFlagModes{display:none}
+#cardModesDetails:has(#cardGeoSettings:not([hidden]))>p.small-help{display:none}
+#cardDialog:has(#cardGeoSettings:not([hidden])) #cardRoundSettings>.two-inputs,
+#cardDialog:has(#cardGeoSettings:not([hidden])) #cardRoundSettings>label{display:none}
+#cardDialog:has(#cardGeoSettings:not([hidden])) #cardTopic{pointer-events:none;background:#f5f0ff}
+@media(max-width:650px){#liveConsole .live-actions{position:sticky;top:4px;bottom:auto;grid-template-columns:repeat(2,minmax(0,1fr));padding:9px}
+.live-projection-link{align-items:stretch;flex-direction:column}.live-projection-link button{width:100%}}
