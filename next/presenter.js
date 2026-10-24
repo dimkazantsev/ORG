@@ -148,11 +148,10 @@ function automaticRoundStandings(state){
 }
 function roundIntroScene(state){
  const title=state.activity?.title||'Новый раунд',icon=state.activity?.icon||'flag';
- const art=icon==='map'?'<circle cx="50" cy="50" r="35"/><path d="m60 35-12 28-12 7 12-28z"/>':
- '<path d="M25 87V16m0 6c25-14 34 12 52-2v42c-20 13-37-9-52 3"/>';
+ const art=QwizStage.roundIconSvg(icon);
  $('projectionMain').innerHTML='<section class="projection-intro-card" aria-label="Представление следующего раунда">'+
  '<span class="projection-eyebrow">СЛЕДУЮЩИЙ РАУНД</span><div class="projection-intro-orbit" aria-hidden="true">'+
- '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round">'+art+'</svg>'+
+ art+
  '</div><h1>'+escapeText(title)+'</h1><p>Готовьтесь к новому испытанию</p>'+
  '<div class="countdown-number" id="countdownNumber">'+seconds(state.ends_at)+'</div></section>';
 }
