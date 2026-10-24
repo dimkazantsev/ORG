@@ -153,7 +153,7 @@ test('Audience screen retains the approved light lavender palette',()=>{
  assert.doesNotMatch(css,/body\.projection-screen-ready\{background:\s*#160e41/);
  assert.doesNotMatch(css,/linear-gradient\(135deg,#190e46/);
  assert.match(css,/\.projection-screen-ready \.projection-footer/);
- assert.match(html,/presenter\.css\?v=round-sequence-20261025-5/);
+ assert.match(html,/presenter\.css\?v=lobby-flag-align-20261025-10/);
 });
 test('The classroom and live mini-games retain purple and lavender, never blue UI accents',()=>{
  const audience=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
@@ -355,6 +355,23 @@ test('Round intro icon follows the actual gameplay mechanic on phone and project
  assert.match(stage,/function roundIconSvg\(key\)/);
  assert.match(phone,/const drawing=QwizStage\.roundIconSvg\(icon/);
  assert.match(projector,/const art=QwizStage\.roundIconSvg\(icon\)/);
+});
+test('Lobby symbol and flag artwork have stable, centered visual bounds',()=>{
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const mobile=readFileSync(new URL('./player-layout.css',import.meta.url),'utf8');
+ const stage=readFileSync(new URL('./stage.js',import.meta.url),'utf8');
+ const stageCss=readFileSync(new URL('./stage.css',import.meta.url),'utf8');
+ const presenter=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
+ assert.match(app,/lobby-play-mark/);
+ assert.doesNotMatch(app,/<span>✳<\/span>/);
+ assert.match(app,/role="status">Ожидайте сигнала преподавателя/);
+ assert.match(mobile,/\.game-lobby-wait \.lobby-people\{position:relative;z-index:2/);
+ assert.match(mobile,/\.game-lobby-wait \.lobby-ambient\{display:none!important/);
+ assert.match(stage,/flag-media-frame/);
+ assert.match(stage,/url\?'':'<div class="frame-orbit"/);
+ assert.match(stageCss,/\.question-frame\.flag-media-frame \.question-picture>/);
+ assert.match(presenter,/#projectionMain \.projection-question-only \.projection-reveal-option-body \.flag-choice-art/);
+ assert.match(presenter,/#projectionMain \.projection-question-only \.projection-answer-reveal\{/);
 });
 test('Phone lobby animates and completed tap-game ballot fills the viewport',()=>{
  const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
