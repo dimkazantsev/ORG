@@ -49,6 +49,47 @@ test('Geography of Russia is a real question bank, not a list of regions',()=>{
  assert.match(seed,/REVOKE ALL ON FUNCTION public\.qwiz_geo_questions/);
  assert.match(seed,/GRANT EXECUTE ON FUNCTION public\.qwiz_geo_questions/);
 });
+test('Every non-final card can be duplicated with isolated settings and stable finale order',()=>{
+ const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const styles=readFileSync(new URL('./workspace.css',import.meta.url),'utf8');
+ assert.match(host,/data-duplicate-card/);
+ assert.match(host,/data-delete-card/);
+ assert.match(host,/const copySvg=/);
+ assert.match(styles,/\.round-card-tools \.round-copy/);
+ const start=host.indexOf('function duplicateCard(index){');
+ const end=host.indexOf('function moveCard(i,j){',start);
+ assert.ok(start>0&&end>start,'The duplicate function must exist');
+ const original={id:'old-card-id',type:'round',title:'Флаги',topic_id:'sample-topic',
+   settings:{flag_modes:['country'],geo_modes:['locate'],nested:{levels:[1,2]}}};
+ const cards=[original,{type:'finale',title:'Финал',settings:{}}];
+ let renders=0,announced='';
+ const context={state:{cards},titles:{round:'Раунд вопросов'},
+   renderCards(){renders++},
+   msg(id,text){announced=text},
+   motionPreference:{matches:true},
+   $(id){assert.equal(id,'roundCards');return {querySelector(){return {scrollIntoView(){},focus(){}}}}}
+ };
+ runInNewContext(host.slice(start,end)+'duplicateCard(0);',context);
+ assert.equal(cards.length,3);
+ assert.equal(cards[1].title,'Флаги — копия');
+ assert.equal(cards[2].type,'finale');
+ assert.equal(cards[1].id,undefined);
+ assert.equal(cards[1].topic_id,original.topic_id);
+ assert.deepEqual(JSON.parse(JSON.stringify(cards[1].settings)),original.settings);
+ cards[1].settings.geo_modes.push('flag');
+ assert.deepEqual(original.settings.geo_modes,['locate']);
+ assert.equal(renders,1);
+ assert.match(announced,/Сохраните сборку/);
+ // The singleton final card cannot be cloned.
+ runInNewContext(host.slice(start,end)+'duplicateCard(2);',context);
+ assert.equal(cards.length,3);
+ // Respect server-side limit of sixty cards.
+ context.state.cards=Array.from({length:59},()=>({type:'round',title:'Вопросы',settings:{}}));
+ context.state.cards.push({type:'finale',settings:{}});
+ runInNewContext(host.slice(start,end)+'duplicateCard(0);',context);
+ assert.equal(context.state.cards.length,60);
+ assert.match(announced,/лимит 60 карточек/);
+});
 test('Mini-game palette and saved cards use distinct polished vector icons',()=>{
  const workspace=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
  const palette=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
