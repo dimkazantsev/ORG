@@ -166,8 +166,8 @@ test('The classroom and live mini-games retain purple and lavender, never blue U
  assert.doesNotMatch(arcade,/#6cbee4/i);
  assert.doesNotMatch(gameplay,/#54a3d8|#8291db/i);
  assert.doesNotMatch(studio,/#497d91|#e9f3fa/i);
- assert.match(gameHtml,/arcade\.css\?v=round-sequence-20261025-5/);
- assert.match(screenHtml,/arcade\.css\?v=round-sequence-20261025-5/);
+ assert.match(gameHtml,/arcade\.css\?v=bonus-sheet-20261025-7/);
+ assert.match(screenHtml,/arcade\.css\?v=bonus-sheet-20261025-7/);
 });
 test('Flag imagery remains visible and visual answers show the flag instead of placeholder labels',()=>{
  const shared=readFileSync(new URL('./stage.js',import.meta.url),'utf8');
@@ -359,7 +359,7 @@ test('Phone lobby animates and completed tap-game ballot fills the viewport',()=
  assert.match(playerCss,/\.arcade-player\.is-boost-voting/);
  assert.match(playerCss,/grid-auto-rows:minmax\(0,1fr\)/);
  assert.match(playerCss,/\.arcade-player\.is-boost-voting .arcade-boost-grid button\.selected/);
- assert.match(playerHtml,/arcade\.js\?v=round-sequence-20261025-5/);
+ assert.match(playerHtml,/arcade\.js\?v=bonus-sheet-20261025-7/);
  assert.match(playerHtml,/player-layout\.css\?v=round-sequence-20261025-5/);
 });
 test('New JavaScript parses independently of legacy app.js',()=>{assert.doesNotThrow(()=>new Function(js));assert.doesNotMatch(html,/\.\/\.\.\/(app\.js|styles\.css)/)});
