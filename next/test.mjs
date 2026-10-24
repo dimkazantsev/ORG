@@ -742,3 +742,32 @@ test('Audience quick-join QR requires a verified active room and links to the st
  assert.match(css,/projection-setup-grid/);
  assert.doesNotMatch(js,/\.from\(['"]org_next_rooms/);
 });
+
+test('Studio game selector keeps full names, uses consistent icons and an accessible chevron',()=>{
+ const layout=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ const styles=readFileSync(new URL('./workspace.css',import.meta.url),'utf8');
+ const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const names=[
+  ['data-geo="russia_map"','Карта регионов России'],
+  ['data-arcade="rocket"','Ракета'],
+  ['data-arcade="blitz"','Блиц-вопрос'],
+  ['data-arcade="tug"','Перетягивание очков'],
+  ['data-arcade="captain"','Дуэль капитанов']
+ ];
+ for(const [attribute,title] of names){
+  const button=layout.match(new RegExp('<button[^>]*'+attribute+'[^>]*>([^<]+)<\\/button>'));
+  assert.ok(button,'The palette must contain '+title);
+  assert.equal(button[1].trim(),title);
+ }
+ const labelExpression=host.match(/const label=(b\.textContent\.replace\(\/\\s\+\/g,' '\)\.trim\(\));/);
+ assert.ok(labelExpression,'The button label must normalize whitespace without stripping words');
+ for(const [,name] of names){
+  assert.equal(runInNewContext(labelExpression[1],{b:{textContent:name}}),name);
+ }
+ assert.match(host,/const game=b\.closest\('#arcadePalette'\)/);
+ assert.match(layout,/id="openGamesPalette"[^>]*aria-expanded="false"[^>]*>[\\s\\S]*?<svg class="games-chevron"/);
+ assert.match(styles,/#openGamesPalette\[aria-expanded=true\] \.games-chevron\{transform:rotate\(180deg\)\}/);
+ assert.match(styles,/#arcadePalette \[data-arcade\],#arcadePalette \[data-geo\]\{/);
+ assert.match(styles,/\.game-palette #arcadePalette button>span:last-child\{[^}]*overflow-wrap:break-word/);
+ assert.match(styles,/@media\(max-width:520px\)\{\.game-palette #arcadePalette\{grid-template-columns:minmax\(0,1fr\)\}\}/);
+});
