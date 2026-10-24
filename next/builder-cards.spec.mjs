@@ -24,7 +24,7 @@ test('Selecting a card controls insertion order; controls do not accidentally se
  await expect(cards.nth(0)).toHaveAttribute('aria-current','true');
  await cards.nth(0).dblclick();
  await expect(page.locator('#cardDialog')).toBeVisible();
- await page.locator('#cardDialog [data-close]').click();
+ await page.locator('#cardDialog [data-close]').first().click();
  await cards.nth(1).locator('[data-edit-card]').click();
  await expect(page.locator('#cardDialog')).toBeVisible();
 });
