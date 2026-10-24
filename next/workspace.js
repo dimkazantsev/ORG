@@ -445,6 +445,7 @@ function duplicateCard(index){
  // Deep copy of the saved card format: nested geography / arcade settings
  // and all mode arrays must remain independent from the original.
  const clone=JSON.parse(JSON.stringify(original));
+ delete clone.id; // A duplicate must not retain the original database card identity.
  clone.title=(original.title||titles[original.type]||'Карточка')+' — копия';
  state.cards.splice(index+1,0,clone);
  renderCards();
@@ -822,7 +823,7 @@ function wire(){
   const card=e.target.closest('.round-card');if(card&&!e.target.closest('button'))editCard(Number(card.dataset.index));
  };
  $('roundCards').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('.round-card')){e.preventDefault();editCard(Number(e.target.dataset.index))}});
- $('roundCards').addEventListener('dragstart',e=>{const x=e.target.closest('.round-card');if(!x||x.dataset.type==='finale')return;
+ $('roundCards').addEventListener('dragstart',e=>{if(e.target.closest('button')){e.preventDefault();return}const x=e.target.closest('.round-card');if(!x||x.dataset.type==='finale')return;
  state.dragFrom=Number(x.dataset.index);x.classList.add('dragging');e.dataTransfer.effectAllowed='move'});
  $('roundCards').addEventListener('dragover',e=>{const x=e.target.closest('.round-card');if(!x||x.dataset.type==='finale')return;e.preventDefault();x.classList.add('drop-here')});
  $('roundCards').addEventListener('dragleave',e=>e.target.closest('.round-card')?.classList.remove('drop-here'));
