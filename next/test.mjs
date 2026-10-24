@@ -166,8 +166,8 @@ test('The classroom and live mini-games retain purple and lavender, never blue U
  assert.doesNotMatch(arcade,/#6cbee4/i);
  assert.doesNotMatch(gameplay,/#54a3d8|#8291db/i);
  assert.doesNotMatch(studio,/#497d91|#e9f3fa/i);
- assert.match(gameHtml,/arcade\.css\?v=rounds-responsive-20261024-13/);
- assert.match(screenHtml,/arcade\.css\?v=rounds-responsive-20261024-13/);
+ assert.match(gameHtml,/arcade\.css\?v=round-sequence-20261025-4/);
+ assert.match(screenHtml,/arcade\.css\?v=round-sequence-20261025-4/);
 });
 test('Flag imagery remains visible and visual answers show the flag instead of placeholder labels',()=>{
  const shared=readFileSync(new URL('./stage.js',import.meta.url),'utf8');
