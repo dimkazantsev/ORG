@@ -548,7 +548,7 @@ function subscribeRoom(code){if(state.channel){state.db.removeChannel(state.chan
  .subscribe();
 }
 async function selectRoom(code){state.roomCode=code;sessionStorage.setItem('qwiz-host-room',code);
- $('liveConsole').hidden=false;subscribeRoom(code);await refreshLive();
+ $('liveConsole').hidden=false;subscribeRoom(code);await refreshLive();void loadProjectorPreferences();
  $('liveConsole').scrollIntoView({behavior:'instant',block:'start'});savePosition()}
 async function refreshLive(){if(!state.roomCode)return;if(state.roomBusy){state.roomRefreshQueued=true;return;}state.roomBusy=true;const code=state.roomCode;
  try{const s=await rpc('qwiz_party_state',{p_code:code});if(code!==state.roomCode)return;if(s.server_now)state.clockOffset=Date.parse(s.server_now)-Date.now();state.room=s;renderLive(s);msg('liveMessage','')}
@@ -578,6 +578,35 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  void updateModeratorSlides(s);
 }
 let moderatorDeckKey='',moderatorDeckBusy=false;
+let projectorPrefsCode='',projectorPrefs={sound_enabled:true,volume:45};
+function renderProjectorPreferences(){
+ const btn=$('hostProjectorSound'),range=$('hostProjectorVolume');
+ if(!btn||!range)return;
+ btn.textContent='Звук проектора: '+(projectorPrefs.sound_enabled?'вкл.':'выкл.');
+ btn.setAttribute('aria-pressed',String(!!projectorPrefs.sound_enabled));
+ range.value=String(projectorPrefs.volume);
+ $('hostProjectorVolumeLabel').textContent=projectorPrefs.volume+'%';
+}
+async function loadProjectorPreferences(){
+ const room=state.room;if(!room||projectorPrefsCode===room.code)return;
+ try{
+  const value=await rpc('qwiz_projector_settings',{p_room:room.room_id});
+  if(state.room?.code!==room.code)return;
+  projectorPrefsCode=room.code;projectorPrefs=value;renderProjectorPreferences();
+ }catch(err){msg('liveMessage','Настройки проектора: '+err.message,true)}
+}
+async function updateProjectorPreferences(update){
+ const room=state.room;if(!room)return;
+ const previous={...projectorPrefs};
+ projectorPrefs={...projectorPrefs,...update};renderProjectorPreferences();
+ try{
+  const params={p_room:room.room_id};
+  if('sound_enabled' in update)params.p_enabled=update.sound_enabled;
+  if('volume' in update)params.p_volume=update.volume;
+  projectorPrefs=await rpc('qwiz_projector_settings',params);
+  renderProjectorPreferences();
+ }catch(err){projectorPrefs=previous;renderProjectorPreferences();msg('liveMessage','Звук проектора: '+err.message,true)}
+}
 async function updateModeratorSlides(state){
  const root=$('moderatorSlides');
  if(!root||!state?.code||moderatorDeckBusy)return;
@@ -589,8 +618,16 @@ async function updateModeratorSlides(state){
   root.innerHTML=(deck.slides||[]).map((slide,i)=>{
    const where=i===0?'Предыдущий':i===1?'Текущий':'Следующий';
    const title=slide.kind==='question'?'Вопрос '+(slide.index+1)+' / '+deck.total:slide.title;
+   const image=typeof slide.media_url==='string'&&/^https:\/\//i.test(slide.media_url)
+    ?'<div class="moderator-slide-image"><img loading="lazy" decoding="async" src="'+esc(slide.media_url)+'" alt="Иллюстрация вопроса"></div>':'';
+   const choices=Array.isArray(slide.options)?slide.options.slice(0,4).map((choice,index)=>{
+     const label=typeof choice==='string'?choice:choice?.label||choice?.text||'Вариант '+(index+1);
+     const done=i===0||state.phase==='result'||state.phase==='finished';
+     return '<span class="moderator-choice '+(done&&Number(slide.correct)===index?'is-correct':'')+'">'+esc(label)+'</span>';
+   }).join(''):'';
    return '<article class="moderator-slide '+(i===1?'is-current':'')+'"><span class="moderator-slide-overline">'+where+'</span>'+
-    '<h4>'+esc(title)+'</h4><p>'+esc(slide.prompt||slide.title||'Нет слайда')+'</p></article>';
+     '<h4>'+esc(title)+'</h4><p>'+esc(slide.prompt||slide.title||'Нет слайда')+'</p>'+
+     image+(choices?'<div class="moderator-slide-choices">'+choices+'</div>':'')+'</article>';
   }).join('');
   moderatorDeckKey=key;
  }catch(err){root.innerHTML='<p class="small-help">Не удалось загрузить предпросмотр: '+esc(err.message)+'</p>'}
@@ -706,6 +743,9 @@ function wire(){
   const b=e.target.closest('[data-room]');if(b)selectRoom(b.dataset.room)};
  $('liveStart').onclick=()=>{projection();control('start')};$('liveReveal').onclick=()=>control('reveal');
  $('liveNext').onclick=()=>control('next');$('livePause').onclick=()=>control(state.room?.paused?'resume':'pause');$('liveFinish').onclick=()=>control('finish');
+ $('hostProjectorSound').onclick=()=>updateProjectorPreferences({sound_enabled:!projectorPrefs.sound_enabled});
+ $('hostProjectorVolume').oninput=e=>{$('hostProjectorVolumeLabel').textContent=Number(e.target.value)+'%'};
+ $('hostProjectorVolume').onchange=e=>updateProjectorPreferences({volume:Number(e.target.value)});
  $('copyRoomUrl').onclick=copyRoom;$('openScreen').onclick=projection;$('showPublicScreen').onclick=projection;$('showRoomProjection').onclick=projection;
  $('reloadInsights').onclick=loadInsights;$('studentSort').onchange=renderInsights;
  for(const b of all('[data-close]'))b.onclick=()=>$(b.dataset.close).close();
