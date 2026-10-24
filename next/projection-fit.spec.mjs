@@ -135,11 +135,12 @@ test('Real flag frame stays attached to artwork and all four flag choices remain
     teams:[],players:[],screen_settings:{sound_enabled:false,volume:0}});
   });
   await page.waitForTimeout(280);
-  await expect(page.locator('.projection-reveal-option')).toHaveCount(4);
+  await expect(page.locator('.projection-answer-single')).toHaveCount(1);
+  await expect(page.locator('.projection-reveal-option')).toHaveCount(0);
   const layout=await page.locator('.projection-answer-reveal').evaluate(el=>{
    const main=document.querySelector('#projectionMain').getBoundingClientRect();
    const outer=el.getBoundingClientRect();
-   const opts=[...el.querySelectorAll('.projection-reveal-option')].map(card=>{
+   const opts=[...el.querySelectorAll('.projection-answer-single')].map(card=>{
     const box=card.getBoundingClientRect(),img=card.querySelector('img')?.getBoundingClientRect();
     return {box:{left:box.left,right:box.right,top:box.top,bottom:box.bottom},
       img:img?{left:img.left,right:img.right,top:img.top,bottom:img.bottom}:null};
