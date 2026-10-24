@@ -29,6 +29,14 @@ test('Selecting a card controls insertion order; controls do not accidentally se
  await expect(page.locator('#cardDialog')).toBeVisible();
 });
 
+test('Two separate taps on a card open its settings',async({page})=>{
+ const first=page.locator('#roundCards .round-card').first();
+ await first.click();
+ await expect(first).toHaveAttribute('aria-current','true');
+ await first.click();
+ await expect(page.locator('#cardDialog')).toBeVisible();
+});
+
 test('New geography and arcade cards insert after current card, retaining their settings',async({page})=>{
  const cards=page.locator('#roundCards .round-card');
  await cards.first().click();
