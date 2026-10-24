@@ -5,6 +5,18 @@ window.QwizTeams=(()=>{
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const animals=new Set(['fox','owl','cat','panda','otter','raccoon','capybara','penguin','koala','red-panda','rabbit','bear']);
  const qrCache=new WeakMap();
+ // Some early raster atlases were blank/corrupt. Render the verified SVG
+ // portraits unless a real multi-portrait atlas loads and decodes successfully.
+ if(typeof Image==='function'){
+  const atlas=new Image();
+  atlas.onload=()=>{
+   if(atlas.naturalWidth>=800&&atlas.naturalHeight>=550 &&
+      Math.abs(atlas.naturalWidth/atlas.naturalHeight-4/3)<.15)
+     document.documentElement.classList.add('portrait-atlas-verified');
+  };
+  atlas.onerror=()=>document.documentElement.classList.remove('portrait-atlas-verified');
+  atlas.src='./assets/animal-portraits.webp?v=portrait-check-20261024-1';
+ }
  function intent(search=location.search){const p=new URLSearchParams(search),team=p.get('team'),via=p.get('via'),room=p.get('room');
   return {room:room?.toUpperCase(),team:team&&uuid.test(team)?team:null,via:via&&uuid.test(via)?via:null,invalid:(team!==null&&!uuid.test(team))||(via!==null&&(!uuid.test(via)||!team))};}
  function joinRequest(code,name,group=''){
@@ -14,7 +26,8 @@ window.QwizTeams=(()=>{
  }
  function url(code,team=null,via=null){const u=new URL('./',location.href);u.searchParams.set('room',code);
   if(team&&uuid.test(team))u.searchParams.set('team',team);if(via&&uuid.test(via))u.searchParams.set('via',via);return u.toString();}
- function avatar(key){return '<span class="team-avatar animal-portrait" role="img" aria-label="Персонаж" data-animal="'+(animals.has(key)?key:'fox')+'"></span>';}
+ function avatar(key){const safe=animals.has(key)?key:'fox';return '<span class="team-avatar animal-portrait" role="img" aria-label="Персонаж" data-animal="'+safe+'">'+
+  '<svg class="animal-fallback-svg" viewBox="0 0 100 100" aria-hidden="true"><use href="./assets/animals.svg?v=avatar-safe-20261024-1#'+safe+'"></use></svg></span>';}
  function qr(node,link,size=180){if(!node||qrCache.get(node)===link+':'+size)return;node.replaceChildren();
   if(typeof QRCode!=='function'){node.textContent='QR-код недоступен. Используйте ссылку.';return;}
   new QRCode(node,{text:link,width:size,height:size,colorDark:'#33234f',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
