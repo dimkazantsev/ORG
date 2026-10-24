@@ -90,7 +90,7 @@ window.QwizStage=(()=>{
  }
  const duration=s=>Number(s.duration||s.question?.duration)||Math.max(1,Math.ceil((Date.parse(s.ends_at)-Date.now())/1000))||30;
  function clockMarkup(s,id='stageTimer'){return '<div class="stage-clock" data-phase="'+esc(s.phase)+'"><div class="clock-label">'+(s.phase==='result'?'Следующий этап через':'Время на ответ')+'</div><div class="clock-value"><strong id="'+id+'">0</strong><span>сек.</span></div><div class="clock-track" role="progressbar" aria-label="Оставшееся время" aria-valuemin="0" aria-valuemax="'+duration(s)+'"><span></span></div><span class="clock-warning" aria-live="polite"></span></div>'}
- const audio={context:null,enabled:(()=>{try{return localStorage.getItem('qwiz-audio-preference-v1')!=='off'}catch{return true}})(),volume:.45,voices:new Set(),lastTick:'',unlocking:null,musicTimer:null,musicKey:'',
+ const audio={context:null,enabled:(()=>{try{return localStorage.getItem('qwiz-audio-preference-v1')!=='off'}catch{return true}})(),volume:.45,voices:new Set(),lastTick:'',unlocking:null,musicTimer:null,musicKey:'',themeTimer:null,themeWanted:false,themeStep:0,
   async unlock(){
    if(!this.enabled)return false;
    if(this.context?.state==='running')return true;
@@ -108,7 +108,7 @@ window.QwizStage=(()=>{
    if(await this.unlock())this.play('start');
    return true;
   },
-  stop(){this.stopMusic();for(const o of this.voices){try{o.stop()}catch{}}this.voices.clear()},
+  stop(){this.stopMusic();this.stopTheme();for(const o of this.voices){try{o.stop()}catch{}}this.voices.clear()},
   stopMusic(){if(this.musicTimer)clearInterval(this.musicTimer);this.musicTimer=null;this.musicKey=''},
   music(kind='arcade',id='',durationMs=16000){
    if(!this.enabled||document.hidden)return;
@@ -118,6 +118,34 @@ window.QwizStage=(()=>{
    const playBeat=()=>{if(document.hidden||!this.enabled){this.stopMusic();return}this.play(melody[beat++%melody.length]);if(durationMs&&beat*2350>=durationMs)this.stopMusic()};
    playBeat();this.musicTimer=setInterval(playBeat,2350);
   },
+  async startTheme(){
+   this.themeWanted=true;
+   if(!this.enabled||this.themeTimer||document.hidden)return;
+   if(!(await this.unlock())||!this.themeWanted||this.themeTimer)return;
+   const progression=[0,7,9,5],base=[48,55,57,53],scale=[0,2,4,7,9,12,14,16];
+   const notes=[0,2,4,7,9,7,4,2,7,9,12,9,7,4,2,4,9,12,14,12,9,7,4,7,7,9,7,4,2,4,7,2];
+   const play=()=>{
+    if(!this.enabled||document.hidden||!this.themeWanted){this.stopTheme();return}
+    const context=this.context;if(!context||context.state!=='running')return;
+    const n=this.themeStep++,bar=Math.floor(n/8)%4,root=base[bar],when=context.currentTime+.02;
+    const tone=(midi,len,kind,vol)=>{
+     if(this.voices.size>28)return;
+     const osc=context.createOscillator(),gain=context.createGain();
+     osc.type=kind;osc.frequency.setValueAtTime(440*Math.pow(2,(midi-69)/12),when);
+     gain.gain.setValueAtTime(.0001,when);
+     gain.gain.linearRampToValueAtTime(Math.max(.0002,this.volume*vol),when+.02);
+     gain.gain.exponentialRampToValueAtTime(.0001,when+len);
+     osc.connect(gain);gain.connect(context.destination);this.voices.add(osc);
+     osc.onended=()=>{this.voices.delete(osc);try{osc.disconnect();gain.disconnect()}catch{}};
+     osc.start(when);osc.stop(when+len+.025);
+    };
+    tone(root+12+notes[n%notes.length],.36,'triangle',.09);
+    if(n%4===0)tone(root-.5,.83,'sine',.075);
+    if(n%2===0)tone(root+7,.25,'triangle',.028);
+   };
+   this.themeStep=0;play();this.themeTimer=setInterval(play,380);
+  },
+  stopTheme(){this.themeWanted=false;if(this.themeTimer)clearInterval(this.themeTimer);this.themeTimer=null;},
   setVolume(v){this.volume=Math.max(0,Math.min(1,Number(v)||0))},
   play(kind){
    if(!this.enabled||!this.context||this.context.state!=='running'||document.hidden||kind==='none')return;
@@ -143,7 +171,7 @@ window.QwizStage=(()=>{
  };
  // A browser blocks autoplay until a real key/pointer gesture. Keep audio preference ON
  // by default, but unlock the AudioContext only after the first deliberate interaction.
- const unlockOnGesture=()=>{if(audio.enabled)void audio.unlock()};
+ const unlockOnGesture=()=>{if(audio.enabled)void audio.unlock().then(()=>{if(audio.themeWanted&&!audio.themeTimer)audio.startTheme()})};
  document.addEventListener('pointerdown',unlockOnGesture,{passive:true});
  document.addEventListener('keydown',unlockOnGesture);
  const uiPaths={
