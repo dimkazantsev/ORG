@@ -5,7 +5,7 @@ window.QwizArcade=(()=>{
   rocket:{title:'Ракетная гонка',desc:'Быстрее разгоните ракету. Сравнивается средний вклад игроков; победитель выбирает усиление следующего раунда.',cta:'ЗАРЯДИТЬ РАКЕТУ'},
   blitz:{title:'Блиц-вопрос',desc:'Захватите право ответить первыми. Команда-победитель получит право проголосовать за усиление следующего раунда.',cta:'ЗАХВАТИТЬ ВОПРОС'},
   tug:{title:'Перетягивание очков',desc:'Перетяните канат и получите преимущество. Победители также голосуют за усиление следующего раунда.',cta:'ТЯНУТЬ!'},
-  captain:{title:'Дуэль капитанов',desc:'Один сигнал — одно нажатие капитана. Самый быстрый побеждает, его команда голосует за усиление следующего раунда.',cta:'УДАР!'}
+  captain:{title:'Дуэль капитанов',desc:'Капитан каждой команды ждёт сигнал 3 секунды. Затем один точный удар на скорость реакции. Фальстарт отнимает попытку. Победитель получает командный бонус.',cta:'МОЙ УДАР!'}
  };
  const COLORS=['#9470e2','#b58add','#e6a95d','#76ad83','#ea7f9b','#a78be5','#bb86c8'];
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -31,7 +31,16 @@ window.QwizArcade=(()=>{
  function art(mode){
   if(mode==='rocket')return '<svg class="arcade-rocket-art" viewBox="0 0 440 150" role="img" aria-label="Ракета летит к финишу"><path d="M10 112H430" stroke="#d6ccec" stroke-width="4" stroke-dasharray="7 9"/><circle cx="390" cy="42" r="25" fill="#eee5ff"/><circle cx="390" cy="42" r="10" fill="#d8c7f5"/><g transform="translate(110,15) rotate(-12 100 60)"><path class="arcade-flame" d="M55 69 4 60l49-21Z" fill="#ffbc71"/><path d="m53 40 51-22c48-15 67-12 103-7-4 38-24 62-63 76L72 85Z" fill="#8667d5"/><path d="M99 24 75 2l-17 5 13 33m48 44-4 35-19 6-19-45" fill="#bba9ed"/><circle cx="149" cy="43" r="17" fill="#faf6ff"/><circle cx="149" cy="43" r="9" fill="#b9e3ff"/></g></svg>';
   if(mode==='tug')return '<div class="arcade-rope" data-rope style="--arcade-progress:50%" role="img" aria-label="Общий канат, отметка показывает преимущество"></div>';
-  if(mode==='captain')return '<div class="arcade-king" aria-hidden="true"><svg viewBox="0 0 120 120" width="110" height="110" fill="none" stroke="#8165d3" stroke-width="6" stroke-linejoin="round"><path d="m15 40 19 20 26-35 26 35 19-20-10 56H25L15 40Z"/><path d="M26 100h68"/></svg></div><div class="arcade-captain-ready" data-reflex-signal>ГОТОВЬТЕСЬ</div>';
+  if(mode==='captain')return '<div class="arcade-king arcade-duel-trophy" aria-hidden="true"><svg viewBox="0 0 180 150" width="190" height="155" fill="none">'+
+   '<defs><linearGradient id="qwizDuelGold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff2c7"/><stop offset=".45" stop-color="#edb95f"/><stop offset="1" stop-color="#ad7026"/></linearGradient>'+
+   '<linearGradient id="qwizDuelViolet" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c8adff"/><stop offset="1" stop-color="#6740b5"/></linearGradient></defs>'+
+   '<ellipse cx="90" cy="140" rx="61" ry="8" fill="#64429a" opacity=".13"/>'+
+   '<path d="M57 108h66v13H57z" fill="url(#qwizDuelViolet)"/><path d="M70 120h40v12H70z" fill="#7651b9"/>'+
+   '<path d="M43 24h94l-9 67c-4 27-22 32-38 32s-34-5-38-32L43 24Z" fill="url(#qwizDuelGold)" stroke="#b67d2d" stroke-width="3"/>'+
+   '<path d="M49 34H28c-4 35 10 59 32 59M131 34h21c4 35-10 59-32 59" stroke="#c49441" stroke-width="10" stroke-linecap="round"/>'+
+   '<path d="m90 40 8.5 18 19.5 3-14 13.5 3.5 19.5L90 84.5l-17.5 9.5 3.5-19.5L62 61l19.5-3Z" fill="#fff4d7"/>'+
+   '<path d="M53 36h69" stroke="#fff" stroke-opacity=".45" stroke-width="4"/></svg></div>'+
+   '<div class="arcade-captain-ready" data-reflex-signal>ГОТОВЬТЕСЬ</div>';
   return '<div class="arcade-king" aria-hidden="true"><svg viewBox="0 0 120 120" width="114" height="114" fill="none" stroke="#8165d3" stroke-width="6" stroke-linejoin="round"><path d="M61 10 25 69h31l-6 41 45-67H62l-1-33Z"/></svg></div>';
  }
  function rankMarkup(v){const teams=v?.teams||[],max=Math.max(1,...teams.map(t=>Number(t.points)||0));
