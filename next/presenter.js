@@ -150,7 +150,7 @@ function roundIntroScene(state){
  const title=state.activity?.title||'Новый раунд',icon=state.activity?.icon||'flag';
  const art=QwizStage.roundIconSvg(icon);
  $('projectionMain').innerHTML='<section class="projection-intro-card" aria-label="Представление следующего раунда">'+
- '<span class="projection-eyebrow">СЛЕДУЮЩИЙ РАУНД</span><div class="projection-intro-orbit" aria-hidden="true">'+
+ '<span class="projection-eyebrow">СЛЕДУЮЩИЙ РАУНД</span><div class="projection-intro-orbit'+(icon==='flag'?' is-flag':'')+'" aria-hidden="true">'+
  art+
  '</div><h1>'+escapeText(title)+'</h1><p>Готовьтесь к новому испытанию</p>'+
  '<div class="countdown-number" id="countdownNumber">'+seconds(state.ends_at)+'</div></section>';
@@ -235,8 +235,11 @@ function questionScene(state){
   const measure=()=>({w:Math.max(scene.scrollWidth,scene.getBoundingClientRect().width),
                        h:Math.max(scene.scrollHeight,scene.getBoundingClientRect().height)});
   const m=measure();
-  let zoom=Math.min(1,availW/Math.max(1,m.w),availH/Math.max(1,m.h));
-  scene.style.zoom=String(Math.max(.08,zoom));
+  const sparse=scene.matches('.projection-round-results,.projection-intro-card,.projection-question-only.is-result,.geo-projector,.arcade-shell');
+  // Grow sparse slides for TVs; shrink only when actual content would overflow.
+  const ideal=Math.min(availW/Math.max(1,m.w),availH/Math.max(1,m.h));
+  let zoom=Math.min(sparse?1.26:1.07,Math.max(.08,ideal));
+  scene.style.zoom=String(zoom);
   // Browser zoom may alter line wrapping. Check real dimensions and shrink a second time.
   for(let tries=0;tries<4;tries++){
    const box=scene.getBoundingClientRect();
