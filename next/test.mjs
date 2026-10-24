@@ -153,7 +153,7 @@ test('Audience screen retains the approved light lavender palette',()=>{
  assert.doesNotMatch(css,/body\.projection-screen-ready\{background:\s*#160e41/);
  assert.doesNotMatch(css,/linear-gradient\(135deg,#190e46/);
  assert.match(css,/\.projection-screen-ready \.projection-footer/);
- assert.match(html,/presenter\.css\?v=large-stage-20261025-13/);
+ assert.match(html,/presenter\.css\?v=projector-fit-20261025-14/);
 });
 test('The classroom and live mini-games retain purple and lavender, never blue UI accents',()=>{
  const audience=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
@@ -839,4 +839,14 @@ test('Projector keeps generic decoration out of text-only questions and preserve
  assert.match(src,/\|\|!hasVisual\?'':QwizStage\.illustration/);
  assert.match(css,/figure\.question-frame figcaption\{/);
  assert.match(css,/max-height:none!important;overflow:visible!important/);
+});
+
+test('Round results expose large personal and team summaries before detailed lists',()=>{
+ const player=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const styles=readFileSync(new URL('./player-layout.css',import.meta.url),'utf8');
+ assert.match(player,/round-self-summary/);
+ assert.match(player,/myIndex=players\.findIndex/);
+ assert.match(player,/teamIndex=rows\.findIndex/);
+ assert.match(styles,/\.round-self-summary strong\{/);
+ assert.match(readFileSync(new URL('./index.html',import.meta.url),'utf8'),/app\.js\?v=round-self-20261025-14/);
 });
