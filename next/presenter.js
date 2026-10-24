@@ -152,24 +152,44 @@ function projectionOption(value,index){
 }
 function questionScene(state){
  const q=state.question;
- // Audience display is intentionally question-only. Options, their images,
- // correct choices and explanations remain exclusively on the players' devices.
  const media=typeof q.media_url==='string'&&/^https:\/\//i.test(q.media_url)&&['audio','video'].includes(q.kind)
   ?'<'+q.kind+' class="projection-'+q.kind+'" controls preload="metadata" src="'+escapeText(q.media_url)+'"></'+q.kind+'>':'';
- // A "choose the flag" prompt must not project answer pictures or a fictitious filler illustration.
- // The real flag options stay on the students' devices and in the moderator's private preview.
+ // While answering, flag-picker options are private to the players. At reveal,
+ // the audience sees the same four flag pictures and the correct one highlighted.
  const selectingFlag=/^(?:выберите|найдите)\s+(?:государственный\s+)?флаг\b/i.test(q.prompt||'')&&!q.media_url&&!q.illustration_url;
- const frame=selectingFlag?'':QwizStage.illustration(q,null);
+ const frame=selectingFlag?'':QwizStage.illustration(q,state.phase==='result'?state.answer:null);
  const top='<div class="projection-topline"><div><span class="projection-count">'+escapeText(q.round_title||q.topic||'Раунд вопросов')+
   '</span><p class="question-step">Вопрос '+(state.index+1)+' <span>/ '+state.total+'</span></p></div>'+
   QwizStage.clockMarkup(state)+'</div>';
- const finished=state.phase==='result';
- return '<section class="projection-question projection-question-only'+(finished?' is-result':'')+'">'+top+
+ const finished=state.phase==='result'&&!!state.answer;
+ const answer=finished?state.answer:null;
+ const correctIndices=Array.isArray(answer?.indices)?answer.indices.map(Number).filter(Number.isInteger):[];
+ const choices=finished&&Array.isArray(q.options)?q.options.slice(0,10).map((option,i)=>{
+   const correct=correctIndices.includes(i);
+   return '<div class="projection-reveal-option'+(correct?' is-correct':'')+'">'+
+    '<span class="projection-reveal-letter">'+String.fromCharCode(65+i)+'</span>'+
+    '<div class="projection-reveal-option-body">'+projectionOption(option,i)+'</div>'+
+    (correct?'<span class="projection-reveal-check" aria-label="Правильный ответ">✓ Верно</span>':'')+
+    '</div>';
+ }).join(''):'';
+ const answerImage=typeof answer?.image_url==='string'&&/^https:\/\//i.test(answer.image_url)?answer.image_url:'';
+ const answerText=answer?.text||'Ответ не указан';
+ const explanation=answer?.explanation||'';
+ const reveal=finished?
+  '<section class="projection-answer-reveal" role="status" aria-label="Разбор вопроса">'+
+   '<div class="projection-answer-heading"><span>ПРАВИЛЬНЫЙ ОТВЕТ</span><strong>'+escapeText(answerText)+'</strong></div>'+
+   (choices?'<div class="projection-reveal-options'+(choices.includes('flag-choice-art')?' has-flag-options':'')+'">'+choices+'</div>':
+     (answerImage?'<img class="projection-answer-image" src="'+escapeText(answerImage)+'" alt="Правильный флаг" decoding="async">':''))+
+   (explanation?'<p class="projection-answer-explanation">'+escapeText(explanation)+'</p>':'')+
+  '</section>':'';
+ return '<section class="projection-question projection-question-only'+(state.phase==='result'?' is-result':'')+'">'+top+
   '<h1>'+escapeText(q.prompt)+'</h1>'+frame+media+
-  '<div class="projection-question-instruction">'+(finished?'Время ответа завершено. Посмотрите разбор на своих устройствах.':
-   'Варианты ответа и кнопки выбора доступны на телефонах и планшетах участников.')+'</div>'+
-  '<div class="projection-response-count">'+
-   (state.teams||[]).reduce((n,t)=>n+Number(t.answered||0),0)+' ответов получено</div>'+
+  (finished?reveal:
+   '<div class="projection-question-instruction">'+
+    (state.phase==='result'?'Время ответа завершено. Разбор появится на общем экране.':
+     'Варианты ответа доступны на устройствах участников.')+'</div>')+
+  (!finished?'<div class="projection-response-count">'+
+   (state.teams||[]).reduce((n,t)=>n+Number(t.answered||0),0)+' ответов получено</div>':'')+
   '</section>';
 }
 function applyProjectionSettings(settings){
@@ -216,7 +236,7 @@ function render(state){
  if(!state.question){$('projectionMain').innerHTML='<div class="projection-loading"><h1>Следующий раунд</h1><p>Смотрите на экран.</p></div>';return}
  if(state.phase==='result')tone('reveal');else if(previous!=='question'||ctx.previousQuestion!==state.index)tone('pop');ctx.previousQuestion=state.index;
  $('projectionMain').innerHTML=questionScene(state);
- if(state.phase==='question'&&state.question.flag_memory)$('projectionMain').querySelector('.projection-options')?.setAttribute('data-memory-answer','');
+
 
  QwizStage.updateClock(state,ctx.offset);QwizStage.hydrateIllustrations($('projectionMain'));
 }
