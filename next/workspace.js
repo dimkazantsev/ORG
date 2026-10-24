@@ -575,7 +575,26 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  $('liveRoundStats').textContent='Вопрос '+completed+' / '+s.total+' · Ответов '+(s.answers_count||0)+(latest?' · Верных '+latest.correct+'/'+latest.answered:'')+(s.paused?' · Игра на паузе':'');
  $('liveRoster').innerHTML=(s.players||[]).map(p=>'<div class="live-line"><span>'+esc(p.name)+'</span><small>'+
  esc(s.teams.find(t=>t.id===p.team_id)?.name||'Ожидает распределения')+'</small></div>').join('');renderTeamManager(s);window.QwizArcade?.mountHost($('arcadeHostPanel'),s,state.db);
- const mirror=$('liveScreenMirror');if(mirror&&mirror.dataset.room!==s.code){mirror.dataset.room=s.code;const u=new URL('./presenter.html',location.href);u.searchParams.set('room',s.code);u.searchParams.set('embedded','1');mirror.src=u.toString()}
+ void updateModeratorSlides(s);
+}
+let moderatorDeckKey='',moderatorDeckBusy=false;
+async function updateModeratorSlides(state){
+ const root=$('moderatorSlides');
+ if(!root||!state?.code||moderatorDeckBusy)return;
+ const key=[state.code,state.phase,state.index,state.activity?.title].join(':');
+ if(key===moderatorDeckKey)return;
+ moderatorDeckBusy=true;
+ try{
+  const deck=await rpc('qwiz_host_slide_deck',{p_code:state.code});
+  root.innerHTML=(deck.slides||[]).map((slide,i)=>{
+   const where=i===0?'Предыдущий':i===1?'Текущий':'Следующий';
+   const title=slide.kind==='question'?'Вопрос '+(slide.index+1)+' / '+deck.total:slide.title;
+   return '<article class="moderator-slide '+(i===1?'is-current':'')+'"><span class="moderator-slide-overline">'+where+'</span>'+
+    '<h4>'+esc(title)+'</h4><p>'+esc(slide.prompt||slide.title||'Нет слайда')+'</p></article>';
+  }).join('');
+  moderatorDeckKey=key;
+ }catch(err){root.innerHTML='<p class="small-help">Не удалось загрузить предпросмотр: '+esc(err.message)+'</p>'}
+ finally{moderatorDeckBusy=false}
 }
 async function control(action){if(!state.room)return;for(const id of ['liveStart','livePause','liveReveal','liveNext','liveFinish'])disable(id,true);
  try{if(action==='finish'&&!confirm('Завершить игру?'))return;
