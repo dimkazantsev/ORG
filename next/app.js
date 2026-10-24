@@ -293,7 +293,13 @@ async function restore(){if(!ctx.client)return;try{
  }catch{showScreen('home')}}
 function attach(){q('#logoHome').addEventListener('click',home);
  $('teamInvitationNotice').hidden=!QwizTeams.intent().team;if(QwizTeams.intent().team)setRole('player');
- setRole(storage.get('entry-role')==='host'?'host':'player');
+ const directJoin=new URLSearchParams(location.search).get('room');
+ setRole(directJoin?'player':storage.get('entry-role')==='host'?'host':'player');
+ if(directJoin&&/^[A-F0-9]{8}$/i.test(directJoin)){
+  $('qrDirectJoin').hidden=false;$('qrDirectCode').textContent=directJoin.toUpperCase();
+  try{const cached=localStorage.getItem('qwiz-player-name');if(cached&&!$('joinName').value)$('joinName').value=cached}catch{}
+  requestAnimationFrame(()=>$('joinName').focus({preventScroll:true}));
+ }
  $('changeTeacherAccount').onclick=logout;$('resumeGameButton').onclick=resumeGame;
  $('togglePassword').onclick=()=>{const visible=$('loginPassword').type==='password';$('loginPassword').type=visible?'text':'password';$('togglePassword').setAttribute('aria-pressed',String(visible));$('togglePassword').setAttribute('aria-label',visible?'Скрыть пароль':'Показать пароль')};
  // The welcome page now has no redundant left-hand navigation.
