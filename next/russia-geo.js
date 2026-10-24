@@ -138,10 +138,10 @@
    if(error)throw error;
    if(answer!==null&&data.last_answer){
      t.revealQuestion=t.view?.question;
-     t.lastAnswer=data.last_answer;t.feedbackUntil=Date.now()+2200;
+     t.lastAnswer=data.last_answer;t.feedbackUntil=Date.now()+3800;
      setTimeout(()=>{if(!t.closed&&Date.now()>=t.feedbackUntil){
        t.lastAnswer=null;t.revealQuestion=null;t.renderKey=null;roundState(t);
-     }},2250);
+     }},3850);
    }
    t.view=data;
    t.message=answer===null?'':data.last_correct?'Верно! +100 очков':'Нет, этот ответ неверный.';
@@ -174,6 +174,17 @@
   y=Math.max(0,Math.min(480-nh,y+(h-nh)*v-dy*nh/rect.height));
   svg.setAttribute('viewBox',[x,y,nw,nh].join(' '));
  }
+ function selectRegion(t,node){
+  const selected=node?.dataset?.region;
+  if(!selected||t.busy||!t.view?.open||t.view?.question?.mode!=='locate')return false;
+  t.selectedRegion=selected;
+  t.root.querySelectorAll('.geo-region').forEach(p=>p.classList.toggle('geo-selected',p.dataset.region===selected));
+  const button=t.root.querySelector('[data-geo-confirm]');
+  if(button){button.disabled=false;button.hidden=false;button.textContent='Подтвердить: '+(node.getAttribute('aria-label')||'регион');button.setAttribute('aria-label','Подтвердить выбранный регион');}
+  t.message='Регион выбран. Нажмите «Подтвердить».';
+  const label=t.root.querySelector('.geo-message');if(label)label.textContent=t.message;
+  return true;
+ }
  function mountPlayer(root,s,ctx){
   if(s.phase!=='intermission'||s.activity?.settings?.arcade_mode!=='russia_map')return false;
   const key=s.code+':player',existing=sessions.get(key);
@@ -196,24 +207,19 @@
     t.zoomBox=[x,y,w,h].join(' ');svg.setAttribute('viewBox',t.zoomBox);return;
    }
    if(Date.now()<t.suppressUntil||Date.now()<t.feedbackUntil||t.pointers.size)return;
+   if(Date.now()<(t.regionPointerSelectedUntil||0)&&e.target.closest('[data-region]'))return;
    if(e.target.closest('[data-geo-confirm]')){if(t.selectedRegion&&!t.busy&&t.view?.open)fetchView(t,t.selectedRegion);return;}
    const b=e.target.closest('[data-geo-answer],[data-region]');if(!b||!t.view?.open||t.busy||!t.view?.question)return;
    const selected=b.dataset.geoAnswer||b.dataset.region;
    if(b.dataset.region&&t.view.question.mode!=='locate')return;
-   if(b.dataset.region){
-    t.selectedRegion=selected;root.querySelectorAll('.geo-region').forEach(p=>p.classList.toggle('geo-selected',p.dataset.region===selected));
-    const button=root.querySelector('[data-geo-confirm]');if(button){button.disabled=false;button.textContent='Подтвердить: '+(b.getAttribute('aria-label')||'регион');}
-    t.message='Регион выбран. Нажмите «Подтвердить».';
-    const label=root.querySelector('.geo-message');if(label)label.textContent=t.message;
-    return;
-   }
+   if(b.dataset.region){selectRegion(t,b);return;}
    t.chosenAnswerId=selected;
    fetchView(t,selected);
   };
   root.addEventListener('click',t.onClick);
   t.onPointerDown=e=>{
    const svg=e.target.closest?.('.geo-map-frame .geo-map-svg');if(!svg)return;
-   t.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY});
+   t.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,region:e.target.closest?.('[data-region]')||null});
    if(t.pointers.size===1)t.gestureMoved=false;
     // A drag or pinch must not submit a region as an answer.
   };
@@ -237,7 +243,13 @@
    }
    t.zoomBox=svg.getAttribute('viewBox');
   };
-  t.onPointerUp=e=>{t.pointers.delete(e.pointerId);if(t.gestureMoved)t.suppressUntil=Date.now()+850;};
+  t.onPointerUp=e=>{
+   const pointer=t.pointers.get(e.pointerId);t.pointers.delete(e.pointerId);
+   if(t.gestureMoved){t.suppressUntil=Date.now()+850;return}
+   if(pointer?.region&&Math.hypot(e.clientX-pointer.startX,e.clientY-pointer.startY)<16){
+    if(selectRegion(t,pointer.region))t.regionPointerSelectedUntil=Date.now()+350;
+   }
+  };
   t.onWheel=e=>{
    const svg=e.target.closest?.('.geo-map-frame .geo-map-svg');if(!svg)return;
    e.preventDefault();t.suppressUntil=Date.now()+600;
@@ -247,9 +259,7 @@
   t.onKeyDown=e=>{
    if((e.key!=='Enter'&&e.key!==' ')||!e.target.matches?.('.geo-region[data-region]'))return;
    e.preventDefault();if(t.busy||!t.view?.open||t.view?.question?.mode!=='locate')return;
-   t.selectedRegion=e.target.dataset.region;t.message='Регион выбран. Подтвердите ответ.';
-   root.querySelectorAll('.geo-region').forEach(p=>p.classList.toggle('geo-selected',p.dataset.region===t.selectedRegion));
-   const button=root.querySelector('[data-geo-confirm]');if(button){button.disabled=false;button.textContent='Подтвердить выбор';button.focus();}
+   if(selectRegion(t,e.target))root.querySelector('[data-geo-confirm]')?.focus();
   };
   root.addEventListener('pointerdown',t.onPointerDown);
   root.addEventListener('pointermove',t.onPointerMove);
