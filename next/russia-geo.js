@@ -49,7 +49,7 @@
   const paths=geometry.map(g=>'<path class="geo-region '+(g.id===active?'geo-focus':'')+'" data-region="'+esc(g.id)+'" d="'+g.path+'" aria-label="'+esc(g.name)+'" '+(interactive?'role="button" tabindex="0"':'')+'/>').join('');
   // Avoid overlapping transparent hit targets that select neighboring regions.
   return '<div class="geo-map-frame"><svg class="geo-map-svg" viewBox="0 0 1120 480" preserveAspectRatio="xMidYMid meet" role="group" aria-label="Интерактивная карта субъектов России"><g>'+paths+'</g></svg>'+
-    '<div class="geo-map-zoom"><button type="button" data-geo-zoom="in" aria-label="Приблизить карту">＋</button><button type="button" data-geo-zoom="out" aria-label="Отдалить карту">−</button><button type="button" data-geo-zoom="reset">Сброс</button></div></div>';
+    '</div>';
  }
  function options(q){
   return '<div class="geo-options">'+(q.options||[]).map(x=>'<button type="button" data-geo-answer="'+esc(x.id)+'">'+esc(x.text)+'</button>').join('')+'</div>';
@@ -92,7 +92,9 @@
    (done?'<div class="geo-done"><h2>'+(v.finished?'Готово!':'Время вышло')+'</h2><p>Верно: '+v.correct+' из '+v.total+'. Баллы сохранены на сервере.</p></div>':
    '<h2>'+esc(prompt(q))+'</h2>'+hint+img+
    (showMap?(t.mapError?'<div class="geo-map-loading">Не удалось загрузить карту. <button type="button" data-geo-map-retry>Повторить загрузку</button></div>':(geometry&&qmode==='silhouette'?mapMarkup(q.region,false,true):mapMarkup(qmode==='identify'?q.region:null,interactive&&!feedbackActive))):'')+
-   (interactive?'<p class="geo-tip">Нажмите на нужный субъект. Для мелких регионов приблизьте карту.</p>':options(q)))+
+   (showMap&&qmode!=='silhouette'?'<div class="geo-map-toolbar" aria-label="Масштаб карты"><button type="button" data-geo-zoom="in" aria-label="Увеличить">＋</button><button type="button" data-geo-zoom="out" aria-label="Уменьшить">−</button><button type="button" data-geo-zoom="reset">Вся карта</button></div>':'')+
+   (interactive?'<p class="geo-tip">Один раз нажмите на субъект, проверьте выделение и нажмите «Подтвердить выбор». Карту можно перемещать пальцем и двумя пальцами изменять масштаб.</p>'+
+    '<button type="button" class="geo-confirm" data-geo-confirm '+(!t.selectedRegion?'disabled':'')+'>'+ (t.selectedRegion?'Подтвердить выбранный регион':'Сначала выберите регион на карте')+'</button>':options(q)))+
    '<p class="geo-message" role="status" aria-live="polite">'+esc(t.message||'')+'</p>'+
    '<div class="geo-footer"><span>Осталось '+v.remaining+' сек.</span><small>Результат каждого игрока индивидуален</small></div></section>';
   const nextSvg=root.querySelector('.geo-map-frame .geo-map-svg');
@@ -106,6 +108,7 @@
         t.zoomBox=[Math.round((1120-w)/2),0,w,480].join(' ');
      }
      if(t.zoomBox)nextSvg.setAttribute('viewBox',t.zoomBox);
+     if(t.selectedRegion&&!feedbackActive)nextSvg.querySelectorAll('.geo-region').forEach(p=>p.classList.toggle('geo-selected',p.dataset.region===t.selectedRegion));
      if(feedbackActive&&t.lastAnswer.correct_region_id){
        nextSvg.querySelectorAll('[data-region]').forEach(n=>{
          if(n.dataset.region===t.lastAnswer.correct_region_id)n.classList.add('geo-correct-answer');
@@ -164,7 +167,7 @@
   const key=s.code+':player',existing=sessions.get(key);
   if(existing&&!existing.closed&&existing.root===root)return true;
   stop('player');
-  const t={root,client:ctx.client||ctx.db,roomId:s.room_id,kind:'player',closed:false,view:null,busy:false,message:'',mapPending:false,pointers:new Map(),suppressUntil:0,zoomBox:null,lastAnswer:null,feedbackUntil:0,revealQuestion:null,renderKey:null,gestureMoved:false};sessions.set(key,t);
+  const t={root,client:ctx.client||ctx.db,roomId:s.room_id,kind:'player',closed:false,view:null,busy:false,message:'',mapPending:false,pointers:new Map(),suppressUntil:0,zoomBox:null,selectedRegion:null,lastAnswer:null,feedbackUntil:0,revealQuestion:null,renderKey:null,gestureMoved:false};sessions.set(key,t);
   root.innerHTML='<section class="geo-game"><h2>Карта России</h2><p>Готовим вашу индивидуальную карту…</p></section>';
   t.onClick=e=>{
    if(e.target.closest('[data-geo-map-retry]')){t.mapError=false;t.message='Повторяем загрузку карты…';roundState(t);return}
@@ -181,9 +184,17 @@
     t.zoomBox=[x,y,w,h].join(' ');svg.setAttribute('viewBox',t.zoomBox);return;
    }
    if(Date.now()<t.suppressUntil||Date.now()<t.feedbackUntil||t.pointers.size)return;
+   if(e.target.closest('[data-geo-confirm]')){if(t.selectedRegion&&!t.busy&&t.view?.open)fetchView(t,t.selectedRegion);return;}
    const b=e.target.closest('[data-geo-answer],[data-region]');if(!b||!t.view?.open||t.busy||!t.view?.question)return;
    const selected=b.dataset.geoAnswer||b.dataset.region;
    if(b.dataset.region&&t.view.question.mode!=='locate')return;
+   if(b.dataset.region){
+    t.selectedRegion=selected;root.querySelectorAll('.geo-region').forEach(p=>p.classList.toggle('geo-selected',p.dataset.region===selected));
+    const button=root.querySelector('[data-geo-confirm]');if(button){button.disabled=false;button.textContent='Подтвердить: '+(b.getAttribute('aria-label')||'регион');}
+    t.message='Регион выбран. Нажмите «Подтвердить».';
+    const label=root.querySelector('.geo-message');if(label)label.textContent=t.message;
+    return;
+   }
    fetchView(t,selected);
   };
   root.addEventListener('click',t.onClick);
@@ -223,7 +234,9 @@
   t.onKeyDown=e=>{
    if((e.key!=='Enter'&&e.key!==' ')||!e.target.matches?.('.geo-region[data-region]'))return;
    e.preventDefault();if(t.busy||!t.view?.open||t.view?.question?.mode!=='locate')return;
-   fetchView(t,e.target.dataset.region);
+   t.selectedRegion=e.target.dataset.region;t.message='Регион выбран. Подтвердите ответ.';
+   root.querySelectorAll('.geo-region').forEach(p=>p.classList.toggle('geo-selected',p.dataset.region===t.selectedRegion));
+   const button=root.querySelector('[data-geo-confirm]');if(button){button.disabled=false;button.textContent='Подтвердить выбор';button.focus();}
   };
   root.addEventListener('pointerdown',t.onPointerDown);
   root.addEventListener('pointermove',t.onPointerMove);
