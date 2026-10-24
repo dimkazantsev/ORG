@@ -42,3 +42,31 @@
 /* Touch gestures belong to the map itself, not the outer page. */
 .geo-map-frame .geo-map-svg{touch-action:none;user-select:none;-webkit-user-select:none}
 .geo-map-frame .geo-region{cursor:pointer}
+
+/* 2026-10-24: aligned selection grid and visible mobile cartography */
+.geo-modes-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.geo-modes-grid label{display:grid;grid-template-columns:24px minmax(0,1fr);align-items:center;justify-items:start;column-gap:12px;min-height:70px;padding:13px 15px;font-size:13px;line-height:1.45;text-align:left;overflow-wrap:anywhere}
+.geo-modes-grid label input[type=checkbox]{appearance:auto;margin:0;width:18px;height:18px;justify-self:center;align-self:center;min-width:18px;flex:none}
+.geo-modes-grid label.disabled{opacity:.55}
+.geo-map-frame{min-height:clamp(260px,39dvh,480px)}
+.geo-map-frame .geo-map-svg:not(.geo-silhouette){height:clamp(260px,39dvh,480px);width:100%;max-height:none;min-height:0;aspect-ratio:auto}
+.geo-map-frame .geo-map-zoom{z-index:3;bottom:10px;right:10px}
+.geo-game .geo-answer-feedback{border-radius:13px;background:#eaf8ed;color:#206d45;border:1px solid #bce4ca;padding:11px 13px;font-size:13px;font-weight:750;line-height:1.5}
+.geo-game .geo-answer-feedback.is-wrong{background:#fff0f1;color:#a1294b;border-color:#f2c5d0}
+.geo-map-svg .geo-region.geo-correct-answer{fill:#47a96e;stroke:#137843;stroke-width:3.4}
+.geo-map-svg .geo-region.geo-wrong-answer{fill:#d96979;stroke:#b73555;stroke-width:3.4}
+@media(max-width:680px){
+ .geo-modes-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .geo-modes-grid label{min-height:80px;padding:10px;grid-template-columns:20px minmax(0,1fr);gap:8px;font-size:12px}
+ .geo-game{gap:9px;padding:10px}
+ .geo-game h2{font-size:clamp(19px,5.5vw,25px)}
+ .geo-game .geo-header{font-size:11px}
+ .geo-map-frame{min-height:0}
+ .geo-map-frame .geo-map-svg:not(.geo-silhouette){height:clamp(270px,43dvh,410px)}
+ .geo-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ .geo-options button{padding:10px;min-height:50px;font-size:13px;line-height:1.3}
+ .geo-flag{max-height:125px;width:min(190px,66%)}
+ .geo-tip{font-size:11px}
+ .geo-map-zoom button{min-width:42px;min-height:42px}
+}
+@media(max-width:390px){.geo-modes-grid{grid-template-columns:minmax(0,1fr)}}
