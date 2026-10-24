@@ -127,7 +127,7 @@ function section(section){state.activePage=section;for(const id of ['bank','buil
 function createOption(value,label){const n=document.createElement('option');n.value=value;n.textContent=label;return n}
 function fillSelect(select,options,placeholder,selected=''){select.replaceChildren();if(placeholder!==null)select.add(createOption('',placeholder));for(const [value,title]of options)select.add(createOption(value,title));select.value=selected}
 function nameTopic(id){return state.topics.find(t=>t.id===id)?.name||'Все темы'}
-async function overview(){const d=await studio('overview');state.topics=d.topics||[];state.builds=d.builds||[];renderTopics();renderBuilds();updateSelectors();await loadQuestions()}
+async function overview(){const d=await studio('overview');state.topics=d.topics||[];state.builds=d.builds||[];renderTopics();renderBuilds();updateSelectors();configureBankModes();await loadQuestions()}
 function updateSelectors(){
  const items=state.topics.map(t=>[t.id,t.name]);
  for(const id of ['bankTopic','editTopic','cardTopic']){const el=$(id),selected=el.value;fillSelect(el,items,id==='bankTopic'?'Все темы':'Без темы',selected)}
@@ -137,7 +137,33 @@ function renderTopics(){
  const items=[{id:'',name:'Все темы'},...state.topics];
  $('topicChips').innerHTML=items.map(t=>'<button type="button" class="topic-chip '+($('bankTopic').value===t.id?'current':'')+'" data-topic="'+esc(t.id)+'">'+esc(t.name)+'</button>').join('');
 }
+
+const geoModeNames={locate:'Найти субъект',identify:'Угадать название',capital:'Административный центр',flag:'Узнать по флагу',silhouette:'Угадать по силуэту',neighbour:'Соседние субъекты',detective:'Географический детектив',district:'Федеральный округ'};
+function isGeoTopic(id=$('bankTopic')?.value){return !!id&&state.topics.some(t=>t.id===id&&t.name==='География России')}
+function configureBankModes(){
+ const choose=$('bankMode'),previous=choose.value;
+ fillSelect(choose,isGeoTopic()?Object.entries(geoModeNames):flagModes.map(([id,name])=>[id,name]),'Все механики',previous);
+}
+async function loadGeoQuestions(){
+ if(!state.geoCatalog)state.geoCatalog=await rpc('qwiz_geo_catalog');
+ const needle=$('bankSearch').value.trim().toLocaleLowerCase('ru');
+ const mode=$('bankMode').value;
+ const records=(state.geoCatalog||[]).filter(x=>!needle||[x.name,x.capital,x.district,x.region_type].some(v=>String(v||'').toLocaleLowerCase('ru').includes(needle)));
+ const start=state.bankOffset,size=state.bankPageSize,total=records.length;
+ state.questionTotal=total;
+ $('navQuestionCount').textContent=fmt(total);$('questionsTotal').textContent='('+fmt(total)+' субъектов)';
+ $('bankPageInfo').textContent='Страница '+(Math.floor(start/size)+1)+' из '+Math.max(1,Math.ceil(total/size));
+ $('bankPrevious').disabled=start===0;$('bankNext').disabled=start+size>=total;
+ const label=mode?geoModeNames[mode]||'Карта России':'8 механик';
+ $('bankItems').innerHTML=records.slice(start,start+size).map(region=>
+  '<article class="question-row geo-bank-row"><div><div class="question-meta"><span class="chip lilac">География России</span><span class="chip">'+esc(label)+'</span></div>'+
+  '<h3>'+esc(region.name)+'</h3><p>Административный центр: '+esc(region.capital)+' · '+esc(region.district)+'</p>'+
+  '<p class="small-help">Субъект из единого справочника 89 регионов. Индивидуальное задание создаётся случайно при начале раунда.</p></div></article>'
+ ).join('')||'<div class="empty">Нет субъектов по вашему запросу.</div>';
+ renderTopics();msg('bankMessage','');
+}
 async function loadQuestions(){
+ if(isGeoTopic()){try{await loadGeoQuestions()}catch(e){msg('bankMessage',e.message,true)}return}
  const input={search:$('bankSearch').value.trim().slice(0,90),topic_id:$('bankTopic').value,kind:'flag',mode:$('bankMode').value,sort:$('bankSort').value,offset:state.bankOffset,limit:state.bankPageSize};
  try{const data=await studio('questions',input);state.questions=data.items||[];state.questionTotal=data.total||0;
   $('navQuestionCount').textContent=fmt(state.questionTotal);$('questionsTotal').textContent='('+fmt(state.questionTotal)+')';
@@ -567,8 +593,8 @@ function wire(){
  $('refreshAll').onclick=refreshWorkspace;
  document.addEventListener('keydown',event=>{if(event.key!=='/'||event.ctrlKey||event.metaKey||event.altKey||event.target.closest('input,textarea,select,[contenteditable="true"]')||document.querySelector('dialog[open]')||state.activePage!=='bank')return;event.preventDefault();$('bankSearch').focus()});
  $('bankSearch').oninput=()=>{clearTimeout(state.bankTimer);state.bankOffset=0;state.bankTimer=setTimeout(loadQuestions,350)};
- for(const id of ['bankTopic','bankMode','bankSort'])$(id).onchange=()=>{state.bankOffset=0;loadQuestions()};
- $('topicChips').onclick=e=>{const b=e.target.closest('[data-topic]');if(!b)return;$('bankTopic').value=b.dataset.topic;state.bankOffset=0;loadQuestions()};
+ for(const id of ['bankTopic','bankMode','bankSort'])$(id).onchange=()=>{if(id==='bankTopic')configureBankModes();state.bankOffset=0;loadQuestions()};
+ $('topicChips').onclick=e=>{const b=e.target.closest('[data-topic]');if(!b)return;$('bankTopic').value=b.dataset.topic;configureBankModes();state.bankOffset=0;loadQuestions()};
  $('bankPrevious').onclick=()=>{state.bankOffset=Math.max(0,state.bankOffset-state.bankPageSize);loadQuestions()};
  $('bankNext').onclick=()=>{if(state.bankOffset+state.bankPageSize<state.questionTotal){state.bankOffset+=state.bankPageSize;loadQuestions()}};
  $('newTopic').onclick=()=>{$('topicDialog').showModal();$('topicName').focus()};$('topicForm').onsubmit=saveTopic;$('newQuestion').onclick=()=>editQuestion();
