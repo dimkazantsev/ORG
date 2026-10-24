@@ -325,3 +325,30 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
 .round-reward-banner p{margin:0;font-size:clamp(10px,1.55dvh,12px);line-height:1.25}
 .round-reward-banner.is-boost{border-color:#a6dabe;background:#e4f6e9;color:#235e3f}
 .round-reward-banner.is-harm{border-color:#f1bbc7;background:#ffe7ec;color:#912f4e}
+
+
+/* Stable, recognizable lobby emblem and quiet footer — no floating decorative glyphs over text. */
+.game-lobby-wait{
+ box-sizing:border-box;min-width:0;width:100%;max-width:100%;height:100%;
+ padding:clamp(16px,3dvh,32px) clamp(16px,5vw,32px);
+ justify-content:center;gap:clamp(9px,1.75dvh,16px)
+}
+.game-lobby-wait>.lobby-ambient{display:none!important}
+.game-lobby-wait .lobby-signal{z-index:0;width:clamp(92px,20dvh,164px);margin:0 auto 5px;
+ box-shadow:0 10px 28px #7845d51c}
+.game-lobby-wait .lobby-play-mark{display:block;width:68%;height:68%;
+ color:#7845d5;filter:none;animation:none}
+.game-lobby-wait .lobby-signal-ring{z-index:-1}
+.game-lobby-wait .lobby-progress{margin-top:clamp(5px,1.1dvh,13px);max-width:70%;position:relative;z-index:1}
+.game-lobby-wait .lobby-people{position:relative;z-index:2;flex:none;max-width:100%;
+ display:block;margin:0;min-height:26px;padding:5px 12px;
+ border-radius:9px;background:#fffdfef0;color:#625373;
+ font-size:clamp(11px,1.65dvh,13px);font-weight:650;line-height:1.4;
+ text-align:center;overflow-wrap:anywhere}
+@media(max-height:620px){
+ .game-lobby-wait{gap:7px;padding:10px 12px}
+ .game-lobby-wait .lobby-signal{width:clamp(76px,16dvh,112px);margin:0 auto 2px}
+ .game-lobby-wait .lobby-people{display:block!important;min-height:24px;padding:4px 9px}
+ .game-lobby-wait .lobby-progress{margin-top:3px}
+}
+@media(prefers-reduced-motion:reduce){.game-lobby-wait .lobby-play-mark{animation:none}}
