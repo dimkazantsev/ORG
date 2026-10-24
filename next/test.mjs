@@ -345,6 +345,17 @@ test('Projector hides flag-picker filler art, reveals actual answers and fits th
  assert.match(styles,/#projectionMain\{flex:1 1 auto;min-height:0/);
  assert.match(styles,/\.projection-question-only \.projection-topline\{min-height:0!important/);
 });
+test('Round intro icon follows the actual gameplay mechanic on phone and projector',()=>{
+ const stage=readFileSync(new URL('./stage.js',import.meta.url),'utf8');
+ const phone=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const projector=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
+ for(const key of ['round','flag','map','arcade_rocket','arcade_blitz','arcade_tug','arcade_captain','intro','finale']){
+  assert.match(stage,new RegExp(key+":'<"),'Missing round artwork for '+key);
+ }
+ assert.match(stage,/function roundIconSvg\(key\)/);
+ assert.match(phone,/const drawing=QwizStage\.roundIconSvg\(icon/);
+ assert.match(projector,/const art=QwizStage\.roundIconSvg\(icon\)/);
+});
 test('Phone lobby animates and completed tap-game ballot fills the viewport',()=>{
  const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
  const playerCss=readFileSync(new URL('./player-layout.css',import.meta.url),'utf8');
