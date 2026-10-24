@@ -169,3 +169,27 @@
 @media(max-width:660px){.arcade-vote-strategy .arcade-boost-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:420px){.arcade-vote-strategy .arcade-boost-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
  .arcade-vote-strategy .arcade-boost-grid button{min-width:0}}
+
+
+/* Two-stage bonus decision: bottom-sheet entrance with semantic green shield and red target. */
+.arcade-vote-strategy .arcade-boost-grid button{display:flex;flex-direction:column;align-items:flex-start;justify-content:center}
+.arcade-strategy-icon{display:grid;place-items:center;flex:none;width:42px;height:42px;border-radius:13px;
+ box-shadow:0 3px 9px #4d356e15}
+.arcade-strategy-icon svg{width:27px;height:27px}
+.arcade-boost-grid [data-vote-tone=boost] .arcade-strategy-icon{color:#238750;background:#dff5e7}
+.arcade-boost-grid [data-vote-tone=harm] .arcade-strategy-icon{color:#b13a58;background:#fee3eb}
+.player-compact #gameContent .arcade-player.is-boost-voting .arcade-vote{
+ border-radius:22px 22px 14px 14px;box-shadow:0 -9px 28px #513b7730;
+ border:1px solid #ddd0f1;animation:arcade-sheet-rise .28s cubic-bezier(.22,.78,.26,1) both}
+.player-compact #gameContent .arcade-player.is-boost-voting .arcade-vote-strategy .arcade-boost-grid button{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:3px}
+.player-compact #gameContent .arcade-player.is-boost-voting .arcade-vote-strategy .arcade-boost-grid button strong{font-size:clamp(12px,2.4dvh,17px)}
+.player-compact #gameContent .arcade-player.is-boost-voting .arcade-vote-strategy .arcade-boost-grid button span:not(.arcade-strategy-icon){font-size:11px;line-height:1.15}
+.player-compact #gameContent .arcade-player.is-boost-voting .arcade-vote-strategy .arcade-boost-grid button b{font-size:10px}
+@keyframes arcade-sheet-rise{from{opacity:.75;transform:translateY(36px)}to{opacity:1;transform:translateY(0)}}
+@media(max-height:560px){
+ .player-compact #gameContent .arcade-player.is-boost-voting .arcade-vote-strategy .arcade-boost-grid button{gap:2px}
+ .arcade-strategy-icon{width:31px;height:31px;border-radius:9px}
+ .arcade-strategy-icon svg{width:21px;height:21px}
+}
+@media(prefers-reduced-motion:reduce){.player-compact #gameContent .arcade-player.is-boost-voting .arcade-vote{animation:none}}
