@@ -30,7 +30,7 @@ jobs:
         run: |
           mkdir -p visual-artifacts
           python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/org-http.log 2>&1 &
-          npx playwright test next/visual.spec.mjs next/stage.spec.mjs next/teams.spec.mjs next/flags-six.spec.mjs next/ui-recovery.spec.mjs next/player-layout.spec.mjs --reporter=list --workers=1
+          npx playwright test next/visual.spec.mjs next/stage.spec.mjs next/teams.spec.mjs next/flags-six.spec.mjs next/ui-recovery.spec.mjs next/player-layout.spec.mjs next/builder-cards.spec.mjs --reporter=list --workers=1
       - name: Preserve screenshots
         if: always()
         uses: actions/upload-artifact@v4
