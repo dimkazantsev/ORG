@@ -14,7 +14,7 @@ window.QwizTeams=(()=>{
  }
  function url(code,team=null,via=null){const u=new URL('./',location.href);u.searchParams.set('room',code);
   if(team&&uuid.test(team))u.searchParams.set('team',team);if(via&&uuid.test(via))u.searchParams.set('via',via);return u.toString();}
- function avatar(key){return '<svg class="team-avatar" aria-hidden="true" viewBox="0 0 100 100"><use href="./assets/animals.svg#'+(animals.has(key)?key:'fox')+'"></use></svg>';}
+ function avatar(key){return '<svg class="team-avatar" aria-hidden="true" viewBox="0 0 100 100"><use href="./assets/animals.svg?v=avatars-20261024-2#'+(animals.has(key)?key:'fox')+'"></use></svg>';}
  function qr(node,link,size=180){if(!node||qrCache.get(node)===link+':'+size)return;node.replaceChildren();
   if(typeof QRCode!=='function'){node.textContent='QR-код недоступен. Используйте ссылку.';return;}
   new QRCode(node,{text:link,width:size,height:size,colorDark:'#33234f',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.M});
