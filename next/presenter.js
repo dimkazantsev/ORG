@@ -156,7 +156,10 @@ function questionScene(state){
  // correct choices and explanations remain exclusively on the players' devices.
  const media=typeof q.media_url==='string'&&/^https:\/\//i.test(q.media_url)&&['audio','video'].includes(q.kind)
   ?'<'+q.kind+' class="projection-'+q.kind+'" controls preload="metadata" src="'+escapeText(q.media_url)+'"></'+q.kind+'>':'';
- const frame=QwizStage.illustration(q,null);
+ // A "choose the flag" prompt must not project answer pictures or a fictitious filler illustration.
+ // The real flag options stay on the students' devices and in the moderator's private preview.
+ const selectingFlag=/^(?:выберите|найдите)\s+(?:государственный\s+)?флаг\b/i.test(q.prompt||'')&&!q.media_url&&!q.illustration_url;
+ const frame=selectingFlag?'':QwizStage.illustration(q,null);
  const top='<div class="projection-topline"><div><span class="projection-count">'+escapeText(q.round_title||q.topic||'Раунд вопросов')+
   '</span><p class="question-step">Вопрос '+(state.index+1)+' <span>/ '+state.total+'</span></p></div>'+
   QwizStage.clockMarkup(state)+'</div>';
