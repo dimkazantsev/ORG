@@ -410,3 +410,59 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
  .game-lobby-wait .lobby-signal-node,
  .game-lobby-wait .lobby-signal-spark{animation:none!important;filter:none!important}
 }
+
+
+/* Phone and tablet scoreboards: readable names and actual ranking hierarchy. */
+.player-compact #gameView .game-card:has(.round-results-page){
+ padding:0;overflow:hidden;background:#faf8ff}
+.round-results-page{
+ min-height:100%;align-items:stretch;justify-content:flex-start;
+ gap:clamp(13px,2.1dvh,22px);
+ padding:clamp(16px,3dvh,28px);
+ background:linear-gradient(160deg,#faf8ff 0%,#ede5fc 100%);
+}
+.round-results-page .eyebrow{font-size:clamp(11px,2dvh,16px);letter-spacing:.09em;color:#7040d0}
+.round-results-page>h1{font-size:clamp(29px,5.3dvh,46px);line-height:1.12;margin:0;font-weight:850}
+.round-results-orbit{font-size:clamp(32px,6dvh,52px);opacity:.7}
+.round-results-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(11px,2vw,22px)}
+.round-results-grid>section{
+ min-width:0;background:#fff;border:1px solid #dcccfa;
+ border-radius:19px;padding:clamp(15px,2.1vw,27px);
+ box-shadow:0 10px 27px #56338a0d;
+}
+.round-results-grid h2{font-size:clamp(20px,3dvh,30px);font-weight:800;color:#503197;margin:0 0 13px}
+.round-score-list{gap:6px}
+.round-score-list li{
+ display:grid;grid-template-columns:clamp(28px,4dvh,39px) minmax(0,1fr) auto;
+ align-items:center;gap:clamp(7px,1.5vw,13px);
+ padding:clamp(9px,1.3dvh,16px) 2px;
+ font-size:clamp(15px,2.15dvh,21px);line-height:1.3;
+}
+.round-score-list li strong{min-width:0;white-space:normal;overflow-wrap:anywhere}
+.round-score-list li b{font-size:1.16em;font-weight:850;color:#673ac4}
+.round-score-list li:first-child{background:linear-gradient(90deg,#f5efff,#fff);border-radius:12px;padding-inline:7px}
+.round-score-list li:first-child .round-rank{
+ display:grid;place-items:center;border-radius:10px;color:#6d3dc5;
+ background:#e8dafd;font-weight:850;font-size:clamp(13px,2dvh,18px);
+ height:32px;min-width:28px}
+.round-results-next{
+ margin:0 auto;font-size:clamp(15px,2.3dvh,21px);
+ line-height:1.4;color:#66557e;text-align:center}
+.player-compact #gameView .round-results-page{max-height:100%;overflow-y:auto;scrollbar-gutter:stable}
+@media(max-width:650px){
+ .player-compact #gameView .round-results-grid{grid-template-columns:1fr}
+ .round-results-page{gap:12px}
+ .round-results-grid>section{padding:14px}
+ .round-score-list li{font-size:clamp(15px,3.7vw,19px)}
+}
+@media(max-height:570px){
+ .round-results-page>h1{font-size:clamp(25px,5dvh,36px)}
+ .round-results-grid>section{padding:10px 13px}
+}
+.round-intro-symbol{border-radius:23%;background:linear-gradient(145deg,#fff,#e7defd);box-shadow:0 13px 34px #6432a22c}
+.round-intro-symbol:has(.round-flag-sculpture){width:clamp(130px,24dvh,225px);aspect-ratio:1.35;border-radius:22px}
+.round-intro-symbol .round-flag-sculpture{width:90%;height:90%;overflow:visible;filter:drop-shadow(9px 11px 8px #5c358d35)}
+.round-intro-symbol .round-flag-sculpture .flag-sculpture-cloth{
+ transform-origin:20% 50%;animation:qwiz-cloth-wave 3s ease-in-out infinite}
+@keyframes qwiz-cloth-wave{0%,100%{transform:perspective(500px) rotateY(-8deg)}50%{transform:perspective(500px) rotateY(13deg) translateX(3px)}}
+@media(prefers-reduced-motion:reduce){.round-intro-symbol .round-flag-sculpture .flag-sculpture-cloth{animation:none}}
