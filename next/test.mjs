@@ -176,7 +176,9 @@ test('Flag imagery remains visible and visual answers show the flag instead of p
  const workspace=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
  const migration=readFileSync(new URL('./migrations/20261024_flags_visible_and_correct_picture.sql',import.meta.url),'utf8');
  assert.doesNotMatch(shared,/Флаг скрыт\. Вспомните страну/);
- assert.match(shared,/function updateMemory\(root,s,offset=0\)\{return;/);
+ assert.match(shared,/function updateMemory\(root,s,offset=0\)\{/);
+ assert.match(shared,/\[data-memory-study\]/);
+ assert.match(shared,/\[data-memory-answer\]/);
  assert.match(projection,/const frame=selectingFlag\|\|hideFiller\|\|!hasVisual\?'':QwizStage\.illustration\(q,state\.phase==='result'\?state\.answer:null\)/);
  assert.doesNotMatch(projection.slice(projection.indexOf('function questionScene('),projection.indexOf('function applyProjectionSettings(')),/projection-options/);
  assert.match(app,/result-flag-image/);
@@ -807,7 +809,7 @@ test('Participant entry omits public projector links and old copy-all-codes acti
 test('Correct flag is an actual flag image, not a textual stripe order',()=>{
  const source=readFileSync(new URL('./stage.js',import.meta.url),'utf8');
  const start=source.indexOf(' function stripeOption(value){');
- const end=source.indexOf(' // Existing flag-memory questions',start);
+ const end=source.indexOf(' // The client does not choose the deadline',start);
  assert.ok(start>0&&end>start);
  const block=source.slice(start,end);
  const run=(question,answer)=>runInNewContext(block+'correctFlagMarkup(question,answer)',{
