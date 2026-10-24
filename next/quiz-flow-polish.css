@@ -1,0 +1,49 @@
+/* QWIZ-PARTY: nonduplicated host control, geography bank, compact audience QR hierarchy. */
+.geography-bank-info{display:flex;justify-content:space-between;align-items:center;gap:18px;padding:20px 24px;margin:18px 0;border:1px solid #ddcff4;border-radius:17px;background:linear-gradient(115deg,#f3edff,#fff)}
+.geography-bank-info[hidden]{display:none}
+.geography-bank-info>div{min-width:0;max-width:690px}
+.geography-bank-info h3{font-size:clamp(18px,2vw,25px);line-height:1.3;margin:6px 0;color:#2d2140}
+.geography-bank-info p{font-size:12px;color:#685b7c;line-height:1.6;margin:0}
+.geography-bank-info button{flex-shrink:0;max-width:240px}
+.live-projector-shortcut{display:flex;align-items:center;justify-content:space-between;gap:18px;background:#f7f2ff;border:1px solid #e1d4f7;border-radius:15px;padding:15px 18px;margin:14px 0}
+.live-projector-shortcut strong{display:block;font-size:13px;color:#33234f}
+.live-projector-shortcut p{font-size:11px;line-height:1.5;color:#685c7d;margin:5px 0 0}
+.live-projector-shortcut button{flex:none;min-height:44px}
+#liveConsole .live-actions{position:sticky;top:10px;bottom:auto;z-index:36;margin:14px 0;padding:9px;background:#fffffff0}
+#liveConsole .live-actions button{min-height:46px}
+#liveConsole .live-metrics{margin:12px 0}
+#liveConsole .live-metrics>div{padding:13px 15px}
+#liveConsole .live-question{min-height:0;font-size:15px;line-height:1.55;padding:15px 18px}
+#liveConsole .live-columns{gap:13px}
+#liveConsole .moderator-clock{margin-top:8px}
+.qr-direct-entry{padding:12px 14px;border:1px solid #d5c4f5;border-radius:12px;background:#f6f0ff;margin:8px 0 15px}
+.qr-direct-entry strong{color:#6431bf;font-size:15px;letter-spacing:.02em}
+.qr-direct-entry p{margin:6px 0 0;font-size:12px;line-height:1.6;color:#675e7c}
+#playerEntry:has(.qr-direct-entry:not([hidden])) .code-label,
+#playerEntry:has(.qr-direct-entry:not([hidden])) #codeHint{display:none}
+#playerEntry:has(.qr-direct-entry:not([hidden])) .entry-heading{margin-bottom:12px}
+#playerEntry:has(.qr-direct-entry:not([hidden])) .entry-step{display:none}
+/* Projector: main room join QR is the only general code on lobby; team QR cards stay separate. */
+.projection-shell:has(.projection-lobby) #projectionJoinQr{display:none}
+.projection-lobby.has-team-entry{grid-template-columns:minmax(0,1fr) 150px;gap:20px;align-items:center;padding:8px 0 16px;min-height:0}
+.projection-lobby.has-team-entry>div:first-child{display:grid;align-content:center;justify-items:start;gap:6px;min-width:0}
+.projection-lobby.has-team-entry h1{margin:0;font-size:clamp(28px,3.5vw,48px)}
+.projection-lobby.has-team-entry p{margin:0;max-width:690px;font-size:clamp(12px,1vw,15px);line-height:1.45}
+.projection-lobby.has-team-entry .projection-code{position:static;margin:4px 0 0;padding:7px 14px;font-size:clamp(19px,2vw,30px);line-height:1.25}
+.projection-lobby.has-team-entry .projection-qr{position:static;width:150px;height:150px;min-width:0;min-height:0;padding:11px;aspect-ratio:1;border-radius:17px;box-sizing:border-box}
+.projection-lobby.has-team-entry .projection-qr :is(img,canvas){width:126px!important;height:126px!important;max-width:100%;max-height:100%}
+.projection-team-entry{margin-top:8px}
+.projection-team-entry>h2{margin:0 0 5px;font-size:20px}
+.projection-team-entry>p{margin:0 0 12px;font-size:12px}
+.team-board{grid-template-columns:repeat(auto-fit,minmax(min(185px,100%),1fr));gap:10px}
+.team-board-card{padding:10px;display:grid;align-content:start;justify-items:center;gap:4px}
+.team-board-heading{margin:0;min-height:35px;gap:7px}
+.team-board-heading .habitat-icon{width:35px;height:35px}
+.team-board-qr{padding:4px}
+.team-board-qr :is(img,canvas){width:clamp(90px,11vw,140px)!important;height:clamp(90px,11vw,140px)!important}
+.board-count{margin:2px 0 0;font-size:11px}
+@media(min-width:1150px){.team-board{grid-template-columns:repeat(5,minmax(0,1fr))}}
+@media(min-width:750px) and (max-width:1149px){.team-board{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:749px){.team-board{grid-template-columns:repeat(2,minmax(0,1fr))}.projection-lobby.has-team-entry{grid-template-columns:minmax(0,1fr) 120px;gap:8px}.projection-lobby.has-team-entry .projection-qr{display:grid;width:120px;height:120px;padding:8px}.projection-lobby.has-team-entry .projection-qr :is(img,canvas){width:102px!important;height:102px!important}}
+@media(max-width:600px){.geography-bank-info,.live-projector-shortcut{align-items:stretch;flex-direction:column}.geography-bank-info button{max-width:none}.live-projector-shortcut button{width:100%}#liveConsole .live-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.team-board-qr :is(img,canvas){width:clamp(86px,25vw,130px)!important;height:clamp(86px,25vw,130px)!important}.projection-lobby.has-team-entry h1{font-size:26px}}
+@media(max-width:380px){.projection-lobby.has-team-entry{grid-template-columns:1fr}.projection-lobby.has-team-entry .projection-qr{width:120px;height:120px}}
