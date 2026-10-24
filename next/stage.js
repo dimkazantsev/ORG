@@ -64,10 +64,8 @@ window.QwizStage=(()=>{
   }
  }
  function illustration(q,answer,content=''){
-  if(q.flag_memory?.seconds&&!answer){
-   const url=typeof q.media_url==='string'&&/^https:\/\//i.test(q.media_url)?q.media_url:'';
-   return '<figure class="question-frame memory-frame"><div class="question-picture"><div data-memory-study>'+(url?'<img class="question-art" src="'+esc(url)+'" alt="Флаг для запоминания">':'')+'<span>Запомните флаг</span></div><p data-memory-recall hidden role="status">Флаг скрыт. Вспомните страну.</p></div></figure>';
-  }
+  // A flag-identification question must keep the flag visible until the answer; never replace it with a recall placeholder.
+  if(Array.isArray(q.options)&&q.options.some(x=>x&&typeof x==='object'&&typeof x.image_url==='string')&&!q.media_url&&!q.illustration_url)return '';
   if(q.flag_assembly&&!answer)return '<figure class="question-frame assembly-frame"><div class="question-picture">'+assemblyPalette(q)+'</div><figcaption>Соберите флаг из этих полос</figcaption></figure>';
   const source=q.flag_visual?.type?q.media_url:q.kind==='hotspot'?q.media_url:q.illustration_url||(!['audio','video'].includes(q.kind)?q.media_url:'');
   if(q.flag_visual?.type&&typeof source==='string'&&/^https:\/\//i.test(source)){
@@ -207,12 +205,9 @@ window.QwizStage=(()=>{
   return '<span class="flag-stripe-art '+(vertical?'vertical':'horizontal')+'" role="img" aria-label="Полосы флага">'+
     value.stripes.map(color=>'<span style="background:'+esc(color)+'"></span>').join('')+'</span>';
  }
- function updateMemory(root,s,offset=0){
-  if(!s.question?.flag_memory||s.phase!=='question')return;
-  const pending=Date.now()+offset<Date.parse(s.question.memory_until);
-  for(const el of root.querySelectorAll('[data-memory-study]'))el.hidden=!pending;
-  for(const el of root.querySelectorAll('[data-memory-answer],[data-memory-recall]'))el.hidden=pending;
- }
+ // Existing flag-memory questions now behave as ordinary visible-flag questions.
+ // Keep the method for the shared stage API, without hiding the question or answers.
+ function updateMemory(root,s,offset=0){return;}
  function assemblyPalette(q){
   const colors=q.flag_assembly?.colors||{};
   return '<div class="assembly-palette">'+(q.options||[]).map(name=>'<span><i style="background:'+esc(/^#[0-9a-f]{6}$/i.test(colors[name])?colors[name]:'#888888')+'" aria-hidden="true"></i>'+esc(capitalize(name))+'</span>').join('')+'</div>';
