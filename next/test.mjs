@@ -153,7 +153,7 @@ test('Audience screen retains the approved light lavender palette',()=>{
  assert.doesNotMatch(css,/body\.projection-screen-ready\{background:\s*#160e41/);
  assert.doesNotMatch(css,/linear-gradient\(135deg,#190e46/);
  assert.match(css,/\.projection-screen-ready \.projection-footer/);
- assert.match(html,/presenter\.css\?v=repeat-flag-20261024-15/);
+ assert.match(html,/presenter\.css\?v=viewport-vote-20261025-2/);
 });
 test('The classroom and live mini-games retain purple and lavender, never blue UI accents',()=>{
  const audience=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
@@ -313,6 +313,54 @@ test('3D avatars render in team roster, profile and new optional gallery',()=>{
    const html=readFileSync(new URL('./'+filename,import.meta.url),'utf8');
    assert.match(html,/avatar-art\.js\?v=avatar-3d-20261024-16/);
  }
+});
+test('Projector hides flag-picker filler art, reveals actual answers and fits the viewport',()=>{
+ const projector=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
+ const styles=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
+ const sceneStart=projector.indexOf('function questionScene(state){');
+ const sceneEnd=projector.indexOf('// Keep the visible scene',sceneStart);
+ assert.ok(sceneStart>=0&&sceneEnd>sceneStart);
+ const scene=projector.slice(sceneStart,sceneEnd);
+ const context={
+  escapeText:String,
+  projectionOption:(option)=>'<div class="fixture-flag">'+String(option.label||option)+'</div>',
+  QwizStage:{
+   illustration:()=>'<div class="fixture-filler-art">Not a real flag</div>',
+   clockMarkup:()=>'<div>12 sec</div>',
+   correctFlagMarkup:()=>'<div class="fixture-correct-flag">Flag</div>'
+  }
+ };
+ const prompt='Выберите флаг государства «Ангола».';
+ const question={prompt,options:[{label:'A'},{label:'B'},{label:'C'},{label:'D'}]};
+ const lobby=runInNewContext(scene+'questionScene({question,phase:"question",index:0,total:10,teams:[]})',{...context,question});
+ assert.doesNotMatch(lobby,/fixture-filler-art/);
+ assert.doesNotMatch(lobby,/fixture-flag/);
+ const result=runInNewContext(scene+'questionScene({question,phase:"result",index:0,total:10,answer:{indices:[1],text:"Ангола"},teams:[]})',{...context,question});
+ assert.match(result,/fixture-correct-flag/);
+ assert.equal((result.match(/fixture-flag/g)||[]).length,4);
+ assert.match(result,/is-correct/);
+ assert.match(projector,/scene\.dataset\.fittedZoom/);
+ assert.match(projector,/availH\/Math\.max\(1,m\.h\)/);
+ assert.doesNotMatch(projector,/Math\.max\(\.36/);
+ assert.match(styles,/#projectionMain\{flex:1 1 auto;min-height:0/);
+ assert.match(styles,/\.projection-question-only \.projection-topline\{min-height:0!important/);
+});
+test('Phone lobby animates and completed tap-game ballot fills the viewport',()=>{
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const playerCss=readFileSync(new URL('./player-layout.css',import.meta.url),'utf8');
+ const arcade=readFileSync(new URL('./arcade.js',import.meta.url),'utf8');
+ const playerHtml=readFileSync(new URL('./index.html',import.meta.url),'utf8');
+ assert.match(app,/game-lobby-wait/);
+ assert.match(app,/lobby-signal-ring/);
+ assert.match(playerCss,/@keyframes lobby-bob/);
+ assert.match(playerCss,/@keyframes lobby-pulse/);
+ assert.match(playerCss,/prefers-reduced-motion:reduce/);
+ assert.match(arcade,/classList\.toggle\('is-boost-voting'/);
+ assert.match(playerCss,/\.arcade-player\.is-boost-voting/);
+ assert.match(playerCss,/grid-auto-rows:minmax\(0,1fr\)/);
+ assert.match(playerCss,/\.arcade-player\.is-boost-voting .arcade-boost-grid button\.selected/);
+ assert.match(playerHtml,/arcade\.js\?v=viewport-vote-20261025-2/);
+ assert.match(playerHtml,/player-layout\.css\?v=viewport-vote-20261025-2/);
 });
 test('New JavaScript parses independently of legacy app.js',()=>{assert.doesNotThrow(()=>new Function(js));assert.doesNotMatch(html,/\.\/\.\.\/(app\.js|styles\.css)/)});
 test('All direct DOM IDs referenced by client exist in HTML',()=>{
