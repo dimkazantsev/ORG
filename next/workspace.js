@@ -561,10 +561,15 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  $('livePhase').textContent=QwizStage.phaseLabel(s.phase);
  $('liveAnswers').textContent=s.answers_count||0;
  $('liveStart').hidden=false;$('liveStart').disabled=!['lobby','finished'].includes(s.phase);
- $('liveStart').textContent=s.phase==='finished'?'↻ Повторить игру':'▶ Начать';
+ QwizStage.iconLabel($('liveStart'),s.phase==='finished'?'Повторить игру':'Начать',s.phase==='finished'?'refresh':'play');
  $('liveStart').setAttribute('aria-label',s.phase==='finished'?'Создать новую сессию той же игры, сохранив историю':'Начать текущую игру');
- $('livePause').hidden=false;$('livePause').disabled=!['countdown','question','result','intermission'].includes(s.phase);$('livePause').textContent=s.paused?'▶ Продолжить':'⏸ Пауза';$('livePause').setAttribute('aria-pressed',String(!!s.paused));
- $('liveNext').hidden=false;$('liveNext').disabled=!!s.paused||!['question','result','intermission'].includes(s.phase);$('liveNext').textContent='Далее →';$('liveReveal').hidden=true;$('liveFinish').hidden=false;$('liveFinish').disabled=s.phase==='finished';
+ $('livePause').hidden=false;$('livePause').disabled=!['countdown','question','result','intermission'].includes(s.phase);QwizStage.iconLabel($('livePause'),s.paused?'Продолжить':'Пауза',s.paused?'play':'pause');$('livePause').setAttribute('aria-pressed',String(!!s.paused));
+ $('liveNext').hidden=false;$('liveNext').disabled=!!s.paused||!['question','result','intermission'].includes(s.phase);QwizStage.iconLabel($('liveNext'),'Далее','forward');$('liveReveal').hidden=true;$('liveFinish').hidden=false;$('liveFinish').disabled=s.phase==='finished';
+ $('liveConsole').classList.toggle('is-finished',s.phase==='finished');
+ $('liveControlsHint').textContent=s.phase==='finished'?
+   'Начните новую сессию той же сборки. Предыдущая игра и результаты сохранятся.':
+   s.phase==='lobby'?'Начните игру, когда команды подключатся.':'';
+ $('liveControlsHint').hidden=!['finished','lobby'].includes(s.phase);
  $('liveQuestion').textContent=s.phase==='intermission'?(s.activity?.title||'Дополнительная активность')+
   ' · следующий этап откроется автоматически (можно перейти вручную)':
   s.phase==='countdown'?'Серверный обратный отсчёт: 5 секунд':
@@ -689,7 +694,7 @@ let repeatRoomBusy=false;
 async function repeatFinishedRoom(){
  const source=state.room;
  if(!source||source.phase!=='finished'||repeatRoomBusy)return;
- if(!confirm('Повторить эту игру? Будет создана новая комната с теми же вопросами, раундами и командами. Результаты завершённой игры сохранятся; участники войдут по новому QR-коду.'))return;
+ // Creating a separate room is non-destructive; avoid blocked native confirm dialogs.
  repeatRoomBusy=true;disable('liveStart',true);
  try{
   const created=await rpc('qwiz_repeat_finished_room',{p_room:source.room_id});
