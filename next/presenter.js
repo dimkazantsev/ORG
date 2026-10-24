@@ -161,14 +161,34 @@ function roundIntroScene(state){
 }
 function finalShow(state){
  const teams=state.teams||[],players=state.players||[],stats=state.question_stats||[];
- const answered=stats.reduce((sum,x)=>sum+Number(x.answered||0),0),correct=stats.reduce((sum,x)=>sum+Number(x.correct||0),0);
+ const answered=stats.reduce((sum,x)=>sum+Number(x.answered||0),0);
+ const correct=stats.reduce((sum,x)=>sum+Number(x.correct||0),0);
  const accuracy=answered?Math.round(correct*100/answered):0;
  const title=state.activity?.title&&state.activity.title!=='Финал игры'?state.activity.title:'Вот это была игра!';
- $('projectionMain').innerHTML='<section class="projection-finale"><div class="finale-heading"><div><span class="projection-eyebrow">QWIZ-PARTY / ФИНАЛ</span><h1>'+escapeText(title)+'</h1><p>'+escapeText(state.title)+' · '+teams.length+' команд · '+players.length+' участников</p></div><span class="finale-star" aria-hidden="true">✦</span></div>'+
- '<div class="finale-summary"><div><strong>'+stats.length+'</strong><span>сыграно вопросов</span></div><div><strong>'+answered+'</strong><span>ответов участников</span></div><div><strong>'+accuracy+'%</strong><span>верных ответов</span></div></div>'+ 
- '<section class="stage-team-results"><div class="stage-section-head"><h2>Рейтинг команд</h2><span>По баллам; при равенстве — по средней скорости</span></div>'+QwizStage.teams(teams,{full:true,ranked:true})+'</section>'+
- '<section class="stage-player-results"><div class="stage-section-head"><h2>Личный рейтинг</h2><span>Баллы → верный ответ → скорость</span></div>'+QwizStage.leaderboard(players,80)+'</section>'+
- (stats.length?questionStats(stats):'<p class="stage-empty">Статистика вопросов появится после первого сыгранного вопроса.</p>')+'</section>';
+ // Never squeeze an entire 40-player roster into a brief projector finale.
+ // The full results remain on participant devices; the public screen highlights leaders.
+ const limit=window.innerWidth<=800?3:window.innerHeight<900?4:6;
+ const ranked=rows=>[...rows].sort((a,b)=>{
+  const ar=Number(a.position),br=Number(b.position);
+  if(ar>0&&br>0)return ar-br;
+  return (Number(b.score)||0)-(Number(a.score)||0);
+ });
+ const list=rows=>rows.length
+  ?'<ol class="projection-round-leaders">'+ranked(rows).slice(0,limit).map((r,i)=>
+   '<li><span>'+(Number(r.position)>0?Number(r.position):i+1)+'</span><strong>'+escapeText(r.nickname||r.name||'Участник')+
+   '</strong><b>'+Number(r.score||0).toLocaleString('ru-RU')+'</b></li>').join('')+'</ol>'+
+   (rows.length>limit?'<p class="projection-rank-more">Ещё '+(rows.length-limit)+' · полный рейтинг на устройствах игроков</p>':'')
+  :'<p class="projection-final-empty">Результаты появятся после первых ответов.</p>';
+ $('projectionMain').innerHTML='<section class="projection-finale projection-finale-compact" aria-label="Итоги всей игры">'+
+  '<div class="finale-heading"><div><span class="projection-eyebrow">QWIZ-PARTY / ФИНАЛ</span><h1>'+escapeText(title)+
+  '</h1><p>'+escapeText(state.title||'Квиз')+' · '+teams.length+' команд · '+players.length+' участников</p></div>'+
+  '<span class="finale-star" aria-hidden="true">✦</span></div>'+
+  '<div class="finale-summary"><div><strong>'+stats.length+'</strong><span>вопросов</span></div>'+
+  '<div><strong>'+answered+'</strong><span>ответов участников</span></div>'+
+  '<div><strong>'+accuracy+'%</strong><span>верных ответов</span></div></div>'+
+  '<div class="projection-round-columns"><section class="stage-team-results"><h2>Рейтинг команд</h2>'+list(teams)+'</section>'+
+  '<section class="stage-player-results"><h2>Личный рейтинг</h2>'+list(players)+'</section></div>'+
+  '<p class="projection-final-footnote">Полная статистика игры доступна каждому участнику на его устройстве.</p></section>';
 }
 function projectionOption(value,index){
  const bands=QwizStage.stripeOption(value);if(bands)return bands;
