@@ -180,7 +180,10 @@ function questionScene(state){
  // While answering, flag-picker options are private to the players. At reveal,
  // the audience sees the same four flag pictures and the correct one highlighted.
  const selectingFlag=/^(?:выберите|найдите)\s+(?:государственный\s+)?флаг(?=\s|$)/iu.test(q.prompt||'')&&!q.media_url&&!q.illustration_url;
- const frame=selectingFlag?'':QwizStage.illustration(q,state.phase==='result'?state.answer:null);
+ // The generic map illustration is a fallback, not a correct flag.
+ // Remove that filler in flag-result mode: the real flag is rendered below.
+ const hideFiller=state.phase==='result'&&q.kind==='flag'&&!q.media_url&&!q.illustration_url;
+ const frame=selectingFlag||hideFiller?'':QwizStage.illustration(q,state.phase==='result'?state.answer:null);
  const top='<div class="projection-topline"><div><span class="projection-count">'+escapeText(q.round_title||q.topic||'Раунд вопросов')+
   '</span><p class="question-step">Вопрос '+(state.index+1)+' <span>/ '+state.total+'</span></p></div>'+
   QwizStage.clockMarkup(state)+'</div>';

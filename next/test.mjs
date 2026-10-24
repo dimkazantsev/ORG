@@ -827,6 +827,7 @@ test('Correct flag is an actual flag image, not a textual stripe order',()=>{
    {indices:[0],text:'красный — белый — зелёный'}),'');
  const screen=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
  assert.match(screen,/answerArt&&q\.kind==='flag'/);
+ assert.match(screen,/const hideFiller=state\.phase==='result'&&q\.kind==='flag'/);
  assert.match(readFileSync(new URL('./index.html',import.meta.url),'utf8'),/stage\.js\?v=actual-flag-20261025-11/);
  assert.match(readFileSync(new URL('./presenter.html',import.meta.url),'utf8'),/stage\.js\?v=actual-flag-20261025-11/);
 });
