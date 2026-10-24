@@ -186,6 +186,15 @@ window.QwizStage=(()=>{
   finale:'<path d="M7 4h10v7c0 7-10 7-10 0V4ZM7 7H3v3c0 3 3 5 6 5m8-8h4v3c0 3-3 5-6 5m-3 2v4m-4 0h8"/>'
  };
  function roundIconSvg(key){
+  // A sculpted, layered waving pennant instead of the primitive outline.
+  if(key==='flag'||key==='round')return '<svg class="round-art-svg round-flag-sculpture" viewBox="0 0 240 160" fill="none" aria-hidden="true">'+
+   '<defs><linearGradient id="qwizFlagMaterial" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#C8B0FF"/><stop offset=".28" stop-color="#8D5BE8"/><stop offset=".63" stop-color="#6A38C8"/><stop offset="1" stop-color="#A985F3"/></linearGradient>'+
+   '<linearGradient id="qwizFlagSheen" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#fff" stop-opacity=".56"/><stop offset=".38" stop-color="#fff" stop-opacity=".03"/><stop offset=".76" stop-color="#fff" stop-opacity=".3"/><stop offset="1" stop-color="#30146e" stop-opacity=".17"/></linearGradient></defs>'+
+   '<path d="M42 21v128" stroke="#5E389C" stroke-width="7" stroke-linecap="round"/><circle cx="42" cy="19" r="6" fill="#B98AF3"/>'+
+   '<g class="flag-sculpture-cloth"><path d="M46 33C92 8 116 48 157 31c20-9 36-12 53-6v94c-23-7-40-2-58 7-39 18-67-21-106 0Z" fill="url(#qwizFlagMaterial)"/>'+
+   '<path d="M46 33C92 8 116 48 157 31c20-9 36-12 53-6v94c-23-7-40-2-58 7-39 18-67-21-106 0Z" fill="url(#qwizFlagSheen)"/>'+
+   '<path d="M46 62c42-23 74 17 111-2 17-9 35-10 53-7M46 93c42-20 74 19 111 0 17-9 35-10 53-6" stroke="#F2E9FF" stroke-opacity=".66" stroke-width="5"/>'+
+   '<path d="M158 31c-15 18-13 75-6 95" stroke="#291255" stroke-opacity=".15" stroke-width="12"/></g></svg>';
   return '<svg class="round-art-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+
     (roundArtPaths[key]||roundArtPaths.flag)+'</svg>';
  }
