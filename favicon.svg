@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="QWIZ-PARTY">
+  <defs>
+    <linearGradient id="qwiz-violet" x1="8" y1="5" x2="58" y2="59" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8952F0"/>
+      <stop offset=".54" stop-color="#7846E3"/>
+      <stop offset="1" stop-color="#6233C5"/>
+    </linearGradient>
+  </defs>
+  <rect x="3" y="3" width="58" height="58" rx="18" fill="url(#qwiz-violet)"/>
+  <circle cx="31" cy="30" r="15.5" fill="none" stroke="#FFFFFF" stroke-width="6.2"/>
+  <path d="m39.5 40 8 8" stroke="#FFFFFF" stroke-width="6.2" stroke-linecap="round"/>
+</svg>
