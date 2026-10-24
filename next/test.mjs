@@ -211,7 +211,7 @@ test('Projector reveals one authoritative answer only after server result phase'
 test('Moderator slide cards shrink to content and do not reserve blank height',()=>{
  const css=readFileSync(new URL('./workspace.css',import.meta.url),'utf8');
  const html=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
- const compact=css.slice(css.lastIndexOf('/* Compact moderator timeline:'));
+ const compact=css.split('/* Compact moderator timeline:')[1]?.split('/* Teacher sees each configured timeline card')[0]||'';
  assert.match(compact,/\.moderator-slides\s*\{[^}]*align-items:start/);
  assert.match(compact,/grid-auto-rows:min-content/);
  assert.match(compact,/\.moderator-slide\s*\{[^}]*min-height:0;height:auto/);
@@ -786,7 +786,7 @@ test('Mini-game buttons keep complete labels and the disclosure uses a separate 
  assert.match(styles,/#openGamesPalette\[aria-expanded="true"\] \.games-chevron-box \.games-chevron/);
  assert.match(styles,/\.game-palette #arcadePalette\.arcade-palette button>span:last-child\{/);
  assert.match(styles,/white-space:normal;overflow:visible;text-overflow:clip/);
- assert.match(html,/workspace\.css\?v=palette-fit-20261025-12/);
+ assert.match(html,/workspace\.css\?v=square-cards-20261025-15/);
 });
 
 test('Participant entry omits public projector links and old copy-all-codes actions',()=>{
