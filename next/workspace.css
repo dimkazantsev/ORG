@@ -521,7 +521,7 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
   grid-template-columns:repeat(4,minmax(0,1fr));
   gap:10px;
 }
-#arcadePalette [data-arcade]{
+#arcadePalette [data-arcade],#arcadePalette [data-geo]{
   --arcade-icon-color:#6a45c8;
   --arcade-icon-surface:#efe8ff;
   display:flex;
@@ -570,13 +570,13 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
   fill:none;
   stroke:currentColor;
 }
-#arcadePalette [data-arcade]:hover{
+#arcadePalette [data-arcade]:hover,#arcadePalette [data-geo]:hover{
   background:#f5efff;
   border-color:#bfa9ee;
   box-shadow:0 5px 14px #6d47be12;
 }
-#arcadePalette [data-arcade]:active{background:#eee4fe}
-#arcadePalette [data-arcade]>span:last-child{min-width:0}
+#arcadePalette [data-arcade]:active,#arcadePalette [data-geo]:active{background:#eee4fe}
+#arcadePalette [data-arcade]>span:last-child,#arcadePalette [data-geo]>span:last-child{min-width:0}
 .round-card .round-icon:has(svg){flex-shrink:0}
 @media(max-width:1050px){
   #arcadePalette.arcade-palette{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -786,10 +786,15 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
  border-radius:15px;background:#fff;border:1px solid #e1d6f1;color:#503a77;
  font-size:14px;font-weight:800;box-shadow:0 2px 8px #6147940c}
 .card-main-palette button:hover,.card-main-palette button[aria-expanded=true]{background:#eee6ff;color:#7041ce;border-color:#bba3ef}
+#openGamesPalette .games-chevron{display:block;width:18px;height:18px;flex:0 0 18px;transition:transform .2s ease}
+#openGamesPalette[aria-expanded=true] .games-chevron{transform:rotate(180deg)}
 .game-palette{display:grid;gap:10px;padding:15px;border:1px solid #d9ccf0;background:#fbf9ff;border-radius:17px;margin-bottom:16px}
 .game-palette[hidden]{display:none!important}
-.game-palette #arcadePalette{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:0}
-.game-palette #arcadePalette button{min-height:53px;border-radius:13px;display:flex;justify-content:center;text-align:center}
+.game-palette #arcadePalette{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,205px),1fr));gap:10px;margin:0}
+.game-palette #arcadePalette button{min-width:0;min-height:64px;padding:10px 13px;border-radius:14px;display:flex;align-items:center;justify-content:flex-start;gap:12px;text-align:left;font-size:13px;line-height:1.35;white-space:normal}
+.game-palette #arcadePalette button>span:last-child{flex:1 1 auto;min-width:0;overflow-wrap:break-word}
+@media(max-width:520px){.game-palette #arcadePalette{grid-template-columns:minmax(0,1fr)}}
+@media(prefers-reduced-motion:reduce){#openGamesPalette .games-chevron{transition:none}}
 .round-grid{gap:10px}
 .round-grid .round-card{min-height:0;padding:42px 15px 13px;gap:5px;border-radius:17px}
 .round-grid .round-card-heading{gap:7px}
