@@ -1,13 +1,14 @@
 'use strict';
 const teamUI={key:'',dragged:null,busy:false};
 function roomReadiness(s){
- const issues=s.setup_issues||[],waiting=Number(s.unassigned_count)||0,ready=s.total>0&&!issues.length;
+ const issues=s.setup_issues||[],waiting=Number(s.unassigned_count)||0,ready=!issues.length; // 0 fixed questions is valid only for compiler-approved individual geography rounds.
  $('roomReadiness').hidden=s.phase!=='lobby';
- $('roomReadinessTitle').textContent=ready?'Вопросы готовы · '+s.total: 'Комната создана · вопросы ещё не готовы';
- $('roomReadinessText').textContent=issues.length?issues.map(x=>x.title+': '+x.reason).join('. '):waiting?'Ожидают распределения: '+waiting+'. Назначьте им команды перед началом.':'Можно собирать команды и начинать игру.';
+ $('roomReadinessTitle').textContent=ready?'Сборка готова · '+(s.total>0?s.total+' вопросов':'географический раунд'): 'Комната создана · требуется исправить сборку';
+ $('roomReadinessText').textContent=issues.length?issues.map(x=>'«'+x.title+'»: '+x.reason).join('. '):waiting?'Ожидают распределения: '+waiting+'. Назначьте им команды перед началом.':'Можно собирать команды и начинать игру.';
  $('addRoomQuestions').hidden=ready;$('refreshRoomContent').hidden=s.phase!=='lobby';
  $('liveStart').disabled=!ready||waiting>0||teamUI.busy;
- $('liveStart').title=!ready?'Добавьте вопросы и нажмите «Обновить вопросы»':waiting?'Распределите ожидающих участников':'';
+ $('liveStart').title=!ready?'Сборка не готова: '+issues.map(x=>x.title+' — '+x.reason).join('; '):waiting?'Распределите ожидающих участников':'';
+ $('liveStart').setAttribute('aria-describedby','roomReadinessText');
 }
 function teamMember(p,s){
  const movable=!teamUI.busy&&(s.phase==='lobby'||(!p.team_id&&s.phase!=='finished'));
