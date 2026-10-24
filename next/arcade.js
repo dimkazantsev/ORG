@@ -39,7 +39,7 @@ window.QwizArcade=(()=>{
   }catch(e){showMessage(tr,e.message||'Состояние игры недоступно',true)}finally{tr.fetching=false}
  }
  function showMessage(tr,msg,bad=false){const el=tr.root?.querySelector('[data-arcade-alert]');if(el){el.textContent=msg;el.dataset.error=String(!!bad)}}
- function sceneProgress(tr,v){if(v.mode==='rocket'){const lead=Math.max(0,...(v.teams||[]).map(t=>Number(t.points)||0));const rocket=tr.root.querySelector('.arcade-rocket-art');if(rocket)rocket.style.setProperty('--arcade-progress',Math.min(100,lead*7));}
+ function sceneProgress(tr,v){if(v.mode==='rocket'){const lead=Math.max(0,...(v.teams||[]).map(t=>Number(t.points)||0));const rocket=tr.root.querySelector('.arcade-rocket-art');if(rocket){const progress=Math.min(100,lead*7);rocket.style.setProperty('--arcade-progress',progress+'%');rocket.style.transform='translateX('+Math.round(progress*1.45)+'px)';}}
   if(v.mode==='tug'){const teams=v.teams||[],first=Number(teams[0]?.points)||0,last=Number(teams.at(-1)?.points)||0,mark=first+last>0?50+40*(first-last)/(first+last):50;const rope=tr.root.querySelector('[data-rope]');if(rope)rope.style.setProperty('--arcade-progress',Math.max(10,Math.min(90,mark))+'%');}
  }
  function promptMarkup(q,allow,shown){if(!q)return '';const images=(q.options||[]).map((o,i)=>{const img=o&&typeof o==='object'&&/^https:\/\/\S+$/.test(o.image_url||'')?'<img class="arcade-choice-image" src="'+escape(o.image_url)+'" alt="Вариант '+(i+1)+'">':'<span>'+escape(typeof o==='string'?o:o?.label||'Флаг')+'</span>';
@@ -115,10 +115,25 @@ window.QwizArcade=(()=>{
   }catch(e){showMessage(tr,e.message||'Голос не принят',true);tr.alertOverride=Date.now()+5000}
   finally{tr.voteBusy=false}
  }
+ function animateTap(tr){
+  const scene=tr.root.querySelector('.arcade-scene'),button=tr.root.querySelector('[data-arcade-tap]');
+  if(!scene||!button)return;
+  const now=Date.now();if(now-(tr.lastVisualTap||0)<95)return;
+  tr.lastVisualTap=now;
+  scene.classList.remove('arcade-burst-active');
+  void scene.offsetWidth;scene.classList.add('arcade-burst-active');
+  const fleck=document.createElement('span');fleck.className='arcade-tap-particle';
+  fleck.textContent=tr.mode==='rocket'?'✦':tr.mode==='tug'?'↔':tr.mode==='captain'?'⚡':'✧';
+  const spread=(tr.visualTapCount=(tr.visualTapCount||0)+1)*29%70-35;
+  fleck.style.setProperty('--arcade-particle-x',spread+'px');
+  scene.appendChild(fleck);
+  setTimeout(()=>{fleck.remove();scene.classList.remove('arcade-burst-active')},700);
+ }
  function tap(tr){const v=tr.view;if(tr.closed||!v||!v.running||!v.mine)return;
   const now=currentTime(tr),end=Date.parse(v.ends_at)||0;
   if(now>end)return;
   if(v.mode==='blitz'&&now>(Date.parse(v.capture_until)||0))return;
+  animateTap(tr);
   if(v.mode==='captain'){sendTap(tr,1);return;}
   tr.pending=Math.min(24,tr.pending+1);
   if(!tr.flushTimer)tr.flushTimer=setTimeout(()=>flush(tr),750);
