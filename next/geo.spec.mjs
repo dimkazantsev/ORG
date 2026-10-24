@@ -29,6 +29,10 @@ test('Russia personal round loads 89 clickable geometries, accepts answer and re
  await expect(page.locator('#geoBrowserTest .geo-map-svg .geo-region')).toHaveCount(89);
  await expect(page.locator('#geoBrowserTest .geo-game h2')).toContainText('Найдите на карте');
  await page.locator('#geoBrowserTest [data-region="region-1"]').first().click();
+ await expect(page.locator('#geoBrowserTest .geo-region.geo-selected')).toHaveCount(1);
+ await expect(page.locator('#geoBrowserTest .geo-header strong')).toContainText('0 / 3');
+ await expect(page.locator('#geoBrowserTest [data-geo-confirm]')).toBeEnabled();
+ await page.locator('#geoBrowserTest [data-geo-confirm]').click();
  await expect(page.locator('#geoBrowserTest .geo-header strong')).toContainText('1 / 3');
  await page.locator('#geoBrowserTest [data-geo-zoom="in"]').click();
  const zoom=await page.locator('#geoBrowserTest .geo-map-svg').getAttribute('viewBox');
@@ -69,7 +73,9 @@ test('Geography Russia question round has eight mechanics and teacher-owned topi
  await page.locator('[data-section="builder"]').click();
  await page.evaluate(()=>{state.topics.push({id:'00000000-0000-4000-8000-000000001234',name:'География России',category:'География'});updateSelectors()});
  await page.locator('#newBuild').click();
- await page.locator('#cardPalette [data-geo="russia_map"]').click();
+ await page.locator('#openGamesPalette').click();
+ await expect(page.locator('#gamesPalette')).toBeVisible();
+ await page.locator('#arcadePalette [data-geo="russia_map"]').click();
  await expect(page.locator('#roundCards .round-card[data-type="round"]')).toHaveCount(2);
  await page.locator('#roundCards [data-index="2"] [data-edit-card]').click();
  await expect(page.locator('#cardGeoSettings')).toBeVisible();
