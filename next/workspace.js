@@ -520,7 +520,7 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  $('livePhase').textContent=QwizStage.phaseLabel(s.phase);
  $('liveAnswers').textContent=s.answers_count||0;
  $('liveStart').hidden=false;$('liveStart').disabled=s.phase!=='lobby';$('liveStart').setAttribute('aria-label',s.phase==='lobby'?'Начать игру':'Игра уже начата');
- $('livePause').hidden=false;$('livePause').disabled=!['countdown','question','result'].includes(s.phase);$('livePause').textContent=s.paused?'▶ Продолжить':'⏸ Пауза';$('livePause').setAttribute('aria-pressed',String(!!s.paused));
+ $('livePause').hidden=false;$('livePause').disabled=!(['countdown','question','result'].includes(s.phase)||(s.phase==='intermission'&&!['rocket','blitz','tug','captain'].includes(s.activity?.settings?.arcade_mode)));$('livePause').textContent=s.paused?'▶ Продолжить':'⏸ Пауза';$('livePause').setAttribute('aria-pressed',String(!!s.paused));
  $('liveNext').hidden=false;$('liveNext').disabled=!!s.paused||!['question','result','intermission'].includes(s.phase);$('liveNext').textContent='Далее →';$('liveReveal').hidden=true;$('liveFinish').hidden=false;$('liveFinish').disabled=s.phase==='finished';
  $('liveQuestion').textContent=s.phase==='intermission'?(s.activity?.title||'Дополнительная активность')+
   ' · следующий этап откроется автоматически (можно перейти вручную)':
