@@ -373,6 +373,37 @@ test('Phone lobby animates and completed tap-game ballot fills the viewport',()=
  assert.match(playerHtml,/arcade\.js\?v=[a-zA-Z0-9_-]+/);
  assert.match(playerHtml,/player-layout\.css\?v=[a-zA-Z0-9_-]+/);
 });
+test('2026 quiz round flow: editor, countdown, score displays and two-stage vote stay connected',()=>{
+ const studio=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ const source=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const player=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const screen=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
+ const arcade=readFileSync(new URL('./arcade.js',import.meta.url),'utf8');
+ const stage=readFileSync(new URL('./stage.js',import.meta.url),'utf8');
+ const map=readFileSync(new URL('./russia-geo.js',import.meta.url),'utf8');
+ const dbGate=readFileSync(new URL('./migrations/20261025_bonus_gate_host_next.sql',import.meta.url),'utf8');
+ for(const id of ['openGamesPalette','generalLeadSeconds','generalStatsSeconds','generalBonusPercent','generalBonusLead','hostProjectorMusic'])assert.match(studio,new RegExp('id="'+id+'"'));
+ for(const type of ['Вступление','Вопросы','Игры','Финал'])assert.match(studio,new RegExp(type));
+ for(const obsolete of ['data-card="team_stats"','data-card="player_stats"','data-card="bonus"'])assert.doesNotMatch(studio,obsolete);
+ assert.match(source,/bonus_percent/);
+ assert.match(source,/stats_seconds/);
+ assert.match(player,/roundScorePanel\(s.round_results/);
+ assert.match(player,/roundIntroMarkup\(s\)/);
+ assert.match(player,/player-finale-screen/);
+ assert.match(screen,/automaticRoundStandings\(state\)/);
+ assert.match(screen,/roundIntroScene\(state\)/);
+ assert.match(arcade,/const STRATEGIES=/);
+ assert.match(arcade,/const HINDRANCES=/);
+ assert.match(arcade,/arcade-vote-strategy/);
+ assert.match(arcade,/vote\.stage==='strategy'/);
+ assert.match(stage,/async startTheme\(\)/);
+ assert.match(stage,/stopTheme\(\)/);
+ assert.match(map,/data-geo-confirm/);
+ assert.match(map,/geo-map-toolbar/);
+ assert.match(dbGate,/public\.qwiz_bonus_vote_complete/);
+ assert.match(dbGate,/public\.qwiz_bonus_window/);
+ assert.match(dbGate,/clock_timestamp\(\)/);
+});
 test('New JavaScript parses independently of legacy app.js',()=>{assert.doesNotThrow(()=>new Function(js));assert.doesNotMatch(html,/\.\/\.\.\/(app\.js|styles\.css)/)});
 test('All direct DOM IDs referenced by client exist in HTML',()=>{
  const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]));
