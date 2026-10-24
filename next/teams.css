@@ -105,3 +105,18 @@ html.portrait-atlas-verified .animal-portrait.has-avatar-photo.avatar-photo-fail
 .team-card-head .habitat-seams{opacity:.22}
 @media(prefers-reduced-motion:reduce){.team-card-head .habitat-icon,
  .team-dialog-identity .habitat-icon,.my-team-identity .habitat-icon{transition:none}}
+
+
+/* Align character artwork optically with the centre of each roster avatar tile.
+   Limit the correction to the team roster; keep the profile portrait unchanged. */
+.team-member .team-avatar.animal-portrait{
+ display:grid;place-items:center;overflow:hidden;
+}
+.team-member .team-avatar.animal-portrait .animal-photo{
+ transform:translateX(-2px) scale(1.1);
+ transform-origin:50% 50%;
+ object-position:center center;
+}
+.team-member .team-avatar.animal-portrait .animal-fallback-svg{
+ display:block;place-self:center;margin:auto;
+}
