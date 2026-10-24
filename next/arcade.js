@@ -13,6 +13,15 @@ window.QwizArcade=(()=>{
  const HINDRANCES=[['fog','Туман соперника','−5 очков главному сопернику'],['storm','Штормовой заслон','−8 очков главному сопернику'],['drain','Энергетический отток','−12 очков главному сопернику']];
  const STRATEGIES=[['support','Зелёный маршрут','Усиление собственной команды'],['sabotage','Красный манёвр','Ограничение для главного соперника']];
  const ALL_VOTES=[...BOOSTS,...HINDRANCES,...STRATEGIES];
+ // Clear vector identity: green shield helps our team, red target hinders a rival.
+ function strategyIcon(id){
+  if(id!=='support'&&id!=='sabotage')return '';
+  const inner=id==='support'
+   ?'<path d="M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11Z"/><path d="m8.5 12 2.5 2.5 4.5-5"/>'
+   :'<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3"/>';
+  return '<span class="arcade-strategy-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">'+inner+'</svg></span>';
+ }
+
   const ui={player:null,screen:null,host:null};let wallet={code:null,client:null,roomId:null,lastFetch:0,busy:false,view:null};
  const isArcade=a=>!!META[a?.settings?.arcade_mode];
  function modeTitle(mode){return META[mode]?.title||'Командная игра'}
@@ -87,11 +96,11 @@ window.QwizArcade=(()=>{
     ballot.className='arcade-vote '+(strategyStage?'arcade-vote-strategy ':'arcade-vote-effects ')+(vote.strategy==='sabotage'?'is-harm':'is-boost');
     ballot.innerHTML='<div class="arcade-vote-title"><span>'+subtitle+' · 🏆 '+escape(champion?.name||'Лидеры')+'</span>'+
       '<strong>'+escape(title)+'</strong>'+
-      '<p>Решение большинством команды, два этапа за 15 секунд. '+(vote.target_name?'Соперник: '+escape(vote.target_name)+'. ':'')+'Осталось '+remaining+' сек.</p></div>'+
+      '<p>Решение большинством команды, два этапа, общее время до 15 секунд. '+(vote.target_name?'Соперник: '+escape(vote.target_name)+'. ':'')+'Осталось '+remaining+' сек.</p></div>'+
       (selections.length?'<div class="arcade-boost-grid">'+selections.map(([id,caption,description])=>
         '<button type="button" data-boost-choice="'+id+'" '+(!canChoose||tr.voteBusy?'disabled':'')+
         ' data-vote-tone="'+(id==='sabotage'||HINDRANCES.some(item=>item[0]===id)?'harm':'boost')+'"'+
-        ' class="'+(mine===id?'selected':'')+'"><strong>'+escape(caption)+'</strong>'+
+        ' class="'+(mine===id?'selected':'')+'">'+strategyIcon(id)+'<strong>'+escape(caption)+'</strong>'+
         '<span>'+escape(description)+'</span><b>'+Number(tally[id]||0)+' голосов</b></button>').join('')+'</div>':
         '<p class="arcade-vote-wait">Большинство не выбрало единую стратегию. Раунд продолжится автоматически.</p>')+
       '<p class="arcade-vote-rule">'+(canChoose?'Нажмите карточку. До завершения этапа вы можете изменить голос.':
