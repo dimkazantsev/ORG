@@ -150,3 +150,22 @@
  .arcade-tap-particle{display:none}
  .arcade-rocket-art{transition:none}
 }
+
+
+/* Distinct strategy: earn a green advantage, or impose a red penalty on the runner-up. */
+.arcade-vote-strategy .arcade-boost-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.arcade-vote .arcade-boost-grid button[data-vote-tone=boost]{
+ background:#edf9f1;border:2px solid #8ad2a2;color:#235a3a}
+.arcade-vote .arcade-boost-grid button[data-vote-tone=boost] span,
+.arcade-vote .arcade-boost-grid button[data-vote-tone=boost] b{color:#41734d}
+.arcade-vote .arcade-boost-grid button[data-vote-tone=harm]{
+ background:#fff0f1;border:2px solid #e7a9b0;color:#873446}
+.arcade-vote .arcade-boost-grid button[data-vote-tone=harm] span,
+.arcade-vote .arcade-boost-grid button[data-vote-tone=harm] b{color:#985668}
+.arcade-vote .arcade-boost-grid button.selected{outline:3px solid #7545d0;outline-offset:-3px;
+ box-shadow:0 0 0 2px #fff inset}
+.arcade-vote .arcade-vote-title>span{color:#7347b8;letter-spacing:.07em}
+.arcade-vote-wait{font-size:14px;padding:16px;text-align:center;color:#736184}
+@media(max-width:660px){.arcade-vote-strategy .arcade-boost-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:420px){.arcade-vote-strategy .arcade-boost-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .arcade-vote-strategy .arcade-boost-grid button{min-width:0}}
