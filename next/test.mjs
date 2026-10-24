@@ -274,7 +274,7 @@ test('Majority boost votes, host controls, and auto-advance are server-owned',()
  const arcade=readFileSync(new URL('./arcade.js',import.meta.url),'utf8');
  const layout=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
  const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
- for(const name of ['liveStart','livePause','liveNext','liveFinish','liveScreenMirror','liveRoundStats'])
+ for(const name of ['liveStart','livePause','liveNext','liveFinish','showPublicScreen','liveRoundStats'])
   assert.match(layout,new RegExp('id="'+name+'"'));
  assert.match(migration,/winner_votes<=total_members\/2/);
  assert.match(migration,/create or replace function public\.qwiz_tick/);
@@ -284,6 +284,9 @@ test('Majority boost votes, host controls, and auto-advance are server-owned',()
  assert.match(arcade,/data-boost-choice/);
  assert.match(arcade,/qwiz_vote_boost/);
  assert.match(host,/qwiz_party_control/);
+ assert.doesNotMatch(layout,/<iframe[^>]*id="liveScreenMirror"/);
+ assert.match(layout,/id="geographyBankInfo"/);
+ assert.match(host,/qwiz_geo_catalog/);
  assert.doesNotMatch(arcade,/\.from\(['"]qwiz_boost_votes/);
 });
 
