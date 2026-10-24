@@ -365,7 +365,7 @@ function appendCard(type='round',arcadeMode=null){if(state.cards.length>=60){msg
  if(arcadeMode&&arcadeGames[arcadeMode]){const meta=arcadeGames[arcadeMode];added.title=meta.title;added.icon=meta.icon;added.settings.arcade_mode=arcadeMode;added.settings.arcade_seconds=meta.seconds;}
  state.cards.splice(Math.max(0,state.cards.length-1),0,added);renderCards()}
 function cardDesc(c){const settings=c.settings||{};
- if(settings.arcade_mode==='russia_map')return 'Карта России · '+(settings.geo_count||15)+' случайных субъектов каждому игроку · '+(settings.geo_seconds||180)+' сек. · индивидуальный прогресс';
+ if(settings.arcade_mode==='russia_map')return 'География России · карта · '+(settings.geo_count||15)+' случайных субъектов каждому игроку · '+(settings.geo_seconds||180)+' сек. · индивидуальный прогресс';
   if(arcadeGames[settings.arcade_mode])return 'Командная мини-игра · '+(settings.arcade_seconds||arcadeGames[settings.arcade_mode].seconds)+' секунд · достижения и жетоны';
  if(c.type==='round')return (c.topic_id?nameTopic(c.topic_id):'Тема не выбрана')+' · '+(Array.isArray(settings.flag_modes)&&settings.flag_modes.length?settings.flag_modes.map(titleKind).join(', '):'Все доступные механики')+' · '+(settings.count||5)+' вопр. · '+(settings.seconds||30)+' сек. · ответ '+(settings.answer_seconds||10)+' сек.';
  if(c.type==='finale')return 'Команды, личный рейтинг и вопросы, которые запомнились';
@@ -383,7 +383,10 @@ function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{}
  $('cardRoundSettings').hidden=c.type!=='round';$('cardFinalePreview').hidden=c.type!=='finale';
  const arcade=arcadeGames[s.arcade_mode];$('cardArcadeSettings').hidden=!arcade;
   const geo=s.arcade_mode==='russia_map';$('cardGeoSettings').hidden=!geo;
-  if(geo){$('cardGeoCount').value=s.geo_count||15;$('cardGeoSeconds').value=s.geo_seconds||180;
+  $('cardFlagModes').hidden=geo;$('cardModesDetails').open=geo;
+  if(geo)$('cardModesInfo').textContent='8 способов ответа · выберите нужные';
+  if(geo){if(!c.topic_id)c.topic_id=state.topics.find(t=>t.name==='География России')?.id||null;$('cardTopic').value=c.topic_id||'';
+   $('cardGeoCount').value=s.geo_count||15;$('cardGeoSeconds').value=s.geo_seconds||180;
    for(const item of all('#cardGeoModes input:not(:disabled)'))item.checked=!Array.isArray(s.geo_modes)||s.geo_modes.includes(item.value);}
  $('cardArcadeSeconds').value=s.arcade_seconds||arcade?.seconds||12;
  $('cardArcadeHelp').textContent=arcade?.help||'';
@@ -397,7 +400,12 @@ function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{}
  $('cardDialog').showModal()}
 function saveCard(event){event.preventDefault();const c=state.cards[state.editingCard];
  const selected=all('[data-card-mode]:checked',$('cardFlagModes')).map(x=>x.dataset.cardMode);
- if(c.type==='round'&&!selected.length){
+  if(c.settings?.arcade_mode==='russia_map'){
+   const geoTopic=state.topics.find(t=>t.name==='География России');
+   if(!geoTopic){msg('buildMessage','Тема «География России» недоступна. Обновите библиотеку.',true);return}
+   $('cardTopic').value=geoTopic.id;
+  }
+ if(c.type==='round'&&c.settings?.arcade_mode!=='russia_map'&&!selected.length){
   const first=$('cardFlagModes').querySelector('[data-card-mode]:not(:disabled)');
   first?.setCustomValidity('Выберите хотя бы одну доступную механику');first?.reportValidity();
   first?.addEventListener('change',()=>first.setCustomValidity(''),{once:true});return;
@@ -412,7 +420,7 @@ function saveCard(event){event.preventDefault();const c=state.cards[state.editin
  if(arcadeGames[c.settings.arcade_mode])c.settings.arcade_seconds=Math.max(8,Math.min(40,Number($('cardArcadeSeconds').value)||arcadeGames[c.settings.arcade_mode].seconds));
   if(c.settings.arcade_mode==='russia_map'){
    const modes=all('#cardGeoModes input:checked:not(:disabled)').map(x=>x.value);
-   if(!modes.length){msg('buildMessage','Выберите хотя бы одну механику карты России.',true);return}
+   if(!modes.length){$('cardModesDetails').open=true;msg('buildMessage','Выберите хотя бы одну механику карты России.',true);return}
    c.settings.geo_count=Math.max(1,Math.min(89,Number($('cardGeoCount').value)||15));
    c.settings.geo_seconds=Math.max(45,Math.min(600,Number($('cardGeoSeconds').value)||180));
    c.settings.geo_modes=modes;
@@ -467,11 +475,11 @@ async function loadRooms(){try{const list=await rpc('qwiz_host_rooms');state.hos
  '<article class="room-row"><div><div class="question-meta"><span class="chip">'+esc(QwizStage.phaseLabel(r.phase))+'</span><span class="chip lilac">'+esc(r.code)+'</span></div><h3>'+esc(QwizStage.capitalize(r.title))+'</h3><p>'+esc(QwizStage.countLabel(r.players,{one:'участник',few:'участника',many:'участников',other:'участника'}))+' · '+esc(QwizStage.countLabel(r.teams,{one:'команда',few:'команды',many:'команд',other:'команды'}))+'</p></div><div class="room-row-actions"><button class="primary-button" data-room="'+esc(r.code)+'">Управлять →</button><button type="button" class="card-trash" data-delete-room="'+esc(r.id)+'" title="Удалить комнату" aria-label="Удалить комнату '+esc(r.title)+'">'+trashSvg+'</button></div></article>').join(''):
  '<div class="empty">Создайте комнату из сохранённой сборки.</div>';
  }catch(e){msg('launchMessage',e.message,true)}}
-async function launch(){disable('launchButton',true);msg('launchMessage','');
+async function launch(){projection();disable('launchButton',true);msg('launchMessage','');
  try{if(!$('launchBuild').value)throw Error('Выберите сборку.');
  const created=await rpc('qwiz_prepare_room',{p_build:$('launchBuild').value,p_title:$('launchTitle').value.trim()||null,p_teams:Number($('launchTeams').value)});
  msg('launchMessage','Комната '+created.code+' создана. '+(created.issues?.length?'Можно собирать команды; вопросы добавьте перед началом.':'Вопросов: '+created.total_questions));
- await loadRooms();await selectRoom(created.code)}
+ await loadRooms();await selectRoom(created.code);if(audienceWindow&&!audienceWindow.closed){const url=new URL('./presenter.html',location.href);url.searchParams.set('room',created.code);audienceWindow.location.href=url.toString()}}
  catch(e){msg('launchMessage',e.message,true)}finally{disable('launchButton',false)}}
 function subscribeRoom(code){if(state.channel){state.db.removeChannel(state.channel);state.channel=null}
  state.channel=state.db.channel('org-next-'+code,{config:{broadcast:{ack:false}}})
@@ -494,7 +502,7 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  $('livePhase').textContent=QwizStage.phaseLabel(s.phase);
  $('liveAnswers').textContent=s.answers_count||0;
  $('liveStart').hidden=false;$('liveStart').disabled=s.phase!=='lobby';$('liveStart').setAttribute('aria-label',s.phase==='lobby'?'Начать игру':'Игра уже начата');
- $('livePause').hidden=false;$('livePause').disabled=!['countdown','question','result'].includes(s.phase);$('livePause').textContent=s.paused?'▶ Продолжить':'⏸ Пауза';$('livePause').setAttribute('aria-pressed',String(!!s.paused));
+ $('livePause').hidden=false;$('livePause').disabled=!['countdown','question','result','intermission'].includes(s.phase);$('livePause').textContent=s.paused?'▶ Продолжить':'⏸ Пауза';$('livePause').setAttribute('aria-pressed',String(!!s.paused));
  $('liveNext').hidden=false;$('liveNext').disabled=!!s.paused||!['question','result','intermission'].includes(s.phase);$('liveNext').textContent='Далее →';$('liveReveal').hidden=true;$('liveFinish').hidden=false;$('liveFinish').disabled=s.phase==='finished';
  $('liveQuestion').textContent=s.phase==='intermission'?(s.activity?.title||'Дополнительная активность')+
   ' · следующий этап откроется автоматически (можно перейти вручную)':
@@ -516,9 +524,14 @@ async function control(action){if(!state.room)return;for(const id of ['liveStart
  state.channel?.send({type:'broadcast',event:'phase',payload:{room:state.roomCode}})?.catch(()=>{});
  await refreshLive()}catch(e){msg('liveMessage',e.message,true)}
  finally{for(const id of ['liveStart','livePause','liveReveal','liveNext','liveFinish'])disable(id,false);if(state.room){roomReadiness(state.room);renderLive(state.room)}}}
+let audienceWindow=null;
 function projection(){const u=new URL('./presenter.html',location.href);if(state.roomCode)u.searchParams.set('room',state.roomCode);
- window.open(u.toString(),'qwiz_party_public_screen','noopener,width=1280,height=760')}
-async function copyRoom(){const u=new URL('./',location.href);u.searchParams.set('room',state.roomCode);
+  try{if(audienceWindow&&!audienceWindow.closed){audienceWindow.location.href=u.toString();audienceWindow.focus();return true}
+   audienceWindow=window.open(u.toString(),'qwiz_party_public_screen','width=1280,height=760,resizable=yes,scrollbars=yes');
+   if(!audienceWindow){msg('liveMessage','Браузер заблокировал отдельный экран. Разрешите всплывающие окна для QWIZ-PARTY.',true);return false}
+   audienceWindow.opener=null;return true
+  }catch(e){msg('liveMessage','Не удалось открыть экран аудитории: '+e.message,true);return false}}
+ async function copyRoom(){const u=new URL('./',location.href);u.searchParams.set('room',state.roomCode);
  try{await navigator.clipboard.writeText(u.toString());msg('liveMessage','Ссылка на вход скопирована.')}
  catch{prompt('Ссылка:',u.toString())}}
 async function loadInsights(){try{state.insights=await rpc('qwiz_teacher_stats');renderInsights()}
@@ -583,7 +596,8 @@ function wire(){
  $('addCard').onclick=()=>appendCard('round');$('appendRound').onclick=()=>appendCard('round');
  $('cardPalette').onclick=e=>{const b=e.target.closest('[data-card]');if(!b)return;
    if(b.dataset.geo==='russia_map'){
-    appendCard('bonus');const c=state.cards[state.cards.length-2];c.title='Карта России · 89 субъектов';c.icon='map';
+    appendCard('round');const c=state.cards[state.cards.length-2];c.title='География России · карта 89 субъектов';c.icon='map';
+    c.topic_id=state.topics.find(t=>t.name==='География России')?.id||null;
     c.settings={...c.settings,arcade_mode:'russia_map',geo_count:15,geo_seconds:180,geo_modes:['locate','identify','capital','flag','silhouette','neighbour','detective','district']};renderCards();
    }else appendCard(b.dataset.card,b.dataset.arcade||null);
   };
@@ -609,7 +623,7 @@ function wire(){
  // Team setup handlers are owned by workspace-teams.js; no duplicate listeners here.
  $('hostRoomList').onclick=e=>{const d=e.target.closest('[data-delete-room]');if(d){deleteRoom(d.dataset.deleteRoom);return}
   const b=e.target.closest('[data-room]');if(b)selectRoom(b.dataset.room)};
- $('liveStart').onclick=()=>control('start');$('liveReveal').onclick=()=>control('reveal');
+ $('liveStart').onclick=()=>{projection();control('start')};$('liveReveal').onclick=()=>control('reveal');
  $('liveNext').onclick=()=>control('next');$('livePause').onclick=()=>control(state.room?.paused?'resume':'pause');$('liveFinish').onclick=()=>control('finish');
  $('copyRoomUrl').onclick=copyRoom;$('openScreen').onclick=projection;$('showPublicScreen').onclick=projection;
  $('reloadInsights').onclick=loadInsights;$('studentSort').onchange=renderInsights;
