@@ -649,3 +649,13 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
  .moderator-slide-choices{max-height:115px;overflow:auto}
  .projector-prefs>label{min-width:125px}
 }
+
+
+/* Teacher's flag-picker previews use images, not invented "Option 1" captions. */
+.moderator-slide-choices:has(.moderator-option-flag){grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.moderator-choice.has-flag{display:grid;grid-template-columns:19px minmax(0,1fr);align-items:center;gap:5px;padding:7px 5px;min-height:62px}
+.moderator-option-letter{color:#7853c0;font-size:10px;align-self:start}
+.moderator-option-flag{display:block;width:100%;height:52px;min-width:0;object-fit:contain;border-radius:3px}
+.moderator-slide.is-current .moderator-option-flag{height:62px}
+.moderator-slide-choices:has(.moderator-option-flag){max-height:none}
+@media(max-width:650px){.moderator-choice.has-flag{display:flex;flex-direction:column;gap:2px;min-height:49px}.moderator-option-flag,.moderator-slide.is-current .moderator-option-flag{height:39px}.moderator-option-letter{align-self:center}}
