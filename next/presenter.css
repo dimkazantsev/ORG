@@ -665,3 +665,13 @@ body:fullscreen .projection-shell{height:100dvh}
  .projection-round-leaders{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
  .projection-round-leaders li{font-size:12px;gap:5px;grid-template-columns:22px minmax(0,1fr) auto}}
 @media(prefers-reduced-motion:reduce){.projection-intro-orbit{animation:none}}
+
+
+.projection-reward-banner{width:100%;display:flex;align-items:center;justify-content:center;
+ gap:clamp(12px,2vw,28px);padding:clamp(9px,1.2dvh,18px);
+ border:1px solid;border-radius:15px;line-height:1.2}
+.projection-reward-banner strong{font-size:clamp(16px,min(1.8vw,2.5dvh),30px)}
+.projection-reward-banner span{font-size:clamp(14px,min(1.4vw,2dvh),22px)}
+.projection-reward-banner.is-boost{background:#e6f7eb;color:#216445;border-color:#a8ddbd}
+.projection-reward-banner.is-harm{background:#ffeaf0;color:#9a304e;border-color:#efbdc9}
+@media(max-width:700px){.projection-reward-banner{flex-wrap:wrap;gap:5px;padding:7px}}
