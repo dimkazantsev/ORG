@@ -932,3 +932,135 @@ body:fullscreen .projection-shell{height:100dvh}
   height:min(20dvh,150px)!important
  }
 }
+
+/* Unified projector question composition, October 2026.
+   The public view uses all available space without oversized empty margins.
+   Response keys remain private until result reveal. */
+#projectionMain>.projection-question-only:not(.is-result){
+ width:min(100%,1690px);
+ max-width:1690px;
+ min-height:100%;
+ height:auto;
+ flex:0 0 auto;
+ justify-content:space-evenly;
+ align-items:stretch;
+ gap:clamp(8px,1.4dvh,22px);
+ margin:0 auto;
+ padding:clamp(4px,.8dvh,12px) 0;
+}
+#projectionMain .projection-question-only:not(.is-result) .projection-topline{
+ flex:0 0 auto;
+ width:100%;
+ min-height:0;
+}
+#projectionMain .projection-question-only:not(.is-result) h1{
+ flex:0 0 auto;
+ max-width:100%;
+ margin:0 auto!important;
+ line-height:1.14;
+ font-size:clamp(29px,min(4.25vw,6.5dvh),88px);
+ overflow-wrap:anywhere;
+ text-wrap:balance;
+}
+#projectionMain .projection-public-options{
+ display:grid;
+ box-sizing:border-box;
+ flex:1 1 auto;
+ align-content:stretch;
+ width:100%;
+ min-width:0;
+ max-width:none;
+ max-height:min(53dvh,610px);
+ margin:0;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ grid-auto-rows:minmax(0,1fr);
+ gap:clamp(9px,1.25dvh,20px) clamp(10px,1.2vw,24px);
+}
+#projectionMain .projection-public-options[data-count="1"],
+#projectionMain .projection-public-options[data-count="2"]{max-height:min(32dvh,360px)}
+#projectionMain .projection-public-options[data-count="5"],
+#projectionMain .projection-public-options[data-count="6"],
+#projectionMain .projection-public-options[data-count="7"],
+#projectionMain .projection-public-options[data-count="8"]{max-height:min(62dvh,700px)}
+#projectionMain .projection-public-options .projection-option{
+ box-sizing:border-box;
+ display:flex;
+ align-items:center;
+ width:100%;
+ min-width:0;
+ min-height:clamp(70px,10dvh,150px);
+ height:100%;
+ padding:clamp(11px,1.5dvh,26px) clamp(13px,1.65vw,30px);
+ gap:clamp(10px,1.15vw,19px);
+ font-size:clamp(19px,min(2.05vw,3.15dvh),38px);
+ line-height:1.22;
+ overflow-wrap:anywhere;
+ hyphens:auto;
+}
+#projectionMain .projection-public-options .projection-option .letter{
+ flex:none;
+ width:clamp(35px,3.2vw,60px);
+ height:clamp(35px,3.2vw,60px);
+ font-size:clamp(17px,1.6vw,28px);
+}
+#projectionMain .projection-public-options .projection-option>span:last-child{
+ flex:1 1 auto;min-width:0;max-width:100%;
+ overflow-wrap:anywhere;
+}
+#projectionMain .projection-public-options:has(.flag-choice-art,.flag-stripe-art){
+ max-height:min(60dvh,680px);
+}
+#projectionMain .projection-public-options .flag-choice-with-label{
+ display:flex;flex-direction:column;justify-content:center;align-items:center;
+ width:100%;min-width:0;gap:7px;
+}
+#projectionMain .projection-public-options .flag-choice-art{
+ width:auto;
+ max-width:100%;
+ height:min(12dvh,128px);
+ object-fit:contain;
+}
+#projectionMain .projection-question-only:has(.question-frame) .projection-public-options,
+#projectionMain .projection-question-only:has(.projection-audio,.projection-video) .projection-public-options{
+ max-height:min(34dvh,385px);
+}
+#projectionMain .projection-question-only:has(.question-frame) .projection-public-options .projection-option,
+#projectionMain .projection-question-only:has(.projection-audio,.projection-video) .projection-public-options .projection-option{
+ min-height:clamp(55px,7dvh,105px);
+ padding:clamp(7px,1dvh,15px) clamp(10px,1vw,20px);
+}
+#projectionMain .projection-question-only:not(.is-result) .projection-response-count{
+ flex:0 0 auto;text-align:center;margin:0;
+}
+/* Longer choices grow by their content; the viewport fitter scales only on overflow. */
+#projectionMain .projection-public-options.has-long-options{grid-auto-rows:minmax(70px,auto)}
+@media(max-width:800px){
+ #projectionMain .projection-question-only:not(.is-result) h1{
+  font-size:clamp(24px,4.8vw,42px);
+ }
+ #projectionMain .projection-public-options{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  max-height:none;
+  grid-auto-rows:minmax(70px,1fr);
+ }
+ #projectionMain .projection-public-options .projection-option{
+  font-size:clamp(15px,2.4vw,21px);
+  min-height:66px;
+  padding:10px;
+ }
+ #projectionMain .projection-public-options .flag-choice-art{
+  height:min(13dvh,96px);
+ }
+}
+@media(max-width:480px){
+ #projectionMain .projection-public-options{
+  grid-template-columns:1fr;
+  gap:7px;
+  grid-auto-rows:auto;
+  max-height:none;
+ }
+ #projectionMain .projection-public-options .projection-option{min-height:52px}
+ #projectionMain>.projection-question-only:not(.is-result){
+  min-height:0;
+ }
+}
