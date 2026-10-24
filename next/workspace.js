@@ -669,6 +669,15 @@ async function updateModeratorSlides(s){
      '</article>';
   }).join('');
   moderatorDeckKey=key;moderatorDeckRefreshAt=0;
+  if(s.phase==='intermission'&&s.activity?.settings?.arcade_mode==='russia_map'&&window.QwizGeo?.loadMap){
+    window.QwizGeo.loadMap().then(shapes=>{
+      const shell=root.querySelector('.moderator-slide.is-current .moderator-map-symbol');
+      if(!shell||state.roomCode!==s.code||!Array.isArray(shapes))return;
+      shell.innerHTML='<svg class="moderator-mini-map" viewBox="0 0 1120 480" role="img" aria-label="Карта России с 89 субъектами">'+
+        shapes.map(region=>'<path class="moderator-mini-region" d="'+esc(region.path)+'"/>').join('')+
+        '</svg>';
+    }).catch(()=>{}); // Current activity and live counters remain usable offline.
+  }
   void updateModeratorLiveStats(s);
  }catch(err){root.innerHTML='<p class="small-help">Не удалось загрузить предпросмотр: '+esc(err.message)+'</p>'}
  finally{moderatorDeckBusy=false}
