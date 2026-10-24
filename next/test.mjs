@@ -145,6 +145,28 @@ test('Flag imagery remains visible and visual answers show the flag instead of p
  assert.match(migration,/CREATE OR REPLACE FUNCTION public\.qwiz_answer_display/);
  assert.match(migration,/'image_url',image_url/);
 });
+test('Projector reveals correct flags and answer choices only in server result phase',()=>{
+ const presenter=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
+ const migration=readFileSync(new URL('./migrations/20261024_public_projector_reveal_after_answer.sql',import.meta.url),'utf8');
+ const start=presenter.indexOf('function questionScene(state){');
+ const end=presenter.indexOf('function applyProjectionSettings(settings)',start);
+ assert.ok(start>=0&&end>start);
+ const scene=presenter.slice(start,end);
+ assert.match(scene,/const finished=state\.phase==='result'&&!!state\.answer/);
+ assert.match(scene,/const choices=finished&&Array\.isArray\(q\.options\)/);
+ assert.match(scene,/correctIndices\.includes\(i\)/);
+ assert.match(scene,/projectionOption\(option,i\)/);
+ assert.match(scene,/projection-answer-heading/);
+ assert.match(scene,/projection-answer-explanation/);
+ assert.match(scene,/projection-reveal-option/);
+ assert.match(css,/\.projection-reveal-options\.has-flag-options/);
+ assert.match(css,/\.projection-reveal-option\.is-correct/);
+ assert.match(migration,/IF s->>'phase' = 'result' THEN/);
+ assert.match(migration,/s:=s-'answer'/);
+ assert.match(migration,/'options'::text/);
+ assert.match(migration,/'solution'::text/);
+});
 test('New JavaScript parses independently of legacy app.js',()=>{assert.doesNotThrow(()=>new Function(js));assert.doesNotMatch(html,/\.\/\.\.\/(app\.js|styles\.css)/)});
 test('All direct DOM IDs referenced by client exist in HTML',()=>{
  const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]));
