@@ -442,3 +442,14 @@ body:fullscreen .projection-shell{height:100dvh}
 @media(max-width:430px){.projection-shell .projection-lobby.has-team-entry{grid-template-columns:1fr}
 .projection-shell .projection-lobby.has-team-entry .projection-qr{width:165px;height:165px}
 .projection-shell .projection-lobby.has-team-entry .projection-qr :is(img,canvas){width:148px!important;height:148px!important}}
+
+
+/* Question-only classroom projection: large prompt, generous legibility, no answer cards. */
+.projection-question-only{display:flex;flex-direction:column;align-items:stretch;gap:clamp(16px,2vw,30px);max-width:1480px;margin:0 auto}
+.projection-question-only .projection-topline{margin:0}
+.projection-question-only h1{font-size:clamp(36px,5.4vw,90px);line-height:1.15;letter-spacing:-.045em;margin:0;max-width:100%;text-wrap:balance}
+.projection-question-only .question-frame{max-width:min(970px,100%);margin:0 auto}
+.projection-question-only .projection-question-instruction{text-align:center;background:#f3edfc;border-radius:16px;padding:15px 22px;color:#675d7c;font-size:clamp(15px,1.35vw,22px);font-weight:600}
+.projection-question-only .projection-response-count{text-align:center;color:#7656be;font-size:clamp(14px,1.1vw,18px);font-weight:750}
+.projection-question-only.is-result .projection-question-instruction{background:#e9f5ef;color:#315d48}
+@media(max-width:750px){.projection-question-only{gap:14px}.projection-question-only h1{font-size:clamp(26px,6vw,46px)}.projection-question-only .projection-question-instruction{padding:12px}}
