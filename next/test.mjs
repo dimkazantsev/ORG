@@ -60,8 +60,28 @@ test('Mini-game palette and saved cards use distinct polished vector icons',()=>
  assert.match(workspace,/arcade-palette-icon/);
  assert.match(workspace,/cardIconSvg\(c\.type,c\.icon\)/);
  assert.match(styles,/#arcadePalette \.arcade-palette-icon svg/);
- assert.match(palette,/workspace\.js\?v=arcade-icons-20261024-1/);
- assert.match(palette,/workspace\.css\?v=arcade-icons-20261024-1/);
+ assert.match(palette,/workspace\.js\?v=ux-overhaul-20261024-4/);
+ assert.match(palette,/workspace\.css\?v=ux-overhaul-20261024-4/);
+});
+test('Public projector never includes options or answer keys and host previews three server-scoped slides',()=>{
+ const presenter=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
+ const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const layout=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ const sql=readFileSync(new URL('./migrations/20261024_public_projector_hide_answers.sql',import.meta.url),'utf8');
+ const deck=readFileSync(new URL('./migrations/20261024_host_three_slide_deck.sql',import.meta.url),'utf8');
+ assert.match(layout,/id="moderatorSlides"/);
+ assert.match(host,/qwiz_host_slide_deck/);
+ assert.match(deck,/owner_id<>\(SELECT auth.uid\(\)\)/);
+ assert.match(sql,/s:=s-''answer''/);
+ assert.doesNotMatch(presenter.slice(presenter.indexOf('function questionScene('),presenter.indexOf('function render(state)')),/projection-options|projection-option\(/);
+});
+test('Geography feedback is provided after a submitted answer and map zoom is persistent',()=>{
+ const client=readFileSync(new URL('./russia-geo.js',import.meta.url),'utf8');
+ const sql=readFileSync(new URL('./migrations/20261024_geo_answer_feedback.sql',import.meta.url),'utf8');
+ assert.match(client,/t\.zoomBox/);
+ assert.match(client,/last_answer/);
+ assert.match(client,/showMap/);
+ assert.match(sql,/p_answer is not null and v_task is not null/);
 });
 test('New JavaScript parses independently of legacy app.js',()=>{assert.doesNotThrow(()=>new Function(js));assert.doesNotMatch(html,/\.\/\.\.\/(app\.js|styles\.css)/)});
 test('All direct DOM IDs referenced by client exist in HTML',()=>{
@@ -357,8 +377,8 @@ test('Shared stage initializes in a browser-like environment without undefined r
  assert.ok(!stage.icon({position:1,players:5,answered:2}).includes('animals.svg'));
  const teamModule=readFileSync(new URL('./teams.js',import.meta.url),'utf8');
  assert.doesNotThrow(()=>runInNewContext(teamModule,{window,document,Intl,Date,localStorage:{getItem:()=>null}}));
- assert.ok(window.QwizTeams.avatar('fox').includes('animals.svg#fox'));
- assert.ok(window.QwizTeams.avatar('owl').includes('animals.svg#owl'));
+ assert.ok(window.QwizTeams.avatar('fox').includes('animals.svg?v=avatars-20261024-2#fox'));
+ assert.ok(window.QwizTeams.avatar('owl').includes('animals.svg?v=avatars-20261024-2#owl'));
  assert.equal(typeof stage.audio.stopMusic,'function');
 });
 
