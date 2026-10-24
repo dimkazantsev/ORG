@@ -1,14 +1,18 @@
-name: QWIZ-PARTY / Saved build cards QA
+name: QWIZ-PARTY / Builder card QA
 on:
   push:
     paths:
       - 'next/workspace.css'
+      - 'next/workspace.js'
+      - 'next/builder-cards.spec.mjs'
       - 'next/workspace.html'
       - 'next/visual.spec.mjs'
       - '.github/workflows/saved-build-layout-qa.yml'
   pull_request:
     paths:
       - 'next/workspace.css'
+      - 'next/workspace.js'
+      - 'next/builder-cards.spec.mjs'
       - 'next/workspace.html'
       - 'next/visual.spec.mjs'
       - '.github/workflows/saved-build-layout-qa.yml'
@@ -34,7 +38,7 @@ jobs:
         run: |
           mkdir -p visual-artifacts
           python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/saved-builds-http.log 2>&1 &
-          npx playwright test next/visual.spec.mjs --grep "Saved build cards keep identical width and height|General timing settings keep summary-duration input aligned" --reporter=list --workers=1
+          npx playwright test next/visual.spec.mjs next/builder-cards.spec.mjs --grep "Saved build cards keep identical width and height|General timing settings keep summary-duration input aligned|Selecting a card controls insertion order|Two separate taps on a card|New geography and arcade cards|Cards remain square" --reporter=list --workers=1
       - name: Keep screenshots
         if: always()
         uses: actions/upload-artifact@v4
