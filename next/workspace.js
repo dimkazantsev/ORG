@@ -560,7 +560,9 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  $('livePlayers').textContent=(s.players||[]).length;$('liveTeams').textContent=(s.teams||[]).length;
  $('livePhase').textContent=QwizStage.phaseLabel(s.phase);
  $('liveAnswers').textContent=s.answers_count||0;
- $('liveStart').hidden=false;$('liveStart').disabled=s.phase!=='lobby';$('liveStart').setAttribute('aria-label',s.phase==='lobby'?'Начать игру':'Игра уже начата');
+ $('liveStart').hidden=false;$('liveStart').disabled=!['lobby','finished'].includes(s.phase);
+ $('liveStart').textContent=s.phase==='finished'?'↻ Повторить игру':'▶ Начать';
+ $('liveStart').setAttribute('aria-label',s.phase==='finished'?'Создать новую сессию той же игры, сохранив историю':'Начать текущую игру');
  $('livePause').hidden=false;$('livePause').disabled=!['countdown','question','result','intermission'].includes(s.phase);$('livePause').textContent=s.paused?'▶ Продолжить':'⏸ Пауза';$('livePause').setAttribute('aria-pressed',String(!!s.paused));
  $('liveNext').hidden=false;$('liveNext').disabled=!!s.paused||!['question','result','intermission'].includes(s.phase);$('liveNext').textContent='Далее →';$('liveReveal').hidden=true;$('liveFinish').hidden=false;$('liveFinish').disabled=s.phase==='finished';
  $('liveQuestion').textContent=s.phase==='intermission'?(s.activity?.title||'Дополнительная активность')+
@@ -682,6 +684,25 @@ async function updateModeratorSlides(s){
  }catch(err){root.innerHTML='<p class="small-help">Не удалось загрузить предпросмотр: '+esc(err.message)+'</p>'}
  finally{moderatorDeckBusy=false}
 }
+// Repeat is a fresh session: never reset the completed game's answer archive.
+let repeatRoomBusy=false;
+async function repeatFinishedRoom(){
+ const source=state.room;
+ if(!source||source.phase!=='finished'||repeatRoomBusy)return;
+ if(!confirm('Повторить эту игру? Будет создана новая комната с теми же вопросами, раундами и командами. Результаты завершённой игры сохранятся; участники войдут по новому QR-коду.'))return;
+ repeatRoomBusy=true;disable('liveStart',true);
+ try{
+  const created=await rpc('qwiz_repeat_finished_room',{p_room:source.room_id});
+  if(!created?.code)throw Error('Сервер не вернул код новой игры');
+  await loadRooms();await selectRoom(created.code);
+  if(audienceWindow&&!audienceWindow.closed){
+   const url=new URL('./presenter.html',location.href);
+   url.searchParams.set('room',created.code);audienceWindow.location.href=url.toString();
+  }
+  msg('liveMessage','Новая игра '+created.code+' подготовлена. Подключите участников по новому QR-коду и нажмите «Начать».');
+ }catch(error){msg('liveMessage','Не удалось повторить игру: '+error.message,true)}
+ finally{repeatRoomBusy=false;if(state.room)renderLive(state.room)}
+}
 async function control(action){if(!state.room)return;for(const id of ['liveStart','livePause','liveReveal','liveNext','liveFinish'])disable(id,true);
  try{if(action==='finish'&&!confirm('Завершить игру?'))return;
  await rpc('qwiz_party_control',{p_room:state.room.room_id,p_action:action});
@@ -790,7 +811,7 @@ function wire(){
  // Team setup handlers are owned by workspace-teams.js; no duplicate listeners here.
  $('hostRoomList').onclick=e=>{const d=e.target.closest('[data-delete-room]');if(d){deleteRoom(d.dataset.deleteRoom);return}
   const b=e.target.closest('[data-room]');if(b)selectRoom(b.dataset.room)};
- $('liveStart').onclick=()=>{projection();control('start')};$('liveReveal').onclick=()=>control('reveal');
+ $('liveStart').onclick=()=>{if(state.room?.phase==='finished'){void repeatFinishedRoom();return;}projection();control('start')};$('liveReveal').onclick=()=>control('reveal');
  $('liveNext').onclick=()=>control('next');$('livePause').onclick=()=>control(state.room?.paused?'resume':'pause');$('liveFinish').onclick=()=>control('finish');
  $('hostProjectorSound').onclick=()=>updateProjectorPreferences({sound_enabled:!projectorPrefs.sound_enabled});
  $('hostProjectorVolume').oninput=e=>{$('hostProjectorVolumeLabel').textContent=Number(e.target.value)+'%'};
