@@ -128,6 +128,23 @@ test('The classroom and live mini-games retain purple and lavender, never blue U
  assert.match(gameHtml,/arcade\.css\?v=lavender-no-blue-20261024-9/);
  assert.match(screenHtml,/arcade\.css\?v=lavender-no-blue-20261024-9/);
 });
+test('Flag imagery remains visible and visual answers show the flag instead of placeholder labels',()=>{
+ const shared=readFileSync(new URL('./stage.js',import.meta.url),'utf8');
+ const projection=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const workspace=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const migration=readFileSync(new URL('./migrations/20261024_flags_visible_and_correct_picture.sql',import.meta.url),'utf8');
+ assert.doesNotMatch(shared,/Флаг скрыт\. Вспомните страну/);
+ assert.match(shared,/function updateMemory\(root,s,offset=0\)\{return;/);
+ assert.match(projection,/const frame=selectingFlag\?'':QwizStage\.illustration\(q,null\)/);
+ assert.doesNotMatch(projection.slice(projection.indexOf('function questionScene('),projection.indexOf('function applyProjectionSettings(')),/projection-options/);
+ assert.match(app,/result-flag-image/);
+ assert.match(app,/s\.answer\.image_url/);
+ assert.match(workspace,/moderator-option-flag/);
+ assert.match(migration,/CREATE OR REPLACE FUNCTION public\.qwiz_flag_memory_view/);
+ assert.match(migration,/CREATE OR REPLACE FUNCTION public\.qwiz_answer_display/);
+ assert.match(migration,/'image_url',image_url/);
+});
 test('New JavaScript parses independently of legacy app.js',()=>{assert.doesNotThrow(()=>new Function(js));assert.doesNotMatch(html,/\.\/\.\.\/(app\.js|styles\.css)/)});
 test('All direct DOM IDs referenced by client exist in HTML',()=>{
  const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]));
