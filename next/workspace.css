@@ -950,3 +950,13 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
  #roundCards .round-card .round-sub{font-size:11px}
 }
 @media(prefers-reduced-motion:reduce){#roundCards .round-card{transition:none!important}}
+
+
+/* Touch targets retain the original full-size controls even in the compact grid. */
+@media(pointer:coarse){
+ #roundCards .round-card-tools .round-copy,
+ #roundCards .round-card-tools .round-trash{
+  width:44px;height:44px;flex-basis:44px;min-height:44px;
+ }
+ #roundCards .round-actions button{min-width:44px;min-height:44px}
+}
