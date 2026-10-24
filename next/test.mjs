@@ -786,7 +786,7 @@ test('Mini-game buttons keep complete labels and the disclosure uses a separate 
  assert.match(styles,/#openGamesPalette\[aria-expanded="true"\] \.games-chevron-box \.games-chevron/);
  assert.match(styles,/\.game-palette #arcadePalette\.arcade-palette button>span:last-child\{/);
  assert.match(styles,/white-space:normal;overflow:visible;text-overflow:clip/);
- assert.match(html,/workspace\.css\?v=square-touch-20261025-17/);
+ assert.match(html,/workspace\.css\?v=chevron-alignment-20261025-18/);
 });
 
 test('Participant entry omits public projector links and old copy-all-codes actions',()=>{
@@ -849,4 +849,29 @@ test('Round results expose large personal and team summaries before detailed lis
  assert.match(player,/teamIndex=rows\.findIndex/);
  assert.match(styles,/\.round-self-summary strong\{/);
  assert.match(readFileSync(new URL('./index.html',import.meta.url),'utf8'),/app\.js\?v=round-self-20261025-14/);
+});
+
+test('QWIZ favicon is provided on all entry and moderator pages',()=>{
+ const root=readFileSync(new URL('../favicon.svg',import.meta.url),'utf8');
+ assert.match(root,/<svg /);
+ assert.match(root,/qwiz-violet/);
+ assert.match(root,/<circle/);
+ for(const page of ['index.html','presenter.html','workspace.html','profile.html','question-preview.html']){
+  const markup=readFileSync(new URL('./'+page,import.meta.url),'utf8');
+  assert.match(markup,/rel="icon" type="image\/svg\+xml" href="\.\.\/favicon\.svg\?v=qwiz-2"/);
+ }
+ const legacy=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ assert.match(legacy,/rel="icon" type="image\/svg\+xml" href="\.\/favicon\.svg\?v=qwiz-2"/);
+});
+test('Round editor opens mechanics by default with vector arrow and even selection outline',()=>{
+ const markup=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ const script=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const styles=readFileSync(new URL('./workspace.css',import.meta.url),'utf8');
+ assert.match(markup,/id="cardModesDetails" class="card-mode-details" open/);
+ assert.match(markup,/class="card-modes-chevron"/);
+ assert.doesNotMatch(markup,/<summary>Механики внутри темы <span/);
+ assert.equal((script.match(/\$\('cardModesDetails'\)\.open=c\.type==='round'/g)||[]).length,2);
+ assert.match(styles,/#roundCards \.round-card\.is-selected::before\{content:none\}/);
+ assert.match(styles,/#cardModesDetails\[open\] \.card-modes-chevron/);
+ assert.match(markup,/class="card-order-explainer"/);
 });
