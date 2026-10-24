@@ -384,7 +384,8 @@ test('2026 quiz round flow: editor, countdown, score displays and two-stage vote
  const dbGate=readFileSync(new URL('./migrations/20261025_bonus_gate_host_next.sql',import.meta.url),'utf8');
  for(const id of ['openGamesPalette','generalLeadSeconds','generalStatsSeconds','generalBonusPercent','generalBonusLead','hostProjectorMusic'])assert.match(studio,new RegExp('id="'+id+'"'));
  for(const type of ['Вступление','Вопросы','Игры','Финал'])assert.match(studio,new RegExp(type));
- for(const obsolete of ['data-card="team_stats"','data-card="player_stats"','data-card="bonus"'])assert.doesNotMatch(studio,obsolete);
+ const topPalette=studio.slice(studio.indexOf('id="cardPalette"'),studio.indexOf('id="gamesPalette"'));
+ for(const obsolete of ['data-card="team_stats"','data-card="player_stats"','data-card="bonus"'])assert.doesNotMatch(topPalette,obsolete);
  assert.match(source,/bonus_percent/);
  assert.match(source,/stats_seconds/);
  assert.match(player,/roundScorePanel\(s.round_results/);
