@@ -904,3 +904,31 @@ body:fullscreen .projection-shell{height:100dvh}
  #projectionMain .projection-question-only figure.question-frame .question-picture{max-height:27dvh}
  #projectionMain .projection-question-only figure.question-frame figcaption{font-size:clamp(12px,1.15vw,18px)}
 }
+
+
+/* True-size flag artwork on the TV — not a 150px thumbnail. */
+#projectionMain .projection-question-only.is-result .projection-answer-single .correct-flag-art{
+ width:min(100%,520px)!important;max-width:520px!important;
+ display:grid;place-items:center;
+}
+#projectionMain .projection-question-only.is-result .projection-answer-single .correct-flag-art img{
+ box-sizing:border-box;display:block;
+ width:min(38vw,495px)!important;height:min(22dvh,235px)!important;
+ min-width:0;max-width:100%!important;max-height:100%!important;
+ object-fit:contain!important;object-position:center!important;margin:0 auto!important;
+}
+#projectionMain .projection-question-only.is-result .projection-answer-single .correct-flag-art .flag-stripe-art{
+ width:min(38vw,495px)!important;max-width:100%!important;
+ max-height:min(22dvh,235px)!important;margin:0 auto!important;
+}
+/* Leaderboard is purposely capped on projector. Never turn 30 entries into 10px text. */
+#projectionMain .projection-rank-more{
+ margin:auto 0 0;font-size:clamp(15px,1.35vw,22px);
+ line-height:1.35;color:#78638f;text-align:center;
+ padding:clamp(8px,1dvh,14px) 0 0;
+}
+@media(max-height:740px){
+ #projectionMain .projection-question-only.is-result .projection-answer-single .correct-flag-art img{
+  height:min(20dvh,150px)!important
+ }
+}
