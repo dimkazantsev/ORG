@@ -501,3 +501,16 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
   line-height:1.18;
  }
 }
+
+
+/* 320px phones: keep all four long flag answers within the fixed game card.
+   Tighten only inter-row whitespace; buttons remain at least 44px high. */
+@media(max-width:420px) and (max-height:520px){
+ .player-compact #gameView .option-list.has-long-options{gap:3px}
+ .player-compact #gameView .option-list.has-long-options .option{
+  min-height:44px;padding:5px 7px;line-height:1.2
+ }
+ .player-compact #gameView .player-question-layout:has(.has-long-options){
+  gap:6px
+ }
+}
