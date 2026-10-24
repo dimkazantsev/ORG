@@ -1,7 +1,7 @@
 'use strict';
 const KEY='sb_publishable_Hv7NgYuVsfKhFuhX_9pl0Q_qXWA2wOr',PROFILE_SUPABASE_URL='https://bderfrcfuhnutuoyudje.supabase.co';
 const $=id=>document.getElementById(id);
-const animals=[['fox','🦊','Лиса'],['owl','🦉','Сова'],['cat','🐱','Кот'],['panda','🐼','Панда'],['otter','🦦','Выдра'],['raccoon','🦝','Енот'],['capybara','🦫','Капибара'],['penguin','🐧','Пингвин'],['koala','🐨','Коала'],['red-panda','🦊','Панда'],['rabbit','🐰','Кролик'],['bear','🐻','Медведь']];
+const animals=[['fox','🦊','Лиса'],['owl','🦉','Сова'],['cat','🐱','Кот'],['panda','🐼','Панда'],['otter','🦦','Выдра'],['raccoon','🦝','Енот'],['capybara','🦫','Капибара'],['penguin','🐧','Пингвин'],['koala','🐨','Коала'],['red-panda','🦊','Красная панда'],['rabbit','🐰','Кролик'],['bear','🐻','Медведь']];
 const s={db:null,me:null,avatar:'fox',registrationAvatar:'fox',pairTimer:null};
 function message(id,value='',error=false){$(id).textContent=value;$(id).classList.toggle('error',!!error)}
 function avatar(key){return animals.find(x=>x[0]===key)||animals[0]}
