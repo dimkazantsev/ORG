@@ -152,3 +152,55 @@ test('Phone displays synchronized card introductions, round rankings and full fi
   await expect(page.locator('#gameContent .player-final-results .habitat-team')).toHaveCount(5);
  }
 });
+
+
+test('Two-stage penalty vote opens a red majority choice then lets players choose a specific hindrance',async({page})=>{
+ for(const [width,height] of [[320,480],[390,700]]){
+  await page.setViewportSize({width,height});
+  await setup(page);
+  await page.evaluate(()=>{
+   showScreen('game');
+   const now=Date.now();
+   const vote={winner_team:'team-a',can_vote:true,open:true,
+    stage:'strategy',strategy:null,counts:{},my_choice:null,
+    target_name:'Команда-соперник',vote_ends_at:new Date(now+14000).toISOString()};
+   window.penaltyFixture={code:'ABCDEF12',mode:'rocket',running:false,
+    server_now:new Date(now).toISOString(),started_at:new Date(now-12000).toISOString(),
+    ends_at:new Date(now-1000).toISOString(),mine:{team_id:'team-a'},
+    teams:[{id:'team-a',name:'Лидеры',points:90,place:1},
+           {id:'team-b',name:'Соперники',points:12,place:2}],
+    awards:[],vote};
+   window.penaltyCalls=[];
+   const client={rpc:async(name,args)=>{
+    if(name==='qwiz_vote_boost'){
+     window.penaltyCalls.push(args.p_choice);
+     if(args.p_choice==='sabotage'){vote.strategy='sabotage';vote.stage='option';
+      vote.my_choice=null;vote.counts={};}
+     else {vote.my_choice=args.p_choice;vote.counts[args.p_choice]=1;}
+     return {data:{ok:true},error:null};
+    }
+    return {data:window.penaltyFixture,error:null};
+   }};
+   QwizArcade.mountPlayer(document.querySelector('#gameContent'),{
+    code:'ABCDEF12',room_id:'00000000-0000-4000-8000-000000000091',
+    activity:{settings:{arcade_mode:'rocket'}}},{client});
+  });
+  await expect(page.locator('[data-boost-choice]')).toHaveCount(2);
+  await expect(page.locator('[data-boost-choice="sabotage"]')).toBeVisible();
+  await page.locator('[data-boost-choice="sabotage"]').click();
+  await expect(page.locator('[data-boost-choice]')).toHaveCount(3);
+  await expect(page.locator('[data-boost-choice="fog"]')).toBeVisible();
+  await expect(page.locator('[data-boost-choice="storm"]')).toBeVisible();
+  await expect(page.locator('[data-boost-choice="drain"]')).toBeVisible();
+  await page.locator('[data-boost-choice="storm"]').click();
+  await expect(page.locator('[data-boost-choice="storm"]')).toHaveClass(/selected/);
+  const calls=await page.evaluate(()=>window.penaltyCalls);
+  expect(calls).toEqual(['sabotage','storm']);
+  const bounds=await page.locator('.arcade-vote').boundingBox();
+  expect(bounds).not.toBeNull();
+  expect(bounds.x).toBeGreaterThanOrEqual(0);
+  expect(bounds.y).toBeGreaterThanOrEqual(0);
+  expect(bounds.x+bounds.width).toBeLessThanOrEqual(width+2);
+  expect(bounds.y+bounds.height).toBeLessThanOrEqual(height+2);
+ }
+});
