@@ -67,6 +67,64 @@ for(const [width,height] of [[1280,720],[1366,768],[1920,1080],[3840,2160],[7680
 }
 
 
+
+test('All answer variants are readable on the public screen without exposing the solution',async({page})=>{
+ for(const [width,height] of [[1280,720],[1920,1080],[3840,2160],[768,1024]]){
+  await page.setViewportSize({width,height});
+  for(const count of [2,3,4,5,6,8]){
+   const options=Array.from({length:count},(_,i)=>'Вариант '+(i+1)+': название страны и краткое описание её государственного символа');
+   await page.evaluate(options=>{
+    ctx.renderKey='';
+    render({code:'A1B2C3D4',phase:'question',index:0,total:10,
+     question:{kind:'single',prompt:'Какой из вариантов соответствует описанию?',options},
+     ends_at:new Date(Date.now()+60000).toISOString(),
+     teams:[],players:[],screen_settings:{sound_enabled:false,volume:0}});
+   },options);
+   await page.waitForTimeout(150);
+   await expect(page.locator('.projection-public-options .projection-option')).toHaveCount(count);
+   await expect(page.locator('.projection-question-instruction')).toHaveCount(0);
+   for(let i=0;i<count;i++)await expect(page.locator('.projection-public-options .projection-option').nth(i)).toContainText(options[i]);
+   const rect=await page.evaluate(()=>{
+    const main=document.querySelector('#projectionMain').getBoundingClientRect();
+    const scene=document.querySelector('.projection-question-only').getBoundingClientRect();
+    const cards=[...document.querySelectorAll('.projection-public-options .projection-option')].map(x=>{
+     const r=x.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,scrollWidth:x.scrollWidth,clientWidth:x.clientWidth};
+    });
+    return {main,scene,cards};
+   });
+   expect(rect.scene.top).toBeGreaterThanOrEqual(rect.main.top-4);
+   expect(rect.scene.bottom).toBeLessThanOrEqual(rect.main.bottom+4);
+   for(const card of rect.cards){
+    expect(card.left).toBeGreaterThanOrEqual(rect.main.left-4);
+    expect(card.right).toBeLessThanOrEqual(rect.main.right+4);
+    expect(card.scrollWidth).toBeLessThanOrEqual(card.clientWidth+3);
+   }
+  }
+ }
+});
+
+test('Open questions stay compact and results show only one revealed answer',async({page})=>{
+ await page.evaluate(()=>{
+  ctx.renderKey='';
+  render({code:'A1B2C3D4',phase:'question',index:0,total:3,
+   question:{kind:'text',prompt:'Назовите государственный символ.',options:[]},
+   ends_at:new Date(Date.now()+60000).toISOString(),teams:[],players:[],
+   screen_settings:{sound_enabled:false,volume:0}});
+ });
+ await expect(page.locator('.projection-public-options')).toHaveCount(0);
+ await expect(page.locator('.projection-question-instruction')).toBeVisible();
+ await page.evaluate(()=>{
+  ctx.renderKey='';
+  render({code:'A1B2C3D4',phase:'result',index:0,total:3,
+   question:{kind:'single',prompt:'Столица России?',options:['Казань','Москва','Томск']},
+   answer:{indices:[1],text:'Москва'},
+   ends_at:new Date(Date.now()+60000).toISOString(),teams:[],players:[],
+   screen_settings:{sound_enabled:false,volume:0}});
+ });
+ await expect(page.locator('.projection-public-options')).toHaveCount(0);
+ await expect(page.locator('.projection-answer-single')).toContainText('Москва');
+});
+
 test('Moderator-controlled music loops across game phases until explicitly disabled',async({page})=>{
  await page.locator('#projectionSound').click();
  await page.locator('#projectionSound').click();

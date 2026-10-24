@@ -82,8 +82,9 @@ test('Projection screen only renders questions and never host controls',async({p
  }));
  await page.goto('http://127.0.0.1:8080/next/presenter.html?room=ABCDEF12');
  await expect(page.locator('.projection-question h1')).toHaveText('Как называется столица России?');
- await expect(page.locator('.projection-option')).toHaveCount(0);
- await expect(page.locator('.projection-question-instruction')).toContainText('Варианты ответа доступны');
+ await expect(page.locator('.projection-public-options .projection-option')).toHaveCount(4);
+ await expect(page.locator('.projection-public-options')).toContainText('Москва');
+ await expect(page.locator('.projection-question-instruction')).toHaveCount(0);
  await expect(page.locator('#hostControls')).toHaveCount(0);
  await expect(page.locator('#hostTeams')).toHaveCount(0);
  await expect(page.locator('#loginEmail')).toHaveCount(0);
@@ -179,14 +180,15 @@ test('Local font is shared by all four screens',async({page})=>{
 test('Classic entry retains its form and new studio link',async({page})=>{
  await page.emulateMedia({reducedMotion:'reduce'});
  await page.goto('http://127.0.0.1:8080/');
- await expect(page).toHaveURL(/\/next\/$/);
  for(const width of [375,768,1440]){
   await page.setViewportSize({width,height:920});
   await expect(page.locator('#joinForm')).toBeVisible();
   expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
  }
- await page.goto('http://127.0.0.1:8080/?legacy=1');
- await expect(page.locator('a.new-studio-link')).toHaveAttribute('href','./next/');
+ await expect(page.getByRole('link',{name:'QWIZ-PARTY'})).toHaveAttribute('href','./next/');
+ const hero=await page.locator('.hero-card').boundingBox(),form=await page.locator('#homeAccess').boundingBox();
+ expect(form.x).toBeGreaterThan(hero.x+hero.width);
+ expect(Math.abs(form.y-hero.y)).toBeLessThan(5);
  await page.screenshot({path:'visual-artifacts/classic-lavender-1440.png',fullPage:true,animations:'disabled'});
 });
 
@@ -329,8 +331,8 @@ test('Standalone teacher workspace is responsive and has two library sections',a
  await page.locator('#newBuild').click();
  await expect(page.locator('#roundCards .round-card')).toHaveCount(3);
  await expect(page.locator('#roundCards .round-card').last()).toHaveAttribute('data-type','finale');
- await expect(page.locator('#cardPalette [data-card="team_stats"]')).toHaveCount(0);
- await expect(page.locator('#roundCards .round-card')).toHaveCount(3);
+ await page.locator('[data-card="team_stats"]').click();
+ await expect(page.locator('#roundCards .round-card')).toHaveCount(4);
  await expect(page.locator('#roundCards .round-card').last()).toHaveAttribute('data-type','finale');
 });
 test('Flag studio shows twelve working formats, without old question types',async({page})=>{
@@ -347,15 +349,12 @@ test('Flag studio shows twelve working formats, without old question types',asyn
  await expect(page.locator('#answerEditor [data-flag-label]')).toHaveCount(4);
  await expect(page.locator('#questionMediaUrl')).toHaveCount(0);
 });
-test('Student can select 12 primary and 13 additional animal avatars',async({page})=>{
+test('Student can see registration and twelve animal avatars',async({page})=>{
  await page.goto('http://127.0.0.1:8080/next/profile.html');
  await expect(page.getByRole('heading',{name:'Мой профиль'})).toBeVisible();
  await page.locator('#authRegisterTab').click();
  await expect(page.locator('#registerPanel')).toBeVisible();
- await expect(page.locator('#registerAvatars [data-avatar]')).toHaveCount(25);
- await expect(page.locator('#registerAvatars > .avatar-pick')).toHaveCount(12);
- await page.locator('#registerAvatars .avatar-more summary').click();
- await expect(page.locator('#registerAvatars .avatar-more [data-avatar]')).toHaveCount(13);
+ await expect(page.locator('#registerAvatars [data-avatar]')).toHaveCount(12);
  await page.screenshot({path:'visual-artifacts/profile-390.png',fullPage:true,animations:'disabled'});
 });
 test('Public display renders server countdown but no answers or admin controls',async({page})=>{
@@ -512,7 +511,7 @@ test('A saved student room is offered without taking over the entry page',async(
  await expect(page.locator('#resumeGame')).toBeVisible();
  await page.locator('#resumeGameButton').click();
  await expect(page.locator('#gameView')).toBeVisible();
- await expect(page.locator('#gameContent')).toContainText('Скоро начнём!');
+ await expect(page.locator('#gameContent')).toContainText('Вы в игре.');
  await page.locator('#logoHome').click();
  await expect(page.locator('#homeView')).toBeVisible();
  await page.reload();
@@ -523,7 +522,7 @@ test('Explicit room QR links still connect registered players directly',async({p
  await authFixture(page,{admin:false});
  await page.goto('http://127.0.0.1:8080/next/?room=abcdef12');
  await expect(page.locator('#gameView')).toBeVisible();
- await expect(page.locator('#gameContent')).toContainText('Скоро начнём!');
+ await expect(page.locator('#gameContent')).toContainText('Вы в игре.');
 });
 test('Non-admin session and rejected teacher login cannot open cabinet',async({page})=>{
  await authFixture(page,{admin:false});
@@ -560,17 +559,15 @@ test('Reduced motion disables decorative and dialog animation without hiding con
  await page.keyboard.press('Escape');
  await expect(page.locator('#qrDialog')).toBeHidden();
 });
-test('Canonical entry preserves teacher sign-in and separate participant access',async({page})=>{
+test('Classic entry also stays on home with a saved teacher session',async({page})=>{
  await authFixture(page);
  await page.goto('http://127.0.0.1:8080/');
- await expect(page).toHaveURL(/\/next\/$/);
+ await expect(page.locator('#teacherToggle')).toHaveText('Мой кабинет');
  await expect(page.locator('#homeView')).toBeVisible();
- await page.getByRole('tab',{name:'Преподаватель'}).click();
- await expect(page.locator('#hostSession')).toBeVisible();
- await expect(page.locator('#openWorkspace')).toContainText('Открыть кабинет');
+ await expect(page.locator('#teacherView')).toBeHidden();
  await page.reload();
+ await expect(page.locator('#teacherToggle')).toHaveText('Мой кабинет');
  await expect(page.locator('#homeView')).toBeVisible();
- await expect(page.locator('#hostSession')).toBeVisible();
 });
 
 test('Entrance motion ends in a stable layout and keeps role controls available',async({page})=>{
