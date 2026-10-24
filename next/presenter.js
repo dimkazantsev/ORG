@@ -248,6 +248,8 @@ function questionScene(state){
 function applyProjectionSettings(settings){
  if(!settings)return;
  const sound=Boolean(settings.sound_enabled),volume=Number(settings.volume);
+ const theme=sound&&Boolean(settings.music_enabled);
+ if(theme){QwizStage.audio.startTheme()}else if(QwizStage.audio.themeWanted){QwizStage.audio.stopTheme()}
  if(Number.isFinite(volume))QwizStage.audio.setVolume(Math.max(0,Math.min(1,volume/100)));
  if(QwizStage.audio.enabled!==sound){
    if(!sound)QwizStage.audio.stopMusic();
