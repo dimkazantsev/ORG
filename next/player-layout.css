@@ -284,3 +284,36 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
 .player-finale-screen .player-final-results{position:relative;animation:intro-rise .65s both}
 @media(max-width:360px){.round-results-grid{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.round-intro-symbol,.round-intro-sparks i,.round-results-orbit,.player-finale-screen .player-final-results{animation:none}}
+
+
+/* Voting appears like a deliberate sheet raised from the same bottom thumb zone as Statistics. */
+.player-compact #gameContent .arcade-player.is-boost-voting .arcade-vote{
+ position:fixed;z-index:26;
+ left:50%;bottom:calc(74px + env(safe-area-inset-bottom));transform:translateX(-50%);
+ width:min(100% - 18px,570px);
+ height:auto;max-height:min(70dvh,620px);min-height:0;flex:none;
+ overflow-y:auto;-webkit-overflow-scrolling:touch;
+ padding:clamp(11px,2dvh,20px);
+ border-radius:22px 22px 17px 17px;
+ background:#fff;border:1px solid #d9c8ed;
+ box-shadow:0 -10px 42px #3d27604a;
+ animation:vote-sheet-up .42s cubic-bezier(.16,.95,.24,1) both;
+}
+.player-compact #gameContent .arcade-player.is-boost-voting .arcade-vote-title{margin-bottom:8px}
+.player-compact #gameContent .arcade-player.is-boost-voting .arcade-boost-grid{
+ flex:none;grid-auto-rows:minmax(66px,auto)}
+.player-compact #gameContent .arcade-player.is-boost-voting .arcade-boost-grid button{
+ min-height:66px;grid-template-columns:minmax(0,1fr) auto;padding:9px 13px}
+.player-compact #gameContent .arcade-player.is-boost-voting .arcade-vote-rule{font-size:11px;margin:8px 0 0}
+.player-compact #gameContent .arcade-player.is-boost-voting .arcade-vote:before{
+ content:"";display:block;width:42px;height:4px;border-radius:9px;background:#cab9df;margin:0 auto 9px}
+@keyframes vote-sheet-up{from{opacity:.5;transform:translate(-50%,45px)}to{opacity:1;transform:translate(-50%,0)}}
+@media(max-height:550px){
+ .player-compact #gameContent .arcade-player.is-boost-voting .arcade-vote{
+  bottom:calc(58px + env(safe-area-inset-bottom));max-height:calc(100dvh - 70px);padding:10px}
+ .player-compact #gameContent .arcade-player.is-boost-voting .arcade-boost-grid button{min-height:55px;padding:6px 11px}
+ .player-compact #gameContent .arcade-player.is-boost-voting .arcade-vote-title p{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+ .player-compact #gameContent .arcade-player.is-boost-voting .arcade-vote{animation:none}
+}
