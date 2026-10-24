@@ -90,3 +90,63 @@
 .arcade-projection .arcade-vote-title>strong{font-size:clamp(23px,3.4vw,46px)}
 @media(max-width:660px){.arcade-boost-grid{grid-template-columns:1fr}.arcade-boost-grid button{min-height:0}}
 @media(prefers-reduced-motion:reduce){.arcade-boost-grid button{transition:none!important;transform:none!important}}
+
+
+/* Fully animated light-lavender arcade scenes; motion is visual only.
+   Server remains authoritative for score, taps, winner and rewards. */
+.arcade-shell{--arcade-spark:#a17af0}
+.arcade-scene{position:relative;isolation:isolate;overflow:hidden;min-height:170px;
+ background:radial-gradient(ellipse at 45% 15%,#fff 0%,#f6f0ff 62%,#eee6ff 100%);
+ box-shadow:inset 0 1px 0 #fff,0 9px 25px #6e48ac14}
+.arcade-scene::before{
+ content:"";position:absolute;inset:-25%;pointer-events:none;
+ background-image:radial-gradient(circle,#b197eb 1.2px,transparent 2px),
+ radial-gradient(circle,#e8c7a0 1.6px,transparent 2px);
+ background-size:47px 51px,79px 71px;background-position:0 0,17px 29px;
+ opacity:.44;animation:arcade-sky-drift 20s linear infinite;
+}
+.arcade-scene::after{content:"";position:absolute;inset:0;border-radius:inherit;
+ border:2px solid #ffffffb5;pointer-events:none}
+@keyframes arcade-sky-drift{to{background-position:100px 52px,-64px 84px}}
+.arcade-rocket-art{position:relative;z-index:1;max-height:185px;filter:drop-shadow(0 12px 13px #56389b3a);
+ transition:transform .6s cubic-bezier(.2,.65,.2,1)}
+.arcade-scene .arcade-rocket-art .arcade-flame{transform-origin:48px 60px;animation:arcade-engine .18s ease-in-out infinite alternate}
+@keyframes arcade-engine{from{opacity:.7;transform:scaleX(.76)}to{opacity:1;transform:scaleX(1.15)}}
+.arcade-rope{z-index:1;height:22px;margin:46px 0 34px;border:2px solid #bda8ed;
+ background:repeating-linear-gradient(125deg,#ab8ce0 0 11px,#e4bc8e 11px 21px,#d5bdf4 21px 32px);
+ background-size:120px 60px;animation:arcade-rope-slide 1.8s linear infinite alternate}
+@keyframes arcade-rope-slide{to{background-position:45px 0}}
+.arcade-rope::after{z-index:3;background:linear-gradient(180deg,#fff,#e5d9ff);border-color:#7652c2;box-shadow:0 8px 21px #7551ab38}
+.arcade-king{position:relative;z-index:1;filter:drop-shadow(0 8px 10px #7045aa25);
+ animation:arcade-float 2.6s ease-in-out infinite}
+@keyframes arcade-float{50%{transform:translateY(-9px) rotate(2deg)}}
+.arcade-captain-ready{position:relative;z-index:1;letter-spacing:.04em}
+.arcade-captain-ready.go{animation:arcade-go-pulse .55s ease-in-out infinite alternate}
+@keyframes arcade-go-pulse{from{transform:scale(1);filter:drop-shadow(0 0 0 #2baf7a)}to{transform:scale(1.07);filter:drop-shadow(0 0 12px #6dd7a3)}}
+.arcade-tap-btn{position:relative;overflow:hidden;isolation:isolate;min-height:104px;
+ background:linear-gradient(145deg,#9873ef,#713ed9 60%,#5d33b7);
+ border:1px solid #6a3ece;
+ box-shadow:0 9px 0 #54309e,0 18px 30px #6644af35;
+ text-shadow:0 1px 2px #35225355;
+ transition:transform .09s,box-shadow .09s,filter .18s}
+.arcade-tap-btn::before{content:"";position:absolute;width:55%;aspect-ratio:1;top:-95%;left:-30%;
+ background:radial-gradient(circle,#ffffff9a 0%,#fff0 68%);pointer-events:none;
+ animation:arcade-button-shine 3s ease-in-out infinite}
+@keyframes arcade-button-shine{50%{left:75%;top:20%}100%{left:120%;top:70%}}
+.arcade-tap-btn:active{transform:translateY(7px) scale(.98);box-shadow:0 2px 0 #54309e,0 7px 14px #6644af25}
+.arcade-rank-track{height:17px;background:#ebe6f7;box-shadow:inset 0 2px 4px #5b438318}
+.arcade-rank-fill{background:linear-gradient(90deg,var(--arcade-team-color,#9778df),#b28ef2);
+ box-shadow:0 0 10px #a58bdc50;transition:width .65s cubic-bezier(.19,.8,.25,1)}
+.arcade-tap-particle{position:absolute;z-index:5;top:38%;left:50%;font-size:clamp(34px,6vw,65px);
+ font-weight:900;color:#784add;pointer-events:none;text-shadow:0 0 13px #fff;
+ animation:arcade-burst .67s cubic-bezier(.15,.8,.3,1) forwards}
+@keyframes arcade-burst{from{transform:translate(-50%,10px) scale(.3);opacity:0}
+ 28%{opacity:1}to{transform:translate(calc(-50% + var(--arcade-particle-x,0px)),-90px) scale(1.9);opacity:0}}
+.arcade-scene.arcade-burst-active{box-shadow:inset 0 0 20px #fff,0 0 23px #bda7ed80}
+.arcade-projection .arcade-scene{min-height:min(28dvh,300px)}
+@media(prefers-reduced-motion:reduce){
+ .arcade-scene::before,.arcade-tap-btn::before,.arcade-king,.arcade-rope,
+ .arcade-captain-ready.go,.arcade-rocket-art .arcade-flame{animation:none!important}
+ .arcade-tap-particle{display:none}
+ .arcade-rocket-art{transition:none}
+}
