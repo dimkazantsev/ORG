@@ -167,7 +167,7 @@ function personalResults(s,final=false){
  (players.length?QwizStage.leaderboard(players,final?80:10):'<p>Пока нет результатов игроков</p>')+
  (final&&stats.length?QwizStage.questionStats(stats):'')+'</section>';
 }
-function roundScorePanel(view,title,final=false){
+function roundScorePanel(view,title,final=false,endsAt=null){
  const rows=(view?.teams||[]),players=(view?.players||[]),reward=view?.reward||null;
  const rewardBanner=reward?'<div class="round-reward-banner is-'+(reward.tone==='harm'?'harm':'boost')+
  '"><strong>'+(reward.tone==='harm'?'Красный манёвр':'Зелёный маршрут')+' · '+esc(reward.title)+'</strong>'+
@@ -179,7 +179,7 @@ function roundScorePanel(view,title,final=false){
  '<h1>'+esc(title||'Результаты')+'</h1>'+rewardBanner+
  '<div class="round-results-grid"><section><h2>Команды</h2>'+render(rows,true)+'</section>'+
  '<section><h2>Участники</h2>'+render(players,false)+'</section></div>'+
- (!final?'<p class="round-results-next">Следующая карточка откроется автоматически.</p>':'')+'</section>';
+ (!final?'<p class="round-results-next">Следующая карточка через <strong id="playerResultCountdown">'+(endsAt?remaining(endsAt):'—')+'</strong> сек.</p>':'')+'</section>';
 }
 function roundIntroMarkup(s){
  const title=s.activity?.title||'Следующий раунд',icon=s.activity?.icon||s.activity?.settings?.queued_icon;
@@ -225,7 +225,7 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
     text('playerStatus','Командное испытание. Действуйте вместе, зарабатывайте достижения и жетоны.');return;
   }
    if(s.activity?.type==='round_stats'){
-    el.innerHTML=roundScorePanel(s.round_results,'Итоги раунда');text('playerStatus','Итоги раунда · следующий этап автоматически.');return;
+    el.innerHTML=roundScorePanel(s.round_results,'Итоги раунда',false,s.ends_at);text('playerStatus','Итоги раунда · следующий этап автоматически.');return;
   }
   const type=s.activity?.type||'break';
    const hasStandings=['team_stats','player_stats'].includes(type);
@@ -310,7 +310,12 @@ async function submitRichAnswer(){
 function exportResults(){const s=ctx.room;if(!s)return;const rows=[['Место','Команда','Игроков','Очков'],...s.teams.slice().sort((a,b)=>b.score-a.score).map((x,i)=>[i+1,x.name,x.players,x.score])];const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='org-party-'+s.code+'.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 async function copyInvite(){if(!ctx.roomCode)return;const invite=joinUrl(ctx.roomCode);try{await navigator.clipboard.writeText(invite);notice('hostNotice','Ссылка скопирована.','success')}catch{notice('hostNotice','Ссылка для приглашения: '+invite)}}
-function updateClocks(){if(ctx.room?.paused)return;if(ctx.room?.phase==='intermission'&&ctx.room?.activity?.type==='card_intro'){
+function updateClocks(){if(ctx.room?.paused)return;
+ if(ctx.room?.phase==='intermission'&&ctx.room?.activity?.type==='round_stats'){
+  const left=remaining(ctx.room.ends_at);text('playerResultCountdown',left);
+  if(left===0&&!ctx.releaseTimer)ctx.releaseTimer=setTimeout(()=>{ctx.releaseTimer=null;if(ctx.roomCode)refreshRoom(false)},650+Math.floor(Math.random()*800));
+  return;
+ }if(ctx.room?.phase==='intermission'&&ctx.room?.activity?.type==='card_intro'){
  const n=remaining(ctx.room.ends_at);text('playerCountdown',n);
  if(n===0&&!ctx.releaseTimer)ctx.releaseTimer=setTimeout(()=>{ctx.releaseTimer=null;if(ctx.roomCode)refreshRoom(false)},600+Math.floor(Math.random()*850));
  return;
