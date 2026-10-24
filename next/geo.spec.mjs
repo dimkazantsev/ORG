@@ -116,3 +116,35 @@ test('Geography textual choice reveals the correct answer in green and a wrong s
  const paint=await page.locator('#geoAnswerColors [data-geo-answer="correct"]').evaluate(el=>getComputedStyle(el).backgroundColor);
  expect(paint).toBe('rgb(229, 247, 237)');
 });
+
+
+test('One region touch exposes confirm; server correct region appears highlighted before next question',async({page})=>{
+ await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:'window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}})},rpc:async()=>({data:{registered:false},error:null})})};'}));
+ await page.route('**/data/regions.topojson',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(topology())}));
+ await page.setViewportSize({width:390,height:844});
+ await page.goto(HOME);
+ await page.evaluate(()=>{
+  const el=document.createElement('div');el.id='geoTapConfirm';document.body.append(el);
+  let answerCount=0;
+  const client={rpc:async(name,args)=>{
+   if(name!=='qwiz_geo_play')throw Error('Unexpected RPC');
+   if(args.p_answer!==null)answerCount++;
+   return {error:null,data:{active:true,open:true,remaining:95,index:answerCount,total:3,score:0,correct:0,
+    question:{mode:'locate',name:answerCount?'Субъект 2':'Субъект 1',region:answerCount?'region-2':'region-1',options:[]},
+    last_answer:answerCount?{correct:false,correct_text:'Субъект 1',correct_region_id:'region-1',selected_region_id:args.p_answer}:null}};
+  }};
+  window.QwizGeo.mountPlayer(el,{code:'A1B2C3D4',room_id:'00000000-0000-4000-8000-000000000123',
+   phase:'intermission',activity:{settings:{arcade_mode:'russia_map'}}},{client});
+ });
+ const button=page.locator('#geoTapConfirm [data-geo-confirm]');
+ await expect(page.locator('#geoTapConfirm .geo-region')).toHaveCount(89);
+ await expect(button).toBeHidden();
+ await page.locator('#geoTapConfirm [data-region="region-3"]').click();
+ await expect(button).toBeVisible();
+ await expect(button).toBeEnabled();
+ await expect(button).toContainText('Подтвердить: Субъект 3');
+ await button.click();
+ await expect(page.locator('#geoTapConfirm .geo-answer-feedback')).toContainText('Субъект 1');
+ await expect(page.locator('#geoTapConfirm [data-region="region-1"]')).toHaveClass(/geo-correct-answer/);
+ await expect(page.locator('#geoTapConfirm [data-region="region-3"]')).toHaveClass(/geo-wrong-answer/);
+});
