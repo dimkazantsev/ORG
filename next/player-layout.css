@@ -352,3 +352,43 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
  .game-lobby-wait .lobby-progress{margin-top:3px}
 }
 @media(prefers-reduced-motion:reduce){.game-lobby-wait .lobby-play-mark{animation:none}}
+
+
+/* Waiting icon geometry: the play symbol is fixed at the exact circle center. */
+.game-lobby-wait .lobby-signal{
+ box-sizing:border-box;position:relative;display:grid;place-items:center;
+ width:clamp(96px,18dvh,146px);aspect-ratio:1;
+ margin:0 auto 6px;background:#f8f4ff;border:1px solid #e0d3f2;
+ border-radius:50%;box-shadow:0 8px 22px #593b9916;
+ transform:none;animation:none!important;
+}
+.game-lobby-wait .lobby-signal-ring{
+ position:absolute;inset:5px;z-index:0;border:1px solid #ae91e1;
+ border-radius:50%;opacity:.5;pointer-events:none;
+ animation:lobby-centered-pulse 3.5s ease-in-out infinite;
+}
+.game-lobby-wait .lobby-signal-ring:nth-child(2){
+ inset:-8px;border-color:#d0bbee;animation-delay:1.75s;
+}
+.game-lobby-wait .lobby-signal-core{
+ box-sizing:border-box;position:relative;z-index:1;display:grid;place-items:center;
+ width:56%;aspect-ratio:1;min-width:54px;min-height:54px;
+ border-radius:50%;background:linear-gradient(145deg,#8854e5,#6e3bc9);
+ border:1px solid #7742d7;box-shadow:0 6px 17px #7040db26;
+}
+.game-lobby-wait .lobby-play-mark{
+ display:block;position:relative;z-index:1;
+ width:46%!important;height:46%!important;flex:none;
+ color:#fff;filter:none;animation:none;transform:translateX(2px);
+}
+@keyframes lobby-centered-pulse{
+ 0%,100%{opacity:.34;transform:scale(.995)}
+ 50%{opacity:.72;transform:scale(1.025)}
+}
+@media(max-height:620px){
+ .game-lobby-wait .lobby-signal{width:clamp(76px,15dvh,110px)}
+ .game-lobby-wait .lobby-signal-core{min-width:44px;min-height:44px}
+}
+@media(prefers-reduced-motion:reduce){
+ .game-lobby-wait .lobby-signal-ring{animation:none!important;transform:none}
+}
