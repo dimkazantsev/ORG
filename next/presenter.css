@@ -163,7 +163,7 @@ body:fullscreen .projection-shell{height:100dvh}
 .projection-welcome p{font-size:clamp(18px,2vw,30px);max-width:750px;z-index:1}
 .welcome-orbit{position:absolute;inset:0;pointer-events:none}
 .welcome-orbit span{position:absolute;display:block;font-size:clamp(72px,12vw,175px);opacity:.4;animation:qwiz-float 5s ease-in-out infinite alternate}
-.welcome-orbit span:nth-child(1){top:7%;left:9%;color:#9176ea}.welcome-orbit span:nth-child(2){bottom:8%;right:10%;color:#e0ad56;animation-delay:-2s}.welcome-orbit span:nth-child(3){top:14%;right:13%;color:#85b8e0;animation-delay:-3s}
+.welcome-orbit span:nth-child(1){top:7%;left:9%;color:#9176ea}.welcome-orbit span:nth-child(2){bottom:8%;right:10%;color:#e0ad56;animation-delay:-2s}.welcome-orbit span:nth-child(3){top:14%;right:13%;color:#af88e7;animation-delay:-3s}
 @keyframes qwiz-float{from{transform:translateY(-12px) rotate(-8deg)}to{transform:translateY(14px) rotate(11deg)}}
 .welcome-dots{display:flex;gap:12px;margin-top:26px}.welcome-dots i{width:13px;height:13px;border-radius:50%;background:#9470e2;animation:qwiz-pulse 1.2s ease-in-out infinite alternate}.welcome-dots i:nth-child(2){animation-delay:.2s}.welcome-dots i:nth-child(3){animation-delay:.4s}.welcome-dots i:nth-child(4){animation-delay:.6s}.welcome-dots i:nth-child(5){animation-delay:.8s}
 @keyframes qwiz-pulse{to{transform:scale(.45);opacity:.4}}
