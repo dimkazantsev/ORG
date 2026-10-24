@@ -144,7 +144,7 @@ function automaticRoundStandings(state){
  '<span class="projection-eyebrow">РАУНД ЗАВЕРШЁН · РЕЗУЛЬТАТЫ</span><h1>Итоги раунда</h1>'+rewardBanner+
  '<div class="projection-round-columns"><section><h2>Команды <small>· '+escapeText(d.team_unit||'очки')+'</small></h2>'+list(teams)+'</section>'+
  '<section><h2>Участники <small>· '+escapeText(d.player_unit||'баллы')+'</small></h2>'+list(players)+'</section></div>'+
- '<p>Следующий этап начнётся автоматически</p></section>';
+ '<p>Следующий этап через <strong id="projectorResultCountdown">'+(state.ends_at?seconds(state.ends_at):'—')+'</strong> сек.</p></section>';
 }
 function roundIntroScene(state){
  const title=state.activity?.title||'Новый раунд',icon=state.activity?.icon||'flag';
@@ -270,6 +270,9 @@ function render(state){
  $('projectionPlay').hidden=!state.code;$('projectionPlay').href=link(state.code);
  const key=[state.code,state.phase,state.index,state.activity?.title,state.activity?.type,state.activity?.settings?.arcade_mode].join(':');
  if(key===ctx.renderKey){
+  if(state.phase==='intermission'&&state.activity?.type==='round_stats'&&$('projectorResultCountdown')){
+   $('projectorResultCountdown').textContent=state.ends_at?seconds(state.ends_at):'—';
+  }
   if(state.phase==='lobby'){QwizTeams.board($('projectionTeamBoard'),state.lobby_teams||[],state.code);scheduleFitProjection();}
   if(state.phase==='question'){QwizStage.patchTeams($('projectionMain'),state.teams);if($('teamAnswerCount'))$('teamAnswerCount').textContent=(state.teams||[]).reduce((a,t)=>a+Number(t.answered||0),0)}
   if(!state.paused)QwizStage.updateClock(state,ctx.offset);return;
