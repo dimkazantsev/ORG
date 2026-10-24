@@ -3,14 +3,12 @@ on:
   push:
     paths:
       - 'next/presenter.*'
-      - 'next/copy-codes.*'
       - 'next/visual.spec.mjs'
       - 'next/projection-fit.spec.mjs'
       - '.github/workflows/presenter-layout-qa.yml'
   pull_request:
     paths:
       - 'next/presenter.*'
-      - 'next/copy-codes.*'
       - 'next/visual.spec.mjs'
       - 'next/projection-fit.spec.mjs'
       - '.github/workflows/presenter-layout-qa.yml'
@@ -38,7 +36,6 @@ jobs:
           python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/qwiz-layout-server.log 2>&1 &
           npx playwright test next/visual.spec.mjs --grep "Audience setup compact layout|Audience QR appears immediately|Optional manual room picker" --reporter=list --workers=1
           npx playwright test next/projection-fit.spec.mjs --reporter=list --workers=1
-          npx playwright test next/copy-codes.spec.mjs --reporter=list --workers=1
       - name: Upload screenshots
         if: always()
         uses: actions/upload-artifact@v4
