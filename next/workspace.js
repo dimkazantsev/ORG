@@ -869,17 +869,21 @@ function wire(){
     geo_modes:['locate','identify','capital','flag','silhouette','neighbour','detective','district']};renderCards();
   }else appendCard(b.dataset.card,b.dataset.arcade);
  };
+ let lastCardTap=null;
  $('roundCards').onclick=e=>{
+  if(e.target.closest('button,a,input,select,textarea'))lastCardTap=null;
   const edit=e.target.closest('[data-edit-card]');if(edit){editCard(Number(edit.dataset.editCard));return}
   const copy=e.target.closest('[data-duplicate-card]');if(copy){duplicateCard(Number(copy.dataset.duplicateCard));return}
   const del=e.target.closest('[data-delete-card]');if(del){const i=Number(del.dataset.deleteCard),c=state.cards[i];if(c&&confirm('Удалить раунд «'+c.title+'» из сборки? Для сохранения изменений нажмите «Сохранить сборку».')){if(state.selectedCard===c)state.selectedCard=null;state.cards.splice(i,1);renderCards();msg('buildMessage','Раунд удалён из конструктора. Сохраните сборку, чтобы применить изменения.')}return}
   const move=e.target.closest('[data-move]');if(move){const [a,d]=move.dataset.move.split(':').map(Number);moveCard(a,a+d);return}
-  const card=e.target.closest('.round-card');if(card&&!e.target.closest('button,a,input,select,textarea'))selectCard(Number(card.dataset.index));
+  const element=e.target.closest('.round-card');
+  if(element&&!e.target.closest('button,a,input,select,textarea')){
+   const index=Number(element.dataset.index),ref=state.cards[index],now=performance.now();
+   const secondTap=lastCardTap?.ref===ref&&now-lastCardTap.time<=550;
+   if(e.detail>=2||secondTap){lastCardTap=null;selectCard(index);editCard(index)}
+   else{lastCardTap={ref,time:now};selectCard(index)}
+  }
  };
- $('roundCards').addEventListener('dblclick',e=>{
-  if(e.target.closest('button,a,input,select,textarea'))return;
-  const card=e.target.closest('.round-card');if(card)editCard(Number(card.dataset.index));
- });
  $('roundCards').addEventListener('keydown',e=>{
   if(!e.target.matches('.round-card')||(e.key!=='Enter'&&e.key!==' '))return;
   e.preventDefault();
