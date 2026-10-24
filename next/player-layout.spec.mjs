@@ -14,7 +14,11 @@ async function fits(page){
  await expect(page.locator('html')).toHaveClass(/player-compact/);
  await expect.poll(()=>page.evaluate(()=>Math.max(document.documentElement.scrollHeight-innerHeight,document.documentElement.scrollWidth-innerWidth))).toBeLessThanOrEqual(1);
  const overflow=await page.locator('#gameContent').evaluate(el=>{const box=el.getBoundingClientRect();return Array.from(el.querySelectorAll('h1,.question-picture,.option,.rich-choice,.rich-row,.rich-send,.assembly-preview,.player-answer')).filter(x=>x.getClientRects().length&&getComputedStyle(x).visibility!=='hidden').map(x=>{const r=x.getBoundingClientRect();return {tag:x.className||x.tagName,bottom:r.bottom-box.bottom,right:r.right-box.right,left:box.left-r.left,overflow:x.scrollHeight-x.clientHeight}}).filter(x=>x.bottom>2||x.right>2||x.left>2||x.overflow>2)});
- expect(overflow).toEqual([]);
+ const where=await page.evaluate(()=>({width:innerWidth,height:innerHeight,
+  kind:ctx.room?.question?.kind,prompt:ctx.room?.question?.prompt?.slice(0,70),
+  phase:ctx.room?.phase,answer:ctx.room?.has_answer,
+  layout:document.querySelector('#gameContent .option-list')?.className}));
+ expect(overflow,JSON.stringify(where)).toEqual([]);
 }
 for(const [width,height] of [[320,480],[320,568],[390,844],[768,1024],[667,375],[568,320]])test('All flag answers fit one screen at '+width+'×'+height,async({page})=>{
  await page.setViewportSize({width,height});await setup(page);
