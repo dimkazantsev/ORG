@@ -49,6 +49,20 @@ test('Geography of Russia is a real question bank, not a list of regions',()=>{
  assert.match(seed,/REVOKE ALL ON FUNCTION public\.qwiz_geo_questions/);
  assert.match(seed,/GRANT EXECUTE ON FUNCTION public\.qwiz_geo_questions/);
 });
+test('Mini-game palette and saved cards use distinct polished vector icons',()=>{
+ const workspace=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const palette=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ const styles=readFileSync(new URL('./workspace.css',import.meta.url),'utf8');
+ for(const mode of ['rocket','blitz','tug','captain']){
+   assert.match(workspace,new RegExp("arcade_"+mode+":'<path|arcade_"+mode+":'<circle"));
+   assert.match(palette,new RegExp('data-arcade="'+mode+'"'));
+ }
+ assert.match(workspace,/arcade-palette-icon/);
+ assert.match(workspace,/cardIconSvg\(c\.type,c\.icon\)/);
+ assert.match(styles,/#arcadePalette \.arcade-palette-icon svg/);
+ assert.match(palette,/workspace\.js\?v=arcade-icons-20261024-1/);
+ assert.match(palette,/workspace\.css\?v=arcade-icons-20261024-1/);
+});
 test('New JavaScript parses independently of legacy app.js',()=>{assert.doesNotThrow(()=>new Function(js));assert.doesNotMatch(html,/\.\/\.\.\/(app\.js|styles\.css)/)});
 test('All direct DOM IDs referenced by client exist in HTML',()=>{
  const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]));
