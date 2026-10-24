@@ -488,7 +488,7 @@ function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{}
  $('cardRoundSettings').hidden=c.type!=='round';$('cardFinalePreview').hidden=c.type!=='finale';
  const arcade=arcadeGames[s.arcade_mode];$('cardArcadeSettings').hidden=!arcade;
   const geo=s.arcade_mode==='russia_map';$('cardGeoSettings').hidden=!geo;
-  $('cardFlagModes').hidden=geo;$('cardModesDetails').open=geo;
+  $('cardFlagModes').hidden=geo;$('cardModesDetails').open=c.type==='round';
   if(geo)$('cardModesInfo').textContent='8 способов ответа · выберите нужные';
   if(geo){if(!c.topic_id)c.topic_id=state.topics.find(t=>t.name==='География России')?.id||null;$('cardTopic').value=c.topic_id||'';
    $('cardGeoCount').value=s.geo_count||15;$('cardGeoSeconds').value=s.geo_seconds||180;
@@ -501,7 +501,7 @@ function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{}
  const selected=Array.isArray(s.flag_modes)&&s.flag_modes.length?s.flag_modes:flagModes.filter(x=>x[2]).map(x=>x[0]);
  $('cardFlagModes').innerHTML=flagModes.map(([id,name,ready])=>'<label class="check-row flag-mode-item '+(!ready?'unavailable':'')+'"><input type="checkbox" data-card-mode="'+esc(id)+'" '+(selected.includes(id)&&ready?'checked ':'')+(ready?'':'disabled ')+'><span>'+esc(name)+(ready?'':' · скоро')+'</span></label>').join('');
  $('cardModesInfo').textContent=geo?'8 механик · настройте для каждого игрока':selected.length===1?'Одна механика':selected.length===2?'Две механики':'Все доступные механики';
- $('cardModesDetails').open=geo;
+ $('cardModesDetails').open=c.type==='round';
  $('cardDialog').showModal()}
 function saveCard(event){event.preventDefault();const c=state.cards[state.editingCard];
  const selected=all('[data-card-mode]:checked',$('cardFlagModes')).map(x=>x.dataset.cardMode);
