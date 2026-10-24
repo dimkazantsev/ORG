@@ -30,10 +30,10 @@ const cardSvgPaths={
  team_stats:'<circle cx="9" cy="8" r="3"/><path d="M3.5 20v-2c0-3 2-5 5.5-5s5.5 2 5.5 5v2M17 5a3 3 0 0 1 0 6M17 14c2.5 0 4 2 4 4v2"/>',
  player_stats:'<circle cx="12" cy="7" r="4"/><path d="M4.5 21v-2c0-4.2 3-7 7.5-7s7.5 2.8 7.5 7v2"/>',
  bonus:'<path d="m12 2 2.6 6.4L21 11l-6.4 2.6L12 20l-2.6-6.4L3 11l6.4-2.6L12 2Z"/>',
- arcade_rocket:'<path d="M5 16c1-5 5-9 12-12 0 7-4 11-10 12L5 16Z M12 7l5 5 M6 19l-2 3m8-5-3 4"/><circle cx="12.5" cy="10" r="1.5"/>',
- arcade_blitz:'<path d="m13 2-9 12h7l-1 8 10-13h-7V2Z"/>',
- arcade_tug:'<path d="M3 12h18M4 8v8m16-8v8M8 9l4 3-4 3m8-6-4 3 4 3"/>',
- arcade_captain:'<path d="m2 8 5 4 5-7 5 7 5-4-2 12H4L2 8Z M12 2v3"/>',
+ arcade_rocket:'<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.7-.84.7-2.13-.1-2.91a2 2 0 0 0-2.9-.09Z"/><path d="m12 15-3-3c.9-2.6 2.6-4.9 5-6.6C16.6 3.5 19.3 2 22 2c0 2.7-1.5 5.4-3.4 8a17.6 17.6 0 0 1-6.6 5Z"/><path d="M9 12H4s.6-3 2-4c1.6-1.1 5 0 5 0M12 15v5s3-.6 4-2c1.1-1.6 0-5 0-5"/><circle cx="16.2" cy="7.8" r="1.5"/>',
+ arcade_blitz:'<circle cx="10.5" cy="13.5" r="7.5"/><path d="M8 2h5m-2.5 4V3m6.5 3.5 1.5-1.5"/><path d="m11.5 9-3 5h3l-1 4 4-6h-3Z"/>',
+ arcade_tug:'<path d="M3 12h6m6 0h6M6 8l-4 4 4 4m12-8 4 4-4 4"/><path d="m10 10.3 2-2.3 2 2.3v3.4L12 16l-2-2.3Z"/><path d="m10 10.3 4 3.4m0-3.4-4 3.4"/>',
+ arcade_captain:'<path d="m14.5 17.5 3-3L6.75 3.75a2.12 2.12 0 0 0-3 3L14.5 17.5Z"/><path d="m13 19 6-6m-3 3 4 4m-1 1 2-2"/><path d="m14.5 6.5 3-3a2.12 2.12 0 0 1 3 3l-3 3M5 14l-3 3 5 5 3-3"/>',
  duel:'<path d="m4 7 4-4m0 0 4 4M8 3v12M20 17l-4 4m0 0-4-4m4 4V9"/>',
  finale:'<path d="M7 4h10v7c0 7-10 7-10 0V4ZM7 7H3v3c0 3 3 5 6 5m8-8h4v3c0 3-3 5-6 5m-3 2v4m-4 0h8"/>',
  flag:'<path d="M5 21V3m0 1c5-3 8 2 15-1v11c-7 3-10-2-15 1"/>',
@@ -617,7 +617,10 @@ async function signOut(){await state.db.auth.signOut();location.replace('./')}
 function wire(){
  for(const b of all('#cardPalette [data-card],#arcadePalette [data-card]')){
   const label=b.textContent.trim().replace(/^[^\s]+\s+/,'');
-  b.innerHTML=cardIconSvg(b.dataset.card,b.dataset.arcade?'arcade_'+b.dataset.arcade:null)+'<span>'+esc(label)+'</span>';
+  const icon=cardIconSvg(b.dataset.card,b.dataset.arcade?'arcade_'+b.dataset.arcade:null);
+  b.innerHTML=b.dataset.arcade
+   ?'<span class="arcade-palette-icon" aria-hidden="true">'+icon+'</span><span>'+esc(label)+'</span>'
+   :icon+'<span>'+esc(label)+'</span>';
  }
  for(const b of all('[data-section]'))b.onclick=()=>section(b.dataset.section);
  $('signOut').onclick=()=>{sessionStorage.removeItem(resumeKey);signOut()};
