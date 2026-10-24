@@ -14,18 +14,23 @@ async function workspace(page){
  'window.savedBuild=null;window.actions=[];window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:{user:{id:"host"}}}}),signOut:async()=>({})},rpc:async(name,args)=>{window.actions.push([name,args]);if(name==="org_quiz_is_admin_check")return {data:true};if(name==="qwiz_studio"&&args.p_action==="overview")return {data:{topics:[],builds:[],total_questions:0}};if(name==="qwiz_studio"&&args.p_action==="questions")return {data:{items:[],total:0}};if(name==="qwiz_studio"&&args.p_action==="build_save"){window.savedBuild=args.p_input;return {data:{id:"saved"}}}if(name==="qwiz_host_rooms")return {data:[]};if(name==="qwiz_party_state")return {data:window.fixture};if(name==="qwiz_party_control"){window.fixture={...window.fixture,phase:window.fixture.phase==="question"?"result":"question",ends_at:new Date(Date.now()+10000).toISOString()};return {data:window.fixture.phase}}return {data:{items:[],total:0}}},channel:()=>({on(){return this},subscribe(){return this}}),removeChannel:()=>{}})};'}));
  await page.goto(base+'workspace.html');await expect(page.locator('#connText')).toHaveAttribute('data-state','ready');
 }
-test('Fifteen distinct habitat icons fit the classroom screen and illustration precedes question',async({page})=>{
- await page.setViewportSize({width:1440,height:1000});await projector(page,state());await expect(page.locator('.habitat-team')).toHaveCount(15);
- const d=await page.evaluate(()=>{const icons=[...document.querySelectorAll('.habitat-icon')];return {symbols:new Set(icons.map(x=>x.querySelector('.habitat-base').getAttribute('href'))).size,art:document.querySelector('.question-frame').getBoundingClientRect().bottom,question:document.querySelector('.projection-question h1').getBoundingClientRect().top,last:icons.at(-1).getBoundingClientRect().bottom,overflow:document.documentElement.scrollWidth-innerWidth}});
- expect(d.symbols).toBe(15);expect(d.art).toBeLessThan(d.question);expect(d.last).toBeLessThan(1000);expect(d.overflow).toBeLessThanOrEqual(1);
- await page.screenshot({path:'visual-artifacts/question-stage-1440.png',fullPage:true,animations:'disabled'});
+test('Question screen remains readable without leaking team standings or fallback decorations',async({page})=>{
+ await page.setViewportSize({width:1440,height:1000});await projector(page,state());
+ await expect(page.locator('.projection-question-only h1')).toContainText('Какая планета');
+ await expect(page.locator('.projection-question-instruction')).toContainText('Варианты ответа доступны');
+ await expect(page.locator('.habitat-team')).toHaveCount(0);
+ await expect(page.locator('.question-frame')).toHaveCount(0);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);
 });
-test('Replies fill five segments bottom-up without replacing the illustration',async({page})=>{
- const s=state();s.teams[0].answered=0;await projector(page,s);const first=page.locator('[data-team="team-0"]');
- await expect(first.locator('.habitat-icon')).toHaveCount(1);await page.evaluate(()=>window.originalArt=document.querySelector('.question-frame'));
- await page.evaluate(()=>{window.fixture.teams[0].answered=1;render(window.fixture)});await expect(first.locator('.team-answered')).toHaveText('1');await expect(first.locator('.habitat-color')).toHaveAttribute('style',/76.4%/);
- await page.evaluate(()=>{window.fixture.teams[0].answered=5;render(window.fixture)});await expect(first.locator('.team-answered')).toHaveText('5');await expect(first.locator('.habitat-color')).toHaveAttribute('style',/6%/);
- expect(await page.evaluate(()=>window.originalArt===document.querySelector('.question-frame'))).toBe(true);
+test('Aggregate answer count refreshes without replacing the question',async({page})=>{
+ const s=state();s.teams[0].answered=0;await projector(page,s);
+ await expect(page.locator('#teamAnswerCount')).toContainText('0 ответов');
+ await page.evaluate(()=>window.questionHeading=document.querySelector('.projection-question-only h1'));
+ await page.evaluate(()=>{window.fixture.teams[0].answered=1;render(window.fixture)});
+ await expect(page.locator('#teamAnswerCount')).toContainText('1 ответов');
+ await page.evaluate(()=>{window.fixture.teams[0].answered=5;render(window.fixture)});
+ await expect(page.locator('#teamAnswerCount')).toContainText('5 ответов');
+ expect(await page.evaluate(()=>window.questionHeading===document.querySelector('.projection-question-only h1'))).toBe(true);
 });
 test('Numeric absolute timer and time bar decrease together',async({page})=>{
  await page.clock.install();await projector(page,state());const before=Number(await page.locator('#stageTimer').textContent()),transform=await page.locator('.clock-track>span').evaluate(el=>getComputedStyle(el).transform);
@@ -36,24 +41,34 @@ test('Ten warning ticks and distinct expiry sound do not repeat on clock refresh
  await projector(page,state());const cues=await page.evaluate(()=>{const heard=[];QwizStage.audio.play=kind=>heard.push(kind);for(let n=10;n>=0;n--){const s={code:'test',index:2,phase:'question',duration:30,ends_at:new Date(Date.now()+n*1000).toISOString()};QwizStage.updateClock(s);QwizStage.updateClock(s)}return heard});
  expect(cues.filter(x=>x==='tick')).toHaveLength(10);expect(cues.filter(x=>x==='timeup')).toHaveLength(1);
 });
-test('Audio unlocks on a gesture, respects volume/mute and frees every oscillator',async({page})=>{
- await projector(page,state());expect(await page.evaluate(()=>QwizStage.audio.context)).toBeNull();
- await expect(page.locator('#projectionSound')).toHaveAttribute('aria-pressed','true');
- await page.locator('#projectionSound').click();await expect(page.locator('#projectionSound')).toHaveAttribute('aria-pressed','false');
- await page.locator('#projectionSound').click();await expect(page.locator('#projectionSound')).toHaveAttribute('aria-pressed','true');
- await page.locator('#projectionVolume').fill('20');expect(await page.evaluate(()=>QwizStage.audio.volume)).toBe(.2);
- await page.evaluate(()=>QwizStage.audio.play('reveal'));expect(await page.evaluate(()=>QwizStage.audio.voices.size)).toBeGreaterThan(0);await expect.poll(()=>page.evaluate(()=>QwizStage.audio.voices.size)).toBe(0);
- await page.locator('#projectionSound').click();await page.evaluate(()=>QwizStage.audio.play('reveal'));expect(await page.evaluate(()=>QwizStage.audio.voices.size)).toBe(0);
+test('Public projector keeps sound controls private but obeys moderator audio settings',async({page})=>{
+ await projector(page,state());
+ await expect(page.locator('#projectionSound')).toBeHidden();
+ await page.evaluate(()=>{
+  render({...window.fixture,screen_settings:{sound_enabled:false,volume:20,music_enabled:false}});
+ });
+ expect(await page.evaluate(()=>QwizStage.audio.enabled)).toBe(false);
+ expect(await page.evaluate(()=>QwizStage.audio.volume)).toBe(.2);
+ await page.evaluate(()=>render({...window.fixture,screen_settings:{sound_enabled:true,volume:60,music_enabled:false}}));
+ expect(await page.evaluate(()=>QwizStage.audio.enabled)).toBe(true);
+ expect(await page.evaluate(()=>QwizStage.audio.volume)).toBe(.6);
 });
-test('Animated answer appears above teams and individual ranking',async({page})=>{
- await page.setViewportSize({width:1440,height:1000});await projector(page,state('result'));await expect(page.locator('.answer-copy h1')).toHaveText('Меркурий');await expect(page.locator('.speed-delta')).toHaveCount(15);await expect(page.locator('.player-leaderboard li')).toHaveCount(10);
- const d=await page.evaluate(()=>({teams:document.querySelector('.stage-team-results').getBoundingClientRect().bottom,players:document.querySelector('.stage-player-results').getBoundingClientRect().top,duration:getComputedStyle(document.querySelector('.answer-reveal')).animationDuration}));expect(d.players).toBeGreaterThan(d.teams);expect(d.duration).toBe('0.65s');
- await page.screenshot({path:'visual-artifacts/answer-stage-1440.png',fullPage:true,animations:'disabled'});
+test('Server result reveals exactly one correct answer without a duplicated choice grid',async({page})=>{
+ await page.setViewportSize({width:1440,height:1000});await projector(page,state('result'));
+ await expect(page.locator('.projection-answer-reveal')).toBeVisible();
+ await expect(page.locator('.projection-answer-single')).toHaveCount(1);
+ await expect(page.locator('.projection-answer-text')).toHaveText('Меркурий');
+ await expect(page.locator('.projection-reveal-option')).toHaveCount(0);
+ await expect(page.locator('.habitat-team')).toHaveCount(0);
+ const box=await page.locator('.projection-answer-reveal').boundingBox();
+ expect(box).not.toBeNull();expect(box.y+box.height).toBeLessThanOrEqual(1000);
 });
-test('Question expiry requests answer and answer expiry requests following stage',async({page})=>{
+test('Question expiry reveals the answer and advances to the next server question',async({page})=>{
  await page.clock.install();const s=state();s.ends_at=new Date(Date.now()+1100).toISOString();await projector(page,s);
  await page.evaluate(()=>{ctx.client.rpc=async()=>{if(window.fixture.phase==='question'&&Date.now()>=Date.parse(window.fixture.ends_at))window.fixture={...window.fixture,phase:'result',duration:5,answer:{text:'Меркурий'},ends_at:new Date(Date.now()+5000).toISOString()};else if(window.fixture.phase==='result'&&Date.now()>=Date.parse(window.fixture.ends_at))window.fixture={...window.fixture,phase:'question',index:2,answer:null,ends_at:new Date(Date.now()+30000).toISOString()};return {data:window.fixture}}});
- await page.clock.fastForward(1700);await expect(page.locator('.answer-copy h1')).toHaveText('Меркурий');await page.clock.fastForward(5600);await expect(page.locator('.question-step')).toContainText('Вопрос 3');await expect(page.locator('.answer-copy')).toHaveCount(0);
+ await page.clock.fastForward(1700);await expect(page.locator('.projection-answer-text')).toHaveText('Меркурий');
+ await page.clock.fastForward(5600);await expect(page.locator('.question-step')).toContainText('Вопрос 3');
+ await expect(page.locator('.projection-answer-reveal')).toHaveCount(0);
 });
 test('Finale shows fifteen teams, forty people, three best and three most-missed questions',async({page})=>{
  await page.setViewportSize({width:1440,height:1000});await projector(page,state('finished'));await expect(page.locator('.habitat-team')).toHaveCount(15);await expect(page.locator('.player-leaderboard li')).toHaveCount(40);
@@ -63,21 +78,36 @@ test('Finale shows fifteen teams, forty people, three best and three most-missed
 test('All phases fit phones, tablets and a full HD projector without horizontal scrolling',async({page})=>{
  for(const phase of ['question','result','finished'])for(const width of [320,390,768,1920]){await page.setViewportSize({width,height:1080});await projector(page,state(phase));expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);if(width===390)await page.screenshot({path:'visual-artifacts/'+phase+'-stage-390.png',fullPage:true,animations:'disabled'})}
 });
-test('Reduced motion stops frame and answer animation without hiding content',async({page})=>{
- await page.emulateMedia({reducedMotion:'reduce'});await projector(page,state('result'));expect(await page.locator('.frame-orbit').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');expect(await page.locator('.answer-reveal').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');await expect(page.locator('.answer-copy h1')).toBeVisible();
+test('Reduced motion keeps answer legible and disables decorative animation',async({page})=>{
+ await page.emulateMedia({reducedMotion:'reduce'});await projector(page,state('result'));
+ await expect(page.locator('.projection-answer-text')).toBeVisible();
+ expect(await page.locator('.projection-answer-reveal').evaluate(el=>getComputedStyle(el).animationName)).toBe('none');
 });
-test('Entire round card and Enter key open settings; answer time is editable',async({page})=>{
- await workspace(page);await page.locator('[data-section="builder"]').click();await page.locator('#newBuild').click();await page.locator('.round-card[data-type="round"] h3').click();await expect(page.locator('#cardDialog')).toBeVisible();await expect(page.locator('#cardAnswerSeconds')).toHaveValue('10');
- await page.locator('#cardDialog [data-close]').first().click();await page.locator('.round-card[data-type="round"]').focus();await page.keyboard.press('Enter');await expect(page.locator('#cardDialog')).toBeVisible();await page.locator('#cardAnswerSeconds').fill('5');await page.locator('#cardForm button[type="submit"]').click();await expect(page.locator('.round-card[data-type="round"] .round-sub')).toContainText('ответ 5 сек.');
+test('Selecting a round is separate from opening settings with double-click or Shift+Enter',async({page})=>{
+ await workspace(page);await page.locator('[data-section="builder"]').click();await page.locator('#newBuild').click();
+ const card=page.locator('.round-card[data-type="round"]');
+ await card.locator('h3').click();await expect(card).toHaveAttribute('aria-current','true');
+ await expect(page.locator('#cardDialog')).not.toBeVisible();
+ await card.locator('h3').dblclick();await expect(page.locator('#cardDialog')).toBeVisible();
+ await expect(page.locator('#cardAnswerSeconds')).toHaveValue('10');
+ await page.locator('#cardDialog [data-close]').first().click();
+ await card.focus();await page.keyboard.press('Shift+Enter');await expect(page.locator('#cardDialog')).toBeVisible();
+ await page.locator('#cardAnswerSeconds').fill('5');await page.locator('#cardForm button[type="submit"]').click();
+ await expect(card.locator('.round-sub')).toContainText('ответ 5 сек.');
 });
 test('Bulk timing reaches all rounds and persists in the build payload',async({page})=>{
  await workspace(page);await page.locator('[data-section="builder"]').click();await page.locator('#newBuild').click();await page.locator('#appendRound').click();await page.locator('#generalSettings').click();await page.locator('#generalSeconds').fill('45');await page.locator('#generalAnswerSeconds').fill('30');await page.locator('#generalForm button[type="submit"]').click();
  await expect(page.locator('.round-card[data-type="round"] .round-sub')).toHaveText(['Тема не выбрана · Все доступные механики · 5 вопр. · 45 сек. · ответ 30 сек.','Тема не выбрана · Все доступные механики · 5 вопр. · 45 сек. · ответ 30 сек.']);await page.locator('#buildTitle').fill('Общая игра');await page.locator('#saveBuild').click();
  expect(await page.evaluate(()=>window.savedBuild.cards.filter(c=>c.type==='round').every(c=>c.settings.seconds===45&&c.settings.answer_seconds===30&&c.settings.count===5))).toBe(true);
 });
-test('Final card has a trophy, readable controls and appropriate settings',async({page})=>{
- await workspace(page);await page.locator('[data-section="builder"]').click();await page.locator('#newBuild').click();const final=page.locator('.round-card[data-type="finale"]');await expect(final.locator('svg')).toBeVisible();await expect(final.locator('[data-delete-card]')).toHaveCount(0);
- await page.screenshot({path:'visual-artifacts/builder-stage-1440.png',fullPage:true,animations:'disabled'});await final.locator('h3').click();await expect(page.locator('#cardFinalePreview')).toBeVisible();await expect(page.locator('#cardRoundSettings')).toBeHidden();
+test('Final card stays last and opens settings only on double click',async({page})=>{
+ await workspace(page);await page.locator('[data-section="builder"]').click();await page.locator('#newBuild').click();
+ const final=page.locator('.round-card[data-type="finale"]');
+ await expect(final.locator('svg')).toBeVisible();await expect(final.locator('[data-delete-card]')).toHaveCount(0);
+ await final.locator('h3').click();await expect(final).toHaveAttribute('aria-current','true');
+ await expect(page.locator('#cardDialog')).not.toBeVisible();
+ await final.locator('h3').dblclick();await expect(page.locator('#cardFinalePreview')).toBeVisible();
+ await expect(page.locator('#cardRoundSettings')).toBeHidden();
 });
 test('Moderator Next is available in question and answer and uses the protected RPC',async({page})=>{
  await workspace(page);await page.evaluate(s=>{window.fixture={...s,room_id:'room',players:[],teams:[]};state.roomCode=s.code;state.room=window.fixture;document.getElementById('liveConsole').hidden=false;section('rooms');renderLive(window.fixture)},state());

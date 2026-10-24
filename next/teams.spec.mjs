@@ -79,6 +79,21 @@ test('Classroom board renders 15 habitat icons and locally generated QR codes',a
  expect(await page.locator('.team-board-card').last().evaluate(el=>el.getBoundingClientRect().bottom)).toBeLessThan(900);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);await page.screenshot({path:'visual-artifacts/teams-projector-15.png',fullPage:true,animations:'disabled'});
 });
+test('Fifteen teams and their QR controls fit a 720p classroom screen',async({page})=>{
+ await mock(page,fixture(15,30),{host:false});
+ await page.setViewportSize({width:1280,height:720});
+ await page.goto(base+'presenter.html?room=AABBCCDD');
+ await expect(page.locator('.team-board-card')).toHaveCount(15);
+ const bounds=await page.locator('.team-board-card').evaluateAll(cards=>cards.map(c=>{
+  const box=c.getBoundingClientRect();return {top:box.top,bottom:box.bottom,right:box.right,left:box.left};
+ }));
+ expect(Math.min(...bounds.map(b=>b.top))).toBeGreaterThanOrEqual(0);
+ expect(Math.max(...bounds.map(b=>b.bottom))).toBeLessThanOrEqual(719);
+ expect(Math.min(...bounds.map(b=>b.left))).toBeGreaterThanOrEqual(0);
+ expect(Math.max(...bounds.map(b=>b.right))).toBeLessThanOrEqual(1280);
+ await expect(page.locator('.team-board-card').last()).toBeInViewport();
+});
+
 test('Shared classroom QR enlarges without consuming a team slot',async({page})=>{
  await mock(page,fixture(15,30),{host:false});await page.setViewportSize({width:1440,height:900});await page.goto(base+'presenter.html?room=AABBCCDD');
  await expect(page.locator('.team-board-card')).toHaveCount(15);

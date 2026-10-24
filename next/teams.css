@@ -120,3 +120,78 @@ html.portrait-atlas-verified .animal-portrait.has-avatar-photo.avatar-photo-fail
 .team-member .team-avatar.animal-portrait .animal-fallback-svg{
  display:block;place-self:center;margin:auto;
 }
+
+
+/* Classroom lobby / 15 teams: both panels share one fixed-height viewport.
+   Team codes remain individually zoomable; no content is lost below the screen. */
+@media(min-width:761px){
+ .projection-shell:has(.team-board-card:nth-child(11)) #projectionMain{
+  box-sizing:border-box;display:flex;flex-direction:column;align-items:stretch;
+  justify-content:flex-start;overflow:hidden;min-height:0;
+  padding-block:clamp(6px,1dvh,12px);
+ }
+ .projection-shell:has(.team-board-card:nth-child(11)) .projection-lobby.has-team-entry{
+  box-sizing:border-box;flex:0 0 auto;min-height:0;max-height:clamp(95px,17dvh,138px);
+  width:100%;margin:0;padding:8px clamp(12px,1.3vw,24px);gap:12px;
+  display:grid;grid-template-columns:minmax(0,1fr) clamp(88px,11dvh,110px);
+ }
+ .projection-shell:has(.team-board-card:nth-child(11)) .projection-lobby.has-team-entry h1{
+  font-size:clamp(24px,2.1vw,35px);margin:3px 0;line-height:1.08;
+ }
+ .projection-shell:has(.team-board-card:nth-child(11)) .projection-lobby.has-team-entry p{
+  margin:3px 0;font-size:clamp(10px,1vw,14px);line-height:1.25;
+ }
+ .projection-shell:has(.team-board-card:nth-child(11)) .projection-lobby.has-team-entry .projection-code{
+  position:static;display:inline-block;margin:0;padding:2px 7px;
+  font-size:clamp(17px,1.8vw,25px);letter-spacing:.08em;
+ }
+ .projection-shell:has(.team-board-card:nth-child(11)) .projection-lobby.has-team-entry .projection-qr{
+  box-sizing:border-box;width:clamp(88px,11dvh,110px);height:clamp(88px,11dvh,110px);
+  padding:5px;align-self:center;
+ }
+ .projection-shell:has(.team-board-card:nth-child(11)) .projection-lobby.has-team-entry .projection-qr :is(canvas,img){
+  width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;
+ }
+ .projection-shell:has(.team-board-card:nth-child(11)) .projection-team-entry{
+  box-sizing:border-box;flex:1 1 0;min-height:0;width:100%;
+  margin:clamp(5px,.9dvh,12px) 0 0;
+  display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden;
+  scrollbar-gutter:stable;
+ }
+ .projection-shell:has(.team-board-card:nth-child(11)) .projection-team-entry>h2{
+  flex:none;margin:0 0 2px;font-size:clamp(18px,1.6vw,25px);
+ }
+ .projection-shell:has(.team-board-card:nth-child(11)) .projection-team-entry>p{
+  flex:none;margin:0 0 clamp(4px,.6dvh,8px);font-size:clamp(10px,.9vw,14px);line-height:1.3;
+ }
+ .projection-shell:has(.team-board-card:nth-child(11)) .team-board{
+  box-sizing:border-box;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:clamp(5px,.7dvh,10px);width:100%;min-height:0;align-content:start;
+ }
+ .projection-shell:has(.team-board-card:nth-child(11)) .team-board-card{
+  box-sizing:border-box;padding:clamp(5px,.6dvh,9px);
+  min-width:0;min-height:0;border-radius:13px;
+ }
+ .projection-shell:has(.team-board-card:nth-child(11)) .team-board-heading{
+  min-height:0;max-height:36px;gap:5px;margin:0 0 3px;
+ }
+ .projection-shell:has(.team-board-card:nth-child(11)) .team-board-heading .habitat-icon{
+  width:clamp(24px,3.2dvh,32px);height:clamp(24px,3.2dvh,32px);
+ }
+ .projection-shell:has(.team-board-card:nth-child(11)) .team-board-heading strong{
+  font-size:clamp(11px,.92vw,15px);line-height:1.15;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;
+  overflow:hidden;
+ }
+ .projection-shell:has(.team-board-card:nth-child(11)) .team-board-qr{padding:0;margin:auto}
+ .projection-shell:has(.team-board-card:nth-child(11)) .team-board-qr :is(img,canvas){
+  display:block;width:clamp(74px,10.8dvh,102px)!important;
+  height:clamp(74px,10.8dvh,102px)!important;object-fit:contain;
+ }
+ .projection-shell:has(.team-board-card:nth-child(11)) .board-count{
+  font-size:clamp(10px,.9vw,12px);margin:4px 0 0;line-height:1.2;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .projection-shell .team-board-card{transform:none!important}
+}

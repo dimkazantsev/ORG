@@ -231,7 +231,7 @@ function questionScene(state){
  return '<section class="projection-question projection-question-only'+(state.phase==='result'?' is-result':'')+'">'+top+
   '<h1>'+escapeText(q.prompt)+'</h1>'+frame+media+
   (finished?reveal:publicChoices)+
-  (!finished?'<div class="projection-response-count">'+
+  (!finished?'<div class="projection-response-count" id="teamAnswerCount">'+
    (state.teams||[]).reduce((n,t)=>n+Number(t.answered||0),0)+' ответов получено</div>':'')+
   '</section>';
 }
