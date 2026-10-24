@@ -193,3 +193,53 @@
  .arcade-strategy-icon svg{width:21px;height:21px}
 }
 @media(prefers-reduced-motion:reduce){.player-compact #gameContent .arcade-player.is-boost-voting .arcade-vote{animation:none}}
+
+
+/* Dimensional mini-games. Live server data owns the contest; visual perspective is decorative. */
+.arcade-scene{perspective:900px;transform-style:preserve-3d;
+ background:radial-gradient(ellipse at 42% 22%,#fff 0%,#f1e9ff 55%,#e7dbfa 100%);
+ border:1px solid #d9c6ee;box-shadow:inset 0 2px 3px #fff,0 17px 37px #50318f23;
+ min-height:clamp(155px,22dvh,290px)}
+.arcade-scene::before{
+ inset:0;opacity:.5;animation:arcade-sky-drift 23s linear infinite;
+ background-image:linear-gradient(#9674d71f 1px,transparent 1px),
+ linear-gradient(90deg,#9674d71f 1px,transparent 1px);
+ background-size:34px 34px;
+ transform:perspective(700px) rotateX(53deg) scale(1.55) translateY(10%)}
+.arcade-scene::after{border:1px solid #ffffffde;box-shadow:inset 0 -14px 35px #9776c91b}
+.arcade-scene .arcade-rocket-art{filter:drop-shadow(0 22px 10px #53348e40);
+ transform-origin:50% 54%;animation:arcade-fly-3d 3.7s ease-in-out infinite}
+.arcade-scene .arcade-rocket-art .arcade-flame{filter:drop-shadow(0 0 8px #e7a35490)}
+.arcade-duel-trophy{width:100%;height:clamp(120px,21dvh,200px);display:grid;place-items:center;
+ transform-style:preserve-3d;animation:arcade-trophy-3d 3.7s ease-in-out infinite}
+.arcade-duel-trophy svg{width:auto;height:100%;max-width:100%;filter:drop-shadow(0 17px 12px #5b3f9238)}
+.arcade-captain-ready{font-size:clamp(23px,3.6vw,53px);line-height:1.14;margin:7px 0 13px;
+ text-shadow:0 3px 0 #ffffff9e}
+.arcade-captain-ready.go{color:#167f53;text-shadow:0 0 17px #62d8a74d}
+.arcade-king:not(.arcade-duel-trophy){transform-style:preserve-3d;animation:arcade-trophy-3d 4s ease-in-out infinite}
+.arcade-rope{border-radius:99px;height:clamp(22px,3.3dvh,38px);
+ background:repeating-linear-gradient(125deg,#a587d2 0 12px,#f3dbbb 12px 21px,#a78dd5 21px 32px);
+ box-shadow:0 8px 0 #7f5aac,0 17px 16px #563c8550,inset 0 3px 5px #ffffff92;
+ transform:perspective(650px) rotateX(13deg);transform-style:preserve-3d}
+.arcade-projection .arcade-scene{min-height:min(33dvh,390px);padding:clamp(28px,3dvh,45px)}
+.arcade-projection .arcade-head h2{font-size:clamp(42px,4vw,80px)}
+.arcade-projection .arcade-lead{font-size:clamp(22px,1.8vw,32px);line-height:1.35;max-width:1120px}
+.arcade-projection .arcade-countdown{font-size:clamp(48px,4vw,85px)}
+.arcade-projection .arcade-rank{font-size:clamp(19px,1.5vw,31px);min-height:50px}
+@keyframes arcade-fly-3d{
+ 0%,100%{transform:rotateY(-9deg) rotateX(2deg) translateY(0)}
+ 50%{transform:rotateY(9deg) rotateX(-4deg) translateY(-7px)}
+}
+@keyframes arcade-trophy-3d{
+ 0%,100%{transform:rotateY(-12deg) rotateX(3deg) translateY(0)}
+ 50%{transform:rotateY(13deg) rotateX(-5deg) translateY(-7px)}
+}
+@media(max-width:620px){
+ .arcade-player .arcade-scene{min-height:110px;padding:12px}
+ .arcade-duel-trophy{height:120px}
+ .arcade-captain-ready{font-size:23px;margin:4px}
+}
+@media(prefers-reduced-motion:reduce){
+ .arcade-scene .arcade-rocket-art,.arcade-duel-trophy,
+ .arcade-king:not(.arcade-duel-trophy){animation:none!important;transform:none!important}
+}
