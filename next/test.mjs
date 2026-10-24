@@ -167,6 +167,17 @@ test('Projector reveals correct flags and answer choices only in server result p
  assert.match(migration,/'options'::text/);
  assert.match(migration,/'solution'::text/);
 });
+test('Moderator slide cards shrink to content and do not reserve blank height',()=>{
+ const css=readFileSync(new URL('./workspace.css',import.meta.url),'utf8');
+ const html=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ const compact=css.slice(css.lastIndexOf('/* Compact moderator timeline:'));
+ assert.match(compact,/\.moderator-slides\s*\{[^}]*align-items:start/);
+ assert.match(compact,/grid-auto-rows:min-content/);
+ assert.match(compact,/\.moderator-slide\s*\{[^}]*min-height:0;height:auto/);
+ assert.match(compact,/\.moderator-slide-choices\s*\{[^}]*margin:2px 0 0/);
+ assert.doesNotMatch(compact,/min-height:290px|margin-top:auto/);
+ assert.match(html,/workspace\.css\?v=compact-storyboard-20261024-12/);
+});
 test('New JavaScript parses independently of legacy app.js',()=>{assert.doesNotThrow(()=>new Function(js));assert.doesNotMatch(html,/\.\/\.\.\/(app\.js|styles\.css)/)});
 test('All direct DOM IDs referenced by client exist in HTML',()=>{
  const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]));
