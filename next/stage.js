@@ -174,6 +174,21 @@ window.QwizStage=(()=>{
  const unlockOnGesture=()=>{if(audio.enabled)void audio.unlock().then(()=>{if(audio.themeWanted&&!audio.themeTimer)audio.startTheme()})};
  document.addEventListener('pointerdown',unlockOnGesture,{passive:true});
  document.addEventListener('keydown',unlockOnGesture);
+ const roundArtPaths={
+  flag:'<path d="M5 22V3m0 2c5-3 8 2 15-1v12c-7 3-10-2-15 1"/>',
+  round:'<path d="M5 22V3m0 2c5-3 8 2 15-1v12c-7 3-10-2-15 1"/>',
+  map:'<circle cx="12" cy="12" r="9"/><path d="m16.5 7.5-3.3 6-5.7 3 3-5.7z"/>',
+  arcade_rocket:'<path d="M4 16c-1.8 1.5-2 5-2 5s3.5-.2 5-2a2 2 0 0 0-3-3Z"/><path d="m12 15-3-3c1-3 2.6-5.6 5.5-7.5C16.8 3 19 2 22 2c0 3-1 5.2-2.5 7.5C17.6 12.4 15 14 12 15Z"/><path d="M9 12H4c.5-3 2.3-5.5 6-5.5M12 15v5c3-.5 5.5-2.3 5.5-6"/><circle cx="16.2" cy="7.8" r="1.2"/>',
+  arcade_blitz:'<circle cx="12" cy="12.5" r="8"/><path d="M10 2h4m-2 2v2m6.5 0L20 4.5M12.5 8l-4 6h4l-1 4 5-7h-4z"/>',
+  arcade_tug:'<path d="M2 12h7m6 0h7M7 8l-4 4 4 4m10-8 4 4-4 4"/><path d="m9.5 11 2.5-3 2.5 3v3L12 17l-2.5-3z"/>',
+  arcade_captain:'<path d="M5 3 19 17m-5 3 6-6m-15 2 3 3m-3 2 3-3M19 3 5 17m5 3-6-6m15 2-3 3m3 2-3-3"/>',
+  intro:'<circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4z"/>',
+  finale:'<path d="M7 4h10v7c0 7-10 7-10 0V4ZM7 7H3v3c0 3 3 5 6 5m8-8h4v3c0 3-3 5-6 5m-3 2v4m-4 0h8"/>'
+ };
+ function roundIconSvg(key){
+  return '<svg class="round-art-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+
+    (roundArtPaths[key]||roundArtPaths.flag)+'</svg>';
+ }
  const uiPaths={
   volume:'<path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15 9a5 5 0 0 1 0 6M18 6a9 9 0 0 1 0 12"/>',
   muted:'<path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="m16 9 5 6m0-6-5 6"/>',
@@ -301,5 +316,5 @@ window.QwizStage=(()=>{
   const hardest=scored.filter(x=>x.answered>0).sort((a,b)=>(b.incorrect_rate??100-b.correct_rate)-(a.incorrect_rate??100-a.correct_rate)||b.incorrect-a.incorrect||a.index-b.index).slice(0,3);
   return '<div class="question-insights"><section><h2>Знаем лучше всего</h2><p>Три вопроса с наибольшей долей верных ответов.</p><ol>'+items(best)+'</ol></section><section><h2>Чаще ошибались</h2><p>Три вопроса с наибольшей долей ошибок. Пропуски считаются отдельно.</p><ol>'+items(hardest,true)+'</ol></section></div><details class="all-question-stats"><summary>Все вопросы · '+rows.length+'</summary><ol>'+items(rows)+'</ol></details>';
  }
- return{esc,fmt,habitats,icon,teamTile,teams,patchTeams,progress,leaderboard,illustration,hydrateIllustrations,clockMarkup,updateClock,audio,questionStats,stripeOption,correctFlagMarkup,flagVisualContent,hydrateFlagVisuals,uiIcon,iconLabel,decorateControls,updateMemory,assemblyPalette,assemblyMarkup,hydrateAssembly,sourceLinks,capitalize,countLabel,phaseLabel,bindFullscreen,exitFullscreen};
+ return{esc,fmt,habitats,icon,roundIconSvg,teamTile,teams,patchTeams,progress,leaderboard,illustration,hydrateIllustrations,clockMarkup,updateClock,audio,questionStats,stripeOption,correctFlagMarkup,flagVisualContent,hydrateFlagVisuals,uiIcon,iconLabel,decorateControls,updateMemory,assemblyPalette,assemblyMarkup,hydrateAssembly,sourceLinks,capitalize,countLabel,phaseLabel,bindFullscreen,exitFullscreen};
 })();
