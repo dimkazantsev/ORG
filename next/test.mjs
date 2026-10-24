@@ -385,7 +385,7 @@ test('2026 quiz round flow: editor, countdown, score displays and two-stage vote
  for(const id of ['openGamesPalette','generalLeadSeconds','generalStatsSeconds','generalBonusPercent','generalBonusLead','hostProjectorMusic'])assert.match(studio,new RegExp('id="'+id+'"'));
  for(const type of ['Вступление','Вопросы','Игры','Финал'])assert.match(studio,new RegExp(type));
  const topPalette=studio.slice(studio.indexOf('id="cardPalette"'),studio.indexOf('id="gamesPalette"'));
- for(const obsolete of ['data-card="team_stats"','data-card="player_stats"','data-card="bonus"'])assert.doesNotMatch(topPalette,obsolete);
+ for(const obsolete of ['data-card="team_stats"','data-card="player_stats"','data-card="bonus"'])assert.ok(!topPalette.includes(obsolete),'Removed top-level card must not be in the palette: '+obsolete);
  assert.match(source,/bonus_percent/);
  assert.match(source,/stats_seconds/);
  assert.match(player,/roundScorePanel\(s.round_results/);
