@@ -85,7 +85,7 @@ test('Moderator can pause a geography intermission and continue with server stat
    if(name==='qwiz_party_state')return {data:room,error:null};
    return {data:{},error:null};
   }};
-  wire();renderLive(room);document.getElementById('liveConsole').hidden=false;
+  wire();renderLive(room);document.getElementById('roomsPage').hidden=false;document.getElementById('liveConsole').hidden=false;
  });
  await expect(page.locator('#livePause')).toBeEnabled();
  await page.locator('#livePause').click();
