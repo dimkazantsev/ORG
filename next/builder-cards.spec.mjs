@@ -21,7 +21,7 @@ test('Selecting a card controls insertion order; controls do not accidentally se
  await expect(cards.nth(1)).toHaveAttribute('aria-current','true');
  await expect(cards.nth(3).locator('h3')).toHaveText('Финал игры');
  await cards.nth(0).locator('[data-move]').last().click();
- await expect(cards.nth(1)).toHaveAttribute('aria-current','true');
+ await expect(cards.nth(0)).toHaveAttribute('aria-current','true');
  await cards.nth(0).dblclick();
  await expect(page.locator('#cardDialog')).toBeVisible();
  await page.locator('#cardDialog [data-close]').click();
@@ -32,7 +32,6 @@ test('Selecting a card controls insertion order; controls do not accidentally se
 test('New geography and arcade cards insert after current card, retaining their settings',async({page})=>{
  const cards=page.locator('#roundCards .round-card');
  await cards.first().click();
- await page.locator('#cardPalette [data-geo="russia_map"]').count(); // Geography lives in expanded games panel.
  await page.locator('#openGamesPalette').click();
  await page.locator('#arcadePalette [data-geo="russia_map"]').click();
  await expect(cards.nth(1).locator('h3')).toContainText('География России');
