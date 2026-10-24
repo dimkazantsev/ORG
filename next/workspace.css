@@ -588,3 +588,30 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 @media(prefers-reduced-motion:reduce){
   #arcadePalette [data-arcade]{transition:none}
 }
+
+
+/* Teacher control room — secure timeline preview, not an embedded player. */
+.moderator-storyboard{margin:18px 0;border:1px solid #e2d6f4;border-radius:19px;background:#f8f5ff;padding:17px}
+.moderator-storyboard-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:14px}
+.moderator-storyboard-head h3{font-size:16px;letter-spacing:-.025em;margin:0 0 5px}
+.moderator-storyboard-head p{margin:0;max-width:680px}
+.moderator-storyboard-head button{flex:none}
+.moderator-slides{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr) minmax(0,1fr);align-items:stretch;gap:9px}
+.moderator-slide{background:#fff;border:1px solid #e4d9f2;border-radius:14px;padding:13px 14px;display:flex;flex-direction:column;gap:8px;min-width:0;min-height:154px;overflow:hidden}
+.moderator-slide.is-current{border:2px solid #8657e6;background:#f1eaff;padding:12px 13px}
+.moderator-slide-overline{color:#7642d5;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.09em}
+.moderator-slide h4{font-size:13px;margin:0;line-height:1.35}
+.moderator-slide.is-current h4{font-size:15px}
+.moderator-slide p{font-size:12px;line-height:1.55;color:#5f5774;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:6;line-clamp:6;overflow:hidden}
+.moderator-slide:not(.is-current){opacity:.79}
+@media(max-width:750px){
+ .moderator-storyboard-head{flex-direction:column;align-items:stretch}
+ .moderator-storyboard-head button{width:100%}
+ .moderator-slides{grid-template-columns:minmax(0,.85fr) minmax(0,1.4fr) minmax(0,.85fr);gap:5px}
+ .moderator-slide{padding:10px 8px;min-height:135px}
+ .moderator-slide.is-current{padding:9px 7px}
+ .moderator-slide h4{font-size:11px}
+ .moderator-slide.is-current h4{font-size:13px}
+ .moderator-slide p{font-size:10px;-webkit-line-clamp:5;line-clamp:5}
+ .moderator-slide-overline{font-size:9px}
+}
