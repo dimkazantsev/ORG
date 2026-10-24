@@ -11,7 +11,7 @@ const seconds=t=>Math.max(0,Math.ceil((Date.parse(t)-Date.now()-ctx.offset)/1000
 function showError(s){$('projectionError').textContent=s;$('projectionError').hidden=false}
 function clearError(){$('projectionError').hidden=true}
 function qr(div,url){if(typeof QRCode==='function'&&div){div.replaceChildren();new QRCode(div,{text:url,width:240,height:240,colorLight:'#fff',colorDark:'#27302b',correctLevel:QRCode.CorrectLevel.M})}}
-function link(code){const u=new URL('./',location.href);u.searchParams.set('room',code);return u.toString()}
+function link(code){const u=new URL('./',location.href);u.searchParams.set('room',code);u.searchParams.set('join','1');return u.toString()}
 const recentRoomKey='qwiz-presenter-recent-room';
 const roomPattern=/^[A-F0-9]{8}$/;
 function joinHref(code=''){return roomPattern.test(code||'')?link(code):new URL('./',location.href).toString()}
