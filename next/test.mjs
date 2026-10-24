@@ -186,7 +186,7 @@ test('Flag imagery remains visible and visual answers show the flag instead of p
  assert.match(migration,/CREATE OR REPLACE FUNCTION public\.qwiz_answer_display/);
  assert.match(migration,/'image_url',image_url/);
 });
-test('Projector reveals correct flags and answer choices only in server result phase',()=>{
+test('Projector reveals one authoritative answer only after server result phase',()=>{
  const presenter=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
  const css=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
  const migration=readFileSync(new URL('./migrations/20261024_public_projector_reveal_after_answer.sql',import.meta.url),'utf8');
@@ -195,14 +195,14 @@ test('Projector reveals correct flags and answer choices only in server result p
  assert.ok(start>=0&&end>start);
  const scene=presenter.slice(start,end);
  assert.match(scene,/const finished=state\.phase==='result'&&!!state\.answer/);
- assert.match(scene,/const choices=finished&&Array\.isArray\(q\.options\)/);
- assert.match(scene,/correctIndices\.includes\(i\)/);
- assert.match(scene,/projectionOption\(option,i\)/);
- assert.match(scene,/projection-answer-heading/);
+ assert.doesNotMatch(scene,/const choices=finished/);
+ assert.doesNotMatch(scene,/projection-reveal-options/);
+ assert.match(scene,/correctIndices\.length===1/);
+ assert.match(scene,/projection-answer-single/);
+ assert.match(scene,/projection-answer-text/);
  assert.match(scene,/projection-answer-explanation/);
- assert.match(scene,/projection-reveal-option/);
- assert.match(css,/\.projection-reveal-options\.has-flag-options/);
- assert.match(css,/\.projection-reveal-option\.is-correct/);
+ assert.match(css,/\.projection-answer-single\{/);
+ assert.match(css,/#projectionMain \.projection-question-only\.is-result \.projection-answer-text/);
  assert.match(migration,/IF s->>'phase' = 'result' THEN/);
  assert.match(migration,/s:=s-'answer'/);
  assert.match(migration,/'options'::text/);
@@ -337,8 +337,10 @@ test('Projector hides flag-picker filler art, reveals actual answers and fits th
  assert.doesNotMatch(lobby,/fixture-flag/);
  const result=runInNewContext(scene+'questionScene({question,phase:"result",index:0,total:10,answer:{indices:[1],text:"Ангола"},teams:[]})',{...context,question});
  assert.match(result,/fixture-correct-flag/);
- assert.equal((result.match(/fixture-flag/g)||[]).length,4);
- assert.match(result,/is-correct/);
+ assert.equal((result.match(/fixture-flag/g)||[]).length,0);
+ assert.equal((result.match(/projection-answer-single/g)||[]).length,1);
+ assert.match(result,/projection-answer-text/);
+ assert.match(result,/Ангола/);
  assert.match(projector,/scene\.dataset\.fittedZoom/);
  assert.match(projector,/availH\/Math\.max\(1,m\.h\)/);
  assert.doesNotMatch(projector,/Math\.max\(\.36/);
@@ -784,4 +786,18 @@ test('Mini-game buttons keep complete labels and the disclosure uses a separate 
  assert.match(styles,/\.game-palette #arcadePalette\.arcade-palette button>span:last-child\{/);
  assert.match(styles,/white-space:normal;overflow:visible;text-overflow:clip/);
  assert.match(html,/workspace\.css\?v=palette-fit-20261025-12/);
+});
+
+test('Participant entry omits public projector links and old copy-all-codes actions',()=>{
+ const entry=readFileSync(new URL('./index.html',import.meta.url),'utf8');
+ const projector=readFileSync(new URL('./presenter.html',import.meta.url),'utf8');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./player-layout.css',import.meta.url),'utf8');
+ assert.doesNotMatch(entry,/href="\.\/presenter\.html"/);
+ assert.match(entry,/id="openPresenter"/);
+ assert.match(entry,/id="openPresenterSide"/);
+ assert.doesNotMatch(projector,/projectionCopyAllCodes|projectionCopyCodesDock|copy-codes\.js|copy-codes\.css/);
+ assert.match(app,/lobby-signal-core/);
+ assert.match(css,/\.game-lobby-wait \.lobby-signal-core\{/);
+ assert.match(css,/@keyframes lobby-centered-pulse/);
 });
