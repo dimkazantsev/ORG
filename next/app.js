@@ -178,7 +178,7 @@ function roundScorePanel(view,title,final=false){
  (!final?'<p class="round-results-next">Следующая карточка откроется автоматически.</p>':'')+'</section>';
 }
 function roundIntroMarkup(s){
- const title=s.activity?.title||'Следующий раунд',icon=s.activity?.icon;
+ const title=s.activity?.title||'Следующий раунд',icon=s.activity?.icon||s.activity?.settings?.queued_icon;
  const drawing=icon==='map'?'<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="5" aria-hidden="true"><circle cx="50" cy="50" r="32"/><path d="m61 39-12 25-12 5 12-25z"/></svg>':
  '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="5" aria-hidden="true"><path d="M24 81V17m0 3c23-12 32 12 56-2v43c-26 14-37-9-56 2"/></svg>';
  return '<section class="game-empty round-intro" aria-label="Представление раунда"><div class="round-intro-sparks" aria-hidden="true"><i></i><i></i><i></i></div>'+
@@ -212,6 +212,9 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  if(s.phase==='finished'){el.innerHTML='<div class="game-empty player-finale-screen"><div class="eyebrow">ИГРА ЗАВЕРШЕНА</div><h1>Итоги всей игры</h1><p>Общий зачёт команд и участников</p>'+personalResults(s,true)+'</div>';text('playerStatus','Игра завершена.');return}
  const question=s.question;
  if(s.phase==='intermission'){
+  if(s.activity?.type==='card_intro'){
+   el.innerHTML=roundIntroMarkup(s);text('playerStatus','Заставка следующей игры.');return;
+  }
   if(window.QwizGeo?.mountPlayer(el,s,{client:ctx.client})){
      text('playerStatus','Карта России: индивидуальные задания сохраняются на сервере.');return;
    }
