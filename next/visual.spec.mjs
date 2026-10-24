@@ -678,7 +678,7 @@ test('Round editor filters flags by twelve ready mechanics',async({page})=>{
  await page.locator('#newBuild').click();
  await page.locator('#roundCards [data-edit-card="1"]').click();
  await expect(page.locator('#cardDialog')).toBeVisible();
- await page.locator('#cardModesDetails summary').click();
+ await expect(page.locator('#cardModesDetails')).toHaveAttribute('open','');
  await expect(page.locator('#cardFlagModes [data-card-mode]')).toHaveCount(12);
  await expect(page.locator('#cardFlagModes [data-card-mode]:not(:disabled)')).toHaveCount(12);
  await expect(page.locator('#cardFlagModes [data-card-mode]:checked')).toHaveCount(12);
@@ -690,7 +690,7 @@ test('Round editor filters flags by twelve ready mechanics',async({page})=>{
  await page.locator('#cardDialog button[type="submit"]').click();
  await expect(page.locator('#roundCards .round-card').nth(1)).toContainText('Угадать страну по флагу');
  await page.locator('#roundCards [data-edit-card="1"]').click();
- await page.locator('#cardModesDetails summary').click();
+ await expect(page.locator('#cardModesDetails')).toHaveAttribute('open','');
  await expect(page.locator('[data-card-mode="country"]')).toBeChecked();
  await expect(page.locator('[data-card-mode="picker"]')).not.toBeChecked();
 });
