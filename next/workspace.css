@@ -615,3 +615,37 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
  .moderator-slide p{font-size:10px;-webkit-line-clamp:5;line-clamp:5}
  .moderator-slide-overline{font-size:9px}
 }
+
+
+/* Full lecturer storyboard and per-room projector controls. */
+.moderator-storyboard{background:linear-gradient(140deg,#f8f5ff,#fff);border-color:#e3d9f4;padding:20px}
+.moderator-storyboard-head{align-items:center}
+.projector-prefs{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:9px}
+.projector-prefs>button{min-height:42px;font-size:12px;white-space:nowrap}
+.projector-prefs>label{display:flex;flex-direction:column;gap:4px;min-width:130px;font-size:11px;color:#655c7a;font-weight:750}
+.projector-prefs output{font-variant-numeric:tabular-nums;color:#7441d5}
+.projector-prefs input[type=range]{padding:0;height:18px;accent-color:#703de0;cursor:pointer}
+.moderator-slides{grid-template-columns:minmax(0,1fr) minmax(0,1.28fr) minmax(0,1fr);gap:12px}
+.moderator-slide{border-radius:16px;min-height:290px;padding:16px;background:#fff;gap:10px;opacity:1!important;box-shadow:0 6px 17px #4d31750c}
+.moderator-slide.is-current{border:2px solid #7540ec;background:#fcfaff;padding:15px;box-shadow:0 8px 25px #7540ec1b}
+.moderator-slide h4{font-size:14px}.moderator-slide.is-current h4{font-size:15px}
+.moderator-slide p{font-size:13px;line-height:1.4;font-weight:660;color:#262139;-webkit-line-clamp:4;line-clamp:4}
+.moderator-slide-image{width:100%;min-height:80px;max-height:125px;display:grid;place-items:center;background:#f8f5ff;border-radius:12px;padding:9px;overflow:hidden}
+.moderator-slide-image img{max-height:105px;max-width:100%;width:auto;height:auto;object-fit:contain;border-radius:5px}
+.moderator-slide-choices{display:grid;gap:5px;margin-top:auto}
+.moderator-choice{display:block;padding:7px 10px;font-size:10px;line-height:1.32;border:1px solid #e5def3;border-radius:9px;background:#fff;color:#615a70;overflow-wrap:anywhere}
+.moderator-choice.is-correct{border-color:#9edeb7;background:#e9f7ef;color:#206c46;font-weight:800}
+@media(max-width:850px){
+ .moderator-storyboard-head{align-items:stretch;flex-direction:column}
+ .projector-prefs{justify-content:flex-start}
+}
+@media(max-width:650px){
+ .moderator-slides{gap:7px;grid-template-columns:minmax(0,1fr) minmax(0,1.35fr) minmax(0,1fr)}
+ .moderator-slide{min-height:210px;padding:9px}
+ .moderator-slide.is-current{padding:8px}
+ .moderator-slide-image{min-height:50px;max-height:70px;padding:5px}
+ .moderator-slide-image img{max-height:63px}
+ .moderator-choice{font-size:9px;padding:5px}
+ .moderator-slide-choices{max-height:115px;overflow:auto}
+ .projector-prefs>label{min-width:125px}
+}
