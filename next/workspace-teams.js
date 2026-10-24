@@ -6,8 +6,12 @@ function roomReadiness(s){
  $('roomReadinessTitle').textContent=ready?(s.total>0?'Вопросы готовы · '+s.total:'Карта России готова · 89 субъектов'): 'Комната создана · вопросы ещё не готовы';
  $('roomReadinessText').textContent=issues.length?issues.map(x=>x.title+': '+x.reason).join('. '):waiting?'Ожидают распределения: '+waiting+'. Назначьте им команды перед началом.':'Можно собирать команды и начинать игру.';
  $('addRoomQuestions').hidden=ready;$('refreshRoomContent').hidden=s.phase!=='lobby';
- $('liveStart').disabled=s.phase!=='lobby'||!ready||waiting>0||teamUI.busy;
- $('liveStart').title=!ready?'Добавьте вопросы или картографический раунд в сборку':waiting?'Распределите ожидающих участников':'';
+ // Completed sessions can always be replayed; readiness only guards a NEW lobby start.
+ // The prior readiness code silently disabled the renamed “Повторить игру” button.
+ const replay=s.phase==='finished';
+ $('liveStart').disabled=teamUI.busy||(!replay&&(s.phase!=='lobby'||!ready||waiting>0));
+ $('liveStart').title=replay?'Создать новую игровую комнату с теми же заданиями. История результатов сохранится.':
+  !ready?'Добавьте вопросы или картографический раунд в сборку':waiting?'Распределите ожидающих участников':'';
 }
 function teamMember(p,s){
  const movable=!teamUI.busy&&(s.phase==='lobby'||(!p.team_id&&s.phase!=='finished'));
