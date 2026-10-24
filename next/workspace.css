@@ -691,3 +691,18 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
  .moderator-option-flag,.moderator-slide.is-current .moderator-option-flag{height:34px}
  .projector-prefs>label{min-width:110px}
 }
+
+
+/* Teacher sees each configured timeline card, including live geography and arcade metrics. */
+.moderator-slide.has-map{background:#faf7ff}
+.moderator-map-symbol{display:flex;align-items:center;justify-content:center;gap:12px;min-height:58px;border-radius:11px;color:#6e3fc8;font-size:34px;background:radial-gradient(circle at 56% 45%,#e0d3f8,#f9f6ff)}
+.moderator-map-symbol span{font-size:12px;font-weight:750}
+.moderator-slide-live{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;margin-top:3px}
+.moderator-live-meter{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0;padding:8px 3px;border:1px solid #e1d8f2;border-radius:9px;background:#fff}
+.moderator-live-meter strong{color:#6c36d8;font-size:clamp(13px,1.6vw,19px);font-variant-numeric:tabular-nums}
+.moderator-live-meter span{font-size:9px;color:#5f526e;text-align:center}
+.moderator-slide-live:has(.moderator-live-team){display:flex;flex-direction:column;gap:3px}
+.moderator-live-team,.moderator-slide-metrics>div{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;padding:5px 7px;border-radius:7px;background:#f4efff}
+.moderator-live-team strong,.moderator-slide-metrics b{font-variant-numeric:tabular-nums;color:#7349c0}
+.moderator-slide-metrics{display:grid;gap:4px}
+@media(max-width:600px){.moderator-slide-live{grid-template-columns:1fr}.moderator-live-meter{padding:3px}.moderator-map-symbol{min-height:40px}.moderator-slide-metrics>div{font-size:9px}}
