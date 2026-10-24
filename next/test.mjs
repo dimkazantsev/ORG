@@ -359,7 +359,7 @@ test('Phone lobby animates and completed tap-game ballot fills the viewport',()=
  assert.match(playerCss,/\.arcade-player\.is-boost-voting/);
  assert.match(playerCss,/grid-auto-rows:minmax\(0,1fr\)/);
  assert.match(playerCss,/\.arcade-player\.is-boost-voting .arcade-boost-grid button\.selected/);
- assert.match(playerHtml,/arcade\.js\?v=viewport-vote-20261025-2/);
+ assert.match(playerHtml,/arcade\.js\?v=viewport-vote-20261025-3/);
  assert.match(playerHtml,/player-layout\.css\?v=viewport-vote-20261025-2/);
 });
 test('New JavaScript parses independently of legacy app.js',()=>{assert.doesNotThrow(()=>new Function(js));assert.doesNotMatch(html,/\.\/\.\.\/(app\.js|styles\.css)/)});
