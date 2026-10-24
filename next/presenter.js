@@ -245,7 +245,9 @@ function questionScene(state){
   const sparse=scene.matches('.projection-round-results,.projection-intro-card,.projection-question-only.is-result,.geo-projector,.arcade-shell');
   // Grow sparse slides for TVs; shrink only when actual content would overflow.
   const ideal=Math.min(availW/Math.max(1,m.w),availH/Math.max(1,m.h));
-  let zoom=Math.min(sparse?1.26:1.07,Math.max(.08,ideal));
+  // UHD screens need proportionally larger slide elements, not a tiny 1080p island.
+  const maxGrow=window.innerWidth>=3800?3.0:window.innerWidth>=2500?2.0:sparse?1.26:1.07;
+  let zoom=Math.min(maxGrow,Math.max(.08,ideal));
   scene.style.zoom=String(zoom);
   // Browser zoom may alter line wrapping. Check real dimensions and shrink a second time.
   for(let tries=0;tries<4;tries++){
