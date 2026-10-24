@@ -206,7 +206,7 @@ test('Two-stage penalty vote opens a red majority choice then lets players choos
 });
 
 
-test('Lobby play emblem is recognizable and the instructor signal caption never overlaps decoration',async({page})=>{
+test('Centered lobby constellation is visible without Play and the signal caption never overlaps decoration',async({page})=>{
  for(const [width,height] of [[320,480],[360,640],[390,844]]){
   await page.setViewportSize({width,height});
   await setup(page);
@@ -221,7 +221,9 @@ test('Lobby play emblem is recognizable and the instructor signal caption never 
   });
   const lobby=page.locator('.game-lobby-wait');
   await expect(lobby).toBeVisible();
-  await expect(lobby.locator('.lobby-play-mark')).toBeVisible();
+  await expect(lobby.locator('.lobby-play-mark')).toHaveCount(0);
+  await expect(lobby.locator('.lobby-signal-center')).toBeVisible();
+  await expect(lobby.locator('.lobby-signal-node')).toHaveCount(4);
   await expect(lobby.locator('.lobby-ambient span')).toHaveCount(0);
   await expect(lobby.locator('.lobby-people')).toContainText('Ожидайте сигнала преподавателя');
   const coords=await page.evaluate(()=>{
