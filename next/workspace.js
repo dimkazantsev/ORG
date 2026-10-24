@@ -127,6 +127,8 @@ function section(section){state.activePage=section;for(const id of ['bank','buil
 function createOption(value,label){const n=document.createElement('option');n.value=value;n.textContent=label;return n}
 function fillSelect(select,options,placeholder,selected=''){select.replaceChildren();if(placeholder!==null)select.add(createOption('',placeholder));for(const [value,title]of options)select.add(createOption(value,title));select.value=selected}
 function nameTopic(id){return state.topics.find(t=>t.id===id)?.name||'Все темы'}
+function geoTopic(){return state.topics.find(t=>t.name==='География России')}
+const geoModes=[['locate','Найти субъект'],['identify','Угадать название'],['capital','Административный центр'],['flag','Узнать по флагу'],['silhouette','Угадать по силуэту'],['neighbour','Соседние субъекты'],['detective','Географический детектив'],['district','Федеральный округ']];
 async function overview(){const d=await studio('overview');state.topics=d.topics||[];state.builds=d.builds||[];renderTopics();renderBuilds();updateSelectors();await loadQuestions()}
 function updateSelectors(){
  const items=state.topics.map(t=>[t.id,t.name]);
@@ -138,6 +140,8 @@ function renderTopics(){
  $('topicChips').innerHTML=items.map(t=>'<button type="button" class="topic-chip '+($('bankTopic').value===t.id?'current':'')+'" data-topic="'+esc(t.id)+'">'+esc(t.name)+'</button>').join('');
 }
 async function loadQuestions(){
+ if($('bankTopic').value&&$('bankTopic').value===geoTopic()?.id)return loadGeographyBank();
+ $('geographyBankInfo').hidden=true;$('newQuestion').hidden=false;
  const input={search:$('bankSearch').value.trim().slice(0,90),topic_id:$('bankTopic').value,kind:'flag',mode:$('bankMode').value,sort:$('bankSort').value,offset:state.bankOffset,limit:state.bankPageSize};
  try{const data=await studio('questions',input);state.questions=data.items||[];state.questionTotal=data.total||0;
   $('navQuestionCount').textContent=fmt(state.questionTotal);$('questionsTotal').textContent='('+fmt(state.questionTotal)+')';
@@ -365,14 +369,14 @@ function appendCard(type='round',arcadeMode=null){if(state.cards.length>=60){msg
  if(arcadeMode&&arcadeGames[arcadeMode]){const meta=arcadeGames[arcadeMode];added.title=meta.title;added.icon=meta.icon;added.settings.arcade_mode=arcadeMode;added.settings.arcade_seconds=meta.seconds;}
  state.cards.splice(Math.max(0,state.cards.length-1),0,added);renderCards()}
 function cardDesc(c){const settings=c.settings||{};
- if(settings.arcade_mode==='russia_map')return 'Карта России · '+(settings.geo_count||15)+' случайных субъектов каждому игроку · '+(settings.geo_seconds||180)+' сек. · индивидуальный прогресс';
+ if(settings.arcade_mode==='russia_map')return 'География России · '+(settings.geo_count||15)+' случайных субъектов каждому игроку · '+(settings.geo_seconds||180)+' сек. · индивидуальный прогресс';
   if(arcadeGames[settings.arcade_mode])return 'Командная мини-игра · '+(settings.arcade_seconds||arcadeGames[settings.arcade_mode].seconds)+' секунд · достижения и жетоны';
  if(c.type==='round')return (c.topic_id?nameTopic(c.topic_id):'Тема не выбрана')+' · '+(Array.isArray(settings.flag_modes)&&settings.flag_modes.length?settings.flag_modes.map(titleKind).join(', '):'Все доступные механики')+' · '+(settings.count||5)+' вопр. · '+(settings.seconds||30)+' сек. · ответ '+(settings.answer_seconds||10)+' сек.';
  if(c.type==='finale')return 'Команды, личный рейтинг и вопросы, которые запомнились';
  return 'Дополнительная активность · настройки в карточке'}
 function renderCards(){ensureFinale();$('roundCards').innerHTML=state.cards.map((c,i)=>{
  const final=c.type==='finale',emblem=final?'<svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M15 7h18v13c0 13-18 13-18 0V7ZM15 11H7v6c0 7 8 10 12 8M33 11h8v6c0 7-8 10-12 8M24 30v10M16 41h16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':cardIconSvg(c.type,c.icon);
- return '<article class="round-card" data-index="'+i+'" data-type="'+esc(c.type)+'" tabindex="0" role="group" aria-label="'+esc(c.title)+'. Открыть настройки" draggable="'+!final+'"><div class="round-card-heading"><span class="round-icon" aria-hidden="true">'+emblem+'</span><span class="small-help">'+(final?'ФИНАЛ ИГРЫ':'КАРТОЧКА '+(i+1).toString().padStart(2,'0'))+'</span></div><h3>'+esc(c.title)+'</h3><p class="round-sub">'+esc(cardDesc(c))+'</p>'+
+ return '<article class="round-card" data-index="'+i+'" data-type="'+esc(c.type)+'" tabindex="0" role="group" aria-label="'+esc(c.title)+'. Открыть настройки" draggable="'+!final+'"><div class="round-card-heading"><span class="round-icon" aria-hidden="true">'+emblem+'</span><span class="small-help">'+(final?'ФИНАЛ ИГРЫ':c.settings?.arcade_mode==='russia_map'?'РАУНД · ГЕОГРАФИЯ':'КАРТОЧКА '+(i+1).toString().padStart(2,'0'))+'</span></div><h3>'+esc(c.title)+'</h3><p class="round-sub">'+esc(cardDesc(c))+'</p>'+
  (final?'<div class="finale-card-tags"><span>Команды</span><span>Участники</span><span>3 + 3 вопроса</span></div>':'')+'<div class="round-actions">'+(!final?'<button type="button" data-move="'+i+':-1" aria-label="Раньше" '+(i===0?'disabled':'')+'>←</button><button type="button" data-move="'+i+':1" aria-label="Позже" '+(i>=state.cards.length-2?'disabled':'')+'>→</button>':'')+'<button type="button" class="round-edit" data-edit-card="'+i+'">'+(final?'Настроить финал':'Настроить')+'</button></div>'+(!final?'<button type="button" class="card-trash round-trash" data-delete-card="'+i+'" title="Удалить раунд" aria-label="Удалить раунд '+esc(c.title)+'">'+trashSvg+'</button>':'')+'</article>';
  }).join('');}
 function moveCard(i,j){if(j<0||j>=state.cards.length-1||i<0||i>=state.cards.length-1)return;
@@ -383,6 +387,7 @@ function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{}
  $('cardRoundSettings').hidden=c.type!=='round';$('cardFinalePreview').hidden=c.type!=='finale';
  const arcade=arcadeGames[s.arcade_mode];$('cardArcadeSettings').hidden=!arcade;
   const geo=s.arcade_mode==='russia_map';$('cardGeoSettings').hidden=!geo;
+ $('cardGeoSettings').querySelector('h3').textContent='География России · механики вопросов';
   if(geo){$('cardGeoCount').value=s.geo_count||15;$('cardGeoSeconds').value=s.geo_seconds||180;
    for(const item of all('#cardGeoModes input:not(:disabled)'))item.checked=!Array.isArray(s.geo_modes)||s.geo_modes.includes(item.value);}
  $('cardArcadeSeconds').value=s.arcade_seconds||arcade?.seconds||12;
@@ -403,7 +408,7 @@ function saveCard(event){event.preventDefault();const c=state.cards[state.editin
   first?.addEventListener('change',()=>first.setCustomValidity(''),{once:true});return;
  }
  c.title=$('cardTitle').value.trim();
- c.topic_id=$('cardTopic').value||null;c.icon=$('cardIcon').value||icons[c.type]||'▦';
+ c.topic_id=c.settings?.arcade_mode==='russia_map'?(geoTopic()?.id||c.topic_id):($('cardTopic').value||null);c.icon=$('cardIcon').value||icons[c.type]||'▦';
  c.settings={...c.settings,count:Number($('cardCount').value),seconds:Number($('cardSeconds').value),answer_seconds:Number($('cardAnswerSeconds').value),
   order:$('cardOrder').value,offset:Math.max(0,Number($('cardOffset').value)-1),
   team_cap:$('cardTeamCap').value?Number($('cardTeamCap').value):null,
@@ -458,7 +463,7 @@ async function loadBuild(id){try{const r=await studio('build_get',{id});state.bu
  $('buildTitle').value=r.build.title;state.cards=r.cards||[];ensureFinale();$('composer').hidden=false;renderCards();section('builder');savePosition();
  }catch(e){msg('buildMessage',e.message,true)}}
 async function saveBuild(){disable('saveBuild',true);msg('buildMessage','Сохранение…');
- try{ensureFinale();if(!state.cards.some(c=>c.type==='round'))throw Error('Добавьте хотя бы один раунд вопросов.');
+ try{ensureFinale();if(!state.cards.some(c=>c.type==='round'||c.settings?.arcade_mode==='russia_map'))throw Error('Добавьте хотя бы один раунд вопросов.');
  const result=await studio('build_save',{id:state.buildId||undefined,title:$('buildTitle').value.trim(),
   cards:state.cards});state.buildId=result.id;
  await overview();savePosition();msg('buildMessage','Сборка сохранена. Её можно запустить с любого вашего устройства.');}
@@ -609,7 +614,7 @@ function wire(){
  // Team setup handlers are owned by workspace-teams.js; no duplicate listeners here.
  $('hostRoomList').onclick=e=>{const d=e.target.closest('[data-delete-room]');if(d){deleteRoom(d.dataset.deleteRoom);return}
   const b=e.target.closest('[data-room]');if(b)selectRoom(b.dataset.room)};
- $('liveStart').onclick=()=>control('start');$('liveReveal').onclick=()=>control('reveal');
+ $('liveStart').onclick=()=>{projection();control('start')};$('liveReveal').onclick=()=>control('reveal');
  $('liveNext').onclick=()=>control('next');$('livePause').onclick=()=>control(state.room?.paused?'resume':'pause');$('liveFinish').onclick=()=>control('finish');
  $('copyRoomUrl').onclick=copyRoom;$('openScreen').onclick=projection;$('showPublicScreen').onclick=projection;
  $('reloadInsights').onclick=loadInsights;$('studentSort').onchange=renderInsights;
