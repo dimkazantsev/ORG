@@ -97,7 +97,7 @@ test('Instructor slide deck is visual, public projection stays question-only, an
  assert.match(host,/qwiz_host_slide_deck/);
  assert.match(host,/moderator-slide-image/);
  assert.match(host,/qwiz_projector_settings/);
- assert.match(profile,/data-animal/);
+ assert.match(profile,/QwizTeams\.avatar/);
  assert.match(projector,/applyProjectionSettings/);
  assert.match(projectorCss,/\.projection-screen-ready \.projection-footer/);
  const map=readFileSync(new URL('./russia-geo.js',import.meta.url),'utf8');
@@ -225,7 +225,7 @@ test('Repeating a finished room creates new room and preserves historical scores
  assert.doesNotMatch(sql,/DELETE FROM public\.org_next_answers/);
  assert.match(host,/repeatFinishedRoom\(\)/);
  assert.match(host,/qwiz_repeat_finished_room/);
- assert.match(host,/↻ Повторить игру/);
+ assert.match(host,/s\.phase==='finished'\?'Повторить игру'/);
  assert.match(host,/phase==='finished'/);
 });
 test('Question about Romanian stripe order reveals the flag picture on projector and phone',()=>{
