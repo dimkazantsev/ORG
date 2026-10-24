@@ -55,7 +55,7 @@ const arcadeGames={
  tug:{title:'Перетягивание очков',icon:'arcade_tug',seconds:12,help:'Команды соревнуются нажатиями. Лидеру +15 очков, последняя активная команда уступает не более 15 очков (ниже нуля не опускается).'},
  captain:{title:'Дуэль капитанов',icon:'arcade_captain',seconds:10,help:'Первый подключившийся игрок команды — капитан. После 3 секунд подготовки только один удар. Фальстарт лишает попытки. Победа: +15 очков.'}
 };
-const state={db:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,bankOffset:0,bankPageSize:25,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',dragFrom:null,clockOffset:0,liveKey:'',lastDeadlineRefresh:0};
+const state={db:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,bankOffset:0,bankPageSize:25,bankRequest:0,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',dragFrom:null,clockOffset:0,liveKey:'',lastDeadlineRefresh:0};
 function msg(id,text='',isError=false){const el=$(id);if(!el)return;el.textContent=text;el.classList.toggle('error',!!isError)}
 function disable(id,value){const el=$(id);if(el)el.disabled=value}
 function fmt(x){return Number(x||0).toLocaleString('ru-RU')}
@@ -105,8 +105,10 @@ async function restorePosition(last=readPosition()){
  restoringView=true;
  try{
   if(typeof last.search==='string')$('bankSearch').value=last.search.slice(0,90);
-  for(const [id,key]of [['bankTopic','topic'],['bankMode','mode'],['bankSort','sort']])
+  for(const [id,key]of [['bankTopic','topic'],['bankSort','sort']])
    if(typeof last[key]==='string'&&[...$(id).options].some(o=>o.value===last[key]))$(id).value=last[key];
+  configureBankModes();
+  if(typeof last.mode==='string'&&[...$('bankMode').options].some(o=>o.value===last.mode))$('bankMode').value=last.mode;
   state.bankOffset=Math.max(0,Math.floor(Number(last.bankOffset)||0));
   await loadQuestions();
   if(last.section==='builder'&&last.buildId&&state.builds.some(b=>b.id===last.buildId))await loadBuild(last.buildId);
@@ -127,57 +129,78 @@ function section(section){state.activePage=section;for(const id of ['bank','buil
 function createOption(value,label){const n=document.createElement('option');n.value=value;n.textContent=label;return n}
 function fillSelect(select,options,placeholder,selected=''){select.replaceChildren();if(placeholder!==null)select.add(createOption('',placeholder));for(const [value,title]of options)select.add(createOption(value,title));select.value=selected}
 function nameTopic(id){return state.topics.find(t=>t.id===id)?.name||'Все темы'}
-async function overview(){const d=await studio('overview');state.topics=d.topics||[];state.builds=d.builds||[];renderTopics();renderBuilds();updateSelectors();configureBankModes();await loadQuestions()}
+async function overview(){
+ const d=await studio('overview');state.topics=d.topics||[];state.builds=d.builds||[];
+ updateSelectors();configureBankModes();renderTopics();renderBuilds();await loadQuestions();
+}
 function updateSelectors(){
  const items=state.topics.map(t=>[t.id,t.name]);
- for(const id of ['bankTopic','editTopic','cardTopic']){const el=$(id),selected=el.value;fillSelect(el,items,id==='bankTopic'?'Все темы':'Без темы',selected)}
- const buildEl=$('launchBuild'),sel=buildEl.value;fillSelect(buildEl,state.builds.map(x=>[x.id,x.title]),'Выберите сборку',sel);
+ for(const id of ['bankTopic','editTopic','cardTopic']){
+  const el=$(id),selected=el.value;
+  fillSelect(el,items,id==='bankTopic'?'Все темы':'Без темы',selected);
+ }
+ const buildEl=$('launchBuild'),sel=buildEl.value;
+ fillSelect(buildEl,state.builds.map(x=>[x.id,x.title]),'Выберите сборку',sel);
 }
 function renderTopics(){
- const items=[{id:'',name:'Все темы'},...state.topics];
- $('topicChips').innerHTML=items.map(t=>'<button type="button" class="topic-chip '+($('bankTopic').value===t.id?'current':'')+'" data-topic="'+esc(t.id)+'">'+esc(t.name)+'</button>').join('');
+ const selected=$('bankTopic').value,items=[{id:'',name:'Все темы'},...state.topics];
+ $('topicChips').innerHTML=items.map(t=>
+  '<button type="button" class="topic-chip '+(selected===t.id?'current':'')+
+  '" aria-pressed="'+(selected===t.id)+'" data-topic="'+esc(t.id)+'">'+esc(t.name)+'</button>'
+ ).join('');
 }
 
-const geoModeNames={locate:'Найти субъект',identify:'Угадать название',capital:'Административный центр',flag:'Узнать по флагу',silhouette:'Угадать по силуэту',neighbour:'Соседние субъекты',detective:'Географический детектив',district:'Федеральный округ'};
+const geoModeNames={locate:'Найти субъект на карте',identify:'Угадать название на карте',capital:'Административный центр',flag:'Узнать по флагу',silhouette:'Угадать по силуэту',neighbour:'Соседние субъекты',detective:'Географический детектив',district:'Федеральный округ'};
+const geoStoredModes=new Set(['capital','district']);
 function isGeoTopic(id=$('bankTopic')?.value){return !!id&&state.topics.some(t=>t.id===id&&t.name==='География России')}
+function isFlagTopic(id=$('bankTopic')?.value){return !!id&&state.topics.some(t=>t.id===id&&t.name==='Флаги мира')}
 function configureBankModes(){
  const choose=$('bankMode'),previous=choose.value;
- fillSelect(choose,isGeoTopic()?Object.entries(geoModeNames):flagModes.map(([id,name])=>[id,name]),'Все механики',previous);
+ const options=isGeoTopic()?Object.entries(geoModeNames):isFlagTopic()?flagModes.map(([id,name])=>[id,name]):[];
+ fillSelect(choose,options,'Все механики',previous);
 }
-async function loadGeoQuestions(){
- if(!state.geoCatalog)state.geoCatalog=await rpc('qwiz_geo_catalog');
- const needle=$('bankSearch').value.trim().toLocaleLowerCase('ru');
- const mode=$('bankMode').value;
- const records=(state.geoCatalog||[]).filter(x=>!needle||[x.name,x.capital,x.district,x.region_type].some(v=>String(v||'').toLocaleLowerCase('ru').includes(needle)));
- const start=state.bankOffset,size=state.bankPageSize,total=records.length;
- state.questionTotal=total;
- $('navQuestionCount').textContent=fmt(total);$('questionsTotal').textContent='('+fmt(total)+' субъектов)';
- $('bankPageInfo').textContent='Страница '+(Math.floor(start/size)+1)+' из '+Math.max(1,Math.ceil(total/size));
- $('bankPrevious').disabled=start===0;$('bankNext').disabled=start+size>=total;
- const label=mode?geoModeNames[mode]||'Карта России':'8 механик';
- $('bankItems').innerHTML=records.slice(start,start+size).map(region=>
-  '<article class="question-row geo-bank-row"><div><div class="question-meta"><span class="chip lilac">География России</span><span class="chip">'+esc(label)+'</span></div>'+
-  '<h3>'+esc(region.name)+'</h3><p>Административный центр: '+esc(region.capital)+' · '+esc(region.district)+'</p>'+
-  '<p class="small-help">Субъект из единого справочника 89 регионов. Индивидуальное задание создаётся случайно при начале раунда.</p></div></article>'
- ).join('')||'<div class="empty">Нет субъектов по вашему запросу.</div>';
- renderTopics();msg('bankMessage','');
+function updateBankHeading(){
+ const topic=state.topics.find(t=>t.id===$('bankTopic').value)?.name||'Все вопросы';
+ const title=$('bankHeading'),subtitle=$('bankDescription');
+ if(title)title.textContent=topic;
+ if(subtitle)subtitle.textContent=topic==='География России'
+   ?'178 проверенных вопросов по 89 субъектам: административные центры и федеральные округа. В игровых раундах также доступны восемь интерактивных механик карты России.'
+   :topic==='Флаги мира'
+    ?'Чистая библиотека: 193 государства — члена ООН и два наблюдателя. Проверенные изображения и вопросы.'
+    :'Все темы и игровые задания в одной библиотеке. Выберите тему для фильтрации.';
 }
 async function loadQuestions(){
- if(isGeoTopic()){try{await loadGeoQuestions()}catch(e){msg('bankMessage',e.message,true)}return}
- const input={search:$('bankSearch').value.trim().slice(0,90),topic_id:$('bankTopic').value,kind:'flag',mode:$('bankMode').value,sort:$('bankSort').value,offset:state.bankOffset,limit:state.bankPageSize};
- try{const data=await studio('questions',input);state.questions=data.items||[];state.questionTotal=data.total||0;
-  $('navQuestionCount').textContent=fmt(state.questionTotal);$('questionsTotal').textContent='('+fmt(state.questionTotal)+')';
-  const totalPages=Math.max(1,Math.ceil(state.questionTotal/state.bankPageSize));
-  $('bankPageInfo').textContent='Страница '+(Math.floor(state.bankOffset/state.bankPageSize)+1)+' из '+totalPages;
-  $('bankPrevious').disabled=state.bankOffset===0;
-  $('bankNext').disabled=state.bankOffset+state.bankPageSize>=state.questionTotal;
-  renderQuestions();renderTopics();msg('bankMessage','');
- }catch(e){msg('bankMessage',e.message,true)}
+ const request=++state.bankRequest;
+ const topic=$('bankTopic').value,mode=$('bankMode').value;
+ const search=$('bankSearch').value.trim().slice(0,90),sort=$('bankSort').value;
+ const offset=state.bankOffset,limit=state.bankPageSize;
+ const geo=isGeoTopic(topic),flags=isFlagTopic(topic);
+ updateBankHeading();renderTopics();msg('bankMessage','');
+ try{
+  const data=geo
+   ?await rpc('qwiz_geo_questions',{p_search:search,p_mode:mode,p_sort:sort,p_offset:offset,p_limit:limit})
+   :await studio('questions',{search,topic_id:topic,kind:flags?'flag':'',mode:flags?mode:'',sort,offset,limit});
+  if(request!==state.bankRequest)return;
+  state.questions=data.items||[];state.questionTotal=Number(data.total)||0;
+  $('navQuestionCount').textContent=fmt(state.questionTotal);
+  $('questionsTotal').textContent='('+fmt(state.questionTotal)+')';
+  const totalPages=Math.max(1,Math.ceil(state.questionTotal/limit));
+  $('bankPageInfo').textContent='Страница '+(Math.floor(offset/limit)+1)+' из '+totalPages;
+  $('bankPrevious').disabled=offset===0;$('bankNext').disabled=offset+limit>=state.questionTotal;
+  renderQuestions();savePosition();
+ }catch(e){
+  if(request!==state.bankRequest)return;
+  state.questions=[];state.questionTotal=0;
+  $('bankItems').innerHTML='<div class="empty">Не удалось загрузить вопросы. Обновите раздел.</div>';
+  msg('bankMessage',e.message,true);
+ }
 }
 let previewWindow=null,previewPage=[],previewOffset=0,previewIndex=0,previewTotal=0;
 function previewFilter(offset){
- return {search:$('bankSearch').value.trim().slice(0,90),topic_id:$('bankTopic').value,kind:'flag',
-  mode:$('bankMode').value,sort:$('bankSort').value,limit:25,offset};
+ const geo=isGeoTopic(),flags=isFlagTopic();
+ const search=$('bankSearch').value.trim().slice(0,90),mode=$('bankMode').value,sort=$('bankSort').value;
+ return geo?{p_search:search,p_mode:mode,p_sort:sort,p_limit:25,p_offset:offset}
+  :{search,topic_id:$('bankTopic').value,kind:flags?'flag':'',mode:flags?mode:'',sort,limit:25,offset};
 }
 function previewSend(){
  if(!previewWindow||previewWindow.closed||!previewPage[previewIndex])return;
@@ -204,19 +227,29 @@ window.addEventListener('message',async e=>{
  if(target<0||target>=previewTotal)return;
  try{
   const offset=Math.floor(target/25)*25;
-  const page=await studio('questions',previewFilter(offset));
+  const page=isGeoTopic()?await rpc('qwiz_geo_questions',previewFilter(offset)):await studio('questions',previewFilter(offset));
   if(!page.items?.length)return;
   previewPage=page.items;previewOffset=offset;previewIndex=target-offset;previewSend();
  }catch(error){msg('bankMessage','Ошибка предпросмотра: '+error.message,true)}
 });
 function renderQuestions(){
- $('bankItems').innerHTML=state.questions.length?state.questions.map(q=>'<article class="question-row">'+
-  '<div><div class="question-meta"><span class="chip">'+esc(titleKind(q.solution?.flag_mode))+'</span><span class="chip lilac">'+esc(nameTopic(q.topic_id))+'</span><span class="chip">★ '+esc(q.difficulty)+'</span></div>'+
-  '<h3>'+esc(q.prompt)+'</h3><p>'+(q.tags?.includes('fw:published')?'Проверен · доступен для игры':'Черновик · не участвует в раундах')+'</p></div>'+
-  '<div class="question-actions"><button type="button" class="small-button" data-preview-question="'+esc(q.id)+'">Предпросмотр</button><button type="button" class="small-button" data-edit-question="'+esc(q.id)+'">Изменить</button>'+
-  (!q.tags?.includes('fw:published')?'<button class="small-button" data-publish-question="'+esc(q.id)+'" title="После проверки правильного ответа и изображения">Опубликовать</button>':'')+
-  '</div></article>').join(''):
-  '<div class="empty">Вопросов пока нет. Выберите тему и добавьте первый вопрос.</div>';
+ $('bankItems').innerHTML=state.questions.length?state.questions.map(q=>{
+  const geography=!!q.solution?.geo_mode;
+  const mode=geography?geoModeNames[q.solution.geo_mode]||'География России':titleKind(q.solution?.flag_mode);
+  const reviewed=geography||q.tags?.includes('fw:published');
+  const text=geography?'Проверен по справочнику регионов · готов к игре':
+   reviewed?'Проверен · доступен для игры':'Черновик · не участвует в раундах';
+  return '<article class="question-row"><div><div class="question-meta"><span class="chip">'+esc(mode)+'</span>'+
+   '<span class="chip lilac">'+esc(nameTopic(q.topic_id))+'</span><span class="chip">★ '+esc(q.difficulty)+'</span></div>'+
+   '<h3>'+esc(q.prompt)+'</h3><p>'+text+'</p></div>'+
+   '<div class="question-actions"><button type="button" class="small-button" data-preview-question="'+esc(q.id)+'">Предпросмотр</button>'+
+   (geography?'':'<button type="button" class="small-button" data-edit-question="'+esc(q.id)+'">Изменить</button>'+
+   (!reviewed?'<button class="small-button" data-publish-question="'+esc(q.id)+'" title="После проверки правильного ответа и изображения">Опубликовать</button>':''))+
+   '</div></article>';
+ }).join(''):
+ (isGeoTopic()&&!geoStoredModes.has($('bankMode').value)&&$('bankMode').value
+  ?'<div class="empty">Этот картографический режим создаёт индивидуальные задания непосредственно во время игры. Они не являются заранее записанными вопросами. Выберите «Все механики», «Административный центр» или «Федеральный округ», чтобы увидеть сохранённые вопросы.</div>'
+  :'<div class="empty">По выбранным условиям вопросов не найдено.</div>');
  if(state.activePage==='bank')animateView($('bankItems'),[{opacity:.35,transform:'translateY(12px)'},{opacity:1,transform:'translateY(0)'}],{duration:420});
 }
 async function saveTopic(e){e.preventDefault();
