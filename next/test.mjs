@@ -366,7 +366,7 @@ test('Lobby symbol and flag artwork have stable, centered visual bounds',()=>{
  assert.doesNotMatch(app,/<span>✳<\/span>/);
  assert.match(app,/role="status">Ожидайте сигнала преподавателя/);
  assert.match(mobile,/\.game-lobby-wait \.lobby-people\{position:relative;z-index:2/);
- assert.match(mobile,/\.game-lobby-wait \.lobby-ambient\{display:none!important/);
+ assert.match(mobile,/\.game-lobby-wait>\.lobby-ambient\{display:none!important/);
  assert.match(stage,/flag-media-frame/);
  assert.match(stage,/url\?'':'<div class="frame-orbit"/);
  assert.match(stageCss,/\.question-frame\.flag-media-frame \.question-picture>/);
