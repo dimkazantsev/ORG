@@ -48,7 +48,7 @@
     <div id="playerEntry" role="tabpanel" aria-labelledby="rolePlayer">
      <div class="entry-heading"><div><h2>Присоединяйтесь</h2><p class="entry-desc">Ваша команда уже ждёт.</p></div><span class="entry-step">ПО КОДУ</span></div>
      <div class="resume-game" id="resumeGame" hidden><div><span>Вы уже в игре</span><strong id="resumeCode"></strong></div><button type="button" class="btn" id="resumeGameButton">Продолжить <span aria-hidden="true">→</span></button></div>
-     <p class="team-invitation-notice" id="teamInvitationNotice" hidden>Вход по приглашению: команда уже выбрана в QR-коде.</p>
+     <p class="team-invitation-notice" id="teamInvitationNotice" hidden>Вход по приглашению: команда уже выбрана в QR-коде.</p><div id="qrDirectJoin" class="qr-direct-entry" hidden><strong>Комната <span id="qrDirectCode"></span></strong><p>Вы уже открыли нужную игру по QR. Укажите имя и фамилию, затем нажмите «Присоединиться». Регистрация и ручной ввод кода не нужны.</p></div>
       <form class="stack" id="joinForm">
       <label class="code-label" for="joinCode">Код комнаты
        <input id="joinCode" placeholder="A1B2C3D4" inputmode="text" maxlength="8" autocapitalize="characters" autocomplete="off" spellcheck="false" pattern="[a-fA-F0-9]{8}" title="Восемь символов: цифры и латинские буквы A–F" aria-describedby="codeHint" required>
