@@ -3,12 +3,16 @@ on:
   push:
     paths:
       - 'next/presenter.*'
+      - 'next/stage.js'
+      - 'next/stage.css'
       - 'next/visual.spec.mjs'
       - 'next/projection-fit.spec.mjs'
       - '.github/workflows/presenter-layout-qa.yml'
   pull_request:
     paths:
       - 'next/presenter.*'
+      - 'next/stage.js'
+      - 'next/stage.css'
       - 'next/visual.spec.mjs'
       - 'next/projection-fit.spec.mjs'
       - '.github/workflows/presenter-layout-qa.yml'
