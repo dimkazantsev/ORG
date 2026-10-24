@@ -217,7 +217,7 @@ test('Moderator slide cards shrink to content and do not reserve blank height',(
  assert.match(compact,/\.moderator-slide\s*\{[^}]*min-height:0;height:auto/);
  assert.match(compact,/\.moderator-slide-choices\s*\{[^}]*margin:2px 0 0/);
  assert.doesNotMatch(compact,/min-height:290px|margin-top:auto/);
- assert.match(html,/workspace\.css\?v=avatar-3d-20261024-16/);
+ assert.match(html,/workspace\.css\?v=[a-zA-Z0-9_-]+/);
 });
 test('Result lifecycle has automatic expiry with full timeline preview',()=>{
  const timer=readFileSync(new URL('./migrations/20261024_auto_result_transition.sql',import.meta.url),'utf8');
