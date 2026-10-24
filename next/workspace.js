@@ -49,7 +49,7 @@ function cardIconSvg(type,glyph=null){
 const copySvg='<svg class="copy-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>';
 const trashSvg='<svg class="trash-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 4h4m-7 3 1 13h8l1-13M10 11v6m4-6v6"/></svg>';
 const titles={round:'Раунд вопросов',intro:'Начало игры',break:'Музыкальная пауза',team_stats:'Рейтинг команд',player_stats:'Статистика игроков',bonus:'Бонусная активность',duel:'Дуэль команд',finale:'Финал игры'};
-const buildDefaults={count:5,seconds:30,answer_seconds:10,order:'random',offset:0,team_cap:null,player_cap:null,sound:'fanfare',lead_seconds:5};
+const buildDefaults={count:5,seconds:30,answer_seconds:10,order:'random',offset:0,team_cap:null,player_cap:null,sound:'fanfare',lead_seconds:5,stats_seconds:7,bonus_percent:70,bonus_lead:15};
 const arcadeGames={
  rocket:{title:'Ракетная гонка',icon:'arcade_rocket',seconds:12,help:'Все игроки разгоняют командную ракету. Учитывается средний вклад игрока, а не размер команды. Победа: +25 очков и награда.'},
  blitz:{title:'Блиц-вопрос',icon:'arcade_blitz',seconds:25,help:'7 секунд команды борются за право ответа. После захвата открывается вопрос из банка флагов. Правильный ответ: +80 очков.'},
@@ -428,7 +428,7 @@ function cardDesc(c){const settings=c.settings||{};
  if(settings.arcade_mode==='russia_map')return 'География России · карта · '+(settings.geo_count||15)+' случайных субъектов каждому игроку · '+(settings.geo_seconds||180)+' сек. · индивидуальный прогресс';
   if(arcadeGames[settings.arcade_mode])return 'Командная мини-игра · '+(settings.arcade_seconds||arcadeGames[settings.arcade_mode].seconds)+' секунд · достижения и жетоны';
  if(c.type==='round')return (c.topic_id?nameTopic(c.topic_id):'Тема не выбрана')+' · '+(Array.isArray(settings.flag_modes)&&settings.flag_modes.length?settings.flag_modes.map(titleKind).join(', '):'Все доступные механики')+' · '+(settings.count||5)+' вопр. · '+(settings.seconds||30)+' сек. · ответ '+(settings.answer_seconds||10)+' сек.';
- if(c.type==='finale')return 'Команды, личный рейтинг и вопросы, которые запомнились';
+ if(c.type==='finale')return 'Итог всей игры: результаты команд и каждого игрока · автоматически';
  return 'Дополнительная активность · настройки в карточке'}
 function renderCards(){ensureFinale();$('roundCards').innerHTML=state.cards.map((c,i)=>{
  const final=c.type==='finale',emblem=final?'<svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M15 7h18v13c0 13-18 13-18 0V7ZM15 11H7v6c0 7 8 10 12 8M33 11h8v6c0 7-8 10-12 8M24 30v10M16 41h16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':cardIconSvg(c.type,c.icon);
@@ -495,7 +495,9 @@ function saveCard(event){event.preventDefault();const c=state.cards[state.editin
   order:$('cardOrder').value,offset:Math.max(0,Number($('cardOffset').value)-1),
   team_cap:$('cardTeamCap').value?Number($('cardTeamCap').value):null,
   player_cap:$('cardPlayerCap').value?Number($('cardPlayerCap').value):null,
-  sound:$('cardSound').value,lead_seconds:5,flag_modes:selected.length===flagModes.filter(x=>x[2]).length?[]:selected};
+  sound:$('cardSound').value,lead_seconds:c.settings.lead_seconds??buildDefaults.lead_seconds,
+  stats_seconds:c.settings.stats_seconds??buildDefaults.stats_seconds,bonus_percent:c.settings.bonus_percent??buildDefaults.bonus_percent,
+  bonus_lead:c.settings.bonus_lead??buildDefaults.bonus_lead,flag_modes:selected.length===flagModes.filter(x=>x[2]).length?[]:selected};
  if(arcadeGames[c.settings.arcade_mode])c.settings.arcade_seconds=Math.max(8,Math.min(40,Number($('cardArcadeSeconds').value)||arcadeGames[c.settings.arcade_mode].seconds));
   if(c.settings.arcade_mode==='russia_map'){
    const modes=all('#cardGeoModes input:checked:not(:disabled)').map(x=>x.value);
@@ -507,13 +509,19 @@ function saveCard(event){event.preventDefault();const c=state.cards[state.editin
  $('cardDialog').close();renderCards()}
 function generalSettings(){
  const first=state.cards.find(c=>c.type==='round')?.settings||buildDefaults;
+ $('generalLeadSeconds').value=first.lead_seconds??5;$('generalStatsSeconds').value=first.stats_seconds??7;
+ $('generalBonusPercent').value=first.bonus_percent??70;$('generalBonusLead').value=first.bonus_lead??15;
  $('generalSeconds').value=first.seconds||30;$('generalAnswerSeconds').value=first.answer_seconds||10;$('generalCount').value=first.count||5;$('generalSound').value=first.sound||'fanfare';
  $('generalApplyCount').checked=false;$('generalApplySound').checked=false;$('generalCount').disabled=true;$('generalSound').disabled=true;
  $('generalRoundCount').textContent=state.cards.filter(c=>c.type==='round').length;$('generalDialog').showModal();
 }
 function saveGeneralSettings(event){
- event.preventDefault();const timing={seconds:Number($('generalSeconds').value),answer_seconds:Number($('generalAnswerSeconds').value)};
- if(timing.seconds<10||timing.seconds>120||timing.answer_seconds<5||timing.answer_seconds>30)return;
+ event.preventDefault();const timing={seconds:Number($('generalSeconds').value),answer_seconds:Number($('generalAnswerSeconds').value),
+ lead_seconds:Number($('generalLeadSeconds').value),stats_seconds:Number($('generalStatsSeconds').value),
+ bonus_percent:Number($('generalBonusPercent').value),bonus_lead:Number($('generalBonusLead').value)};
+ if(timing.seconds<10||timing.seconds>120||timing.answer_seconds<5||timing.answer_seconds>30||
+ timing.lead_seconds<1||timing.lead_seconds>5||timing.stats_seconds<5||timing.stats_seconds>10||
+ timing.bonus_percent<50||timing.bonus_percent>100||timing.bonus_lead<0||timing.bonus_lead>200)return;
  if($('generalApplyCount').checked)timing.count=Number($('generalCount').value);
  if($('generalApplySound').checked)timing.sound=$('generalSound').value;
  Object.assign(buildDefaults,timing);for(const c of state.cards)if(c.type==='round')c.settings={...buildDefaults,...c.settings,...timing};
@@ -814,7 +822,16 @@ function wire(){
     c.settings={...c.settings,arcade_mode:'russia_map',geo_count:15,geo_seconds:180,geo_modes:['locate','identify','capital','flag','silhouette','neighbour','detective','district']};renderCards();
    }else appendCard(b.dataset.card,b.dataset.arcade||null);
   };
- $('arcadePalette').onclick=e=>{const b=e.target.closest('[data-arcade]');if(b)appendCard(b.dataset.card,b.dataset.arcade)};
+ $('openGamesPalette').onclick=()=>{const panel=$('gamesPalette'),show=panel.hidden;panel.hidden=!show;$('openGamesPalette').setAttribute('aria-expanded',String(show));};
+ $('addFinaleCard').onclick=()=>{ensureFinale();editCard(state.cards.length-1)};
+ $('arcadePalette').onclick=e=>{const b=e.target.closest('[data-arcade],[data-geo]');if(!b)return;
+  if(b.dataset.geo==='russia_map'){
+   appendCard('round');const c=state.cards[state.cards.length-2];c.title='География России · карта 89 субъектов';c.icon='map';
+   c.topic_id=state.topics.find(t=>t.name==='География России')?.id||null;
+   c.settings={...c.settings,arcade_mode:'russia_map',geo_count:15,geo_seconds:180,
+    geo_modes:['locate','identify','capital','flag','silhouette','neighbour','detective','district']};renderCards();
+  }else appendCard(b.dataset.card,b.dataset.arcade);
+ };
  $('roundCards').onclick=e=>{
   const edit=e.target.closest('[data-edit-card]');if(edit){editCard(Number(edit.dataset.editCard));return}
   const copy=e.target.closest('[data-duplicate-card]');if(copy){duplicateCard(Number(copy.dataset.duplicateCard));return}
