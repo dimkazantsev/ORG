@@ -282,7 +282,8 @@ function render(state){
  if(state.phase==='countdown'){QwizStage.audio.music('round',state.code+':'+state.index,6500);roundIntroScene(state);scheduleFitProjection();return}
  if(state.phase==='intermission'){
   const activity=state.activity||{},type=activity.type||'break';
-  if(type==='round_stats'){automaticRoundStandings(state);scheduleFitProjection();return}QwizStage.audio.music(type==='intro'?'intro':'round',state.code+':'+state.index+':'+type,type==='intro'?9000:12000);
+  if(type==='round_stats'){automaticRoundStandings(state);scheduleFitProjection();return}
+  if(type==='card_intro'){roundIntroScene(state);scheduleFitProjection();return}QwizStage.audio.music(type==='intro'?'intro':'round',state.code+':'+state.index+':'+type,type==='intro'?9000:12000);
   if(window.QwizGeo?.mountProjector($('projectionMain'),state,ctx.client)){scheduleFitProjection();return;}
   if(window.QwizArcade?.mountProjector($('projectionMain'),state,ctx.client)){scheduleFitProjection();return;}
    if(type==='intro'){$('projectionMain').innerHTML='<section class="projection-welcome"><div class="welcome-orbit" aria-hidden="true"><span>✦</span><span>★</span><span>✧</span></div><span class="projection-eyebrow">QWIZ-PARTY · ДОБРО ПОЖАЛОВАТЬ</span><h1>'+escapeText(activity.title||'Большая игра начинается!')+'</h1><p>Команды готовы? Проверьте подключение и приготовьтесь к первому раунду.</p><div class="welcome-dots"><i></i><i></i><i></i><i></i><i></i></div></section>';return;}
