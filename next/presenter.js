@@ -187,23 +187,24 @@ function questionScene(state){
  const finished=state.phase==='result'&&!!state.answer;
  const answer=finished?state.answer:null;
  const correctIndices=Array.isArray(answer?.indices)?answer.indices.map(Number).filter(Number.isInteger):[];
- const choices=finished&&Array.isArray(q.options)?q.options.slice(0,10).map((option,i)=>{
-   const correct=correctIndices.includes(i);
-   return '<div class="projection-reveal-option'+(correct?' is-correct':'')+'">'+
-    '<span class="projection-reveal-letter">'+String.fromCharCode(65+i)+'</span>'+
-    '<div class="projection-reveal-option-body">'+projectionOption(option,i)+'</div>'+
-    (correct?'<span class="projection-reveal-check" aria-label="Правильный ответ">✓ Верно</span>':'')+
-    '</div>';
- }).join(''):'';
  const answerImage=typeof answer?.image_url==='string'&&/^https:\/\//i.test(answer.image_url)?answer.image_url:'';
- const answerText=answer?.text||'Ответ не указан';
+ const answerText=String(answer?.text||'Ответ не указан').trim();
  const correctFlag=finished?QwizStage.correctFlagMarkup(q,answer):'';
  const explanation=answer?.explanation||'';
+ // One authoritative answer card. Multiple-choice questions with more than one
+ // correct index retain the server answer summary instead of dropping answers.
+ const answerLetter=correctIndices.length===1&&correctIndices[0]>=0&&correctIndices[0]<26
+  ?'<span class="projection-answer-letter" aria-hidden="true">'+String.fromCharCode(65+correctIndices[0])+'</span>':'';
+ const answerArt=correctFlag||(!frame&&answerImage
+  ?'<img class="projection-answer-image" src="'+escapeText(answerImage)+'" alt="Иллюстрация правильного ответа" decoding="async">':'');
  const reveal=finished?
   '<section class="projection-answer-reveal" role="status" aria-label="Разбор вопроса">'+
-   '<div class="projection-answer-heading"><span>ПРАВИЛЬНЫЙ ОТВЕТ</span>'+(correctFlag?correctFlag:'<strong>'+escapeText(answerText)+'</strong>')+'</div>'+
-   (choices?'<div class="projection-reveal-options'+(choices.includes('flag-choice-art')?' has-flag-options':'')+'">'+choices+'</div>':
-     (answerImage?'<img class="projection-answer-image" src="'+escapeText(answerImage)+'" alt="Правильный флаг" decoding="async">':''))+
+   '<div class="projection-answer-heading"><span>ПРАВИЛЬНЫЙ ОТВЕТ</span></div>'+
+   '<div class="projection-answer-single">'+answerLetter+
+    '<div class="projection-answer-primary">'+answerArt+
+      '<strong class="projection-answer-text">'+escapeText(answerText)+'</strong></div>'+
+    '<span class="projection-answer-success" aria-hidden="true">✓</span>'+
+   '</div>'+
    (explanation?'<p class="projection-answer-explanation">'+escapeText(explanation)+'</p>':'')+
   '</section>':'';
  return '<section class="projection-question projection-question-only'+(state.phase==='result'?' is-result':'')+'">'+top+
