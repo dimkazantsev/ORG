@@ -104,7 +104,7 @@ test('Mini-game palette and saved cards use distinct polished vector icons',()=>
  assert.match(palette,/workspace\.js\?v=[a-zA-Z0-9_-]+/);
  assert.match(palette,/workspace\.css\?v=[a-zA-Z0-9_-]+/);
 });
-test('Public projector never includes options or answer keys and host previews three server-scoped slides',()=>{
+test('Public projector includes choices but not answer keys and host slides are server-scoped',()=>{
  const presenter=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
  const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
  const layout=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
@@ -114,7 +114,7 @@ test('Public projector never includes options or answer keys and host previews t
  assert.match(host,/qwiz_host_slide_deck/);
  assert.match(deck,/owner_id<>\(SELECT auth.uid\(\)\)/);
  assert.match(sql,/s:=s-''answer''/);
- assert.doesNotMatch(presenter.slice(presenter.indexOf('function questionScene('),presenter.indexOf('function render(state)')),/projection-options|projection-option\(/);
+ assert.match(presenter.slice(presenter.indexOf('function questionScene('),presenter.indexOf('function render(state)')),/projection-public-options/);
 });
 test('Geography feedback is provided after a submitted answer and map zoom is persistent',()=>{
  const client=readFileSync(new URL('./russia-geo.js',import.meta.url),'utf8');
@@ -178,7 +178,7 @@ test('Flag imagery remains visible and visual answers show the flag instead of p
  assert.doesNotMatch(shared,/Флаг скрыт\. Вспомните страну/);
  assert.match(shared,/function updateMemory\(root,s,offset=0\)\{return;/);
  assert.match(projection,/const frame=selectingFlag\|\|hideFiller\|\|!hasVisual\?'':QwizStage\.illustration\(q,state\.phase==='result'\?state\.answer:null\)/);
- assert.doesNotMatch(projection.slice(projection.indexOf('function questionScene('),projection.indexOf('function applyProjectionSettings(')),/projection-options/);
+ assert.match(projection.slice(projection.indexOf('function questionScene('),projection.indexOf('function applyProjectionSettings(')),/projection-public-options/);
  assert.match(app,/result-flag-image/);
  assert.match(app,/s\.answer\.image_url/);
  assert.match(workspace,/moderator-option-flag/);
@@ -334,7 +334,8 @@ test('Projector hides flag-picker filler art, reveals actual answers and fits th
  const question={prompt,options:[{label:'A'},{label:'B'},{label:'C'},{label:'D'}]};
  const lobby=runInNewContext(scene+'questionScene({question,phase:"question",index:0,total:10,teams:[]})',{...context,question});
  assert.doesNotMatch(lobby,/fixture-filler-art/);
- assert.doesNotMatch(lobby,/fixture-flag/);
+ assert.equal((lobby.match(/fixture-flag/g)||[]).length,4);
+ assert.doesNotMatch(lobby,/fixture-correct-flag/);
  const result=runInNewContext(scene+'questionScene({question,phase:"result",index:0,total:10,answer:{indices:[1],text:"Ангола"},teams:[]})',{...context,question});
  assert.match(result,/fixture-correct-flag/);
  assert.equal((result.match(/fixture-flag/g)||[]).length,0);
