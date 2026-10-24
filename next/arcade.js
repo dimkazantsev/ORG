@@ -66,6 +66,8 @@ window.QwizArcade=(()=>{
   }
   const badges=tr.root.querySelector('[data-arcade-badges]');if(badges)badges.innerHTML=(v.awards||[]).slice(0,12).map(a=>'<span class="arcade-award">'+escape(a.title)+' · +'+Number(a.credits)+' жет.</span>').join('');
   const vote=v.vote,ballot=tr.root.querySelector('[data-arcade-vote]');
+  // The ballot replaces the spent arcade scene on a player's phone; never send it below the viewport.
+  tr.root.classList.toggle('is-boost-voting',Boolean(vote&&tr.kind==='player'));
   if(ballot){
    ballot.hidden=!vote;
    if(vote){
@@ -73,7 +75,7 @@ window.QwizArcade=(()=>{
     const tally=vote.counts||{},mine=vote.my_choice;
     const remaining=Math.max(0,Math.ceil((Date.parse(vote.vote_ends_at)-currentTime(tr))/1000));
     ballot.innerHTML='<div class="arcade-vote-title"><span>🏆 ПОБЕДИТЕЛЬ · '+escape(champion?.name||'Команда')+'</span><strong>Усиление на следующий раунд</strong><p>Голосование всех участников команды · требуется больше половины голосов · осталось '+remaining+' с</p></div>'+
-      '<div class="arcade-boost-grid">'+BOOSTS.map(([id,title,description])=>'<button type="button" data-boost-choice="'+id+'" '+(!(tr.kind==='player'&&vote.can_vote&&vote.open)||tr.voteBusy?'disabled':'')+' class="'+(mine===id?'selected':'')+'"><strong>'+escape(title)+'</strong><span>'+escape(description)+'</span><b>'+Number(tally[id]||0)+' голосов</b></button>').join('')+'</div>'+
+      '<div class="arcade-boost-grid">'+BOOSTS.map(([id,title,description])=>'<button type="button" data-boost-choice="'+id+'" '+(!(tr.kind==='player'&&vote.can_vote&&vote.open&&remaining>0)||tr.voteBusy?'disabled':'')+' class="'+(mine===id?'selected':'')+'"><strong>'+escape(title)+'</strong><span>'+escape(description)+'</span><b>'+Number(tally[id]||0)+' голосов</b></button>').join('')+'</div>'+
       '<p class="arcade-vote-rule">'+(vote.open?(vote.can_vote?'Выберите одно усиление. Голос можно изменить до конца времени.':'Голосуют только игроки победившей команды.'):'Голосование завершено. Усиление с большинством голосов активируется в следующем раунде; без большинства бонус не выдаётся.')+'</p>';
    }
   }
