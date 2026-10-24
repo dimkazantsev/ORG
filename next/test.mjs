@@ -873,5 +873,5 @@ test('Round editor opens mechanics by default with vector arrow and even selecti
  assert.equal((script.match(/\$\('cardModesDetails'\)\.open=c\.type==='round'/g)||[]).length,2);
  assert.match(styles,/#roundCards \.round-card\.is-selected::before\{content:none\}/);
  assert.match(styles,/#cardModesDetails\[open\] \.card-modes-chevron/);
- assert.match(markup,/class="card-order-explainer"/);
+ assert.match(markup,/class="small-help card-order-explainer"/);
 });
