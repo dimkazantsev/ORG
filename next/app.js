@@ -167,6 +167,25 @@ function personalResults(s,final=false){
  (players.length?QwizStage.leaderboard(players,final?80:10):'<p>Пока нет результатов игроков</p>')+
  (final&&stats.length?QwizStage.questionStats(stats):'')+'</section>';
 }
+function roundScorePanel(view,title,final=false){
+ const rows=(view?.teams||[]),players=(view?.players||[]);
+ const render=(a,isTeam)=>a.length?'<ol class="round-score-list">'+a.map((x,i)=>'<li><span class="round-rank">'+(i+1)+'</span><strong>'+esc(x.nickname||x.name||'Участник')+'</strong><b>'+Number(x.score||0).toLocaleString('ru-RU')+'</b></li>').join('')+'</ol>':'<p class="small-help">Результаты ещё обрабатываются сервером</p>';
+ return '<section class="round-results-page'+(final?' is-final':'')+'"><div class="round-results-orbit" aria-hidden="true">✦</div>'+
+ '<span class="eyebrow">'+(final?'ИГРА ЗАВЕРШЕНА':'РАУНД ЗАВЕРШЁН')+'</span>'+
+ '<h1>'+esc(title||'Результаты')+'</h1>'+
+ '<div class="round-results-grid"><section><h2>Команды</h2>'+render(rows,true)+'</section>'+
+ '<section><h2>Участники</h2>'+render(players,false)+'</section></div>'+
+ (!final?'<p class="round-results-next">Следующая карточка откроется автоматически.</p>':'')+'</section>';
+}
+function roundIntroMarkup(s){
+ const title=s.activity?.title||'Следующий раунд',icon=s.activity?.icon;
+ const drawing=icon==='map'?'<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="5" aria-hidden="true"><circle cx="50" cy="50" r="32"/><path d="m61 39-12 25-12 5 12-25z"/></svg>':
+ '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="5" aria-hidden="true"><path d="M24 81V17m0 3c23-12 32 12 56-2v43c-26 14-37-9-56 2"/></svg>';
+ return '<section class="game-empty round-intro" aria-label="Представление раунда"><div class="round-intro-sparks" aria-hidden="true"><i></i><i></i><i></i></div>'+
+ '<div class="round-intro-symbol" aria-hidden="true">'+drawing+'</div><div class="eyebrow">СЛЕДУЮЩИЙ РАУНД</div>'+
+ '<h1>'+esc(title)+'</h1><p>Подготовьтесь к новому испытанию</p>'+
+ '<strong class="round-intro-count"><span id="playerCountdown">'+remaining(s.ends_at)+'</span> сек.</strong></section>';
+}
 function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;const me=s.me;const myTeam=(s.teams||[]).find(t=>t.id===me?.team_id);
  text('playerGameTitle',s.title);text('playerTeamName',myTeam?.name||'Команда пока не назначена');$('playerScoreboard').innerHTML=teamMarkup(s.teams);
  QwizTeams.playerPanel($('playerTeamPanel'),s);
@@ -190,7 +209,7 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  '<div class="lobby-progress" aria-label="Ожидание старта"><span></span></div>'+
  '<div class="lobby-people">Ожидайте сигнала преподавателя</div></section>';
  text('playerStatus','Подключён. Ожидайте начала.');return}
- if(s.phase==='finished'){el.innerHTML='<div class="game-empty"><div class="eyebrow">Игра завершена</div><h1>Финальный рейтинг</h1><p>Спасибо за участие. Результаты зафиксированы на сервере.</p>'+personalResults(s,true)+'</div>';text('playerStatus','Игра завершена.');return}
+ if(s.phase==='finished'){el.innerHTML='<div class="game-empty player-finale-screen"><div class="eyebrow">ИГРА ЗАВЕРШЕНА</div><h1>Итоги всей игры</h1><p>Общий зачёт команд и участников</p>'+personalResults(s,true)+'</div>';text('playerStatus','Игра завершена.');return}
  const question=s.question;
  if(s.phase==='intermission'){
   if(window.QwizGeo?.mountPlayer(el,s,{client:ctx.client})){
@@ -199,7 +218,10 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
    if(window.QwizArcade?.mountPlayer(el,s,ctx)){
     text('playerStatus','Командное испытание. Действуйте вместе, зарабатывайте достижения и жетоны.');return;
   }
-   const type=s.activity?.type||'break';
+   if(s.activity?.type==='round_stats'){
+    el.innerHTML=roundScorePanel(s.round_results,'Итоги раунда');text('playerStatus','Итоги раунда · следующий этап автоматически.');return;
+  }
+  const type=s.activity?.type||'break';
    const hasStandings=['team_stats','player_stats'].includes(type);
    el.innerHTML=hasStandings?
      '<div class="game-empty game-statistics-panel"><span class="eyebrow">РЕЗУЛЬТАТЫ РАУНДА</span><h1>'+esc(s.activity?.title||'Рейтинг')+'</h1>'+
@@ -210,7 +232,7 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
    return;
  }
  if(s.phase==='countdown'){
-   el.innerHTML='<div class="game-empty"><div class="eyebrow">НОВЫЙ РАУНД</div><h1>Скоро начнём!</h1><p>Вопрос откроется на всех устройствах через <strong id="playerCountdown">'+remaining(s.ends_at)+'</strong> сек.</p></div>';
+   el.innerHTML=roundIntroMarkup(s);
    text('playerStatus','Общий обратный отсчёт перед раундом.');
    // The projector releases promptly; players use a staggered fallback to avoid a simultaneous 40-client burst.
    return;
