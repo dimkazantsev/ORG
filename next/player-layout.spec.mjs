@@ -79,11 +79,15 @@ test('Finished arcade boost ballot stays entirely visible and accepts a vote at 
     ends_at:new Date(now-1000).toISOString(),
     mine:{team_id:'team-a',captain:false},
     teams:[{id:'team-a',name:'Несгибаемые',points:8,place:1}],
-    awards:[],vote:{winner_team:'team-a',can_vote:true,open:true,
+    awards:[],vote:{winner_team:'team-a',can_vote:true,open:true,stage:'strategy',strategy:null,
       vote_ends_at:new Date(now+30000).toISOString(),counts:{},my_choice:null}};
    window.boostVoteFixture=view;
-   const client={rpc:async name=>{
-    if(name==='qwiz_vote_boost'){view.vote.my_choice='headstart';view.vote.counts.headstart=1;return {data:{ok:true},error:null}}
+   const client={rpc:async(name,args)=>{if(name==='qwiz_vote_boost')window.voteChoiceFixture=args.p_choice;
+    if(name==='qwiz_vote_boost'){
+     if(window.voteChoiceFixture==='support'){view.vote.stage='option';view.vote.strategy='support';view.vote.my_choice=null;view.vote.counts={};}
+     else {view.vote.my_choice='headstart';view.vote.counts.headstart=1;}
+     return {data:{ok:true},error:null}
+    }
     return {data:view,error:null};
    }};
    QwizArcade.mountPlayer(document.querySelector('#gameContent'),{
@@ -91,6 +95,9 @@ test('Finished arcade boost ballot stays entirely visible and accepts a vote at 
      activity:{settings:{arcade_mode:'rocket'}}}, {client});
   });
   await expect(page.locator('.arcade-player.is-boost-voting')).toBeVisible();
+  await expect(page.locator('[data-boost-choice]')).toHaveCount(2);
+  await expect(page.locator('[data-boost-choice="support"]')).toBeEnabled();
+  await page.locator('[data-boost-choice="support"]').click();
   await expect(page.locator('[data-boost-choice]')).toHaveCount(3);
   const bounds=await page.evaluate(()=>{
    const container=document.querySelector('#gameContent').getBoundingClientRect();
