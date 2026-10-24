@@ -82,8 +82,9 @@ test('Projection screen only renders questions and never host controls',async({p
  }));
  await page.goto('http://127.0.0.1:8080/next/presenter.html?room=ABCDEF12');
  await expect(page.locator('.projection-question h1')).toHaveText('Как называется столица России?');
- await expect(page.locator('.projection-option')).toHaveCount(0);
- await expect(page.locator('.projection-question-instruction')).toContainText('Варианты ответа доступны');
+ await expect(page.locator('.projection-public-options .projection-option')).toHaveCount(4);
+ await expect(page.locator('.projection-public-options')).toContainText('Москва');
+ await expect(page.locator('.projection-question-instruction')).toHaveCount(0);
  await expect(page.locator('#hostControls')).toHaveCount(0);
  await expect(page.locator('#hostTeams')).toHaveCount(0);
  await expect(page.locator('#loginEmail')).toHaveCount(0);
