@@ -100,6 +100,11 @@
      // Fill the available phone viewport without distorting the outline.
      // Touch drag and zoom controls expose regions outside the initial crop.
      nextSvg.setAttribute('preserveAspectRatio','xMidYMid meet');
+     if(!t.zoomBox&&window.matchMedia('(max-width:680px)').matches){
+        // Start at a readable crop and allow horizontal dragging to every region.
+        const w=Math.max(440,Math.min(790,Math.round(window.innerWidth*1.9)));
+        t.zoomBox=[Math.round((1120-w)/2),0,w,480].join(' ');
+     }
      if(t.zoomBox)nextSvg.setAttribute('viewBox',t.zoomBox);
      if(feedbackActive&&t.lastAnswer.correct_region_id){
        nextSvg.querySelectorAll('[data-region]').forEach(n=>{
@@ -166,7 +171,11 @@
    const zoom=e.target.closest('[data-geo-zoom]');
    if(zoom){const svg=root.querySelector('.geo-map-frame .geo-map-svg');if(!svg)return;
     const action=zoom.dataset.geoZoom;let [x,y,w,h]=svg.getAttribute('viewBox').split(' ').map(Number);
-    if(action==='reset'){[x,y,w,h]=[0,0,1120,480]}
+    if(action==='reset'){
+      const narrow=window.matchMedia('(max-width:680px)').matches;
+      w=narrow?Math.max(440,Math.min(790,Math.round(window.innerWidth*1.9))):1120;
+      x=(1120-w)/2;y=0;h=480;
+     }
     else{const f=action==='in'?.72:1.38;const nw=Math.max(55,Math.min(1120,w*f)),nh=nw*480/1120;
      x=Math.max(0,Math.min(1120-nw,x+(w-nw)/2));y=Math.max(0,Math.min(480-nh,y+(h-nh)/2));w=nw;h=nh}
     t.zoomBox=[x,y,w,h].join(' ');svg.setAttribute('viewBox',t.zoomBox);return;
@@ -207,7 +216,7 @@
   t.onPointerUp=e=>{t.pointers.delete(e.pointerId);if(t.gestureMoved)t.suppressUntil=Date.now()+850;};
   t.onWheel=e=>{
    const svg=e.target.closest?.('.geo-map-frame .geo-map-svg');if(!svg)return;
-   e.preventDefault();
+   e.preventDefault();t.suppressUntil=Date.now()+600;
    modifyView(svg,e.deltaY<0?1.23:.81,0,0,e.clientX,e.clientY);
    t.zoomBox=svg.getAttribute('viewBox');
   };
