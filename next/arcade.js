@@ -7,7 +7,7 @@ window.QwizArcade=(()=>{
   tug:{title:'Перетягивание очков',desc:'Перетяните канат и получите преимущество. Победители также голосуют за усиление следующего раунда.',cta:'ТЯНУТЬ!'},
   captain:{title:'Дуэль капитанов',desc:'Один сигнал — одно нажатие капитана. Самый быстрый побеждает, его команда голосует за усиление следующего раунда.',cta:'УДАР!'}
  };
- const COLORS=['#9470e2','#54a3d8','#e6a95d','#76ad83','#ea7f9b','#8291db','#bb86c8'];
+ const COLORS=['#9470e2','#b58add','#e6a95d','#76ad83','#ea7f9b','#a78be5','#bb86c8'];
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const BOOSTS=[['headstart','Фора +12','12 очков в начале следующего раунда'],['teamwork','Командный рывок','+3 очка за члена команды, максимум 24'],['momentum','Импульс','+15% к текущим очкам, максимум 30']];
   const ui={player:null,screen:null,host:null};let wallet={code:null,client:null,roomId:null,lastFetch:0,busy:false,view:null};
