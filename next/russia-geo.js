@@ -75,6 +75,9 @@
   const feedbackActive=Boolean(t.lastAnswer&&Date.now()<t.feedbackUntil);
    const q=feedbackActive?(t.revealQuestion||v.question):v.question,done=!q||!v.open;
    const key=[v.index,q?.mode,q?.name,q?.region,feedbackActive].join(':');
+   const taskKey=[v.index,q?.mode,q?.name,q?.region].join(':');
+   if(t.taskKey!==undefined&&t.taskKey!==taskKey&&!feedbackActive){t.selectedRegion=null;t.message='';}
+   if(!feedbackActive)t.taskKey=taskKey;
    if(t.renderKey===key&&root.querySelector('.geo-game')){
      const time=root.querySelector('.geo-footer>span');if(time)time.textContent='Осталось '+Math.max(0,v.remaining)+' сек.';
      return;
