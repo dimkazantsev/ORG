@@ -2,6 +2,21 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
+  <!-- Canonical ORG entry: retain old page only for explicit ?legacy=1 compatibility. -->
+  <script data-org-canonical-entry>
+    (function () {
+      try {
+        var url = new URL(window.location.href);
+        if (url.searchParams.get('legacy') === '1') return;
+        var target = new URL('./next/', url);
+        target.search = url.search;
+        target.hash = url.hash;
+        window.location.replace(target.href);
+      } catch (error) {
+        /* If URL parsing is unavailable, leave the original page usable. */
+      }
+    })();
+  </script>
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f8fafc">
   <meta name="color-scheme" content="light">
