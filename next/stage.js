@@ -64,6 +64,15 @@ window.QwizStage=(()=>{
   }
  }
  function illustration(q,answer,content=''){
+  // Memory mechanic: show the source flag first, then hide it at the shared
+  // absolute deadline. Never generate a new deadline during a re-render.
+  if(q.flag_memory&&!answer){
+   const image=typeof q.media_url==='string'&&/^https:\/\//i.test(q.media_url)?q.media_url:'';
+   const open=Number.isFinite(Date.parse(q.memory_until))&&Date.parse(q.memory_until)>Date.now();
+   return '<figure class="question-frame memory-frame" data-memory-study '+(!open?'hidden':'')+'>'+
+    '<div class="question-picture">'+(image?'<img class="question-art" src="'+esc(image)+'" alt="Запомните флаг">':'')+'</div>'+
+    '<figcaption>Запомните флаг до появления вариантов ответа</figcaption></figure>';
+  }
   // A flag-identification question must keep the flag visible until the answer; never replace it with a recall placeholder.
   if(Array.isArray(q.options)&&q.options.some(x=>x&&typeof x==='object'&&typeof x.image_url==='string')&&!q.media_url&&!q.illustration_url)return '';
   if(q.flag_assembly&&!answer)return '<figure class="question-frame assembly-frame"><div class="question-picture">'+assemblyPalette(q)+'</div><figcaption>Соберите флаг из этих полос</figcaption></figure>';
@@ -295,9 +304,22 @@ window.QwizStage=(()=>{
   const stripes=stripeOption({orientation,stripes:words.map(w=>palette[w])});
   return stripes?wrap(stripes):'';
  }
- // Existing flag-memory questions now behave as ordinary visible-flag questions.
- // Keep the method for the shared stage API, without hiding the question or answers.
- function updateMemory(root,s,offset=0){return;}
+ // The client does not choose the deadline; the server supplies memory_until.
+ // On resume, compare the absolute deadline instead of restarting study time.
+ function updateMemory(root,s,offset=0){
+  const q=s?.question;
+  if(!q?.flag_memory||s?.phase!=='question')return;
+  const until=Date.parse(q.memory_until);
+  const studying=Number.isFinite(until)&&until>Date.now()+Number(offset||0);
+  for(const study of root.querySelectorAll('[data-memory-study]'))study.hidden=!studying;
+  for(const answers of root.querySelectorAll('[data-memory-answer]')){
+   answers.hidden=studying;
+   answers.setAttribute('aria-hidden',String(studying));
+   for(const control of answers.querySelectorAll('button,input,select')){
+    control.disabled=studying||control.dataset.memoryWasDisabled==='true';
+   }
+  }
+ }
  function assemblyPalette(q){
   const colors=q.flag_assembly?.colors||{};
   return '<div class="assembly-palette">'+(q.options||[]).map(name=>'<span><i style="background:'+esc(/^#[0-9a-f]{6}$/i.test(colors[name])?colors[name]:'#888888')+'" aria-hidden="true"></i>'+esc(capitalize(name))+'</span>').join('')+'</div>';
