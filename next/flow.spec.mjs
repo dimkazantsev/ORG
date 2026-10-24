@@ -49,3 +49,47 @@ test('Presenter has direct room-bound join QR and compact team selection layout'
  expect(boxes.overflow).toBeLessThanOrEqual(2);
  expect(boxes.gap).toBeLessThan(70);
 });
+
+test('Moderator Start is enabled for ready room and opens separate exact-room public screen',async({page})=>{
+ await page.goto(BASE+'workspace.html');
+ await page.evaluate(()=>{
+  window.__projectorLink='';
+  window.open=(url)=>{window.__projectorLink=url;return {closed:false,focus(){},moveTo(){},resizeTo(){}};};
+  const room={room_id:'00000000-0000-4000-8000-000000000024',code:'EE31D25A',title:'Игровая комната',
+   phase:'lobby',index:-1,total:5,setup_issues:[],unassigned_count:0,players:[],teams:[],answers_count:0};
+  state.room=room;state.roomCode=room.code;state.db={rpc:async(name,args)=>{
+   if(name==='qwiz_party_control'){window.__lastControl={name,args};return {data:{phase:'intermission'},error:null};}
+   if(name==='qwiz_party_state')return {data:room,error:null};
+   return {data:{},error:null};
+  }};
+  wire();renderLive(room);roomReadiness(room);
+  document.getElementById('liveConsole').hidden=false;
+ });
+ await expect(page.locator('#liveStart')).toBeEnabled();
+ await page.locator('#liveStart').click();
+ await expect.poll(()=>page.evaluate(()=>window.__lastControl?.args?.p_action)).toBe('start');
+ const link=await page.evaluate(()=>window.__projectorLink);
+ expect(link).toContain('presenter.html');
+ expect(link).toContain('room=EE31D25A');
+ await expect(page.locator('#liveScreenMirror')).toHaveCount(0);
+});
+test('Moderator can pause a geography intermission and continue with server state',async({page})=>{
+ await page.goto(BASE+'workspace.html');
+ await page.evaluate(()=>{
+  const room={room_id:'00000000-0000-4000-8000-000000000024',code:'EE31D25A',title:'География России',
+   phase:'intermission',activity:{title:'География России',settings:{arcade_mode:'russia_map'}},
+   index:-1,total:0,setup_issues:[],unassigned_count:0,players:[],teams:[],answers_count:0,paused:false};
+  state.room=room;state.roomCode=room.code;state.db={rpc:async(name,args)=>{
+   if(name==='qwiz_party_control'){window.__lastAction=args.p_action;room.paused=args.p_action==='pause';return {data:{paused:room.paused},error:null};}
+   if(name==='qwiz_party_state')return {data:room,error:null};
+   return {data:{},error:null};
+  }};
+  wire();renderLive(room);document.getElementById('liveConsole').hidden=false;
+ });
+ await expect(page.locator('#livePause')).toBeEnabled();
+ await page.locator('#livePause').click();
+ await expect.poll(()=>page.evaluate(()=>window.__lastAction)).toBe('pause');
+ await expect(page.locator('#livePause')).toContainText('Продолжить');
+ await page.locator('#livePause').click();
+ await expect.poll(()=>page.evaluate(()=>window.__lastAction)).toBe('resume');
+});
