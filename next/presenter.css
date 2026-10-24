@@ -509,3 +509,44 @@ body:fullscreen .projection-shell{height:100dvh}
  .projection-answer-reveal{padding:14px;gap:10px}
  .projection-reveal-option-body .flag-choice-art{height:78px}
 }
+
+
+/* Strict physical viewport containment: 720p to 8K, landscape and portrait TVs. */
+.projection-shell{
+ height:100dvh;min-height:0;
+ overflow:hidden;
+ padding-block:clamp(8px,1.2dvh,34px);
+ padding-inline:clamp(12px,2.1vw,76px);
+}
+.projection-header{flex:0 0 auto;padding-bottom:clamp(7px,1dvh,17px)}
+#projectionMain{
+ flex:1 1 auto;min-height:0;max-height:100%;width:100%;
+ overflow:hidden;display:flex;justify-content:center;align-items:center;
+}
+#projectionMain>section,#projectionMain>div{max-width:100%;min-width:0;flex:0 1 auto}
+.projection-question-only{width:100%;margin:0 auto;gap:clamp(6px,1dvh,15px)}
+.projection-question-only h1{
+ font-size:clamp(23px,min(4.2vw,6.2dvh),80px);
+ line-height:1.09;max-width:100%;text-wrap:balance;
+}
+.projection-question-only .question-frame{max-height:min(38dvh,430px);overflow:hidden}
+.projection-question-only .question-frame img,.projection-question-only .question-frame svg{max-height:min(35dvh,410px);height:auto}
+.projection-question-only.is-result .question-frame{max-height:min(18dvh,160px)}
+.projection-answer-reveal{padding:clamp(7px,1.2dvh,20px);gap:clamp(5px,1dvh,14px)}
+.projection-reveal-option-body .flag-choice-art{height:clamp(42px,10dvh,125px);max-height:100%}
+.projection-lobby.has-team-entry{padding-block:clamp(7px,1dvh,16px)}
+.projection-team-entry{margin-top:clamp(8px,1dvh,20px)}
+@media(max-height:800px){
+ .projection-shell{padding-block:8px}
+ .projection-question-only{gap:6px}
+ .projection-question-only h1{font-size:clamp(24px,4.6dvh,53px)}
+ .projection-question-only .question-frame{max-height:30dvh}
+ .projection-reveal-option-body .flag-choice-art{height:min(8.8dvh,75px)}
+ .projection-answer-heading>strong{font-size:clamp(20px,3.6dvh,38px)}
+ .projection-reveal-options.has-flag-options{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .projection-reveal-option{min-height:0;padding:5px}
+}
+@media(min-width:3840px){
+ .projection-question-only{max-width:1900px}
+ .projection-lobby.has-team-entry{max-width:2200px;margin-inline:auto}
+}
