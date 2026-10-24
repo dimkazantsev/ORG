@@ -8,7 +8,7 @@ const js=readFileSync(new URL('./app.js',import.meta.url),'utf8');
 const sql=readFileSync(new URL('./migration.sql',import.meta.url),'utf8');
 test('The public home opens the current quiz and preserves QR room invitations',()=>{
  const root=readFileSync(new URL('../index.html',import.meta.url),'utf8');
- const redirect=root.match(/<script data-org-canonical-entry>([\\s\\S]*?)<\\/script>/)?.[1];
+ const redirect=root.split('<script data-org-canonical-entry>')[1]?.split('</script>')[0];
  assert.ok(redirect,'The legacy home must forward to the current quiz');
  function destination(initial){
   let redirected=null;
