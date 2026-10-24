@@ -7,10 +7,10 @@ DO $patch$
 DECLARE body text;
 BEGIN
  SELECT pg_get_functiondef('public.qwiz_student_identity(text,jsonb)'::regprocedure) INTO body;
- IF position("('fox','owl','cat','panda','otter','raccoon','capybara','penguin','koala','red-panda','rabbit','bear','giraffe','gorilla','hyena','kangaroo','leopard','lion','orca','polarbear','rhinoceros','toucan','turtle','wolf','zebra')" in body)>0 THEN RETURN; END IF;
- IF position("('fox','owl','cat','panda','otter','raccoon','capybara','penguin','koala','red-panda','rabbit','bear')" in body)=0 THEN
+ IF position('(''fox'',''owl'',''cat'',''panda'',''otter'',''raccoon'',''capybara'',''penguin'',''koala'',''red-panda'',''rabbit'',''bear'',''giraffe'',''gorilla'',''hyena'',''kangaroo'',''leopard'',''lion'',''orca'',''polarbear'',''rhinoceros'',''toucan'',''turtle'',''wolf'',''zebra'')' in body)>0 THEN RETURN; END IF;
+ IF position('(''fox'',''owl'',''cat'',''panda'',''otter'',''raccoon'',''capybara'',''penguin'',''koala'',''red-panda'',''rabbit'',''bear'')' in body)=0 THEN
   RAISE EXCEPTION 'Profile registration whitelist changed; migration aborted';
  END IF;
- EXECUTE replace(body,"('fox','owl','cat','panda','otter','raccoon','capybara','penguin','koala','red-panda','rabbit','bear')","('fox','owl','cat','panda','otter','raccoon','capybara','penguin','koala','red-panda','rabbit','bear','giraffe','gorilla','hyena','kangaroo','leopard','lion','orca','polarbear','rhinoceros','toucan','turtle','wolf','zebra')");
+ EXECUTE replace(body,'(''fox'',''owl'',''cat'',''panda'',''otter'',''raccoon'',''capybara'',''penguin'',''koala'',''red-panda'',''rabbit'',''bear'')','(''fox'',''owl'',''cat'',''panda'',''otter'',''raccoon'',''capybara'',''penguin'',''koala'',''red-panda'',''rabbit'',''bear'',''giraffe'',''gorilla'',''hyena'',''kangaroo'',''leopard'',''lion'',''orca'',''polarbear'',''rhinoceros'',''toucan'',''turtle'',''wolf'',''zebra'')');
 END
 $patch$;
