@@ -43,3 +43,23 @@
 .team-board-global .team-board-qr :is(canvas,img){image-rendering:pixelated;max-width:100%}
 @media(prefers-reduced-motion:reduce){.team-board-global .team-board-qr{transition:none!important;transform:none!important}}
 
+
+
+/* Illustrated portrait atlas: 12 generated characters, four columns × three rows. */
+.animal-portrait{display:inline-block;width:72px;height:72px;flex:none;border-radius:14px;
+ background-color:#fff;background-image:url('./assets/animal-portraits.webp?v=illustrated-20261024-1');
+ background-repeat:no-repeat;background-size:400% 300%;background-position:0% 0%;
+ box-shadow:0 5px 13px #51397a10;vertical-align:middle;overflow:hidden}
+.animal-portrait[data-animal="fox"]{background-position:0% 0%}
+.animal-portrait[data-animal="owl"]{background-position:33.333% 0%}
+.animal-portrait[data-animal="cat"]{background-position:66.667% 0%}
+.animal-portrait[data-animal="panda"]{background-position:100% 0%}
+.animal-portrait[data-animal="otter"]{background-position:0% 50%}
+.animal-portrait[data-animal="raccoon"]{background-position:33.333% 50%}
+.animal-portrait[data-animal="capybara"]{background-position:66.667% 50%}
+.animal-portrait[data-animal="penguin"]{background-position:100% 50%}
+.animal-portrait[data-animal="koala"]{background-position:0% 100%}
+.animal-portrait[data-animal="red-panda"]{background-position:33.333% 100%}
+.animal-portrait[data-animal="rabbit"]{background-position:66.667% 100%}
+.animal-portrait[data-animal="bear"]{background-position:100% 100%}
+.team-avatar.animal-portrait{width:38px;height:38px;border-radius:11px;vertical-align:middle}
