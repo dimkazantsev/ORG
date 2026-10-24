@@ -168,11 +168,15 @@ function personalResults(s,final=false){
  (final&&stats.length?QwizStage.questionStats(stats):'')+'</section>';
 }
 function roundScorePanel(view,title,final=false){
- const rows=(view?.teams||[]),players=(view?.players||[]);
+ const rows=(view?.teams||[]),players=(view?.players||[]),reward=view?.reward||null;
+ const rewardBanner=reward?'<div class="round-reward-banner is-'+(reward.tone==='harm'?'harm':'boost')+
+ '"><strong>'+(reward.tone==='harm'?'Красный манёвр':'Зелёный маршрут')+' · '+esc(reward.title)+'</strong>'+
+ '<p>'+(reward.tone==='harm'?'Ограничение команде: ':'Усиление команды: ')+esc(reward.target)+
+ '. Эффект применяется в следующем раунде.</p></div>':'';
  const render=(a,isTeam)=>a.length?'<ol class="round-score-list">'+a.map((x,i)=>'<li><span class="round-rank">'+(i+1)+'</span><strong>'+esc(x.nickname||x.name||'Участник')+'</strong><b>'+Number(x.score||0).toLocaleString('ru-RU')+'</b></li>').join('')+'</ol>':'<p class="small-help">Результаты ещё обрабатываются сервером</p>';
  return '<section class="round-results-page'+(final?' is-final':'')+'"><div class="round-results-orbit" aria-hidden="true">✦</div>'+
  '<span class="eyebrow">'+(final?'ИГРА ЗАВЕРШЕНА':'РАУНД ЗАВЕРШЁН')+'</span>'+
- '<h1>'+esc(title||'Результаты')+'</h1>'+
+ '<h1>'+esc(title||'Результаты')+'</h1>'+rewardBanner+
  '<div class="round-results-grid"><section><h2>Команды</h2>'+render(rows,true)+'</section>'+
  '<section><h2>Участники</h2>'+render(players,false)+'</section></div>'+
  (!final?'<p class="round-results-next">Следующая карточка откроется автоматически.</p>':'')+'</section>';
