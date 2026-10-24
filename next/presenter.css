@@ -675,3 +675,78 @@ body:fullscreen .projection-shell{height:100dvh}
 .projection-reward-banner.is-boost{background:#e6f7eb;color:#216445;border-color:#a8ddbd}
 .projection-reward-banner.is-harm{background:#ffeaf0;color:#9a304e;border-color:#efbdc9}
 @media(max-width:700px){.projection-reward-banner{flex-wrap:wrap;gap:5px;padding:7px}}
+
+
+/* Flag review: no drifting outline, no horizontal overflow, each answer remains within its own card. */
+#projectionMain .projection-question-only .question-frame.flag-media-frame{
+ box-sizing:border-box;width:min(100%,450px);max-width:100%;padding:0;
+ margin:0 auto!important;overflow:visible;flex:0 1 auto
+}
+#projectionMain .projection-question-only .question-frame.flag-media-frame .question-picture{
+ display:flex;justify-content:center;align-items:center;aspect-ratio:auto!important;
+ min-height:0;height:auto!important;max-height:none;overflow:visible;
+ background:transparent!important;border:0!important;
+}
+#projectionMain .projection-question-only .question-frame.flag-media-frame .question-picture>.question-art{
+ box-sizing:border-box;display:block;width:auto!important;height:auto!important;
+ max-width:100%!important;max-height:min(32dvh,290px)!important;
+ object-fit:contain!important;object-position:center;
+ border:1px solid #d9c9ed;border-radius:8px;background:#fff;
+ box-shadow:0 4px 14px #3425501a
+}
+#projectionMain .projection-question-only.is-result .question-frame.flag-media-frame .question-picture>.question-art{
+ max-height:min(16dvh,140px)!important
+}
+#projectionMain .projection-question-only .question-frame.flag-media-frame .frame-orbit{display:none!important}
+#projectionMain .projection-question-only .projection-answer-reveal{
+ box-sizing:border-box;width:100%;max-width:100%;min-width:0;overflow:hidden
+}
+#projectionMain .projection-question-only .projection-reveal-options,
+#projectionMain .projection-question-only .projection-reveal-options.has-flag-options{
+ box-sizing:border-box;width:100%;max-width:100%;min-width:0;
+ grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(5px,.75vw,12px)
+}
+#projectionMain .projection-question-only .projection-reveal-options:not(.has-flag-options){
+ grid-template-columns:repeat(2,minmax(0,1fr))
+}
+#projectionMain .projection-question-only .projection-reveal-option{
+ box-sizing:border-box;width:100%;max-width:100%;min-width:0;overflow:hidden;
+ margin:0;padding:clamp(5px,.65vw,11px);gap:6px
+}
+#projectionMain .projection-question-only .projection-reveal-option-body{
+ display:grid;place-items:center;width:100%;max-width:100%;
+ min-width:0;overflow:hidden
+}
+#projectionMain .projection-question-only .projection-reveal-option-body .flag-choice-with-label{
+ box-sizing:border-box;min-width:0;width:100%;max-width:100%;
+ display:flex;justify-content:center;align-items:center;overflow:hidden
+}
+#projectionMain .projection-question-only .projection-reveal-option-body .flag-choice-art{
+ box-sizing:border-box;display:block;flex:none;
+ width:auto!important;height:auto!important;
+ max-width:min(100%,215px)!important;max-height:min(12dvh,115px)!important;
+ padding:2px;object-fit:contain!important;object-position:center;margin:0 auto;
+ border:1px solid #e8dff1;border-radius:7px
+}
+#projectionMain .projection-question-only .projection-reveal-option-body .flag-stripe-art{
+ box-sizing:border-box;width:min(100%,215px);max-width:100%;
+ aspect-ratio:3/2;height:auto;max-height:min(12dvh,115px);
+ margin:0 auto;flex-shrink:1
+}
+#projectionMain .projection-question-only .projection-answer-heading .correct-flag-art{
+ display:grid;place-items:center;box-sizing:border-box;min-width:0;
+ width:min(100%,320px);max-width:100%;margin:0 auto;padding:5px
+}
+#projectionMain .projection-question-only .projection-answer-heading .correct-flag-art img{
+ box-sizing:border-box;display:block;width:auto;height:auto;
+ max-width:100%;max-height:min(20dvh,160px);object-fit:contain;
+ margin:0 auto
+}
+@media(max-width:720px){
+ #projectionMain .projection-question-only .projection-reveal-options.has-flag-options{
+  grid-template-columns:repeat(2,minmax(0,1fr))
+ }
+ #projectionMain .projection-question-only .projection-reveal-option-body .flag-choice-art{
+  max-height:min(11dvh,82px)!important
+ }
+}
