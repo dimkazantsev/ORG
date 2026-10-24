@@ -174,10 +174,11 @@ function questionScene(state){
  }).join(''):'';
  const answerImage=typeof answer?.image_url==='string'&&/^https:\/\//i.test(answer.image_url)?answer.image_url:'';
  const answerText=answer?.text||'Ответ не указан';
+ const correctFlag=finished?QwizStage.correctFlagMarkup(q,answer):'';
  const explanation=answer?.explanation||'';
  const reveal=finished?
   '<section class="projection-answer-reveal" role="status" aria-label="Разбор вопроса">'+
-   '<div class="projection-answer-heading"><span>ПРАВИЛЬНЫЙ ОТВЕТ</span><strong>'+escapeText(answerText)+'</strong></div>'+
+   '<div class="projection-answer-heading"><span>ПРАВИЛЬНЫЙ ОТВЕТ</span>'+(correctFlag?correctFlag:'<strong>'+escapeText(answerText)+'</strong>')+'</div>'+
    (choices?'<div class="projection-reveal-options'+(choices.includes('flag-choice-art')?' has-flag-options':'')+'">'+choices+'</div>':
      (answerImage?'<img class="projection-answer-image" src="'+escapeText(answerImage)+'" alt="Правильный флаг" decoding="async">':''))+
    (explanation?'<p class="projection-answer-explanation">'+escapeText(explanation)+'</p>':'')+
