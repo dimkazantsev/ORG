@@ -1,16 +1,20 @@
 'use strict';
 const KEY='sb_publishable_Hv7NgYuVsfKhFuhX_9pl0Q_qXWA2wOr',PROFILE_SUPABASE_URL='https://bderfrcfuhnutuoyudje.supabase.co';
 const $=id=>document.getElementById(id);
-const animals=[['fox','🦊','Лиса'],['owl','🦉','Сова'],['cat','🐱','Кот'],['panda','🐼','Панда'],['otter','🦦','Выдра'],['raccoon','🦝','Енот'],['capybara','🦫','Капибара'],['penguin','🐧','Пингвин'],['koala','🐨','Коала'],['red-panda','🦊','Красная панда'],['rabbit','🐰','Кролик'],['bear','🐻','Медведь']];
+const animals=[['fox','🦊','Лиса'],['owl','🦉','Сова'],['cat','🐱','Кот'],['panda','🐼','Панда'],['otter','🦦','Выдра'],['raccoon','🦝','Енот'],['capybara','🦫','Капибара'],['penguin','🐧','Пингвин'],['koala','🐨','Коала'],['red-panda','🦊','Красная панда'],['rabbit','🐰','Кролик'],['bear','🐻','Медведь'],
+ ['giraffe','🦒','Жираф'],['gorilla','🦍','Горилла'],['hyena','🐾','Гиена'],['kangaroo','🦘','Кенгуру'],
+ ['leopard','🐆','Леопард'],['lion','🦁','Лев'],['orca','🐋','Косатка'],['polarbear','🐻','Белый медведь'],
+ ['rhinoceros','🦏','Носорог'],['toucan','🐦','Тукан'],['turtle','🐢','Черепаха'],
+ ['wolf','🐺','Волк'],['zebra','🦓','Зебра']];
 const s={db:null,me:null,avatar:'fox',registrationAvatar:'fox',pairTimer:null};
 function message(id,value='',error=false){$(id).textContent=value;$(id).classList.toggle('error',!!error)}
 function avatar(key){return animals.find(x=>x[0]===key)||animals[0]}
-function portrait(key,label){
- const safe=avatar(key)[0];
- return '<span class="animal-portrait" data-animal="'+safe+'" role="img" aria-label="'+label+'">'+
-   '<svg class="animal-fallback-svg" viewBox="0 0 100 100" aria-hidden="true"><use href="./assets/animals.svg?v=avatar-safe-20261024-1#'+safe+'"></use></svg></span>';
+function portrait(key,label){return QwizTeams.avatar(avatar(key)[0])}
+function drawAvatars(id,selected){
+ const tile=([key,icon,label])=>'<button type="button" class="avatar-pick '+(key===selected?'selected':'')+'" data-avatar="'+key+'" aria-label="'+label+'" aria-pressed="'+(key===selected)+'">'+portrait(key,label)+'<small>'+label+'</small></button>';
+ $(id).innerHTML=animals.slice(0,12).map(tile).join('')+
+  '<details class="avatar-more"'+(animals.slice(12).some(a=>a[0]===selected)?' open':'')+'><summary>Ещё 13 объёмных персонажей <span>3D</span></summary><div class="avatar-more-grid">'+animals.slice(12).map(tile).join('')+'</div></details>';
 }
-function drawAvatars(id,selected){$(id).innerHTML=animals.map(([key,icon,label])=>'<button type="button" class="avatar-pick '+(key===selected?'selected':'')+'" data-avatar="'+key+'" aria-label="'+label+'" aria-pressed="'+(key===selected)+'">'+portrait(key,label)+'<small>'+label+'</small></button>').join('')}
 async function rpc(action,data={}){const r=await s.db.rpc('qwiz_student_identity',{p_action:action,p_data:data});if(r.error)throw Error(r.error.message||'Ошибка входа');return r.data}
 function chooseTab(register){$('loginPanel').hidden=register;$('registerPanel').hidden=!register;$('authLoginTab').classList.toggle('active',!register);$('authRegisterTab').classList.toggle('active',register)}
 function showAuth(){ $('authPanel').hidden=false;$('dashboard').hidden=true;
