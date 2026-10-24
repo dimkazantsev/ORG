@@ -204,3 +204,36 @@ test('Two-stage penalty vote opens a red majority choice then lets players choos
   expect(bounds.y+bounds.height).toBeLessThanOrEqual(height+2);
  }
 });
+
+
+test('Lobby play emblem is recognizable and the instructor signal caption never overlaps decoration',async({page})=>{
+ for(const [width,height] of [[320,480],[360,640],[390,844]]){
+  await page.setViewportSize({width,height});
+  await setup(page);
+  await page.evaluate(()=>{
+   window.fixture={code:'ABCDEF12',title:'Тест игры',phase:'lobby',index:0,total:5,me:{id:'p1',team_id:'t1'},
+    teams:[{id:'t1',name:'Несгибаемые',score:0,players:1}],public_stats:{teams:[],players:[]},
+    ends_at:null,activity:null,has_answer:false,eligible:true};
+   ctx.room=window.fixture;
+   ctx.gameRenderKey='';
+   showScreen('game');
+   renderGame();
+  });
+  const lobby=page.locator('.game-lobby-wait');
+  await expect(lobby).toBeVisible();
+  await expect(lobby.locator('.lobby-play-mark')).toBeVisible();
+  await expect(lobby.locator('.lobby-ambient span')).toHaveCount(0);
+  await expect(lobby.locator('.lobby-people')).toContainText('Ожидайте сигнала преподавателя');
+  const coords=await page.evaluate(()=>{
+   const find=q=>{const r=document.querySelector(q).getBoundingClientRect();
+     return {top:r.top,bottom:r.bottom,left:r.left,right:r.right}};
+   return {caption:find('.lobby-people'),progress:find('.lobby-progress'),
+      icon:find('.lobby-signal'),game:find('#gameContent'),height:innerHeight};
+  });
+  expect(coords.caption.top).toBeGreaterThanOrEqual(coords.progress.bottom-1);
+  expect(coords.caption.bottom).toBeLessThanOrEqual(coords.game.bottom+2);
+  expect(coords.caption.left).toBeGreaterThanOrEqual(coords.game.left-2);
+  expect(coords.caption.right).toBeLessThanOrEqual(coords.game.right+2);
+  expect(coords.icon.bottom).toBeLessThan(coords.caption.top);
+ }
+});
