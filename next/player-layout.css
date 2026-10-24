@@ -317,3 +317,11 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
 @media(prefers-reduced-motion:reduce){
  .player-compact #gameContent .arcade-player.is-boost-voting .arcade-vote{animation:none}
 }
+
+
+.round-reward-banner{border-radius:13px;padding:clamp(8px,1.4dvh,13px);border:1px solid;
+ display:grid;gap:4px;text-align:left}
+.round-reward-banner strong{font-size:clamp(12px,2dvh,17px);line-height:1.25}
+.round-reward-banner p{margin:0;font-size:clamp(10px,1.55dvh,12px);line-height:1.25}
+.round-reward-banner.is-boost{border-color:#a6dabe;background:#e4f6e9;color:#235e3f}
+.round-reward-banner.is-harm{border-color:#f1bbc7;background:#ffe7ec;color:#912f4e}
