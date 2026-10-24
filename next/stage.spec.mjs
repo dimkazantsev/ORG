@@ -106,6 +106,7 @@ test('Final card stays last and opens settings only on double click',async({page
  await expect(final.locator('svg')).toBeVisible();await expect(final.locator('[data-delete-card]')).toHaveCount(0);
  await final.locator('h3').click();await expect(final).toHaveAttribute('aria-current','true');
  await expect(page.locator('#cardDialog')).not.toBeVisible();
+ await page.waitForTimeout(600); // a new deliberate double tap, not a third click in the prior sequence
  await final.locator('h3').dblclick();await expect(page.locator('#cardFinalePreview')).toBeVisible();
  await expect(page.locator('#cardRoundSettings')).toBeHidden();
 });
