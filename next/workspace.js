@@ -542,8 +542,8 @@ async function control(action){if(!state.room)return;for(const id of ['liveStart
  state.channel?.send({type:'broadcast',event:'phase',payload:{room:state.roomCode}})?.catch(()=>{});
  await refreshLive()}catch(e){msg('liveMessage',e.message,true)}
  finally{for(const id of ['liveStart','livePause','liveReveal','liveNext','liveFinish'])disable(id,false);if(state.room){roomReadiness(state.room);renderLive(state.room)}}}
-function projection(){const u=new URL('./presenter.html',location.href);if(state.roomCode)u.searchParams.set('room',state.roomCode);
- window.open(u.toString(),'qwiz_party_public_screen','noopener,width=1280,height=760')}
+function projection(){const u=new URL('./presenter.html',location.href);if(state.roomCode)u.searchParams.set('room',state.roomCode);u.searchParams.set('join','1');
+ window.open(u.toString(),'qwiz_party_public_screen','width=1280,height=760,resizable=yes')}
 async function copyRoom(){const u=new URL('./',location.href);u.searchParams.set('room',state.roomCode);
  try{await navigator.clipboard.writeText(u.toString());msg('liveMessage','Ссылка на вход скопирована.')}
  catch{prompt('Ссылка:',u.toString())}}
