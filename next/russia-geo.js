@@ -47,8 +47,8 @@
     return g?'<svg class="geo-map-svg geo-silhouette" viewBox="'+g.box.join(' ')+'" role="img" aria-label="Контур неизвестного субъекта"><path d="'+g.path+'"/></svg>':'';
   }
   const paths=geometry.map(g=>'<path class="geo-region '+(g.id===active?'geo-focus':'')+'" data-region="'+esc(g.id)+'" d="'+g.path+'" aria-label="'+esc(g.name)+'" '+(interactive?'role="button" tabindex="0"':'')+'/>').join('');
-  const targets=interactive?geometry.map(g=>'<circle class="geo-hit" data-region="'+esc(g.id)+'" cx="'+g.cx.toFixed(2)+'" cy="'+g.cy.toFixed(2)+'" r="6.5" aria-label="'+esc(g.name)+'"/>').join(''):'';
-  return '<div class="geo-map-frame"><svg class="geo-map-svg" viewBox="0 0 1120 480" role="group" aria-label="Интерактивная карта субъектов России"><g>'+paths+targets+'</g></svg>'+
+  // Avoid overlapping transparent hit targets that select neighboring regions.
+  return '<div class="geo-map-frame"><svg class="geo-map-svg" viewBox="0 0 1120 480" preserveAspectRatio="xMidYMid meet" role="group" aria-label="Интерактивная карта субъектов России"><g>'+paths+'</g></svg>'+
     '<div class="geo-map-zoom"><button type="button" data-geo-zoom="in" aria-label="Приблизить карту">＋</button><button type="button" data-geo-zoom="out" aria-label="Отдалить карту">−</button><button type="button" data-geo-zoom="reset">Сброс</button></div></div>';
  }
  function options(q){
@@ -72,19 +72,26 @@
   const root=t.root;
   if(!root?.isConnected){stop(t.kind);return}
   if(!v.active){root.innerHTML='<div class="geo-wait">Раунд карты завершён.</div>';return}
-  const q=v.question,done=!q||!v.open;
+  const feedbackActive=Boolean(t.lastAnswer&&Date.now()<t.feedbackUntil);
+   const q=feedbackActive?(t.revealQuestion||v.question):v.question,done=!q||!v.open;
+   const key=[v.index,q?.mode,q?.name,q?.region,feedbackActive].join(':');
+   if(t.renderKey===key&&root.querySelector('.geo-game')){
+     const time=root.querySelector('.geo-footer>span');if(time)time.textContent='Осталось '+Math.max(0,v.remaining)+' сек.';
+     return;
+   }
+   t.renderKey=key;
    const oldSvg=root.querySelector('.geo-map-frame .geo-map-svg');
    if(oldSvg&&!oldSvg.classList.contains('geo-silhouette'))t.zoomBox=oldSvg.getAttribute('viewBox');
   let hint='';
   if(q?.mode==='detective')hint='<div class="geo-clues"><span>Подсказка 1: '+esc(q.region_type)+'</span><span>Подсказка 2: '+esc(q.district)+'</span><span>Подсказка 3: центр — '+esc(q.capital)+'</span></div>';
   const img=q?.mode==='flag'&&q.flag?'<img class="geo-flag" loading="lazy" decoding="async" alt="Флаг субъекта России" src="https://raw.githubusercontent.com/russian-flags/regions/3c411c7b305c678c49798cc610538c66108adbde/assets/'+encodeURIComponent(q.flag)+'/index.svg">':'';
   const qmode=q?.mode||'locate';const interactive=qmode==='locate',silhouette=qmode==='silhouette';const showMap=['locate','identify','silhouette'].includes(qmode);
-  const feedback=t.lastAnswer&&Date.now()<t.feedbackUntil?'<div class="geo-answer-feedback '+(t.lastAnswer.correct?'':'is-wrong')+'" role="status">'+(t.lastAnswer.correct?'Верно! ':'Неверно. ')+'Правильный ответ: '+esc(t.lastAnswer.correct_text||'—')+'.</div>':'';
+  const feedback=feedbackActive?'<div class="geo-answer-feedback '+(t.lastAnswer.correct?'':'is-wrong')+'" role="status">'+(t.lastAnswer.correct?'Верно! ':'Неверно. ')+'Правильный ответ: '+esc(t.lastAnswer.correct_text||'—')+'.</div>':'';
    root.innerHTML='<section class="geo-game"><div class="geo-header"><span>КАРТА РОССИИ / '+esc(labels[qmode]||'Знание регионов')+'</span><strong>'+v.index+' / '+v.total+' пройдено · '+v.score+' очков</strong></div>'+
    '<div class="geo-progress"><span style="width:'+Math.min(100,100*v.index/Math.max(1,v.total))+'%"></span></div>'+feedback+
    (done?'<div class="geo-done"><h2>'+(v.finished?'Готово!':'Время вышло')+'</h2><p>Верно: '+v.correct+' из '+v.total+'. Баллы сохранены на сервере.</p></div>':
    '<h2>'+esc(prompt(q))+'</h2>'+hint+img+
-   (showMap?(t.mapError?'<div class="geo-map-loading">Не удалось загрузить карту. <button type="button" data-geo-map-retry>Повторить загрузку</button></div>':(geometry&&qmode==='silhouette'?mapMarkup(q.region,false,true):mapMarkup(qmode==='identify'?q.region:null,interactive))):'')+
+   (showMap?(t.mapError?'<div class="geo-map-loading">Не удалось загрузить карту. <button type="button" data-geo-map-retry>Повторить загрузку</button></div>':(geometry&&qmode==='silhouette'?mapMarkup(q.region,false,true):mapMarkup(qmode==='identify'?q.region:null,interactive&&!feedbackActive))):'')+
    (interactive?'<p class="geo-tip">Нажмите на нужный субъект. Для мелких регионов приблизьте карту.</p>':options(q)))+
    '<p class="geo-message" role="status" aria-live="polite">'+esc(t.message||'')+'</p>'+
    '<div class="geo-footer"><span>Осталось '+v.remaining+' сек.</span><small>Результат каждого игрока индивидуален</small></div></section>';
@@ -92,8 +99,14 @@
    if(nextSvg&&!nextSvg.classList.contains('geo-silhouette')){
      // Fill the available phone viewport without distorting the outline.
      // Touch drag and zoom controls expose regions outside the initial crop.
-     if(window.matchMedia('(max-width:680px)').matches)nextSvg.setAttribute('preserveAspectRatio','xMidYMid slice');
+     nextSvg.setAttribute('preserveAspectRatio','xMidYMid meet');
      if(t.zoomBox)nextSvg.setAttribute('viewBox',t.zoomBox);
+     if(feedbackActive&&t.lastAnswer.correct_region_id){
+       nextSvg.querySelectorAll('[data-region]').forEach(n=>{
+         if(n.dataset.region===t.lastAnswer.correct_region_id)n.classList.add('geo-correct-answer');
+         else if(n.dataset.region===t.lastAnswer.selected_region_id)n.classList.add('geo-wrong-answer');
+       });
+     }
    }
    if(showMap&&!geometry&&!done&&!t.mapPending&&!t.mapError){t.mapPending=true;loadMap().then(()=>{t.mapPending=false;roundState(t)}).catch(e=>{t.mapPending=false;t.mapError=true;t.message='Геометрия недоступна: '+e.message;roundState(t)})}
  }
@@ -103,10 +116,14 @@
   try{
    const {data,error}=await t.client.rpc('qwiz_geo_play',{p_room:t.roomId,p_answer:answer});
    if(error)throw error;
-   t.view=data;
-   if(answer!==null&&data.last_answer){t.lastAnswer=data.last_answer;t.feedbackUntil=Date.now()+3200;
-     setTimeout(()=>{if(!t.closed&&Date.now()>=t.feedbackUntil){t.lastAnswer=null;roundState(t)}},3250);
+   if(answer!==null&&data.last_answer){
+     t.revealQuestion=t.view?.question;
+     t.lastAnswer=data.last_answer;t.feedbackUntil=Date.now()+2200;
+     setTimeout(()=>{if(!t.closed&&Date.now()>=t.feedbackUntil){
+       t.lastAnswer=null;t.revealQuestion=null;t.renderKey=null;roundState(t);
+     }},2250);
    }
+   t.view=data;
    t.message=answer===null?'':data.last_correct?'Верно! +100 очков':'Нет, этот ответ неверный.';
    roundState(t);
   }catch(e){t.message=e.message||'Нет связи';if(t.root)t.root.innerHTML='<div class="geo-wait">'+esc(t.message)+'</div>'}
@@ -142,7 +159,7 @@
   const key=s.code+':player',existing=sessions.get(key);
   if(existing&&!existing.closed&&existing.root===root)return true;
   stop('player');
-  const t={root,client:ctx.client||ctx.db,roomId:s.room_id,kind:'player',closed:false,view:null,busy:false,message:'',mapPending:false,pointers:new Map(),suppressUntil:0,zoomBox:null,lastAnswer:null,feedbackUntil:0};sessions.set(key,t);
+  const t={root,client:ctx.client||ctx.db,roomId:s.room_id,kind:'player',closed:false,view:null,busy:false,message:'',mapPending:false,pointers:new Map(),suppressUntil:0,zoomBox:null,lastAnswer:null,feedbackUntil:0,revealQuestion:null,renderKey:null,gestureMoved:false};sessions.set(key,t);
   root.innerHTML='<section class="geo-game"><h2>Карта России</h2><p>Готовим вашу индивидуальную карту…</p></section>';
   t.onClick=e=>{
    if(e.target.closest('[data-geo-map-retry]')){t.mapError=false;t.message='Повторяем загрузку карты…';roundState(t);return}
@@ -154,7 +171,7 @@
      x=Math.max(0,Math.min(1120-nw,x+(w-nw)/2));y=Math.max(0,Math.min(480-nh,y+(h-nh)/2));w=nw;h=nh}
     t.zoomBox=[x,y,w,h].join(' ');svg.setAttribute('viewBox',t.zoomBox);return;
    }
-   if(e.target.closest('.geo-map-frame')&&Date.now()<t.suppressUntil)return;
+   if(Date.now()<t.suppressUntil||Date.now()<t.feedbackUntil||t.pointers.size)return;
    const b=e.target.closest('[data-geo-answer],[data-region]');if(!b||!t.view?.open||t.busy||!t.view?.question)return;
    const selected=b.dataset.geoAnswer||b.dataset.region;
    if(b.dataset.region&&t.view.question.mode!=='locate')return;
@@ -164,7 +181,8 @@
   t.onPointerDown=e=>{
    const svg=e.target.closest?.('.geo-map-frame .geo-map-svg');if(!svg)return;
    t.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY});
-   // Keep the region as the click target; capturing on SVG would swallow selection taps.
+   if(t.pointers.size===1)t.gestureMoved=false;
+    // A drag or pinch must not submit a region as an answer.
   };
   t.onPointerMove=e=>{
    if(!t.pointers.has(e.pointerId))return;
@@ -176,7 +194,7 @@
    const dragDistance=Math.hypot(e.clientX-old.startX,e.clientY-old.startY);
    if(before.length===1&&dragDistance<8)return; // A small normal click must still select a region.
    if(Math.abs(dx)+Math.abs(dy)<.5)return;
-   if(e.pointerType==='touch'||e.pointerType==='pen')t.suppressUntil=Date.now()+450;
+   t.gestureMoved=true;t.suppressUntil=Date.now()+850;e.preventDefault();
    if(before.length===1)modifyView(svg,1,dx,dy);
    else{
     const dist=p=>Math.hypot(p[0].x-p[1].x,p[0].y-p[1].y);
@@ -186,7 +204,7 @@
    }
    t.zoomBox=svg.getAttribute('viewBox');
   };
-  t.onPointerUp=e=>{t.pointers.delete(e.pointerId)};
+  t.onPointerUp=e=>{t.pointers.delete(e.pointerId);if(t.gestureMoved)t.suppressUntil=Date.now()+850;};
   t.onWheel=e=>{
    const svg=e.target.closest?.('.geo-map-frame .geo-map-svg');if(!svg)return;
    e.preventDefault();
