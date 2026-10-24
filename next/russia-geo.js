@@ -82,7 +82,7 @@
   if(!root?.isConnected){stop(t.kind);return}
   if(!v.active){root.innerHTML='<div class="geo-wait">Раунд карты завершён.</div>';return}
   const feedbackActive=Boolean(t.lastAnswer&&Date.now()<t.feedbackUntil);
-   const q=feedbackActive?(t.revealQuestion||v.question):v.question,done=!q||!v.open;
+   const q=feedbackActive?(t.revealQuestion||v.question):v.question,done=!q||(!v.open&&!feedbackActive);
    const key=[v.index,q?.mode,q?.name,q?.region,feedbackActive].join(':');
    const taskKey=[v.index,q?.mode,q?.name,q?.region].join(':');
    if(t.taskKey!==undefined&&t.taskKey!==taskKey&&!feedbackActive){t.selectedRegion=null;t.message='';}
@@ -106,7 +106,7 @@
    (showMap?(t.mapError?'<div class="geo-map-loading">Не удалось загрузить карту. <button type="button" data-geo-map-retry>Повторить загрузку</button></div>':(geometry&&qmode==='silhouette'?mapMarkup(q.region,false,true):mapMarkup(qmode==='identify'?q.region:null,interactive&&!feedbackActive))):'')+
    (showMap&&qmode!=='silhouette'?'<div class="geo-map-toolbar" aria-label="Масштаб карты"><button type="button" data-geo-zoom="in" aria-label="Увеличить">＋</button><button type="button" data-geo-zoom="out" aria-label="Уменьшить">−</button><button type="button" data-geo-zoom="reset">Вся карта</button></div>':'')+
    (interactive?'<p class="geo-tip">Один раз нажмите на субъект, проверьте выделение и нажмите «Подтвердить выбор». Карту можно перемещать пальцем и двумя пальцами изменять масштаб.</p>'+
-    '<button type="button" class="geo-confirm" data-geo-confirm '+(!t.selectedRegion?'disabled':'')+'>'+ (t.selectedRegion?'Подтвердить выбранный регион':'Сначала выберите регион на карте')+'</button>':options(q,t,feedbackActive)))+
+    '<button type="button" class="geo-confirm" data-geo-confirm '+(!t.selectedRegion?'hidden disabled':'')+'>'+ (t.selectedRegion?'Подтвердить выбранный регион':'Подтвердить выбранный регион')+'</button>':options(q,t,feedbackActive)))+
    '<p class="geo-message" role="status" aria-live="polite">'+esc(t.message||'')+'</p>'+
    '<div class="geo-footer"><span>Осталось '+v.remaining+' сек.</span><small>Результат каждого игрока индивидуален</small></div></section>';
   const nextSvg=root.querySelector('.geo-map-frame .geo-map-svg');
@@ -231,7 +231,7 @@
    t.pointers.set(e.pointerId,{...old,x:e.clientX,y:e.clientY});
    const now=[...t.pointers.values()];
    const dragDistance=Math.hypot(e.clientX-old.startX,e.clientY-old.startY);
-   if(before.length===1&&dragDistance<8)return; // A small normal click must still select a region.
+   if(before.length===1&&dragDistance<14)return; // A small normal click must still select a region.
    if(Math.abs(dx)+Math.abs(dy)<.5)return;
    t.gestureMoved=true;t.suppressUntil=Date.now()+850;e.preventDefault();
    if(before.length===1)modifyView(svg,1,dx,dy);
