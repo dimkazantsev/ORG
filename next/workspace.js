@@ -542,9 +542,18 @@ async function control(action){if(!state.room)return;for(const id of ['liveStart
  state.channel?.send({type:'broadcast',event:'phase',payload:{room:state.roomCode}})?.catch(()=>{});
  await refreshLive()}catch(e){msg('liveMessage',e.message,true)}
  finally{for(const id of ['liveStart','livePause','liveReveal','liveNext','liveFinish'])disable(id,false);if(state.room){roomReadiness(state.room);renderLive(state.room)}}}
-function projection(){const u=new URL('./presenter.html',location.href);if(state.roomCode)u.searchParams.set('room',state.roomCode);u.searchParams.set('join','1');
- window.open(u.toString(),'qwiz_party_public_screen','width=1280,height=760,resizable=yes')}
-async function copyRoom(){const u=new URL('./',location.href);u.searchParams.set('room',state.roomCode);
+function projection(){
+ const u=new URL('./presenter.html',location.href);if(state.roomCode)u.searchParams.set('room',state.roomCode);
+ const w=window.open(u.toString(),'qwiz_party_public_screen','popup=yes,width=1280,height=760,resizable=yes');
+ if(!w){msg('liveMessage','Разрешите открытие окон: экран аудитории не запустился. Нажмите «Экран аудитории» вручную.',true);return}
+ // Window Placement is optional. Never prevent the start if permission is refused.
+ if('getScreenDetails' in window)void window.getScreenDetails().then(info=>{
+  const second=info.screens.find(s=>!s.isPrimary)||info.screens.find(s=>s!==info.currentScreen);
+  if(second&&!w.closed){w.moveTo(second.availLeft,second.availTop);w.resizeTo(second.availWidth,second.availHeight)}
+ }).catch(()=>{});
+ w.focus();
+}
+async function copyRoom(){const u=new URL('./',location.href);u.searchParams.set('room',state.roomCode);u.searchParams.set('join','1');
  try{await navigator.clipboard.writeText(u.toString());msg('liveMessage','Ссылка на вход скопирована.')}
  catch{prompt('Ссылка:',u.toString())}}
 async function loadInsights(){try{state.insights=await rpc('qwiz_teacher_stats');renderInsights()}
