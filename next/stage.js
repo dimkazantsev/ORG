@@ -205,6 +205,19 @@ window.QwizStage=(()=>{
   return '<span class="flag-stripe-art '+(vertical?'vertical':'horizontal')+'" role="img" aria-label="Полосы флага">'+
     value.stripes.map(color=>'<span style="background:'+esc(color)+'"></span>').join('')+'</span>';
  }
+ // The authoritative answer indices are provided by the server after reveal.
+ // For colour-order questions, the correct answer is a flag drawing, never
+ // a label such as "синий — жёлтый — красный".
+ function correctFlagMarkup(question,answer){
+  const idx=Array.isArray(answer?.indices)?Number(answer.indices[0]):NaN;
+  if(!Number.isInteger(idx)||idx<0||!Array.isArray(question?.options)||idx>=question.options.length)return '';
+  const item=question.options[idx];
+  const flag=stripeOption(item);
+  if(flag)return '<div class="correct-flag-art" role="group" aria-label="Правильный флаг">'+flag+'</div>';
+  if(item&&typeof item==='object'&&typeof item.image_url==='string'&&/^https:\/\/[^\s]+[.]svg(?:\?[^\s]*)?$/i.test(item.image_url))
+   return '<div class="correct-flag-art"><img src="'+esc(item.image_url)+'" alt="Правильный флаг" loading="eager" decoding="async"></div>';
+  return '';
+ }
  // Existing flag-memory questions now behave as ordinary visible-flag questions.
  // Keep the method for the shared stage API, without hiding the question or answers.
  function updateMemory(root,s,offset=0){return;}
@@ -259,5 +272,5 @@ window.QwizStage=(()=>{
   const hardest=scored.filter(x=>x.answered>0).sort((a,b)=>(b.incorrect_rate??100-b.correct_rate)-(a.incorrect_rate??100-a.correct_rate)||b.incorrect-a.incorrect||a.index-b.index).slice(0,3);
   return '<div class="question-insights"><section><h2>Знаем лучше всего</h2><p>Три вопроса с наибольшей долей верных ответов.</p><ol>'+items(best)+'</ol></section><section><h2>Чаще ошибались</h2><p>Три вопроса с наибольшей долей ошибок. Пропуски считаются отдельно.</p><ol>'+items(hardest,true)+'</ol></section></div><details class="all-question-stats"><summary>Все вопросы · '+rows.length+'</summary><ol>'+items(rows)+'</ol></details>';
  }
- return{esc,fmt,habitats,icon,teamTile,teams,patchTeams,progress,leaderboard,illustration,hydrateIllustrations,clockMarkup,updateClock,audio,questionStats,stripeOption,flagVisualContent,hydrateFlagVisuals,uiIcon,iconLabel,decorateControls,updateMemory,assemblyPalette,assemblyMarkup,hydrateAssembly,sourceLinks,capitalize,countLabel,phaseLabel,bindFullscreen,exitFullscreen};
+ return{esc,fmt,habitats,icon,teamTile,teams,patchTeams,progress,leaderboard,illustration,hydrateIllustrations,clockMarkup,updateClock,audio,questionStats,stripeOption,correctFlagMarkup,flagVisualContent,hydrateFlagVisuals,uiIcon,iconLabel,decorateControls,updateMemory,assemblyPalette,assemblyMarkup,hydrateAssembly,sourceLinks,capitalize,countLabel,phaseLabel,bindFullscreen,exitFullscreen};
 })();
