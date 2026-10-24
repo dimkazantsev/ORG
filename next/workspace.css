@@ -807,3 +807,22 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 .projector-music-control[aria-pressed=true]{background:#e5f6ed;color:#246448;border-color:#a7dcc0}
 @media(max-width:760px){.card-main-palette{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:400px){.round-grid .round-card{padding:42px 10px 10px}}
+
+
+/* General-settings form: helper captions must never push the adjacent input down.
+   Preserve two perfectly aligned inputs per row at laptop and desktop widths. */
+#generalDialog .dialog-body>.two-inputs{align-items:start;grid-auto-flow:row;grid-auto-rows:auto}
+#generalDialog .dialog-body>.two-inputs>label{
+ display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;
+ gap:8px;align-self:start;min-width:0;min-height:0;
+}
+#generalDialog .dialog-body>.two-inputs>label :is(input,select){
+ box-sizing:border-box;flex:none;width:100%;height:56px;min-height:56px;margin:0;
+}
+#generalDialog .dialog-body>.two-inputs>label>.small-help{
+ display:block;align-self:stretch;margin:0;line-height:1.55;min-height:0;
+}
+@media(max-width:600px){
+ #generalDialog .dialog-body>.two-inputs{grid-template-columns:minmax(0,1fr);gap:16px}
+ #generalDialog .dialog-body>.two-inputs>label :is(input,select){height:52px;min-height:52px}
+}
