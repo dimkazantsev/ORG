@@ -25,7 +25,7 @@
   if(!compact)close();
   for(const {node,anchor} of blocks){const target=compact?(node.classList.contains('control-row')?document.getElementById('playerSheetControls'):body):anchor.parentNode;if(node.parentNode!==target){if(compact)target.append(node);else anchor.after(node)}}
   for(let i=transient.length-1;i>=0;i--){const item=transient[i];if(!item.anchor.isConnected){item.node.remove();transient.splice(i,1)}}
-  if(compact)for(const node of content.querySelectorAll('.personal-results,.player-answer>p')){const anchor=document.createComment('Round details position');node.before(anchor);transient.push({node,anchor});document.getElementById(node.classList.contains('personal-results')?'playerResultDetails':'playerReviewContent').append(node)}
+  if(compact)for(const node of content.querySelectorAll('.personal-results:not(.player-final-results),.player-answer>p')){const anchor=document.createComment('Round details position');node.before(anchor);transient.push({node,anchor});document.getElementById(node.classList.contains('personal-results')?'playerResultDetails':'playerReviewContent').append(node)}
   else for(const {node,anchor} of transient)anchor.after(node);
   if(!compact)transient.length=0;
   document.getElementById('playerReview').hidden=!document.getElementById('playerReviewContent').children.length;
