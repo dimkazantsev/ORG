@@ -7,7 +7,7 @@ test.beforeEach(async({page})=>{
  }));
  await page.goto('http://127.0.0.1:8080/next/workspace.html',{waitUntil:'load'});
  await expect(page.locator('#workspaceLoading')).toBeHidden();
- await page.evaluate(()=>newBuild());
+ await page.evaluate(()=>{document.querySelector('#builderPage').hidden=false;newBuild()});
 });
 
 test('Selecting a card controls insertion order; controls do not accidentally select it',async({page})=>{
