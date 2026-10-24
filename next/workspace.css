@@ -514,3 +514,77 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 #cardDialog:has(#cardGeoSettings:not([hidden])) #cardTopic{pointer-events:none;background:#f5f0ff}
 @media(max-width:650px){#liveConsole .live-actions{position:sticky;top:4px;bottom:auto;grid-template-columns:repeat(2,minmax(0,1fr));padding:9px}
 .live-projection-link{align-items:stretch;flex-direction:column}.live-projection-link button{width:100%}}
+
+/* Mini-game icon system: consistent vector badges matching the approved lavender UI. */
+#arcadePalette.arcade-palette{
+  display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:10px;
+}
+#arcadePalette [data-arcade]{
+  --arcade-icon-color:#6a45c8;
+  --arcade-icon-surface:#efe8ff;
+  display:flex;
+  gap:12px;
+  align-items:center;
+  justify-content:flex-start;
+  min-width:0;
+  min-height:64px;
+  padding:9px 13px;
+  border:1px solid #ded4f2;
+  border-radius:14px;
+  background:#faf8ff;
+  color:var(--ink);
+  font-size:12px;
+  line-height:1.35;
+  font-weight:750;
+  text-align:left;
+  transition:background-color .18s,border-color .18s,box-shadow .18s;
+}
+#arcadePalette [data-arcade="blitz"]{
+  --arcade-icon-color:#8051b4;
+  --arcade-icon-surface:#f2e9fb;
+}
+#arcadePalette [data-arcade="tug"]{
+  --arcade-icon-color:#497d91;
+  --arcade-icon-surface:#e9f3fa;
+}
+#arcadePalette [data-arcade="captain"]{
+  --arcade-icon-color:#9a5681;
+  --arcade-icon-surface:#f7eaf3;
+}
+#arcadePalette .arcade-palette-icon{
+  display:grid;
+  place-items:center;
+  width:38px;
+  height:38px;
+  flex:0 0 38px;
+  border-radius:12px;
+  background:var(--arcade-icon-surface);
+  color:var(--arcade-icon-color);
+}
+#arcadePalette .arcade-palette-icon svg{
+  width:23px;
+  height:23px;
+  stroke-width:1.85;
+  fill:none;
+  stroke:currentColor;
+}
+#arcadePalette [data-arcade]:hover{
+  background:#f5efff;
+  border-color:#bfa9ee;
+  box-shadow:0 5px 14px #6d47be12;
+}
+#arcadePalette [data-arcade]:active{background:#eee4fe}
+#arcadePalette [data-arcade]>span:last-child{min-width:0}
+.round-card .round-icon:has(svg){flex-shrink:0}
+@media(max-width:1050px){
+  #arcadePalette.arcade-palette{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:520px){
+  #arcadePalette.arcade-palette{grid-template-columns:minmax(0,1fr)}
+  #arcadePalette [data-arcade]{min-height:57px}
+}
+@media(prefers-reduced-motion:reduce){
+  #arcadePalette [data-arcade]{transition:none}
+}
