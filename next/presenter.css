@@ -557,3 +557,64 @@ body:fullscreen .projection-shell{height:100dvh}
 .projection-answer-heading .correct-flag-art .flag-stripe-art{width:min(100%,350px);max-height:min(23dvh,205px)}
 .projection-question-only.is-result .projection-answer-reveal:has(.correct-flag-art){gap:clamp(4px,.7dvh,11px)}
 @media(max-height:800px){.projection-answer-heading .correct-flag-art{width:min(100%,260px);padding:5px}.projection-answer-heading .correct-flag-art .flag-stripe-art{max-height:18dvh}}
+
+
+/* Projector viewport contract: no artificial top spacer, and no clipped question or review.
+   Script additionally measures every stage at native dimensions and fits to the physical viewport. */
+.projection-shell{height:100dvh;min-height:0;max-height:100dvh;overflow:hidden;
+ padding:clamp(6px,.9dvh,18px) clamp(12px,1.7vw,68px)}
+.projection-header{flex:none;min-height:0;gap:8px;padding:0 0 clamp(5px,.7dvh,12px)}
+.projection-brand{font-size:clamp(14px,1.2vw,22px)}
+.projection-brand .brand-square{width:clamp(30px,3.3dvh,42px);height:clamp(30px,3.3dvh,42px)}
+#projectionMain{flex:1 1 auto;min-height:0;max-height:none;overflow:hidden;
+ display:flex;flex-direction:column;justify-content:flex-start;align-items:center}
+#projectionMain>.projection-question-only{flex:0 0 auto;align-self:center;margin:0;padding:0;
+ max-height:none;max-width:min(100%,1550px);gap:clamp(7px,.9dvh,16px)}
+.projection-question-only .projection-topline{min-height:0!important;height:auto;
+ padding:0;margin:0!important;align-items:center}
+.projection-question-only .question-step{margin:0}
+.projection-question-only .stage-clock{margin:0;padding:0}
+.projection-question-only h1{margin:0!important;line-height:1.12;
+ font-size:clamp(25px,min(3.3vw,5.8dvh),74px);text-align:center;
+ max-width:100%;text-wrap:balance;overflow-wrap:anywhere}
+.projection-question-only .question-frame{margin:0 auto!important;min-height:0;
+ max-height:min(44dvh,460px);padding:0}
+.projection-question-only .question-frame .question-picture{max-height:min(39dvh,410px);min-height:0}
+.projection-question-only .projection-question-instruction{font-size:clamp(12px,1.15vw,18px);
+ padding:clamp(8px,1dvh,14px) 14px;line-height:1.3;margin:0}
+.projection-question-only .projection-response-count{margin:0;font-size:clamp(12px,.9vw,16px)}
+/* Compact review first; measurement zoom is a last resort for exceptionally long questions. */
+.projection-question-only.is-result{gap:clamp(5px,.7dvh,12px)}
+.projection-question-only.is-result h1{font-size:clamp(22px,min(2.6vw,4.8dvh),48px)}
+.projection-question-only.is-result .question-frame{max-height:min(17dvh,150px)}
+.projection-question-only.is-result .question-frame .question-picture{max-height:min(15dvh,130px)}
+.projection-question-only.is-result .projection-answer-reveal{margin:0 auto;
+ border-radius:clamp(10px,1.5vw,20px);padding:clamp(7px,.9dvh,15px);
+ gap:clamp(5px,.6dvh,10px)}
+.projection-question-only.is-result .projection-answer-heading{gap:3px}
+.projection-question-only.is-result .projection-answer-heading>strong{font-size:clamp(20px,3.2dvh,39px)}
+.projection-question-only.is-result .projection-reveal-options{gap:clamp(5px,.75dvh,12px)}
+.projection-question-only.is-result .projection-reveal-option{min-height:0;
+ padding:clamp(5px,.8dvh,10px);font-size:clamp(13px,min(1.25vw,2.5dvh),21px);
+ border-radius:12px;line-height:1.2;gap:6px}
+.projection-question-only.is-result .projection-reveal-option-body .flag-choice-art{
+ height:clamp(40px,11dvh,135px);max-height:100%;max-width:min(100%,215px)}
+.projection-question-only.is-result .projection-answer-explanation{font-size:clamp(12px,1vw,18px);line-height:1.25}
+.projection-question-only.is-result .projection-answer-heading .correct-flag-art{
+ margin:2px auto;max-height:min(20dvh,170px);padding:3px}
+.projection-question-only.is-result .projection-answer-heading .correct-flag-art .flag-stripe-art{
+ max-height:min(17dvh,145px);width:min(100%,240px)}
+/* 720p / budget projectors */
+@media(max-height:800px){
+ .projection-question-only .projection-topline{gap:8px}
+ .projection-question-only.is-result .projection-answer-reveal{padding:7px}
+ .projection-question-only.is-result .projection-reveal-options.has-flag-options{
+  grid-template-columns:repeat(4,minmax(0,1fr))}
+ .projection-question-only.is-result .projection-reveal-option-body .flag-choice-art{height:clamp(38px,8dvh,72px)}
+ .projection-question-only.is-result .projection-reveal-letter{width:23px;height:23px;flex-basis:23px;font-size:11px}
+ .projection-question-only.is-result .projection-answer-heading>span{font-size:11px}
+}
+@media(min-width:3840px){
+ .projection-question-only{max-width:2200px}
+ .projection-question-only h1{font-size:clamp(50px,3vw,95px)}
+}
