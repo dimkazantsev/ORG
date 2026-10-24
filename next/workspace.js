@@ -421,8 +421,8 @@ function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{}
  $('cardSound').value=s.sound||'fanfare';
  const selected=Array.isArray(s.flag_modes)&&s.flag_modes.length?s.flag_modes:flagModes.filter(x=>x[2]).map(x=>x[0]);
  $('cardFlagModes').innerHTML=flagModes.map(([id,name,ready])=>'<label class="check-row flag-mode-item '+(!ready?'unavailable':'')+'"><input type="checkbox" data-card-mode="'+esc(id)+'" '+(selected.includes(id)&&ready?'checked ':'')+(ready?'':'disabled ')+'><span>'+esc(name)+(ready?'':' · скоро')+'</span></label>').join('');
- $('cardModesInfo').textContent=selected.length===1?'Одна механика':selected.length===2?'Две механики':'Все доступные механики';
- $('cardModesDetails').open=false;
+ $('cardModesInfo').textContent=geo?'8 механик · настройте для каждого игрока':selected.length===1?'Одна механика':selected.length===2?'Две механики':'Все доступные механики';
+ $('cardModesDetails').open=geo;
  $('cardDialog').showModal()}
 function saveCard(event){event.preventDefault();const c=state.cards[state.editingCard];
  const selected=all('[data-card-mode]:checked',$('cardFlagModes')).map(x=>x.dataset.cardMode);
