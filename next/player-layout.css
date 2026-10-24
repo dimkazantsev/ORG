@@ -241,3 +241,46 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
 .player-compact #gameView .player-final-results .habitat-grid{grid-template-columns:minmax(0,1fr)}
 @media(max-height:500px){.player-compact #gameView .game-top{min-height:48px;padding:3px 8px}
  .player-compact #gameView .player-more{min-height:42px}.player-compact #gameView .game-card{padding:7px}}
+
+
+/* Synced quiz intro — a true 1–5 second scene, never a static empty placeholder. */
+.round-intro{position:relative;overflow:hidden;isolation:isolate;gap:clamp(8px,2dvh,20px)}
+.round-intro-symbol{width:clamp(110px,23dvh,190px);aspect-ratio:1;display:grid;place-items:center;
+ background:radial-gradient(circle,#fff 28%,#eaddff 100%);border:1px solid #d9c5f8;
+ border-radius:50%;box-shadow:0 9px 29px #7742d039;animation:intro-rise .95s cubic-bezier(.2,.8,.2,1) both,intro-float 3s 1s ease-in-out infinite}
+.round-intro-symbol svg{width:60%;height:60%;color:#7040cf}
+.round-intro h1{font-size:clamp(22px,5dvh,38px);max-width:450px;line-height:1.16;text-wrap:balance}
+.round-intro-count{font-size:clamp(23px,4.3dvh,36px);color:#7945cc;font-variant-numeric:tabular-nums}
+.round-intro-sparks i{position:absolute;z-index:-1;width:13px;height:13px;border-radius:4px;
+ background:#c9b1f0;transform:rotate(45deg);animation:intro-spark 2s ease-in-out infinite alternate}
+.round-intro-sparks i:nth-child(1){top:18%;left:21%}
+.round-intro-sparks i:nth-child(2){top:30%;right:17%;animation-delay:.6s}
+.round-intro-sparks i:nth-child(3){bottom:20%;right:24%;animation-delay:1.2s}
+@keyframes intro-rise{from{opacity:.25;transform:scale(.75) translateY(25px)}to{opacity:1;transform:scale(1) translateY(0)}}
+@keyframes intro-float{50%{transform:translateY(-7px)}}
+@keyframes intro-spark{to{opacity:.4;transform:rotate(100deg) translateY(-12px)}}
+/* Round scores and the final full game results always remain available in the main phone viewport. */
+.round-results-page{position:relative;overflow:auto;overscroll-behavior:contain;min-width:0;width:100%;
+ max-height:100%;display:flex;flex-direction:column;gap:10px;padding:clamp(10px,2dvh,20px);
+ border:1px solid #e4d9f3;border-radius:18px;background:linear-gradient(160deg,#fbfaff,#f2edfd)}
+.round-results-page>h1{font-size:clamp(22px,4dvh,36px);line-height:1.15;margin:0}
+.round-results-orbit{position:absolute;top:7px;right:13px;color:#a078e6;
+ font-size:35px;animation:intro-float 2.8s ease-in-out infinite}
+.round-results-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;min-height:0}
+.round-results-grid>section{min-width:0;background:#fff;border:1px solid #e9e0f5;
+ padding:clamp(8px,1.5dvh,16px);border-radius:14px}
+.round-results-grid h2{font-size:clamp(13px,2.2dvh,19px);margin:0 0 6px;color:#6138a7}
+.round-score-list{padding:0;margin:0;list-style:none;display:grid;gap:3px}
+.round-score-list li{display:grid;align-items:center;grid-template-columns:19px minmax(0,1fr) auto;
+ gap:5px;padding:5px 0;border-bottom:1px solid #ede7f5;font-size:clamp(10px,1.6dvh,13px)}
+.round-score-list li strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
+.round-score-list li b{font-variant-numeric:tabular-nums;color:#6440ac}
+.round-rank{color:#8977a9;font-size:11px}
+.round-results-next{font-size:11px;color:#796d89;text-align:center;margin:0}
+.player-compact #gameView .game-card:has(.round-results-page){overflow:hidden;padding:0}
+.player-compact #gameView .round-results-page{border:0;border-radius:inherit;flex:1 1 auto}
+.player-compact #gameView .round-results-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.player-compact #gameView .game-empty.player-finale-screen{align-items:stretch;justify-content:flex-start;min-height:0}
+.player-finale-screen .player-final-results{position:relative;animation:intro-rise .65s both}
+@media(max-width:360px){.round-results-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.round-intro-symbol,.round-intro-sparks i,.round-results-orbit,.player-finale-screen .player-final-results{animation:none}}
