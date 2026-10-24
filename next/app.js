@@ -174,9 +174,16 @@ function roundScorePanel(view,title,final=false,endsAt=null){
  '<p>'+(reward.tone==='harm'?'Ограничение команде: ':'Усиление команды: ')+esc(reward.target)+
  '. Эффект применяется в следующем раунде.</p></div>':'';
  const render=(a,isTeam)=>a.length?'<ol class="round-score-list">'+a.map((x,i)=>'<li><span class="round-rank">'+(i+1)+'</span><strong>'+esc(x.nickname||x.name||'Участник')+'</strong><b>'+Number(x.score||0).toLocaleString('ru-RU')+'</b></li>').join('')+'</ol>':'<p class="small-help">Результаты ещё обрабатываются сервером</p>';
+ const myId=ctx.room?.me?.id,myTeamId=ctx.room?.me?.team_id;
+ const myIndex=players.findIndex(x=>x.id===myId),teamIndex=rows.findIndex(x=>x.id===myTeamId);
+ const individual=myIndex>=0?players[myIndex]:null,team=teamIndex>=0?rows[teamIndex]:null;
+ const highlight=individual||team?'<div class="round-self-summary" aria-label="Ваши результаты">'+
+  (team?'<div><span>ВАША КОМАНДА · '+(teamIndex+1)+' МЕСТО</span><strong>'+Number(team.score||0).toLocaleString('ru-RU')+'</strong><small>'+esc(view?.team_unit||'баллы')+'</small></div>':'')+
+  (individual?'<div><span>ВАШ РЕЗУЛЬТАТ · '+(myIndex+1)+' МЕСТО</span><strong>'+Number(individual.score||0).toLocaleString('ru-RU')+'</strong><small>'+esc(view?.player_unit||'баллы')+'</small></div>':'')+
+ '</div>':'';
  return '<section class="round-results-page'+(final?' is-final':'')+'"><div class="round-results-orbit" aria-hidden="true">✦</div>'+
  '<span class="eyebrow">'+(final?'ИГРА ЗАВЕРШЕНА':'РАУНД ЗАВЕРШЁН')+'</span>'+
- '<h1>'+esc(title||'Результаты')+'</h1>'+rewardBanner+
+ '<h1>'+esc(title||'Результаты')+'</h1>'+highlight+rewardBanner+
  '<div class="round-results-grid"><section><h2>Команды</h2>'+render(rows,true)+'</section>'+
  '<section><h2>Участники</h2>'+render(players,false)+'</section></div>'+
  (!final?'<p class="round-results-next">Следующая карточка через <strong id="playerResultCountdown">'+(endsAt?remaining(endsAt):'—')+'</strong> сек.</p>':'')+'</section>';
