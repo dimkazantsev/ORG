@@ -625,7 +625,7 @@ function wire(){
   const b=e.target.closest('[data-room]');if(b)selectRoom(b.dataset.room)};
  $('liveStart').onclick=()=>{projection();control('start')};$('liveReveal').onclick=()=>control('reveal');
  $('liveNext').onclick=()=>control('next');$('livePause').onclick=()=>control(state.room?.paused?'resume':'pause');$('liveFinish').onclick=()=>control('finish');
- $('copyRoomUrl').onclick=copyRoom;$('openScreen').onclick=projection;$('showPublicScreen').onclick=projection;
+ $('copyRoomUrl').onclick=copyRoom;$('openScreen').onclick=projection;$('showPublicScreen').onclick=projection;$('showRoomProjection').onclick=projection;
  $('reloadInsights').onclick=loadInsights;$('studentSort').onchange=renderInsights;
  for(const b of all('[data-close]'))b.onclick=()=>$(b.dataset.close).close();
  for(const dialog of all('dialog'))dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()});
