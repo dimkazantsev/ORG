@@ -3,7 +3,7 @@ import {createRequire} from 'node:module';
 const {rows}=createRequire(import.meta.url)('./scripts/build-flags-six.cjs');
 const base='http://127.0.0.1:8080/next/';
 async function setup(page){
- await page.route('https://cdn.jsdelivr.net/**',r=>r.fulfill({contentType:'application/javascript',body:'window.sent=[];window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}})},rpc:async(name,args)=>{window.sent.push({name,args});return {data:name==="qwiz_arcade_state"&&window.arcadeFixture?window.arcadeFixture:window.fixture||{registered:false}}}})};'}));
+ await page.route('https://cdn.jsdelivr.net/**',r=>r.fulfill({contentType:'application/javascript',body:'window.sent=[];window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}})},rpc:async(name,args)=>{window.sent.push({name,args});return {data:name==="qwiz_party_arcade"&&window.arcadeFixture?window.arcadeFixture:window.fixture||{registered:false}}}})};'}));
  await page.route('https://dimkazantsev.github.io/ORG/next/assets/**',r=>r.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200"><rect width="300" height="200" fill="#7040db"/></svg>'}));
  await page.goto(base);
 }
