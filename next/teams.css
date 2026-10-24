@@ -89,3 +89,19 @@ html.portrait-atlas-verified .animal-portrait.has-avatar-photo.avatar-photo-fail
 .team-member .animal-portrait,.team-card .animal-portrait{width:44px;height:44px;border-radius:12px;min-width:44px}
 .team-member{grid-template-columns:44px minmax(0,1fr)}
 @media(prefers-reduced-motion:reduce){.animal-portrait .animal-photo{transition:none}}
+
+
+/* Modern habitat badges: soften the old flat pictograms without altering team identity. */
+.team-card-head .habitat-icon,.team-dialog-identity .habitat-icon,
+.my-team-identity .habitat-icon,.team-board-heading .habitat-icon{
+ background:radial-gradient(circle at 28% 18%,#ffffff 0%,#f6f1ff 51%,#e5d9fb 100%);
+ padding:7px;border:1px solid #e6dafa;border-radius:17px;
+ box-shadow:inset 0 2px 2px #ffffffa8,0 5px 14px #643f9d1a;
+ overflow:visible;filter:drop-shadow(0 1px 2px #55427b16);
+ transition:transform .22s cubic-bezier(.2,.8,.2,1),box-shadow .22s}
+.team-card-head .habitat-icon{width:62px;height:62px}
+.team-card:hover .team-card-head .habitat-icon{transform:translateY(-2px) rotate(-2deg);
+ box-shadow:0 9px 18px #643f9d29,inset 0 2px 2px #fff}
+.team-card-head .habitat-seams{opacity:.22}
+@media(prefers-reduced-motion:reduce){.team-card-head .habitat-icon,
+ .team-dialog-identity .habitat-icon,.my-team-identity .habitat-icon{transition:none}}
