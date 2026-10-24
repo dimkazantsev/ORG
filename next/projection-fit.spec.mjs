@@ -93,6 +93,10 @@ test('Moderator-controlled music loops across game phases until explicitly disab
 
 
 test('Real flag frame stays attached to artwork and all four flag choices remain inside answer cells',async({page})=>{
+ await page.route('https://dimkazantsev.github.io/ORG/next/assets/flags-world/**',route=>{
+  const wide=route.request().url().endsWith('/uz.svg');
+  return route.fulfill({status:200,contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="'+(wide?600:300)+'" height="'+(wide?300:200)+'"><rect width="100%" height="100%" fill="#7546d4"/></svg>'});
+ });
  for(const [width,height] of [[1280,720],[1920,1080],[3840,2160]]){
   await page.setViewportSize({width,height});
   await page.evaluate(()=>{
