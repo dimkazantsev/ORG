@@ -51,10 +51,10 @@ const trashSvg='<svg class="trash-svg" viewBox="0 0 24 24" fill="none" stroke="c
 const titles={round:'Раунд вопросов',intro:'Начало игры',break:'Музыкальная пауза',team_stats:'Рейтинг команд',player_stats:'Статистика игроков',bonus:'Бонусная активность',duel:'Дуэль команд',finale:'Финал игры'};
 const buildDefaults={count:5,seconds:30,answer_seconds:10,order:'random',offset:0,team_cap:null,player_cap:null,sound:'fanfare',lead_seconds:5,stats_seconds:7,bonus_percent:70,bonus_lead:15};
 const arcadeGames={
- rocket:{title:'Ракетная гонка',icon:'arcade_rocket',seconds:12,help:'Все игроки разгоняют командную ракету. Учитывается средний вклад игрока, а не размер команды. Победа: +25 очков и награда.'},
- blitz:{title:'Блиц-вопрос',icon:'arcade_blitz',seconds:25,help:'7 секунд команды борются за право ответа. После захвата открывается вопрос из банка флагов. Правильный ответ: +80 очков.'},
- tug:{title:'Перетягивание очков',icon:'arcade_tug',seconds:12,help:'Команды соревнуются нажатиями. Лидеру +15 очков, последняя активная команда уступает не более 15 очков (ниже нуля не опускается).'},
- captain:{title:'Дуэль капитанов',icon:'arcade_captain',seconds:10,help:'Первый подключившийся игрок команды — капитан. После 3 секунд подготовки только один удар. Фальстарт лишает попытки. Победа: +15 очков.'}
+ rocket:{title:'Ракетная гонка',icon:'arcade_rocket',seconds:30,help:'Все игроки разгоняют командную ракету. Учитывается средний вклад игрока, а не размер команды. Победа: +25 очков и награда.'},
+ blitz:{title:'Блиц-вопрос',icon:'arcade_blitz',seconds:35,help:'7 секунд команды борются за право ответа. После захвата открывается вопрос из банка флагов. Правильный ответ: +80 очков.'},
+ tug:{title:'Перетягивание очков',icon:'arcade_tug',seconds:30,help:'Команды соревнуются нажатиями. Лидеру +15 очков, последняя активная команда уступает не более 15 очков (ниже нуля не опускается).'},
+ captain:{title:'Дуэль капитанов',icon:'arcade_captain',seconds:30,help:'Капитан команды ждёт 3 секунды до сигнала, затем нажимает один раз. Фальстарт расходует попытку. Участникам показываются ход дуэли и результаты. Победа: +15 очков.'}
 };
 const state={db:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,bankOffset:0,bankPageSize:25,bankRequest:0,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',dragFrom:null,clockOffset:0,liveKey:'',lastDeadlineRefresh:0};
 function msg(id,text='',isError=false){const el=$(id);if(!el)return;el.textContent=text;el.classList.toggle('error',!!isError)}
@@ -467,7 +467,7 @@ function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{}
   if(geo){if(!c.topic_id)c.topic_id=state.topics.find(t=>t.name==='География России')?.id||null;$('cardTopic').value=c.topic_id||'';
    $('cardGeoCount').value=s.geo_count||15;$('cardGeoSeconds').value=s.geo_seconds||180;
    for(const item of all('#cardGeoModes input:not(:disabled)'))item.checked=!Array.isArray(s.geo_modes)||s.geo_modes.includes(item.value);}
- $('cardArcadeSeconds').value=s.arcade_seconds||arcade?.seconds||12;
+ $('cardArcadeSeconds').value=s.arcade_seconds||arcade?.seconds||30;
  $('cardArcadeHelp').textContent=arcade?.help||'';
  $('cardOrder').value=s.order||'random';$('cardOffset').value=(s.offset||0)+1;
  $('cardTeamCap').value=s.team_cap||'';$('cardPlayerCap').value=s.player_cap||'';
