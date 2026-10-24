@@ -192,6 +192,18 @@ function questionScene(state){
    (state.teams||[]).reduce((n,t)=>n+Number(t.answered||0),0)+' ответов получено</div>':'')+
   '</section>';
 }
+// Keep the visible scene inside the actual TV/projector viewport.
+ let fitQueued=false;
+ function fitProjectionScene(){
+  fitQueued=false;
+  const main=$('projectionMain'),scene=main?.firstElementChild;
+  if(!main||!scene||main.clientHeight<100)return;
+  scene.style.zoom='1';scene.style.maxWidth='100%';
+  const h=main.clientHeight-8,w=main.clientWidth-8;
+  const scale=Math.max(.36,Math.min(1,h/Math.max(1,scene.scrollHeight),w/Math.max(1,scene.scrollWidth)));
+  scene.style.zoom=String(scale);
+ }
+ function scheduleFitProjection(){if(fitQueued)return;fitQueued=true;requestAnimationFrame(()=>requestAnimationFrame(fitProjectionScene))}
 function applyProjectionSettings(settings){
  if(!settings)return;
  const sound=Boolean(settings.sound_enabled),volume=Number(settings.volume);
@@ -221,24 +233,24 @@ function render(state){
  if(state.phase!=='intermission')window.QwizArcade?.stop('screen');
  if(state.phase!=='intermission'||state.activity?.settings?.arcade_mode!=='russia_map')window.QwizGeo?.stop('screen');
  if(state.phase==='lobby'){
-  $('projectionMain').innerHTML='<section class="projection-lobby has-team-entry"><div><div class="projection-eyebrow">КОМНАТА ОТКРЫТА</div><h1>Присоединяйтесь!</h1><p>Наведите камеру на QR-код или введите код комнаты на телефоне.</p><strong class="projection-code">'+escapeText(state.code)+'</strong></div><div class="projection-qr" id="projectionQr"></div></section><section class="projection-team-entry"><h2>Выберите свою команду</h2><p>Сканируйте QR под её иконкой. Нажмите на карточку, чтобы увеличить код.</p><div class="team-board" id="projectionTeamBoard"></div></section>';qr($('projectionQr'),link(state.code));$('projectionQr').setAttribute('role','button');$('projectionQr').setAttribute('tabindex','0');$('projectionQr').setAttribute('aria-label','Увеличить общий QR-код входа в игру');$('projectionQr').onclick=()=>openJoinQr(state.code);$('projectionQr').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openJoinQr(state.code)}};QwizTeams.board($('projectionTeamBoard'),state.lobby_teams||[],state.code);return;
+  $('projectionMain').innerHTML='<section class="projection-lobby has-team-entry"><div><div class="projection-eyebrow">КОМНАТА ОТКРЫТА</div><h1>Присоединяйтесь!</h1><p>Наведите камеру на QR-код или введите код комнаты на телефоне.</p><strong class="projection-code">'+escapeText(state.code)+'</strong></div><div class="projection-qr" id="projectionQr"></div></section><section class="projection-team-entry"><h2>Выберите свою команду</h2><p>Сканируйте QR под её иконкой. Нажмите на карточку, чтобы увеличить код.</p><div class="team-board" id="projectionTeamBoard"></div></section>';qr($('projectionQr'),link(state.code));$('projectionQr').setAttribute('role','button');$('projectionQr').setAttribute('tabindex','0');$('projectionQr').setAttribute('aria-label','Увеличить общий QR-код входа в игру');$('projectionQr').onclick=()=>openJoinQr(state.code);$('projectionQr').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openJoinQr(state.code)}};QwizTeams.board($('projectionTeamBoard'),state.lobby_teams||[],state.code);scheduleFitProjection();return;
  }
- if(state.phase==='finished'){QwizStage.audio.music('victory',state.code+':finale',12000);finalShow(state);return}
+ if(state.phase==='finished'){QwizStage.audio.music('victory',state.code+':finale',12000);finalShow(state);scheduleFitProjection();return}
  if(state.phase==='countdown'){QwizStage.audio.music('round',state.code+':'+state.index,6500);$('projectionMain').innerHTML='<div class="countdown-scene"><span class="projection-eyebrow">СЛЕДУЮЩИЙ РАУНД</span><h1>Приготовьтесь!</h1><div class="countdown-number" id="countdownNumber">'+seconds(state.ends_at)+'</div><p>Вопрос появится после обратного отсчёта.</p></div>';return}
  if(state.phase==='intermission'){
   const activity=state.activity||{},type=activity.type||'break';QwizStage.audio.music(type==='intro'?'intro':'round',state.code+':'+state.index+':'+type,type==='intro'?9000:12000);
-  if(window.QwizGeo?.mountProjector($('projectionMain'),state,ctx.client))return;
-  if(window.QwizArcade?.mountProjector($('projectionMain'),state,ctx.client))return;
+  if(window.QwizGeo?.mountProjector($('projectionMain'),state,ctx.client)){scheduleFitProjection();return;}
+  if(window.QwizArcade?.mountProjector($('projectionMain'),state,ctx.client)){scheduleFitProjection();return;}
    if(type==='intro'){$('projectionMain').innerHTML='<section class="projection-welcome"><div class="welcome-orbit" aria-hidden="true"><span>✦</span><span>★</span><span>✧</span></div><span class="projection-eyebrow">QWIZ-PARTY · ДОБРО ПОЖАЛОВАТЬ</span><h1>'+escapeText(activity.title||'Большая игра начинается!')+'</h1><p>Команды готовы? Проверьте подключение и приготовьтесь к первому раунду.</p><div class="welcome-dots"><i></i><i></i><i></i><i></i><i></i></div></section>';return;}
   const extras=type==='team_stats'?QwizStage.teams(state.teams,{full:true,ranked:true}):type==='player_stats'?QwizStage.leaderboard(state.players,20):'';
-  $('projectionMain').innerHTML='<section class="projection-activity" data-type="'+escapeText(type)+'"><span class="projection-eyebrow">QWIZ-PARTY · ПРОДОЛЖАЕМ ИГРУ</span><div class="activity-emblem" aria-hidden="true">✦</div><h1>'+escapeText(activity.title||'Дополнительная активность')+'</h1><p>Следующий этап запускает преподаватель.</p>'+extras+'</section>';return;
+  $('projectionMain').innerHTML='<section class="projection-activity" data-type="'+escapeText(type)+'"><span class="projection-eyebrow">QWIZ-PARTY · ПРОДОЛЖАЕМ ИГРУ</span><div class="activity-emblem" aria-hidden="true">✦</div><h1>'+escapeText(activity.title||'Дополнительная активность')+'</h1><p>Следующий этап начнётся автоматически.</p>'+extras+'</section>';return;
  }
  if(!state.question){$('projectionMain').innerHTML='<div class="projection-loading"><h1>Следующий раунд</h1><p>Смотрите на экран.</p></div>';return}
  if(state.phase==='result')tone('reveal');else if(previous!=='question'||ctx.previousQuestion!==state.index)tone('pop');ctx.previousQuestion=state.index;
  $('projectionMain').innerHTML=questionScene(state);
 
 
- QwizStage.updateClock(state,ctx.offset);QwizStage.hydrateIllustrations($('projectionMain'));
+ QwizStage.updateClock(state,ctx.offset);QwizStage.hydrateIllustrations($('projectionMain'));scheduleFitProjection();
 }
 async function refresh(){if(!ctx.client||!room||ctx.checking)return;ctx.checking=true;
  try{const sentAt=Date.now();const {data,error}=await ctx.client.rpc('qwiz_party_projection',{p_code:room});if(error)throw Error(error.message);
@@ -278,4 +290,6 @@ async function init(){
  },200);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
 }
-window.addEventListener('DOMContentLoaded',init);
+window.addEventListener('resize',scheduleFitProjection,{passive:true});
+ document.addEventListener('load',e=>{if(e.target?.closest?.('#projectionMain'))scheduleFitProjection()},true);
+ window.addEventListener('DOMContentLoaded',init);
