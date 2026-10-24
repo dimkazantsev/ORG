@@ -22,6 +22,15 @@ test('The public home opens the current quiz and preserves QR room invitations',
  );
  assert.equal(destination('https://dimkazantsev.github.io/ORG/?legacy=1'),null);
 });
+test('Moderator can finish rooms without a PL/pgSQL activity alias conflict',()=>{
+ const migration=readFileSync(new URL('./migrations/20261024_qwiz_party_control_alias_fix.sql',import.meta.url),'utf8');
+ const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ assert.match(migration,/activity_lookup\.room_id=p_room/);
+ assert.match(migration,/activity_lookup\.settings/);
+ assert.match(migration,/has_function_privilege\('anon'/);
+ assert.match(host,/\$\('liveFinish'\)\.onclick=\(\)=>control\('finish'\)/);
+ assert.match(host,/qwiz_party_control/);
+});
 test('New JavaScript parses independently of legacy app.js',()=>{assert.doesNotThrow(()=>new Function(js));assert.doesNotMatch(html,/\.\/\.\.\/(app\.js|styles\.css)/)});
 test('All direct DOM IDs referenced by client exist in HTML',()=>{
  const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]));
