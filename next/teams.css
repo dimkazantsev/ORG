@@ -72,3 +72,20 @@ html:not(.portrait-atlas-verified) .animal-portrait{background-image:none!import
 .animal-portrait .animal-fallback-svg{width:100%;height:100%;display:block;object-fit:contain;filter:drop-shadow(0 3px 3px #63499322)}
 html.portrait-atlas-verified .animal-portrait .animal-fallback-svg{display:none}
 .team-member .animal-portrait,.team-card .animal-portrait{min-width:34px;min-height:34px}
+
+
+/* Portrait engine v3: independently rendered high-quality imagery with a safe fallback. */
+.animal-portrait{position:relative;isolation:isolate;overflow:hidden;background-color:#f5edff;
+ background-repeat:no-repeat;background-size:400% 300%;box-shadow:0 3px 10px #3d267828}
+.animal-portrait.has-avatar-photo{background-image:none!important}
+.animal-portrait .animal-photo{position:absolute;inset:0;z-index:2;display:block;width:100%;height:100%;
+ object-fit:cover;object-position:center;background:#fff;transition:transform .25s cubic-bezier(.2,.8,.2,1)}
+.animal-portrait.has-avatar-photo:not(.avatar-photo-failed) .animal-fallback-svg{opacity:0}
+.animal-portrait.avatar-photo-failed .animal-photo{display:none}
+.animal-portrait.avatar-photo-failed .animal-fallback-svg{opacity:1}
+html.portrait-atlas-verified .animal-portrait:not(.has-avatar-photo) .animal-fallback-svg{display:none}
+html.portrait-atlas-verified .animal-portrait.has-avatar-photo.avatar-photo-failed .animal-fallback-svg{display:block}
+.avatar-pick:hover .animal-photo{transform:scale(1.07)}
+.team-member .animal-portrait,.team-card .animal-portrait{width:44px;height:44px;border-radius:12px;min-width:44px}
+.team-member{grid-template-columns:44px minmax(0,1fr)}
+@media(prefers-reduced-motion:reduce){.animal-portrait .animal-photo{transition:none}}
