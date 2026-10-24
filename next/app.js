@@ -307,7 +307,11 @@ async function submitRichAnswer(){
 function exportResults(){const s=ctx.room;if(!s)return;const rows=[['Место','Команда','Игроков','Очков'],...s.teams.slice().sort((a,b)=>b.score-a.score).map((x,i)=>[i+1,x.name,x.players,x.score])];const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='org-party-'+s.code+'.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 async function copyInvite(){if(!ctx.roomCode)return;const invite=joinUrl(ctx.roomCode);try{await navigator.clipboard.writeText(invite);notice('hostNotice','Ссылка скопирована.','success')}catch{notice('hostNotice','Ссылка для приглашения: '+invite)}}
-function updateClocks(){if(ctx.room?.paused)return;if(ctx.room?.phase==='countdown'){
+function updateClocks(){if(ctx.room?.paused)return;if(ctx.room?.phase==='intermission'&&ctx.room?.activity?.type==='card_intro'){
+ const n=remaining(ctx.room.ends_at);text('playerCountdown',n);
+ if(n===0&&!ctx.releaseTimer)ctx.releaseTimer=setTimeout(()=>{ctx.releaseTimer=null;if(ctx.roomCode)refreshRoom(false)},600+Math.floor(Math.random()*850));
+ return;
+}if(ctx.room?.phase==='countdown'){
    const n=remaining(ctx.room.ends_at);text('playerCountdown',n);
    if(n===0 && !ctx.releaseTimer){
     ctx.releaseTimer=setTimeout(()=>{
