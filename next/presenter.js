@@ -217,17 +217,25 @@ function questionScene(state){
    '</div>'+
    (explanation?'<p class="projection-answer-explanation">'+escapeText(explanation)+'</p>':'')+
   '</section>':'';
+ // Public-screen answer variants are visible, but only server-authorized answer
+ // reveal contains the correct indices. Do not add answer markers here.
+ const choices=Array.isArray(q.options)?q.options:[];
+ const longChoice=choices.some(v=>String(typeof v==='object'?(v?.label||''):v).length>72);
+ const publicChoices=choices.length
+  ?'<div class="projection-options projection-public-options'+(longChoice?' has-long-options':'')+'" role="list" data-count="'+choices.length+'">'+
+   choices.map((option,i)=>'<div class="projection-option" role="listitem"><span class="letter" aria-hidden="true">'+String.fromCharCode(65+i)+'</span>'+projectionOption(option,i)+'</div>').join('')+
+   '</div>'
+  :'<div class="projection-question-instruction">'+
+   (state.phase==='result'?'Время ответа завершено. Разбор появится на общем экране.':
+    'Ответьте на задание на своём устройстве.')+'</div>';
  return '<section class="projection-question projection-question-only'+(state.phase==='result'?' is-result':'')+'">'+top+
   '<h1>'+escapeText(q.prompt)+'</h1>'+frame+media+
-  (finished?reveal:
-   '<div class="projection-question-instruction">'+
-    (state.phase==='result'?'Время ответа завершено. Разбор появится на общем экране.':
-     'Варианты ответа доступны на устройствах участников.')+'</div>')+
+  (finished?reveal:publicChoices)+
   (!finished?'<div class="projection-response-count">'+
    (state.teams||[]).reduce((n,t)=>n+Number(t.answered||0),0)+' ответов получено</div>':'')+
   '</section>';
 }
-// Keep the visible scene inside the actual TV/projector viewport.
+ // Keep the visible scene inside the actual TV/projector viewport.
  let fitQueued=false;
  function fitProjectionScene(){
   fitQueued=false;
