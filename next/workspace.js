@@ -607,23 +607,45 @@ async function updateProjectorPreferences(update){
   renderProjectorPreferences();
  }catch(err){projectorPrefs=previous;renderProjectorPreferences();msg('liveMessage','Звук проектора: '+err.message,true)}
 }
-async function updateModeratorSlides(state){
+let moderatorDeckRefreshAt=0;
+async function updateModeratorLiveStats(s){
+ const host=$('moderatorSlides');if(!host||s.phase!=='intermission')return;
+ const target=host.querySelector('.moderator-slide.is-current .moderator-slide-live');
+ if(!target||Date.now()-moderatorDeckRefreshAt<3500)return;
+ moderatorDeckRefreshAt=Date.now();
+ const mode=s.activity?.settings?.arcade_mode||'';
+ try{
+   if(mode==='russia_map'){
+     const d=await rpc('qwiz_geo_projection',{p_code:s.code});
+     if(!target.isConnected||state.roomCode!==s.code)return;
+     target.innerHTML='<div class="moderator-live-meter"><strong>'+Number(d.answered||0)+'</strong><span>решено заданий</span></div>'+
+       '<div class="moderator-live-meter"><strong>'+Number(d.players||0)+'</strong><span>игроков</span></div>'+
+       '<div class="moderator-live-meter"><strong>'+Number(d.remaining||0)+' c</strong><span>осталось</span></div>';
+   }else if(['rocket','blitz','tug','captain'].includes(mode)){
+     const d=await rpc('qwiz_party_arcade',{p_code:s.code});
+     if(!target.isConnected||state.roomCode!==s.code)return;
+     target.innerHTML=(d.teams||[]).slice(0,8).map(t=>'<div class="moderator-live-team"><span>'+esc(t.name)+'</span><strong>'+Number(t.points||0).toFixed(0)+'</strong></div>').join('')||
+       '<p>Ожидаем результаты команд…</p>';
+   }
+ }catch(e){if(target.isConnected)target.textContent='Синхронизация раунда: '+e.message}
+}
+async function updateModeratorSlides(s){
  const root=$('moderatorSlides');
- if(!root||!state?.code||moderatorDeckBusy)return;
- const key=[state.code,state.phase,state.index,state.activity?.title].join(':');
- if(key===moderatorDeckKey)return;
+ if(!root||!s?.code||moderatorDeckBusy)return;
+ const key=[s.code,s.phase,s.index,s.activity?.title,s.activity?.settings?.arcade_mode].join(':');
+ if(key===moderatorDeckKey){void updateModeratorLiveStats(s);return}
  moderatorDeckBusy=true;
  try{
-  const deck=await rpc('qwiz_host_slide_deck',{p_code:state.code});
+  const deck=await rpc('qwiz_host_slide_deck',{p_code:s.code});
+  if(state.roomCode!==s.code)return;
   root.innerHTML=(deck.slides||[]).map((slide,i)=>{
-   const where=i===0?'Предыдущий':i===1?'Текущий':'Следующий';
+   const position=i===0?'Предыдущий':i===1?'Текущий':'Следующий';
    const title=slide.kind==='question'?'Вопрос '+(slide.index+1)+' / '+deck.total:slide.title;
    const image=typeof slide.media_url==='string'&&/^https:\/\//i.test(slide.media_url)
     ?'<div class="moderator-slide-image"><img loading="lazy" decoding="async" src="'+esc(slide.media_url)+'" alt="Иллюстрация вопроса"></div>':'';
-   const choices=Array.isArray(slide.options)?slide.options.slice(0,4).map((choice,index)=>{
-     const done=i===0||state.phase==='result'||state.phase==='finished';
+   const choices=Array.isArray(slide.options)&&slide.kind==='question'?slide.options.slice(0,4).map((choice,index)=>{
+     const done=i===0||s.phase==='result'||s.phase==='finished';
      const letter=String.fromCharCode(65+index);
-     // Picture-choice questions use actual flag images; the value is not the name of the country.
      const imageUrl=choice&&typeof choice==='object'&&typeof choice.image_url==='string'&&/^https:\/\//i.test(choice.image_url)?choice.image_url:'';
      const stripes=QwizStage.stripeOption(choice);
      const content=imageUrl?'<img class="moderator-option-flag" src="'+esc(imageUrl)+'" alt="Флаг, вариант '+letter+'" loading="lazy" decoding="async">':
@@ -631,11 +653,23 @@ async function updateModeratorSlides(state){
      return '<span class="moderator-choice '+(imageUrl?'has-flag ':'')+(done&&Number(slide.correct)===index?'is-correct':'')+'">'+
        '<b class="moderator-option-letter">'+letter+'</b>'+content+'</span>';
    }).join(''):'';
-   return '<article class="moderator-slide '+(i===1?'is-current':'')+'"><span class="moderator-slide-overline">'+where+'</span>'+
+   const map=slide.mode==='russia_map';
+   const mode=slide.mode&&slide.mode!=='russia_map';
+   const status=i===1&&s.phase==='intermission'&&(map||mode)
+     ?'<div class="moderator-slide-live" role="status"><span>Загружаем показатели раунда…</span></div>':'';
+   const metrics=slide.kind!=='question'&&['team_stats','player_stats','finale'].includes(slide.type)
+     ?'<div class="moderator-slide-metrics">'+
+      (slide.type==='player_stats'?(s.public_stats?.players||[]).slice(0,5).map(x=>'<div><span>'+esc(x.nickname||x.name||'Игрок')+'</span><b>'+Number(x.score||0)+'</b></div>').join(''):
+      (s.teams||[]).slice().sort((a,b)=>Number(b.score)-Number(a.score)).slice(0,5).map(x=>'<div><span>'+esc(x.name)+'</span><b>'+Number(x.score||0)+'</b></div>').join(''))+'</div>':'';
+   return '<article class="moderator-slide '+(i===1?'is-current':'')+' '+(map?'has-map':'')+'" data-kind="'+esc(slide.kind)+'">'+
+     '<span class="moderator-slide-overline">'+position+(map?' · КАРТА РФ':mode?' · МИНИ-ИГРА':'')+'</span>'+
      '<h4>'+esc(title)+'</h4><p>'+esc(slide.prompt||slide.title||'Нет слайда')+'</p>'+
-     image+(choices?'<div class="moderator-slide-choices">'+choices+'</div>':'')+'</article>';
+     (map?'<div class="moderator-map-symbol" aria-label="Карта России">⌖ <span>89 регионов</span></div>':'')+
+     image+metrics+status+(choices?'<div class="moderator-slide-choices">'+choices+'</div>':'')+
+     '</article>';
   }).join('');
-  moderatorDeckKey=key;
+  moderatorDeckKey=key;moderatorDeckRefreshAt=0;
+  void updateModeratorLiveStats(s);
  }catch(err){root.innerHTML='<p class="small-help">Не удалось загрузить предпросмотр: '+esc(err.message)+'</p>'}
  finally{moderatorDeckBusy=false}
 }
