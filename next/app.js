@@ -53,7 +53,7 @@ async function joinRoom(event){event.preventDefault();const button=$('joinButton
  try{await ensureAuth();const code=$('joinCode').value.trim().toUpperCase();const name=$('joinName').value.trim();const group=$('joinGroup').value.trim();
   if(!/^[A-F0-9]{8}$/.test(code))throw Error('Код комнаты должен содержать восемь символов.');
   const request=QwizTeams.joinRequest(code,name,group);await rpc(request.method,request.args);
-  ctx.roomCode=code;storage.set('room',code);showScreen('game');await refreshRoom();signal('team');
+  ctx.roomCode=code;storage.set('room',code);try{localStorage.setItem('qwiz-player-name',name)}catch{}showScreen('game');await refreshRoom();signal('team');
   notice('joinNotice','');
  }catch(error){notice('joinNotice',error.message,'error')}finally{busy(button,false)}}
 async function login(event){event.preventDefault();busy($('loginButton'),true);notice('loginNotice','Проверка доступа…');
@@ -360,7 +360,7 @@ function attach(){q('#logoHome').addEventListener('click',home);
 let activeQrCode=null;
 function joinUrl(code=null){
  const url=new URL('./',window.location.href);
- if(code)url.searchParams.set('room',String(code).toUpperCase());
+ if(code){url.searchParams.set('room',String(code).toUpperCase());url.searchParams.set('join','1')}
  return url.toString();
 }
 const qrCache=new WeakMap();
