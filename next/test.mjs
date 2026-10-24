@@ -83,6 +83,29 @@ test('Geography feedback is provided after a submitted answer and map zoom is pe
  assert.match(client,/showMap/);
  assert.match(sql,/p_answer is not null and v_task is not null/);
 });
+test('Instructor slide deck is visual, public projection stays question-only, and portraits use atlas',()=>{
+ const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const hostHtml=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ const projector=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
+ const projectorCss=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
+ const profile=readFileSync(new URL('./profile.js',import.meta.url),'utf8');
+ const sprite=readFileSync(new URL('./assets/animal-portraits.webp',import.meta.url));
+ assert.ok(sprite.length>3000);
+ assert.match(hostHtml,/id="moderatorSlides"/);
+ assert.match(hostHtml,/id="hostProjectorSound"/);
+ assert.match(hostHtml,/id="hostProjectorVolume"/);
+ assert.match(host,/qwiz_host_slide_deck/);
+ assert.match(host,/moderator-slide-image/);
+ assert.match(host,/qwiz_projector_settings/);
+ assert.match(profile,/data-animal/);
+ assert.match(projector,/applyProjectionSettings/);
+ assert.match(projectorCss,/\.projection-screen-ready \.projection-footer/);
+ const map=readFileSync(new URL('./russia-geo.js',import.meta.url),'utf8');
+ assert.doesNotMatch(map,/const targets=interactive\?geometry/);
+ assert.match(map,/gestureMoved=true/);
+ assert.match(map,/t\.renderKey===key/);
+ assert.match(map,/geo-correct-answer/);
+});
 test('New JavaScript parses independently of legacy app.js',()=>{assert.doesNotThrow(()=>new Function(js));assert.doesNotMatch(html,/\.\/\.\.\/(app\.js|styles\.css)/)});
 test('All direct DOM IDs referenced by client exist in HTML',()=>{
  const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]));
@@ -377,8 +400,8 @@ test('Shared stage initializes in a browser-like environment without undefined r
  assert.ok(!stage.icon({position:1,players:5,answered:2}).includes('animals.svg'));
  const teamModule=readFileSync(new URL('./teams.js',import.meta.url),'utf8');
  assert.doesNotThrow(()=>runInNewContext(teamModule,{window,document,Intl,Date,localStorage:{getItem:()=>null}}));
- assert.ok(window.QwizTeams.avatar('fox').includes('animals.svg?v=avatars-20261024-2#fox'));
- assert.ok(window.QwizTeams.avatar('owl').includes('animals.svg?v=avatars-20261024-2#owl'));
+ assert.ok(window.QwizTeams.avatar('fox').includes('data-animal="fox"'));
+ assert.ok(window.QwizTeams.avatar('owl').includes('data-animal="owl"'));
  assert.equal(typeof stage.audio.stopMusic,'function');
 });
 
