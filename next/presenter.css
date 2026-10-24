@@ -550,3 +550,10 @@ body:fullscreen .projection-shell{height:100dvh}
  .projection-question-only{max-width:1900px}
  .projection-lobby.has-team-entry{max-width:2200px;margin-inline:auto}
 }
+
+
+/* Reconstruct the right flag prominently during projector reveal, not as a textual colour list. */
+.projection-answer-heading .correct-flag-art{width:min(90%,400px);margin:4px auto;padding:8px}
+.projection-answer-heading .correct-flag-art .flag-stripe-art{width:min(100%,350px);max-height:min(23dvh,205px)}
+.projection-question-only.is-result .projection-answer-reveal:has(.correct-flag-art){gap:clamp(4px,.7dvh,11px)}
+@media(max-height:800px){.projection-answer-heading .correct-flag-art{width:min(100%,260px);padding:5px}.projection-answer-heading .correct-flag-art .flag-stripe-art{max-height:18dvh}}
