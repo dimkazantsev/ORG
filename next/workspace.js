@@ -613,12 +613,13 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  void updateModeratorSlides(s);
 }
 let moderatorDeckKey='',moderatorDeckBusy=false;
-let projectorPrefsCode='',projectorPrefs={sound_enabled:true,volume:45};
+let projectorPrefsCode='',projectorPrefs={sound_enabled:true,volume:45,music_enabled:false};
 function renderProjectorPreferences(){
  const btn=$('hostProjectorSound'),range=$('hostProjectorVolume');
  if(!btn||!range)return;
  btn.textContent='Звук проектора: '+(projectorPrefs.sound_enabled?'вкл.':'выкл.');
  btn.setAttribute('aria-pressed',String(!!projectorPrefs.sound_enabled));
+ const music=$('hostProjectorMusic');if(music){music.textContent='♫ Музыка на всю игру: '+(projectorPrefs.music_enabled?'вкл.':'выкл.');music.setAttribute('aria-pressed',String(!!projectorPrefs.music_enabled));}
  range.value=String(projectorPrefs.volume);
  $('hostProjectorVolumeLabel').textContent=projectorPrefs.volume+'%';
 }
@@ -638,7 +639,7 @@ async function updateProjectorPreferences(update){
   const params={p_room:room.room_id};
   if('sound_enabled' in update)params.p_enabled=update.sound_enabled;
   if('volume' in update)params.p_volume=update.volume;
-  projectorPrefs=await rpc('qwiz_projector_settings',params);
+  projectorPrefs=('music_enabled' in update)?{...projectorPrefs,...await rpc('qwiz_projector_music',{p_room:room.room_id,p_enable:update.music_enabled})}:await rpc('qwiz_projector_settings',params);
   renderProjectorPreferences();
  }catch(err){projectorPrefs=previous;renderProjectorPreferences();msg('liveMessage','Звук проектора: '+err.message,true)}
 }
@@ -857,6 +858,7 @@ function wire(){
  $('liveStart').onclick=()=>{if(state.room?.phase==='finished'){void repeatFinishedRoom();return;}projection();control('start')};$('liveReveal').onclick=()=>control('reveal');
  $('liveNext').onclick=()=>control('next');$('livePause').onclick=()=>control(state.room?.paused?'resume':'pause');$('liveFinish').onclick=()=>control('finish');
  $('hostProjectorSound').onclick=()=>updateProjectorPreferences({sound_enabled:!projectorPrefs.sound_enabled});
+ $('hostProjectorMusic').onclick=()=>updateProjectorPreferences({music_enabled:!projectorPrefs.music_enabled});
  $('hostProjectorVolume').oninput=e=>{$('hostProjectorVolumeLabel').textContent=Number(e.target.value)+'%'};
  $('hostProjectorVolume').onchange=e=>updateProjectorPreferences({volume:Number(e.target.value)});
  $('copyRoomUrl').onclick=copyRoom;$('openScreen').onclick=projection;$('showPublicScreen').onclick=projection;$('showRoomProjection').onclick=projection;
