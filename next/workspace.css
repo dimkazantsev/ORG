@@ -778,3 +778,32 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 @media(prefers-reduced-motion:reduce){
  .round-card-tools .round-copy,.round-card-tools .round-trash{transition:none}
 }
+
+
+/* A compact four-type card palette; Games expands into the five supported mechanics. */
+.card-main-palette{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:15px 0}
+.card-main-palette button{min-height:62px;display:flex;align-items:center;justify-content:center;gap:8px;
+ border-radius:15px;background:#fff;border:1px solid #e1d6f1;color:#503a77;
+ font-size:14px;font-weight:800;box-shadow:0 2px 8px #6147940c}
+.card-main-palette button:hover,.card-main-palette button[aria-expanded=true]{background:#eee6ff;color:#7041ce;border-color:#bba3ef}
+.game-palette{display:grid;gap:10px;padding:15px;border:1px solid #d9ccf0;background:#fbf9ff;border-radius:17px;margin-bottom:16px}
+.game-palette[hidden]{display:none!important}
+.game-palette #arcadePalette{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:0}
+.game-palette #arcadePalette button{min-height:53px;border-radius:13px;display:flex;justify-content:center;text-align:center}
+.round-grid{gap:10px}
+.round-grid .round-card{min-height:0;padding:42px 15px 13px;gap:5px;border-radius:17px}
+.round-grid .round-card-heading{gap:7px}
+.round-grid .round-icon{width:39px;height:39px;border-radius:12px}
+.round-grid .round-card h3{font-size:clamp(14px,1.2vw,17px);line-height:1.22;margin:1px 0}
+.round-grid .round-card .round-sub{font-size:11px;line-height:1.45;min-height:0;margin:3px 0;
+ display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+ max-height:3em;overflow-wrap:anywhere}
+.round-grid .round-actions{padding-top:7px;gap:5px}
+.round-grid .round-actions button{min-height:37px;padding:7px}
+.round-grid .round-card[data-type=finale] .round-icon{width:39px;height:39px}
+.round-grid .round-card[data-type=finale] .round-icon svg{width:28px;height:28px}
+.round-grid .round-card[data-type=finale] h3{font-size:17px;margin:2px 0}
+.round-grid .finale-card-tags{display:none}
+.projector-music-control[aria-pressed=true]{background:#e5f6ed;color:#246448;border-color:#a7dcc0}
+@media(max-width:760px){.card-main-palette{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:400px){.round-grid .round-card{padding:42px 10px 10px}}
