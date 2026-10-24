@@ -771,3 +771,17 @@ test('Studio game selector keeps full names, uses consistent icons and an access
  assert.match(styles,/\.game-palette #arcadePalette button>span:last-child\{[^}]*overflow-wrap:break-word/);
  assert.match(styles,/@media\(max-width:520px\)\{\.game-palette #arcadePalette\{grid-template-columns:minmax\(0,1fr\)\}\}/);
 });
+
+test('Mini-game buttons keep complete labels and the disclosure uses a separate vector badge',()=>{
+ const html=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ const styles=readFileSync(new URL('./workspace.css',import.meta.url),'utf8');
+ const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const games=['Карта регионов России','Ракета','Блиц-вопрос','Перетягивание очков','Дуэль капитанов'];
+ for(const label of games)assert.ok(html.includes('>'+label+'</button>'),'Missing game '+label);
+ assert.match(host,/const label=b\.textContent\.replace\(\/\\s\+\/g,' '\)\.trim\(\)/);
+ assert.match(html,/class="games-chevron-box" aria-hidden="true"/);
+ assert.match(styles,/#openGamesPalette\[aria-expanded="true"\] \.games-chevron-box \.games-chevron/);
+ assert.match(styles,/\.game-palette #arcadePalette\.arcade-palette button>span:last-child\{/);
+ assert.match(styles,/white-space:normal;overflow:visible;text-overflow:clip/);
+ assert.match(html,/workspace\.css\?v=palette-fit-20261025-12/);
+});
