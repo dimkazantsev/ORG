@@ -17,7 +17,9 @@ async function workspace(page){
 test('Question screen remains readable without leaking team standings or fallback decorations',async({page})=>{
  await page.setViewportSize({width:1440,height:1000});await projector(page,state());
  await expect(page.locator('.projection-question-only h1')).toContainText('Какая планета');
- await expect(page.locator('.projection-question-instruction')).toContainText('Варианты ответа доступны');
+ // Audience receives non-secret choices; correct answer indicators stay private until result.
+ await expect(page.locator('.projection-public-options .projection-option')).toHaveCount(4);
+ await expect(page.locator('.projection-answer-reveal')).toHaveCount(0);
  await expect(page.locator('.habitat-team')).toHaveCount(0);
  await expect(page.locator('.question-frame')).toHaveCount(0);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);
