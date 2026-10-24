@@ -132,6 +132,27 @@ function ranking(rows,key){
  '<strong>'+escapeText(x[key]||'Игрок')+'</strong><b>'+Number(x.score||0).toLocaleString('ru-RU')+'</b></li>').join('')+'</ol>';
 }
 function questionStats(rows){return QwizStage.questionStats(rows)}
+function automaticRoundStandings(state){
+ const d=state.round_results||{},teams=d.teams||[],players=d.players||[];
+ const list=(rows,unit)=>'<ol class="projection-round-leaders">'+rows.slice(0,15).map((r,i)=>
+ '<li><span>'+(i+1)+'</span><strong>'+escapeText(r.nickname||r.name||'Участник')+'</strong><b>'+
+ Number(r.score||0).toLocaleString('ru-RU')+'</b></li>').join('')+'</ol>';
+ $('projectionMain').innerHTML='<section class="projection-round-results" aria-label="Результаты завершённого раунда">'+
+ '<span class="projection-eyebrow">РАУНД ЗАВЕРШЁН · РЕЗУЛЬТАТЫ</span><h1>Итоги раунда</h1>'+
+ '<div class="projection-round-columns"><section><h2>Команды <small>· '+escapeText(d.team_unit||'очки')+'</small></h2>'+list(teams)+'</section>'+
+ '<section><h2>Участники <small>· '+escapeText(d.player_unit||'баллы')+'</small></h2>'+list(players)+'</section></div>'+
+ '<p>Следующий этап начнётся автоматически</p></section>';
+}
+function roundIntroScene(state){
+ const title=state.activity?.title||'Новый раунд',icon=state.activity?.icon||'flag';
+ const art=icon==='map'?'<circle cx="50" cy="50" r="35"/><path d="m60 35-12 28-12 7 12-28z"/>':
+ '<path d="M25 87V16m0 6c25-14 34 12 52-2v42c-20 13-37-9-52 3"/>';
+ $('projectionMain').innerHTML='<section class="projection-intro-card" aria-label="Представление следующего раунда">'+
+ '<span class="projection-eyebrow">СЛЕДУЮЩИЙ РАУНД</span><div class="projection-intro-orbit" aria-hidden="true">'+
+ '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round">'+art+'</svg>'+
+ '</div><h1>'+escapeText(title)+'</h1><p>Готовьтесь к новому испытанию</p>'+
+ '<div class="countdown-number" id="countdownNumber">'+seconds(state.ends_at)+'</div></section>';
+}
 function finalShow(state){
  const teams=state.teams||[],players=state.players||[],stats=state.question_stats||[];
  const answered=stats.reduce((sum,x)=>sum+Number(x.answered||0),0),correct=stats.reduce((sum,x)=>sum+Number(x.correct||0),0);
@@ -256,9 +277,10 @@ function render(state){
   $('projectionMain').innerHTML='<section class="projection-lobby has-team-entry"><div><div class="projection-eyebrow">КОМНАТА ОТКРЫТА</div><h1>Присоединяйтесь!</h1><p>Наведите камеру на QR-код или введите код комнаты на телефоне.</p><strong class="projection-code">'+escapeText(state.code)+'</strong></div><div class="projection-qr" id="projectionQr"></div></section><section class="projection-team-entry"><h2>Выберите свою команду</h2><p>Сканируйте QR под её иконкой. Нажмите на карточку, чтобы увеличить код.</p><div class="team-board" id="projectionTeamBoard"></div></section>';qr($('projectionQr'),link(state.code));$('projectionQr').setAttribute('role','button');$('projectionQr').setAttribute('tabindex','0');$('projectionQr').setAttribute('aria-label','Увеличить общий QR-код входа в игру');$('projectionQr').onclick=()=>openJoinQr(state.code);$('projectionQr').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openJoinQr(state.code)}};QwizTeams.board($('projectionTeamBoard'),state.lobby_teams||[],state.code);scheduleFitProjection();return;
  }
  if(state.phase==='finished'){QwizStage.audio.music('victory',state.code+':finale',12000);finalShow(state);scheduleFitProjection();return}
- if(state.phase==='countdown'){QwizStage.audio.music('round',state.code+':'+state.index,6500);$('projectionMain').innerHTML='<div class="countdown-scene"><span class="projection-eyebrow">СЛЕДУЮЩИЙ РАУНД</span><h1>Приготовьтесь!</h1><div class="countdown-number" id="countdownNumber">'+seconds(state.ends_at)+'</div><p>Вопрос появится после обратного отсчёта.</p></div>';scheduleFitProjection();return}
+ if(state.phase==='countdown'){QwizStage.audio.music('round',state.code+':'+state.index,6500);roundIntroScene(state);scheduleFitProjection();return}
  if(state.phase==='intermission'){
-  const activity=state.activity||{},type=activity.type||'break';QwizStage.audio.music(type==='intro'?'intro':'round',state.code+':'+state.index+':'+type,type==='intro'?9000:12000);
+  const activity=state.activity||{},type=activity.type||'break';
+  if(type==='round_stats'){automaticRoundStandings(state);scheduleFitProjection();return}QwizStage.audio.music(type==='intro'?'intro':'round',state.code+':'+state.index+':'+type,type==='intro'?9000:12000);
   if(window.QwizGeo?.mountProjector($('projectionMain'),state,ctx.client)){scheduleFitProjection();return;}
   if(window.QwizArcade?.mountProjector($('projectionMain'),state,ctx.client)){scheduleFitProjection();return;}
    if(type==='intro'){$('projectionMain').innerHTML='<section class="projection-welcome"><div class="welcome-orbit" aria-hidden="true"><span>✦</span><span>★</span><span>✧</span></div><span class="projection-eyebrow">QWIZ-PARTY · ДОБРО ПОЖАЛОВАТЬ</span><h1>'+escapeText(activity.title||'Большая игра начинается!')+'</h1><p>Команды готовы? Проверьте подключение и приготовьтесь к первому раунду.</p><div class="welcome-dots"><i></i><i></i><i></i><i></i><i></i></div></section>';return;}
