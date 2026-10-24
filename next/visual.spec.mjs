@@ -884,3 +884,47 @@ test('General timing settings keep summary-duration input aligned with transitio
   expect(data.dialog.right,'dialog visible right at '+width).toBeLessThanOrEqual(width+2);
  }
 });
+
+test('Game buttons fit their full labels and the Games chevron stays inside its badge at all widths',async({page})=>{
+ for(const width of [320,390,768,1024,1440]){
+  await page.setViewportSize({width,height:900});
+  await page.goto('http://127.0.0.1:8080/next/workspace.html');
+  await page.evaluate(()=>{
+   document.documentElement.classList.remove('studio-starting');
+   document.getElementById('builderPage').hidden=false;
+   document.getElementById('composer').hidden=false;
+   document.getElementById('gamesPalette').hidden=false;
+   document.getElementById('openGamesPalette').setAttribute('aria-expanded','true');
+  });
+  await page.evaluate(()=>document.fonts.ready);
+  const items=await page.locator('#arcadePalette button').evaluateAll(buttons=>buttons.map(button=>{
+   const label=button.querySelector('span:last-child');
+   const br=button.getBoundingClientRect(),lr=label.getBoundingClientRect();
+   return {text:label.textContent.trim(),buttonWidth:br.width,
+    labelLeft:lr.left,labelRight:lr.right,buttonLeft:br.left,buttonRight:br.right,
+    buttonHeight:br.height,labelHeight:lr.height,
+    scrollWidth:label.scrollWidth,clientWidth:label.clientWidth,
+    scrollHeight:label.scrollHeight,clientHeight:label.clientHeight};
+  }));
+  expect(items.map(x=>x.text)).toEqual(['Карта регионов России','Ракета','Блиц-вопрос','Перетягивание очков','Дуэль капитанов']);
+  for(const item of items){
+   expect(item.labelLeft,'label starts inside button at '+width).toBeGreaterThanOrEqual(item.buttonLeft);
+   expect(item.labelRight,'label ends inside button at '+width).toBeLessThanOrEqual(item.buttonRight+1);
+   expect(item.scrollWidth-item.clientWidth,'text width not clipped at '+width).toBeLessThanOrEqual(1);
+   expect(item.scrollHeight-item.clientHeight,'text height not clipped at '+width).toBeLessThanOrEqual(1);
+   expect(item.labelHeight,'label has height at '+width).toBeGreaterThanOrEqual(14);
+  }
+  const arrow=await page.locator('#openGamesPalette').evaluate(button=>{
+   const box=button.querySelector('.games-chevron-box').getBoundingClientRect();
+   const svg=button.querySelector('.games-chevron').getBoundingClientRect();
+   const host=button.getBoundingClientRect();
+   return {boxLeft:box.left,boxRight:box.right,svgLeft:svg.left,svgRight:svg.right,
+    buttonLeft:host.left,buttonRight:host.right};
+  });
+  expect(arrow.svgLeft).toBeGreaterThan(arrow.boxLeft);
+  expect(arrow.svgRight).toBeLessThan(arrow.boxRight);
+  expect(arrow.boxLeft).toBeGreaterThanOrEqual(arrow.buttonLeft);
+  expect(arrow.boxRight).toBeLessThanOrEqual(arrow.buttonRight+1);
+  if(width===320||width===768)await page.screenshot({path:'visual-artifacts/palette-games-fit-'+width+'.png',fullPage:true,animations:'disabled'});
+ }
+});
