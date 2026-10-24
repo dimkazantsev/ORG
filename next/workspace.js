@@ -783,9 +783,12 @@ function renderInsights(){const d=state.insights||{},overview=d.overview||{},stu
 async function signOut(){await state.db.auth.signOut();location.replace('./')}
 function wire(){
  for(const b of all('#cardPalette [data-card],#arcadePalette [data-card]')){
-  const label=b.textContent.trim().replace(/^[^\s]+\s+/,'');
-  const icon=cardIconSvg(b.dataset.card,b.dataset.arcade?'arcade_'+b.dataset.arcade:null);
-  b.innerHTML=b.dataset.arcade
+  // Keep the entire visible title: stripping its first word hid "Карта", "Перетягивание" and "Дуэль".
+  const label=b.textContent.replace(/\s+/g,' ').trim();
+  const iconKey=b.dataset.arcade?'arcade_'+b.dataset.arcade:b.dataset.geo==='russia_map'?'map':null;
+  const icon=cardIconSvg(b.dataset.card,iconKey);
+  const game=b.closest('#arcadePalette');
+  b.innerHTML=game
    ?'<span class="arcade-palette-icon" aria-hidden="true">'+icon+'</span><span>'+esc(label)+'</span>'
    :icon+'<span>'+esc(label)+'</span>';
  }
