@@ -470,7 +470,7 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
 
 /* Each participant sees their own placement without scrolling through a long roster. */
 .round-self-summary{
- display:grid;grid-template-columns:repeat(auto-fit,minmax(min(125px,1fr)));
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,155px),1fr));
  gap:clamp(9px,1.7vw,16px);margin:0;
 }
 .round-self-summary>div{
