@@ -181,8 +181,8 @@ function questionScene(state){
  const q=state.question;
  const media=typeof q.media_url==='string'&&/^https:\/\//i.test(q.media_url)&&['audio','video'].includes(q.kind)
   ?'<'+q.kind+' class="projection-'+q.kind+'" controls preload="metadata" src="'+escapeText(q.media_url)+'"></'+q.kind+'>':'';
- // While answering, flag-picker options are private to the players. At reveal,
- // the audience sees the same four flag pictures and the correct one highlighted.
+ // Projector displays choice pictures during the question without answer markers.
+ // Server reveals the correct answer only after the result phase begins.
  const selectingFlag=/^(?:выберите|найдите)\s+(?:государственный\s+)?флаг(?=\s|$)/iu.test(q.prompt||'')&&!q.media_url&&!q.illustration_url;
  // The generic map illustration is a fallback, not a correct flag.
  // Remove that filler in flag-result mode: the real flag is rendered below.
