@@ -176,7 +176,7 @@ test('Moderator slide cards shrink to content and do not reserve blank height',(
  assert.match(compact,/\.moderator-slide\s*\{[^}]*min-height:0;height:auto/);
  assert.match(compact,/\.moderator-slide-choices\s*\{[^}]*margin:2px 0 0/);
  assert.doesNotMatch(compact,/min-height:290px|margin-top:auto/);
- assert.match(html,/workspace\.css\?v=rounds-responsive-20261024-13/);
+ assert.match(html,/workspace\.css\?v=rounds-responsive-20261024-14/);
 });
 test('Result lifecycle has automatic expiry with full timeline preview',()=>{
  const timer=readFileSync(new URL('./migrations/20261024_auto_result_transition.sql',import.meta.url),'utf8');
@@ -190,6 +190,7 @@ test('Result lifecycle has automatic expiry with full timeline preview',()=>{
  assert.match(host,/qwiz_geo_projection/);
  assert.match(host,/qwiz_party_arcade/);
  assert.match(host,/moderator-slide-live/);
+ assert.match(host,/moderator-mini-map/);
 });
 test('Projection fits TV sizes and phones show actual round standings',()=>{
  const projector=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
