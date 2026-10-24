@@ -112,7 +112,7 @@ test('Audience screen retains the approved light lavender palette',()=>{
  assert.doesNotMatch(css,/body\.projection-screen-ready\{background:\s*#160e41/);
  assert.doesNotMatch(css,/linear-gradient\(135deg,#190e46/);
  assert.match(css,/\.projection-screen-ready \.projection-footer/);
- assert.match(html,/presenter\.css\?v=rounds-responsive-20261024-13/);
+ assert.match(html,/presenter\.css\?v=repeat-flag-20261024-15/);
 });
 test('The classroom and live mini-games retain purple and lavender, never blue UI accents',()=>{
  const audience=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
@@ -176,7 +176,7 @@ test('Moderator slide cards shrink to content and do not reserve blank height',(
  assert.match(compact,/\.moderator-slide\s*\{[^}]*min-height:0;height:auto/);
  assert.match(compact,/\.moderator-slide-choices\s*\{[^}]*margin:2px 0 0/);
  assert.doesNotMatch(compact,/min-height:290px|margin-top:auto/);
- assert.match(html,/workspace\.css\?v=rounds-responsive-20261024-14/);
+ assert.match(html,/workspace\.css\?v=repeat-flag-20261024-15/);
 });
 test('Result lifecycle has automatic expiry with full timeline preview',()=>{
  const timer=readFileSync(new URL('./migrations/20261024_auto_result_transition.sql',import.meta.url),'utf8');
@@ -214,6 +214,34 @@ test('Animal avatars have visible fallback and animated arcade receives tap reac
  assert.match(arcade,/animateTap\(tr\)/);
  assert.match(motion,/@keyframes arcade-burst/);
  assert.match(motion,/prefers-reduced-motion/);
+});
+test('Repeating a finished room creates new room and preserves historical scores and build',()=>{
+ const sql=readFileSync(new URL('./migrations/20261024_repeat_finished_room.sql',import.meta.url),'utf8');
+ const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ assert.match(sql,/public\.qwiz_repeat_finished_room\(p_room uuid\)/);
+ assert.match(sql,/r\.phase='finished'/);
+ assert.match(sql,/public\.org_next_create_room/);
+ assert.match(sql,/INSERT INTO public\.qwiz_room_builds/);
+ assert.doesNotMatch(sql,/DELETE FROM public\.org_next_answers/);
+ assert.match(host,/repeatFinishedRoom\(\)/);
+ assert.match(host,/qwiz_repeat_finished_room/);
+ assert.match(host,/↻ Повторить игру/);
+ assert.match(host,/phase==='finished'/);
+});
+test('Question about Romanian stripe order reveals the flag picture on projector and phone',()=>{
+ const stage=readFileSync(new URL('./stage.js',import.meta.url),'utf8');
+ const player=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const publicScreen=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./stage.css',import.meta.url),'utf8');
+ const roomFlag=readFileSync(new URL('./assets/flags-world/ro.svg',import.meta.url),'utf8');
+ assert.match(stage,/function correctFlagMarkup\(question,answer\)/);
+ assert.match(stage,/stripeOption\(item\)/);
+ assert.match(player,/QwizStage\.correctFlagMarkup\(question,s\.answer\)/);
+ assert.match(publicScreen,/QwizStage\.correctFlagMarkup\(q,answer\)/);
+ assert.match(css,/\.correct-flag-art \.flag-stripe-art/);
+ assert.match(roomFlag,/#002B7F/i);
+ assert.match(roomFlag,/#FCD116/i);
+ assert.match(roomFlag,/#CE1126/i);
 });
 test('New JavaScript parses independently of legacy app.js',()=>{assert.doesNotThrow(()=>new Function(js));assert.doesNotMatch(html,/\.\/\.\.\/(app\.js|styles\.css)/)});
 test('All direct DOM IDs referenced by client exist in HTML',()=>{
