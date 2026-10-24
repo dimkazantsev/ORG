@@ -23,7 +23,7 @@ test('Question screen remains readable without leaking team standings or fallbac
  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);
 });
 test('Aggregate answer count refreshes without replacing the question',async({page})=>{
- const s=state();s.teams[0].answered=0;await projector(page,s);
+ const s=state();s.teams.forEach(t=>t.answered=0);await projector(page,s);
  await expect(page.locator('#teamAnswerCount')).toContainText('0 ответов');
  await page.evaluate(()=>window.questionHeading=document.querySelector('.projection-question-only h1'));
  await page.evaluate(()=>{window.fixture.teams[0].answered=1;render(window.fixture)});
