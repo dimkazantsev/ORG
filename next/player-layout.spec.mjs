@@ -3,7 +3,7 @@ import {createRequire} from 'node:module';
 const {rows}=createRequire(import.meta.url)('./scripts/build-flags-six.cjs');
 const base='http://127.0.0.1:8080/next/';
 async function setup(page){
- await page.route('https://cdn.jsdelivr.net/**',r=>r.fulfill({contentType:'application/javascript',body:'window.sent=[];window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}})},rpc:async(name,args)=>{window.sent.push({name,args});return {data:name==="qwiz_arcade_state"&&window.arcadeFixture?window.arcadeFixture:window.fixture||{registered:false}}}})};'}));
+ await page.route('https://cdn.jsdelivr.net/**',r=>r.fulfill({contentType:'application/javascript',body:'window.sent=[];window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}})},rpc:async(name,args)=>{window.sent.push({name,args});return {data:name==="qwiz_party_arcade"&&window.arcadeFixture?window.arcadeFixture:window.fixture||{registered:false}}}})};'}));
  await page.route('https://dimkazantsev.github.io/ORG/next/assets/**',r=>r.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="300" height="200"><rect width="300" height="200" fill="#7040db"/></svg>'}));
  await page.goto(base);
 }
@@ -13,7 +13,7 @@ async function question(page,q,phase='question'){
 async function fits(page){
  await expect(page.locator('html')).toHaveClass(/player-compact/);
  await expect.poll(()=>page.evaluate(()=>Math.max(document.documentElement.scrollHeight-innerHeight,document.documentElement.scrollWidth-innerWidth))).toBeLessThanOrEqual(1);
- const overflow=await page.locator('#gameContent').evaluate(el=>{const box=el.getBoundingClientRect();return Array.from(el.querySelectorAll('h1,.question-picture,.option,.rich-choice,.rich-row,.rich-send,.assembly-preview,.player-answer')).filter(x=>x.getClientRects().length&&getComputedStyle(x).visibility!=='hidden').map(x=>{const r=x.getBoundingClientRect();return {tag:x.className||x.tagName,bottom:r.bottom-box.bottom,right:r.right-box.right,left:box.left-r.left,overflow:x.scrollHeight-x.clientHeight}}).filter(x=>Math.max(x.bottom,x.right,x.left,x.overflow)>2)});
+ const overflow=await page.locator('#gameContent').evaluate(el=>{const box=el.getBoundingClientRect();return Array.from(el.querySelectorAll('h1,.question-picture,.option,.rich-choice,.rich-row,.rich-send,.assembly-preview,.player-answer')).filter(x=>x.getClientRects().length&&getComputedStyle(x).visibility!=='hidden').map(x=>{const r=x.getBoundingClientRect();return {tag:x.className||x.tagName,bottom:r.bottom-box.bottom,right:r.right-box.right,left:box.left-r.left,overflow:x.scrollHeight-x.clientHeight}}).filter(x=>x.bottom>2||x.right>2||x.left>2||x.overflow>2)});
  expect(overflow).toEqual([]);
 }
 for(const [width,height] of [[320,480],[320,568],[390,844],[768,1024],[667,375],[568,320]])test('All flag answers fit one screen at '+width+'×'+height,async({page})=>{
