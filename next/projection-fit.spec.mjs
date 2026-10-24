@@ -22,6 +22,17 @@ const examples=[
   {image_url:'https://dimkazantsev.github.io/ORG/next/assets/flags-world/nl.svg'}]},
   answer:{indices:[0],text:'Ангола',explanation:'Флаг государства показан среди предложенных вариантов.'}},
  {id:'long-six-options',phase:'result',question:{kind:'single',prompt:'В каком историческом порядке принимались перечисленные решения относительно государственной символики, с учётом условий времени и отличий каждого из приведённых вариантов?',options:Array.from({length:6},(_,i)=>'Вариант '+(i+1)+': официальное описание символа и его историческая характеристика.')},answer:{indices:[3],text:'Четвёртый вариант',explanation:'Это пояснение намеренно содержит несколько предложений, чтобы проверить компоновку длинного текста и шести вариантов на внешнем дисплее без обрезания снизу.'}}
+
+ ,{id:'map-card-intro',phase:'intermission',
+   activity:{type:'card_intro',title:'География России',icon:'map',
+    settings:{lead_seconds:5}}}
+ ,{id:'question-card-intro',phase:'countdown',
+   activity:{type:'round_intro',title:'Флаги мира',icon:'flag',settings:{lead_seconds:5}}}
+ ,{id:'round-statistics',phase:'intermission',
+   activity:{type:'round_stats',title:'Итоги раунда',settings:{stats_seconds:7}},
+   round_results:{team_unit:'баллы',player_unit:'баллы',
+     teams:Array.from({length:14},(_,i)=>({name:'Команда '+(i+1)+' с названием',score:280-i*7})),
+     players:Array.from({length:18},(_,i)=>({nickname:'Студент участник '+(i+1),score:500-i*12}))}}
 ];
 for(const [width,height] of [[1280,720],[1366,768],[1920,1080],[3840,2160],[7680,4320]]){
  test('Audience content fits '+width+'x'+height,async({page})=>{
@@ -30,7 +41,8 @@ for(const [width,height] of [[1280,720],[1366,768],[1920,1080],[3840,2160],[7680
    await page.evaluate(s=>{
      ctx.renderKey='';
      render({code:'A1B2C3D4',phase:s.phase,index:4,total:10,title:'Проверка экрана',
-       question:s.question,answer:s.answer,ends_at:new Date(Date.now()+60000).toISOString(),
+       question:s.question,answer:s.answer,activity:s.activity,round_results:s.round_results,
+       ends_at:new Date(Date.now()+60000).toISOString(),
        teams:[{id:'a',name:'Фантастические',score:10}],players:[],paused:false,screen_settings:{sound_enabled:false,volume:0}});
    },sample);
    await page.waitForTimeout(180);
@@ -48,6 +60,8 @@ for(const [width,height] of [[1280,720],[1366,768],[1920,1080],[3840,2160],[7680
    expect(Number(size.zoom),'valid scene zoom at '+width+' '+sample.id).toBeGreaterThan(0);
    if(sample.id==='pick-flag')await expect(page.locator('.question-frame')).toHaveCount(0);
    if(sample.phase==='result')await expect(page.locator('.projection-answer-reveal')).toBeVisible();
+   if(sample.id==='map-card-intro'||sample.id==='question-card-intro')await expect(page.locator('.projection-intro-card')).toBeVisible();
+   if(sample.id==='round-statistics')await expect(page.locator('.projection-round-results')).toBeVisible();
   }
  });
 }
