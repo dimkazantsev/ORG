@@ -38,7 +38,7 @@ jobs:
         run: |
           mkdir -p visual-artifacts
           python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/saved-builds-http.log 2>&1 &
-          npx playwright test next/visual.spec.mjs next/builder-cards.spec.mjs --grep "Saved build cards keep identical width and height|General timing settings keep summary-duration input aligned|Selecting a card controls insertion order|Two separate taps on a card|New geography and arcade cards|Cards remain square" --reporter=list --workers=1
+          npx playwright test next/visual.spec.mjs next/builder-cards.spec.mjs --grep "Saved build cards keep identical width and height|General timing settings keep summary-duration input aligned|Selecting a card controls insertion order|Two separate taps on a card|New geography and arcade cards|Cards remain square|Mechanics expand by default|QWIZ favicon loads" --reporter=list --workers=1
       - name: Keep screenshots
         if: always()
         uses: actions/upload-artifact@v4
