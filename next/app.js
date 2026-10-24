@@ -188,7 +188,7 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  '<h1>Скоро начнём!</h1><p>Команды собираются. Игра откроется одновременно для всех участников.</p>'+
  '<div class="lobby-team-chip"><span class="lobby-team-dot" aria-hidden="true"></span>'+esc(myTeam?.name||'Ожидание команды')+'</div>'+
  '<div class="lobby-progress" aria-label="Ожидание старта"><span></span></div>'+
- '<div class="lobby-people">'+Number(s.players?.length||0)+' участников подключено</div></section>';
+ '<div class="lobby-people">Ожидайте сигнала преподавателя</div></section>';
  text('playerStatus','Подключён. Ожидайте начала.');return}
  if(s.phase==='finished'){el.innerHTML='<div class="game-empty"><div class="eyebrow">Игра завершена</div><h1>Финальный рейтинг</h1><p>Спасибо за участие. Результаты зафиксированы на сервере.</p>'+personalResults(s,true)+'</div>';text('playerStatus','Игра завершена.');return}
  const question=s.question;
