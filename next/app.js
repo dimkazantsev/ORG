@@ -183,8 +183,7 @@ function roundScorePanel(view,title,final=false){
 }
 function roundIntroMarkup(s){
  const title=s.activity?.title||'Следующий раунд',icon=s.activity?.icon||s.activity?.settings?.queued_icon;
- const drawing=icon==='map'?'<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="5" aria-hidden="true"><circle cx="50" cy="50" r="32"/><path d="m61 39-12 25-12 5 12-25z"/></svg>':
- '<svg viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="5" aria-hidden="true"><path d="M24 81V17m0 3c23-12 32 12 56-2v43c-26 14-37-9-56 2"/></svg>';
+ const drawing=QwizStage.roundIconSvg(icon||'flag');
  return '<section class="game-empty round-intro" aria-label="Представление раунда"><div class="round-intro-sparks" aria-hidden="true"><i></i><i></i><i></i></div>'+
  '<div class="round-intro-symbol" aria-hidden="true">'+drawing+'</div><div class="eyebrow">СЛЕДУЮЩИЙ РАУНД</div>'+
  '<h1>'+esc(title)+'</h1><p>Подготовьтесь к новому испытанию</p>'+
