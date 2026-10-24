@@ -5,13 +5,13 @@ const animals=[['fox','🦊','Лиса'],['owl','🦉','Сова'],['cat','🐱'
 const s={db:null,me:null,avatar:'fox',registrationAvatar:'fox',pairTimer:null};
 function message(id,value='',error=false){$(id).textContent=value;$(id).classList.toggle('error',!!error)}
 function avatar(key){return animals.find(x=>x[0]===key)||animals[0]}
-function drawAvatars(id,selected){$(id).innerHTML=animals.map(([key,icon,label])=>'<button type="button" class="avatar-pick '+(key===selected?'selected':'')+'" data-avatar="'+key+'" aria-label="'+label+'" aria-pressed="'+(key===selected)+'"><svg class="animal-svg" role="img" aria-label="'+label+'"><use href="./assets/animals.svg?v=avatars-20261024-2#'+key+'"></use></svg><small>'+label+'</small></button>').join('')}
+function drawAvatars(id,selected){$(id).innerHTML=animals.map(([key,icon,label])=>'<button type="button" class="avatar-pick '+(key===selected?'selected':'')+'" data-avatar="'+key+'" aria-label="'+label+'" aria-pressed="'+(key===selected)+'"><span class="animal-portrait" data-animal="'+key+'" role="img" aria-label="'+label+'"></span><small>'+label+'</small></button>').join('')}
 async function rpc(action,data={}){const r=await s.db.rpc('qwiz_student_identity',{p_action:action,p_data:data});if(r.error)throw Error(r.error.message||'Ошибка входа');return r.data}
 function chooseTab(register){$('loginPanel').hidden=register;$('registerPanel').hidden=!register;$('authLoginTab').classList.toggle('active',!register);$('authRegisterTab').classList.toggle('active',register)}
 function showAuth(){ $('authPanel').hidden=false;$('dashboard').hidden=true;
  const args=new URLSearchParams(location.search);if(args.has('pair'))$('pairEntry').hidden=false;}
 function showDashboard(me){s.me=me;$('authPanel').hidden=true;$('dashboard').hidden=false;
- $('myAvatar').innerHTML='<svg class="animal-svg" role="img" aria-label="Ваш персонаж"><use href="./assets/animals.svg?v=avatars-20261024-2#'+avatar(me.avatar)[0]+'"></use></svg>';$('myNickname').textContent=me.nickname;$('myFullName').textContent=me.full_name;$('myLogin').textContent='@'+me.login;
+ $('myAvatar').innerHTML='<span class="animal-portrait" data-animal="'+avatar(me.avatar)[0]+'" role="img" aria-label="Ваш персонаж"></span>';$('myNickname').textContent=me.nickname;$('myFullName').textContent=me.full_name;$('myLogin').textContent='@'+me.login;
  $('myNameInput').value=me.full_name;$('myNicknameInput').value=me.nickname;s.avatar=me.avatar;
  drawAvatars('profileAvatars',s.avatar);
  const stats=me.stats||{};for(const key of ['Games','Answers','Correct','Points'])$( 'stat'+key ).textContent=Number(stats[key.toLowerCase()]||0).toLocaleString('ru-RU');
