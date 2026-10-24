@@ -121,3 +121,27 @@ html:fullscreen{overflow-y:auto}
 .correct-flag-art img{display:block;width:min(100%,330px);max-height:210px;object-fit:contain}
 .player-answer .correct-flag-art{max-width:310px;padding:6px}
 .player-answer .correct-flag-art .flag-stripe-art{width:min(100%,250px)}
+
+
+/* Precise media bounds: the outline belongs to the flag itself, never to a rotated ornament. */
+.question-frame.flag-media-frame{
+ box-sizing:border-box;display:flex;flex-direction:column;align-items:center;
+ justify-content:center;min-width:0;max-width:100%;padding:0;margin-inline:auto;
+}
+.question-frame.flag-media-frame .frame-orbit{display:none!important}
+.question-frame.flag-media-frame .question-picture{
+ position:relative;display:flex;justify-content:center;align-items:center;
+ width:100%;height:auto;min-height:0;max-width:100%;
+ aspect-ratio:auto!important;overflow:visible;
+ padding:0;margin:0;background:transparent!important;border:0!important;
+ border-radius:0!important;box-shadow:none!important;
+}
+.question-frame.flag-media-frame .question-picture>.question-art{
+ display:block;flex:0 1 auto;box-sizing:border-box;
+ width:auto!important;height:auto!important;
+ max-width:100%!important;max-height:min(35dvh,340px);
+ object-fit:contain!important;object-position:center;
+ border:1px solid #ded4ef;border-radius:8px;
+ background:#fff;box-shadow:0 5px 18px #4c38791a;
+}
+.question-frame.flag-media-frame figcaption{position:static;display:block;min-height:0;margin:6px 0 0;text-align:center}
