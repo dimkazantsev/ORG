@@ -524,7 +524,12 @@ function saveGeneralSettings(event){
  timing.bonus_percent<50||timing.bonus_percent>100||timing.bonus_lead<0||timing.bonus_lead>200)return;
  if($('generalApplyCount').checked)timing.count=Number($('generalCount').value);
  if($('generalApplySound').checked)timing.sound=$('generalSound').value;
- Object.assign(buildDefaults,timing);for(const c of state.cards)if(c.type==='round')c.settings={...buildDefaults,...c.settings,...timing};
+ Object.assign(buildDefaults,timing);
+ for(const c of state.cards){
+  if(c.type==='round')c.settings={...buildDefaults,...c.settings,...timing};
+  else if(['rocket','blitz','tug','captain'].includes(c.settings?.arcade_mode))
+   c.settings={...c.settings,bonus_percent:timing.bonus_percent,bonus_lead:timing.bonus_lead,stats_seconds:timing.stats_seconds,lead_seconds:timing.lead_seconds};
+ }
  $('generalDialog').close();renderCards();msg('buildMessage','Общие настройки применены. Сохраните сборку, чтобы использовать их в игре.');QwizStage.audio.play('accept');
 }
 function renderBuilds(){$('savedBuilds').innerHTML=state.builds.length?state.builds.map(b=>
@@ -550,7 +555,9 @@ async function deleteRoom(id){
  }catch(error){msg('launchMessage',error.message,true)}
 }
 async function loadBuild(id){try{const r=await studio('build_get',{id});state.buildId=r.build.id;
- $('buildTitle').value=r.build.title;state.cards=r.cards||[];ensureFinale();$('composer').hidden=false;renderCards();section('builder');savePosition();
+ $('buildTitle').value=r.build.title;
+ state.cards=(r.cards||[]).filter(c=>!['team_stats','player_stats'].includes(c.type)&&!(c.type==='bonus'&&!c.settings?.arcade_mode));
+ ensureFinale();$('composer').hidden=false;renderCards();section('builder');savePosition();
  }catch(e){msg('buildMessage',e.message,true)}}
 async function saveBuild(){disable('saveBuild',true);msg('buildMessage','Сохранение…');
  try{ensureFinale();if(!state.cards.some(c=>c.type==='round'))throw Error('Добавьте хотя бы один раунд вопросов.');
