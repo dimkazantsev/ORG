@@ -202,7 +202,7 @@ function questionScene(state){
    '<div class="projection-answer-heading"><span>ПРАВИЛЬНЫЙ ОТВЕТ</span></div>'+
    '<div class="projection-answer-single">'+answerLetter+
     '<div class="projection-answer-primary">'+answerArt+
-      '<strong class="projection-answer-text">'+escapeText(answerText)+'</strong></div>'+
+      (answerArt&&q.kind==='flag'?'':'<strong class="projection-answer-text">'+escapeText(answerText)+'</strong>')+'</div>'+
     '<span class="projection-answer-success" aria-hidden="true">✓</span>'+
    '</div>'+
    (explanation?'<p class="projection-answer-explanation">'+escapeText(explanation)+'</p>':'')+

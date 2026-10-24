@@ -253,14 +253,38 @@ window.QwizStage=(()=>{
  // For colour-order questions, the correct answer is a flag drawing, never
  // a label such as "синий — жёлтый — красный".
  function correctFlagMarkup(question,answer){
-  const idx=Array.isArray(answer?.indices)?Number(answer.indices[0]):NaN;
-  if(!Number.isInteger(idx)||idx<0||!Array.isArray(question?.options)||idx>=question.options.length)return '';
-  const item=question.options[idx];
+  const opts=Array.isArray(question?.options)?question.options:[];
+  const idx=Array.isArray(answer?.indices)&&answer.indices.length===1?Number(answer.indices[0]):NaN;
+  const item=Number.isInteger(idx)&&idx>=0&&idx<opts.length?opts[idx]:null;
+  const wrap=art=>'<div class="correct-flag-art" role="group" aria-label="Правильный флаг">'+art+'</div>';
+  // First use precisely the stripe colours returned by the server.
   const flag=stripeOption(item);
-  if(flag)return '<div class="correct-flag-art" role="group" aria-label="Правильный флаг">'+flag+'</div>';
-  if(item&&typeof item==='object'&&typeof item.image_url==='string'&&/^https:\/\/[^\s]+[.]svg(?:\?[^\s]*)?$/i.test(item.image_url))
-   return '<div class="correct-flag-art"><img src="'+esc(item.image_url)+'" alt="Правильный флаг" loading="eager" decoding="async"></div>';
-  return '';
+  if(flag)return wrap(flag);
+  const svgUrl=v=>typeof v==='string'&&/^https:\/\/[^\s]+[.]svg(?:\?[^\s]*)?$/i.test(v)?v:'';
+  const image=svgUrl(item&&typeof item==='object'?item.image_url:null)||svgUrl(answer?.image_url);
+  if(image)return wrap('<img src="'+esc(image)+'" alt="Правильный флаг" loading="eager" decoding="async">');
+  // Legacy questions sometimes store colour-order answers as text, not stripe objects.
+  // Only treat these as flag artwork when the question explicitly asks about flag stripes.
+  const prompt=String(question?.prompt||'');
+  if(question?.kind!=='flag'||!/цвет|полос|порядок/iu.test(prompt))return '';
+  const raw=typeof item==='string'?item:String(answer?.text||'');
+  const words=raw.split(/\s*(?:—|–|→|,|;|\s-\s)\s*/u).map(x=>x.trim().toLocaleLowerCase('ru-RU'));
+  const palette={'красный':'#CE293D','белый':'#FFFFFF','зелёный':'#477050',
+   'синий':'#0039A6','голубой':'#4891D9','чёрный':'#000000','черный':'#000000',
+   'жёлтый':'#FCD116','желтый':'#FCD116','золотой':'#FFCE00','оранжевый':'#FF883E'};
+  if(words.length<2||words.length>4||words.some(w=>!palette[w]))return '';
+  // Approved flags already exist in the local asset library: use the actual
+  // national SVG when the country is named, rather than approximate colours.
+  const country=/государств[ао]\s+[«"]([^»"]+)[»"]/iu.exec(prompt)?.[1]?.toLocaleLowerCase('ru-RU');
+  const iso={'германия':'de','россия':'ru','венгрия':'hu','болгария':'bg',
+   'нидерланды':'nl','эстония':'ee','литва':'lt','люксембург':'lu',
+   'йемен':'ye','габон':'ga','армения':'am','сьерра-леоне':'sl',
+   'франция':'fr','италия':'it','ирландия':'ie','бельгия':'be',
+   'румыния':'ro','мали':'ml','гвинея':'gn','чад':'td'}[country];
+  if(iso)return wrap('<img src="./assets/flags-world/'+iso+'.svg" alt="Правильный флаг государства" loading="eager" decoding="async">');
+  const orientation=/вертикальн|слева направо/iu.test(prompt)?'vertical':'horizontal';
+  const stripes=stripeOption({orientation,stripes:words.map(w=>palette[w])});
+  return stripes?wrap(stripes):'';
  }
  // Existing flag-memory questions now behave as ordinary visible-flag questions.
  // Keep the method for the shared stage API, without hiding the question or answers.

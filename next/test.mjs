@@ -364,7 +364,8 @@ test('Lobby symbol and flag artwork have stable, centered visual bounds',()=>{
  const stage=readFileSync(new URL('./stage.js',import.meta.url),'utf8');
  const stageCss=readFileSync(new URL('./stage.css',import.meta.url),'utf8');
  const presenter=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
- assert.match(app,/lobby-play-mark/);
+ assert.match(app,/lobby-signal-center/);
+ assert.doesNotMatch(app,/lobby-play-mark/);
  assert.doesNotMatch(app,/<span>✳<\/span>/);
  assert.match(app,/role="status">Ожидайте сигнала преподавателя/);
  assert.match(mobile,/\.game-lobby-wait \.lobby-people\{position:relative;z-index:2/);
@@ -797,7 +798,35 @@ test('Participant entry omits public projector links and old copy-all-codes acti
  assert.match(entry,/id="openPresenter"/);
  assert.match(entry,/id="openPresenterSide"/);
  assert.doesNotMatch(projector,/projectionCopyAllCodes|projectionCopyCodesDock|copy-codes\.js|copy-codes\.css/);
- assert.match(app,/lobby-signal-core/);
- assert.match(css,/\.game-lobby-wait \.lobby-signal-core\{/);
- assert.match(css,/@keyframes lobby-centered-pulse/);
+ assert.match(app,/lobby-signal-center/);
+ assert.doesNotMatch(app,/lobby-play-mark/);
+ assert.match(css,/\.game-lobby-wait \.lobby-signal-center\{/);
+ assert.match(css,/@keyframes lobby-signal-illuminate/);
+});
+
+test('Correct flag is an actual flag image, not a textual stripe order',()=>{
+ const source=readFileSync(new URL('./stage.js',import.meta.url),'utf8');
+ const start=source.indexOf(' function stripeOption(value){');
+ const end=source.indexOf(' // Existing flag-memory questions',start);
+ assert.ok(start>0&&end>start);
+ const block=source.slice(start,end);
+ const run=(question,answer)=>runInNewContext(block+'correctFlagMarkup(question,answer)',{
+  question,answer,esc:String
+ });
+ const colours={kind:'flag',prompt:'В каком порядке расположены горизонтальные полосы на флаге государства «Венгрия»?',
+   options:['белый — красный — зелёный','красный — зелёный — белый','красный — белый — зелёный']};
+ const art=run(colours,{indices:[2],text:'красный — белый — зелёный'});
+ assert.match(art,/flags-world\/hu\.svg/);
+ assert.doesNotMatch(art,/красный — белый — зелёный/);
+ const visual=run({kind:'flag',prompt:'Порядок полос',options:[
+  {orientation:'horizontal',stripes:['#000000','#ffffff','#00ff00']}
+ ]},{indices:[0],text:'строки'});
+ assert.match(visual,/flag-stripe-art/);
+ assert.match(visual,/#ffffff/);
+ assert.equal(run({kind:'single',prompt:'Какой порядок?',options:['красный — белый — зелёный']},
+   {indices:[0],text:'красный — белый — зелёный'}),'');
+ const screen=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
+ assert.match(screen,/answerArt&&q\.kind==='flag'/);
+ assert.match(readFileSync(new URL('./index.html',import.meta.url),'utf8'),/stage\.js\?v=actual-flag-20261025-11/);
+ assert.match(readFileSync(new URL('./presenter.html',import.meta.url),'utf8'),/stage\.js\?v=actual-flag-20261025-11/);
 });

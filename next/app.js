@@ -204,8 +204,12 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
   if(s.phase!=='intermission'||s.activity?.settings?.arcade_mode!=='russia_map')window.QwizGeo?.stop('player');
  if(s.phase==='lobby'){el.innerHTML='<section class="game-empty game-lobby-wait" aria-label="Ожидание начала игры">'+
  '<div class="lobby-ambient" aria-hidden="true"></div>'+
- '<div class="lobby-signal" aria-hidden="true"><span class="lobby-signal-ring"></span><span class="lobby-signal-ring"></span>'+
- '<span class="lobby-signal-core"><svg class="lobby-play-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M16 12.5c0-1.65 1.8-2.66 3.2-1.78l20 11.5a2.05 2.05 0 0 1 0 3.56l-20 11.5C17.8 38.16 16 37.15 16 35.5Z" fill="currentColor"/></svg></span></div>'+
+ '<div class="lobby-signal" aria-hidden="true">'+
+ '<span class="lobby-signal-ring ring-outer"></span><span class="lobby-signal-ring ring-inner"></span>'+
+ '<span class="lobby-signal-axis axis-horizontal"></span><span class="lobby-signal-axis axis-vertical"></span>'+
+ '<span class="lobby-signal-node node-n"></span><span class="lobby-signal-node node-e"></span>'+
+ '<span class="lobby-signal-node node-s"></span><span class="lobby-signal-node node-w"></span>'+
+ '<span class="lobby-signal-center"><span class="lobby-signal-spark"></span></span></div>'+
  '<div class="eyebrow lobby-room-code">КОМНАТА '+esc(s.code)+'</div>'+
  '<h1>Скоро начнём!</h1><p>Команды собираются. Игра откроется одновременно для всех участников.</p>'+
  '<div class="lobby-team-chip"><span class="lobby-team-dot" aria-hidden="true"></span>'+esc(myTeam?.name||'Ожидание команды')+'</div>'+

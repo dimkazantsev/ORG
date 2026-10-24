@@ -336,8 +336,6 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
 .game-lobby-wait>.lobby-ambient{display:none!important}
 .game-lobby-wait .lobby-signal{z-index:0;width:clamp(92px,20dvh,164px);margin:0 auto 5px;
  box-shadow:0 10px 28px #7845d51c}
-.game-lobby-wait .lobby-play-mark{display:block;width:68%;height:68%;
- color:#7845d5;filter:none;animation:none}
 .game-lobby-wait .lobby-signal-ring{z-index:-1}
 .game-lobby-wait .lobby-progress{margin-top:clamp(5px,1.1dvh,13px);max-width:70%;position:relative;z-index:1}
 .game-lobby-wait .lobby-people{position:relative;z-index:2;flex:none;max-width:100%;
@@ -351,44 +349,64 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
  .game-lobby-wait .lobby-people{display:block!important;min-height:24px;padding:4px 9px}
  .game-lobby-wait .lobby-progress{margin-top:3px}
 }
-@media(prefers-reduced-motion:reduce){.game-lobby-wait .lobby-play-mark{animation:none}}
 
 
-/* Waiting icon geometry: the play symbol is fixed at the exact circle center. */
+
+/* Waiting constellation — single coordinate centre, static geometry,
+   sequential light instead of motion and no faux Play control. */
 .game-lobby-wait .lobby-signal{
- box-sizing:border-box;position:relative;display:grid;place-items:center;
- width:clamp(96px,18dvh,146px);aspect-ratio:1;
- margin:0 auto 6px;background:#f8f4ff;border:1px solid #e0d3f2;
- border-radius:50%;box-shadow:0 8px 22px #593b9916;
- transform:none;animation:none!important;
+ box-sizing:border-box;position:relative;isolation:isolate;display:block;
+ width:clamp(112px,19dvh,168px);height:auto;aspect-ratio:1;flex:none;
+ margin:0 auto clamp(6px,1.4dvh,14px);border:0;border-radius:50%;
+ background:radial-gradient(circle at center,#fff 0%,#f5efff 65%,transparent 76%);
+ box-shadow:none;transform:none;animation:none!important;
 }
 .game-lobby-wait .lobby-signal-ring{
- position:absolute;inset:5px;z-index:0;border:1px solid #ae91e1;
- border-radius:50%;opacity:.5;pointer-events:none;
- animation:lobby-centered-pulse 3.5s ease-in-out infinite;
+ position:absolute;z-index:0;pointer-events:none;border-radius:50%;
+ background:transparent;animation:none!important;transform:none!important;
 }
-.game-lobby-wait .lobby-signal-ring:nth-child(2){
- inset:-8px;border-color:#d0bbee;animation-delay:1.75s;
+.game-lobby-wait .lobby-signal-ring.ring-outer{inset:3%;border:1.5px solid #e1d3fa}
+.game-lobby-wait .lobby-signal-ring.ring-inner{inset:24%;border:1.5px dashed #cfb9f2}
+.game-lobby-wait .lobby-signal-axis{
+ position:absolute;z-index:1;left:50%;top:50%;background:#d3bff3;
+ pointer-events:none;transform:translate(-50%,-50%);
 }
-.game-lobby-wait .lobby-signal-core{
- box-sizing:border-box;position:relative;z-index:1;display:grid;place-items:center;
- width:56%;aspect-ratio:1;min-width:54px;min-height:54px;
- border-radius:50%;background:linear-gradient(145deg,#8854e5,#6e3bc9);
- border:1px solid #7742d7;box-shadow:0 6px 17px #7040db26;
+.game-lobby-wait .lobby-signal-axis.axis-horizontal{width:66%;height:1.5px}
+.game-lobby-wait .lobby-signal-axis.axis-vertical{width:1.5px;height:66%}
+.game-lobby-wait .lobby-signal-node,
+.game-lobby-wait .lobby-signal-center{
+ position:absolute;z-index:2;display:grid;place-items:center;top:50%;left:50%;
+ border-radius:50%;transform:translate(-50%,-50%);
 }
-.game-lobby-wait .lobby-play-mark{
- display:block;position:relative;z-index:1;
- width:46%!important;height:46%!important;flex:none;
- color:#fff;filter:none;animation:none;transform:translateX(2px);
+.game-lobby-wait .lobby-signal-node{
+ width:clamp(12px,2.5dvh,19px);aspect-ratio:1;
+ background:#b998f0;border:3px solid #fff;box-shadow:0 3px 10px #6541a32c;
+ animation:lobby-signal-illuminate 3.6s ease-in-out infinite;
 }
-@keyframes lobby-centered-pulse{
- 0%,100%{opacity:.34;transform:scale(.995)}
- 50%{opacity:.72;transform:scale(1.025)}
+.game-lobby-wait .lobby-signal-node.node-n{top:17%;left:50%;animation-delay:0s}
+.game-lobby-wait .lobby-signal-node.node-e{top:50%;left:83%;animation-delay:.9s}
+.game-lobby-wait .lobby-signal-node.node-s{top:83%;left:50%;animation-delay:1.8s}
+.game-lobby-wait .lobby-signal-node.node-w{top:50%;left:17%;animation-delay:2.7s}
+.game-lobby-wait .lobby-signal-center{
+ width:clamp(42px,7dvh,58px);aspect-ratio:1;
+ background:linear-gradient(135deg,#8956e5,#7040db);
+ border:4px solid #fff;box-shadow:0 6px 19px #6f3bbc30;
 }
+.game-lobby-wait .lobby-signal-spark{
+ width:12px;height:12px;display:block;border-radius:4px;
+ background:#fff;transform:rotate(45deg);box-shadow:0 0 0 5px #ffffff30;
+ animation:lobby-spark-glow 3.6s ease-in-out infinite;
+}
+@keyframes lobby-signal-illuminate{
+ 0%,18%,100%{opacity:.55;filter:brightness(.92)}
+ 30%,42%{opacity:1;filter:brightness(1.2) drop-shadow(0 0 5px #a77be5)}
+}
+@keyframes lobby-spark-glow{0%,100%{opacity:.9}50%{opacity:1;filter:drop-shadow(0 0 6px #fff)}}
 @media(max-height:620px){
- .game-lobby-wait .lobby-signal{width:clamp(76px,15dvh,110px)}
- .game-lobby-wait .lobby-signal-core{min-width:44px;min-height:44px}
+ .game-lobby-wait .lobby-signal{width:clamp(88px,16dvh,114px);margin-bottom:4px}
+ .game-lobby-wait .lobby-signal-center{width:clamp(36px,6dvh,46px)}
 }
 @media(prefers-reduced-motion:reduce){
- .game-lobby-wait .lobby-signal-ring{animation:none!important;transform:none}
+ .game-lobby-wait .lobby-signal-node,
+ .game-lobby-wait .lobby-signal-spark{animation:none!important;filter:none!important}
 }

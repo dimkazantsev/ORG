@@ -941,17 +941,20 @@ test('Player start screen does not expose auditorium link; waiting icon is cente
     players:[],me:{id:'p',team_id:'t'},has_answer:false};
    showScreen('game');renderGame();
   });
-  await expect(page.locator('.game-lobby-wait .lobby-signal-core')).toBeVisible();
+  await expect(page.locator('.game-lobby-wait .lobby-signal-center')).toBeVisible();
+  await expect(page.locator('.game-lobby-wait .lobby-play-mark')).toHaveCount(0);
   const g=await page.locator('.game-lobby-wait .lobby-signal').evaluate(el=>{
-   const a=el.getBoundingClientRect(),b=el.querySelector('.lobby-signal-core').getBoundingClientRect();
-   const c=el.querySelector('.lobby-play-mark').getBoundingClientRect();
+   const a=el.getBoundingClientRect(),b=el.querySelector('.lobby-signal-center').getBoundingClientRect();
+   const dots=[...el.querySelectorAll('.lobby-signal-node')].map(d=>d.getBoundingClientRect());
    return {x:Math.abs((a.left+a.width/2)-(b.left+b.width/2)),
     y:Math.abs((a.top+a.height/2)-(b.top+b.height/2)),
-    ix:Math.abs((b.left+b.width/2)-(c.left+c.width/2)),
-    iy:Math.abs((b.top+b.height/2)-(c.top+c.height/2))};
+    pairedX:Math.abs((dots[0].left+dots[0].width/2)-(dots[2].left+dots[2].width/2)),
+    pairedY:Math.abs((dots[1].top+dots[1].height/2)-(dots[3].top+dots[3].height/2)),
+    dots:dots.length};
   });
   expect(g.x).toBeLessThanOrEqual(1);expect(g.y).toBeLessThanOrEqual(1);
-  expect(g.ix).toBeLessThanOrEqual(3);expect(g.iy).toBeLessThanOrEqual(1);
+  expect(g.pairedX).toBeLessThanOrEqual(1);expect(g.pairedY).toBeLessThanOrEqual(1);
+  expect(g.dots).toBe(4);
   if(width===390)await page.screenshot({path:'visual-artifacts/lobby-centered-390.png',fullPage:true,animations:'disabled'});
  }
 });
