@@ -744,3 +744,37 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 .live-controls-hint{margin:8px 14px 14px;text-align:center;font-size:13px;color:#615477;line-height:1.5}
 .live-controls-hint[hidden]{display:none}
 @media(prefers-reduced-motion:reduce){#liveConsole .live-actions button{transition:none}}
+
+
+/* Duplicate and delete actions share the same compact top-right toolbar. */
+.round-card-tools{
+ position:absolute;top:9px;right:10px;z-index:3;
+ display:flex;align-items:center;gap:3px;
+}
+.round-card-tools .round-trash,.round-card-tools .round-copy{
+ position:static;inset:auto;
+ display:grid;place-items:center;
+ flex:0 0 40px;width:40px;height:40px;
+ padding:0;background:transparent;border:1px solid transparent;
+ border-radius:11px;cursor:pointer;
+ transition:background .16s,border-color .16s,transform .16s;
+}
+.round-card-tools .round-copy{color:#7550c8}
+.round-card-tools .round-copy:hover{color:#592cb8;background:#f2ebff;border-color:#d8c7f4}
+.round-card-tools .round-copy:active{transform:scale(.94)}
+.round-card-tools .round-trash{color:#a05f76}
+.round-card-tools .round-trash:hover{color:#a4234f;background:#fff0f5;border-color:#e7bbcc}
+.round-card-tools .round-copy:focus-visible,
+.round-card-tools .round-trash:focus-visible{outline:3px solid #9f7ae7;outline-offset:2px}
+.round-card-tools .copy-svg,.round-card-tools .trash-svg{
+ display:block;width:19px;height:19px;pointer-events:none;
+}
+.round-card:has(.round-card-tools){padding-top:max(46px,1.15rem)}
+@media(max-width:600px){
+ .round-card-tools .round-copy,.round-card-tools .round-trash{
+  flex-basis:42px;width:42px;height:42px;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ .round-card-tools .round-copy,.round-card-tools .round-trash{transition:none}
+}
