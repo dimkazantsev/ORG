@@ -106,6 +106,14 @@ test('Instructor slide deck is visual, public projection stays question-only, an
  assert.match(map,/t\.renderKey===key/);
  assert.match(map,/geo-correct-answer/);
 });
+test('Audience screen retains the approved light lavender palette',()=>{
+ const css=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
+ const html=readFileSync(new URL('./presenter.html',import.meta.url),'utf8');
+ assert.doesNotMatch(css,/body\.projection-screen-ready\{background:\s*#160e41/);
+ assert.doesNotMatch(css,/linear-gradient\(135deg,#190e46/);
+ assert.match(css,/\.projection-screen-ready \.projection-footer/);
+ assert.match(html,/presenter\.css\?v=lavender-restored-20261024-8/);
+});
 test('New JavaScript parses independently of legacy app.js',()=>{assert.doesNotThrow(()=>new Function(js));assert.doesNotMatch(html,/\.\/\.\.\/(app\.js|styles\.css)/)});
 test('All direct DOM IDs referenced by client exist in HTML',()=>{
  const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]));
