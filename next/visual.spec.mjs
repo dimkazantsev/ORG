@@ -857,3 +857,30 @@ test('Sound defaults to on and includes at least 10 selectable tones',async({pag
  expect(await page.locator('#cardSound option').count()).toBeGreaterThanOrEqual(11);
  await expect(page.locator('#studioSound svg')).toHaveCount(1);
 });
+
+
+test('General timing settings keep summary-duration input aligned with transition field',async({page})=>{
+ for(const [width,height] of [[1440,900],[980,800],[760,800],[390,844]]){
+  await page.setViewportSize({width,height});
+  await page.goto('http://127.0.0.1:8080/next/workspace.html',{waitUntil:'domcontentloaded'});
+  await page.evaluate(()=>{const dialog=document.getElementById('generalDialog');if(!dialog.open)dialog.showModal()});
+  const data=await page.evaluate(()=>({
+   pairs:[...document.querySelectorAll('#generalDialog .dialog-body>.two-inputs')].slice(0,3)
+    .map(row=>[...row.querySelectorAll(':scope>label>input')].map(x=>{
+     const r=x.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,height:r.height,width:r.width};
+    })),
+   dialog:document.getElementById('generalDialog').getBoundingClientRect().toJSON()
+  }));
+  for(const [i,pair] of data.pairs.entries()){
+   if(pair.length!==2)continue;
+   if(width>600){
+    expect(Math.abs(pair[0].top-pair[1].top),'row '+i+' aligned inputs at '+width).toBeLessThanOrEqual(2);
+    expect(Math.abs(pair[0].height-pair[1].height),'row '+i+' equal input heights').toBeLessThanOrEqual(2);
+   }else{
+    expect(pair[0].bottom,'row '+i+' inputs stack on phone').toBeLessThan(pair[1].top);
+   }
+  }
+  expect(data.dialog.left,'dialog visible left at '+width).toBeGreaterThanOrEqual(-2);
+  expect(data.dialog.right,'dialog visible right at '+width).toBeLessThanOrEqual(width+2);
+ }
+});
