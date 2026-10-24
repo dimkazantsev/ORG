@@ -132,3 +132,12 @@ input:focus{border-color:var(--accent);outline-color:var(--accent)}
 .big-avatar .animal-svg{width:88px;height:88px;filter:drop-shadow(0 5px 7px #24113718)}
 @media(max-width:600px){.avatar-picker{grid-template-columns:repeat(3,minmax(0,1fr))}.avatar-picker .avatar-pick{min-height:105px}}
 @media(prefers-reduced-motion:reduce){.avatar-picker .avatar-pick .animal-svg{transition:none}}
+
+
+/* Genuine illustrated character portraits from the approved visual reference. */
+.avatar-picker .avatar-pick .animal-portrait{display:block;width:min(100%,82px);height:82px;max-width:82px;border-radius:13px;filter:none;transition:transform .2s ease}
+.avatar-picker .avatar-pick:hover .animal-portrait{transform:translateY(-3px) scale(1.035)}
+.avatar-picker .avatar-pick small{font-size:11px;font-weight:750;white-space:normal;line-height:1.25}
+.avatar-picker .avatar-pick{min-height:121px;background:linear-gradient(155deg,#fff,#f9f6ff)}
+.big-avatar .animal-portrait{width:88px;height:88px;border-radius:20px}
+@media(max-width:480px){.avatar-picker .avatar-pick .animal-portrait{height:70px;width:70px}.avatar-picker .avatar-pick{min-height:109px}}
