@@ -330,7 +330,7 @@ begin
    else rb.timeline->coalesce((v_quiz.questions->v_room.question_index->>'round_index')::int,0)->>'title' end,
   'icon',rb.timeline->coalesce((v_quiz.questions->v_room.question_index->>'round_index')::int,0)->>'icon')
  from public.qwiz_room_builds rb where rb.room_id=v_room.id)
- else case when v_room.phase='finished' then
+ when v_room.phase='finished' then
  (select jsonb_build_object('type','finale','title',rb.timeline->(jsonb_array_length(rb.timeline)-1)->>'title','sound',coalesce(rb.timeline->(jsonb_array_length(rb.timeline)-1)->'settings'->>'sound','fanfare')) from public.qwiz_room_builds rb where rb.room_id=v_room.id)
  else (select jsonb_build_object('type',a.kind,'title',a.title,'settings',a.settings) from public.qwiz_room_activity a where a.room_id=v_room.id) end,
  'answers_count',v_answers,
