@@ -70,3 +70,18 @@
  .geo-map-zoom button{min-width:42px;min-height:42px}
 }
 @media(max-width:390px){.geo-modes-grid{grid-template-columns:minmax(0,1fr)}}
+
+
+/* Explicit accessible selection; map is never replaced with a floating zoom HUD. */
+.geo-map-toolbar{display:flex;justify-content:flex-end;gap:8px;align-items:center;
+ padding:3px 0;margin-top:-4px}
+.geo-map-toolbar button{min-height:44px;min-width:46px;border-radius:12px;background:#f5efff;
+ border:1px solid #d8caf0;color:#6c40b9;font:750 14px inherit;cursor:pointer}
+.geo-map-toolbar button:last-child{padding:8px 15px;min-width:112px}
+.geo-map-svg .geo-region.geo-selected{fill:#9666e7!important;stroke:#4b2199!important;stroke-width:3.6;filter:drop-shadow(0 0 3px #5a2baf60)}
+.geo-confirm{min-height:48px;width:100%;border-radius:14px;border:0;background:#7845d5;color:#fff;
+ font:750 14px inherit;padding:11px 14px;cursor:pointer}
+.geo-confirm:disabled{background:#e6def4;color:#7a6b91;cursor:default}
+.geo-confirm:not(:disabled):active{transform:scale(.99)}
+.geo-map-svg .geo-region.geo-correct-answer{fill:#3fb978!important;stroke:#126f40!important;stroke-width:4!important}
+.geo-map-toolbar button:focus-visible,.geo-confirm:focus-visible{outline:3px solid #9974e1;outline-offset:2px}
