@@ -118,3 +118,37 @@ test('Finished arcade boost ballot stays entirely visible and accepts a vote at 
   await expect(page.locator('[data-boost-choice="headstart"]')).toHaveClass(/selected/);
  }
 });
+
+
+test('Phone displays synchronized card introductions, round rankings and full finale with thumb-zone statistics',async({page})=>{
+ for(const [width,height] of [[320,480],[390,700]]){
+  await page.setViewportSize({width,height});await setup(page);
+  await page.evaluate(()=>{
+   const teams=Array.from({length:5},(_,i)=>({id:'t'+i,name:'Команда '+(i+1),score:400-i*50,members:2,rank:i+1}));
+   const players=Array.from({length:10},(_,i)=>({nickname:'Участник '+(i+1),score:160-i*8,position:i+1}));
+   const room={code:'A1B2C3D4',room_id:'00000000-0000-4000-8000-000000001321',title:'Тест раундов',
+     phase:'intermission',index:2,total:10,me:{id:'me',team_id:'t0'},teams,public_stats:{teams,players},
+     activity:{type:'card_intro',title:'География России',icon:'map',settings:{queued_icon:'map'}},
+     ends_at:new Date(Date.now()+4500).toISOString()};
+   ctx.room=room;window.roundFixture=room;ctx.gameRenderKey='';
+   showScreen('game');renderGame();
+  });
+  await expect(page.locator('#gameContent .round-intro')).toBeVisible();
+  await expect(page.locator('#gameContent .round-intro h1')).toContainText('География России');
+  const low=await page.locator('#playerMore').boundingBox();
+  expect(low).not.toBeNull();expect(low.y+low.height).toBeLessThanOrEqual(height+2);
+  expect(low.y).toBeGreaterThan(height*0.67);
+  await expect(page.locator('#playerMore .player-more-label')).toHaveText('Статистика');
+  await page.evaluate(()=>{
+   const r=window.roundFixture;r.activity={type:'round_stats',title:'Итоги раунда'};
+   r.round_results={teams:r.teams.map(t=>({...t,score:100+t.rank})),
+     players:r.public_stats.players.map(p=>({...p,score:p.score-30}))};
+   ctx.gameRenderKey='';renderGame();
+  });
+  await expect(page.locator('.round-results-grid .round-score-list')).toHaveCount(2);
+  await expect(page.locator('.round-results-grid .round-score-list li')).toHaveCount(15);
+  await page.evaluate(()=>{window.roundFixture.phase='finished';ctx.gameRenderKey='';renderGame()});
+  await expect(page.locator('#gameContent .player-final-results')).toBeVisible();
+  await expect(page.locator('#gameContent .player-final-results .habitat-team')).toHaveCount(5);
+ }
+});
