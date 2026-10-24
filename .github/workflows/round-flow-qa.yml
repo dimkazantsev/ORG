@@ -1,0 +1,40 @@
+name: QWIZ-PARTY / Round flow QA
+on:
+  push:
+    paths:
+      - 'next/arcade.js'
+      - 'next/app.js'
+      - 'next/presenter.js'
+      - 'next/player-layout.css'
+      - 'next/presenter.css'
+      - 'next/russia-geo.js'
+      - 'next/geo.spec.mjs'
+      - 'next/player-layout.spec.mjs'
+      - 'next/projection-fit.spec.mjs'
+      - 'next/test.mjs'
+      - '.github/workflows/round-flow-qa.yml'
+  workflow_dispatch:
+concurrency:
+  group: qwiz-round-flow-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  focused-rounds:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install Chromium
+        run: |
+          npm install --no-save @playwright/test@1.56.1
+          npx playwright install chromium --with-deps
+      - name: Run static suite and screen/phone timing checks
+        run: |
+          mkdir -p visual-artifacts
+          python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/qwiz-round-flow-http.log 2>&1 &
+          node --test next/test.mjs
+          npx playwright test next/geo.spec.mjs next/projection-fit.spec.mjs --reporter=list --workers=2
+          npx playwright test next/player-layout.spec.mjs --grep "Phone displays synchronized card introductions|Finished arcade boost ballot" --reporter=list --workers=1
