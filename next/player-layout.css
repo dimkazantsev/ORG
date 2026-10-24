@@ -486,3 +486,18 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
 .round-self-summary strong{font-size:clamp(26px,5.5dvh,48px);font-weight:900;line-height:1.13;color:#6033bf}
 .round-self-summary small{font-size:clamp(11px,1.7dvh,14px);color:#705b8b}
 @media(max-width:390px){.round-self-summary>div{padding:11px}}
+
+
+/* Compact landscape: long single-column flag options remain fully inside the
+   question surface without reducing the minimum 44px touch area. */
+@media(max-height:540px) and (min-width:480px){
+ .player-compact #gameView .option-list.has-long-options{
+  gap:4px;
+  align-content:stretch;
+ }
+ .player-compact #gameView .option-list.has-long-options .option{
+  padding-block:4px;
+  min-height:44px;
+  line-height:1.18;
+ }
+}
