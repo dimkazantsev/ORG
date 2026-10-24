@@ -177,7 +177,7 @@ test('Flag imagery remains visible and visual answers show the flag instead of p
  const migration=readFileSync(new URL('./migrations/20261024_flags_visible_and_correct_picture.sql',import.meta.url),'utf8');
  assert.doesNotMatch(shared,/Флаг скрыт\. Вспомните страну/);
  assert.match(shared,/function updateMemory\(root,s,offset=0\)\{return;/);
- assert.match(projection,/const frame=selectingFlag\|\|hideFiller\?'':QwizStage\.illustration\(q,state\.phase==='result'\?state\.answer:null\)/);
+ assert.match(projection,/const frame=selectingFlag\|\|hideFiller\|\|!hasVisual\?'':QwizStage\.illustration\(q,state\.phase==='result'\?state\.answer:null\)/);
  assert.doesNotMatch(projection.slice(projection.indexOf('function questionScene('),projection.indexOf('function applyProjectionSettings(')),/projection-options/);
  assert.match(app,/result-flag-image/);
  assert.match(app,/s\.answer\.image_url/);
