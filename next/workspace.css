@@ -712,3 +712,12 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 .moderator-mini-map{display:block;width:100%;height:100px;max-height:14dvh;fill:#d1c1f3;stroke:#fff;stroke-width:1.2;vector-effect:non-scaling-stroke}
 .moderator-mini-region{fill:#beabec;stroke:#fff;stroke-width:1.25;vector-effect:non-scaling-stroke}
 @media(max-width:600px){.moderator-map-symbol:has(.moderator-mini-map){min-height:49px}.moderator-mini-map{height:56px}}
+
+
+/* Four preview flags must fit into the current slide, not make it several screenfuls tall. */
+.moderator-slide-choices:has(.has-stripes){grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;align-items:start}
+.moderator-choice.has-stripes{display:flex;flex-direction:column;align-items:stretch;justify-content:start;gap:4px;padding:5px;min-height:0}
+.moderator-choice.has-stripes .moderator-option-letter{align-self:flex-start}
+.moderator-choice.has-stripes .flag-stripe-art{width:min(100%,170px);height:auto;aspect-ratio:3/2;max-height:92px;margin:0 auto;border-radius:5px}
+.moderator-slide.is-current .moderator-choice.has-stripes .flag-stripe-art{width:min(100%,195px);max-height:100px}
+@media(max-width:650px){.moderator-slide-choices:has(.has-stripes){grid-template-columns:minmax(0,1fr)}.moderator-choice.has-stripes .flag-stripe-art,.moderator-slide.is-current .moderator-choice.has-stripes .flag-stripe-art{max-height:70px;max-width:100%}}
