@@ -223,7 +223,7 @@ function questionScene(state){
    '<div class="projection-question-instruction">'+
     (state.phase==='result'?'Время ответа завершено. Разбор появится на общем экране.':
      'Варианты ответа доступны на устройствах участников.')+'</div>')+
-  (!finished?'<div class="projection-response-count">'+
+  (!finished?'<div class="projection-response-count" id="teamAnswerCount">'+
    (state.teams||[]).reduce((n,t)=>n+Number(t.answered||0),0)+' ответов получено</div>':'')+
   '</section>';
 }
