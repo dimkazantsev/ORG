@@ -112,7 +112,21 @@ test('Audience screen retains the approved light lavender palette',()=>{
  assert.doesNotMatch(css,/body\.projection-screen-ready\{background:\s*#160e41/);
  assert.doesNotMatch(css,/linear-gradient\(135deg,#190e46/);
  assert.match(css,/\.projection-screen-ready \.projection-footer/);
- assert.match(html,/presenter\.css\?v=lavender-restored-20261024-8/);
+ assert.match(html,/presenter\.css\?v=lavender-restored-20261024-9/);
+});
+test('The classroom and live mini-games retain purple and lavender, never blue UI accents',()=>{
+ const audience=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
+ const arcade=readFileSync(new URL('./arcade.css',import.meta.url),'utf8');
+ const gameplay=readFileSync(new URL('./arcade.js',import.meta.url),'utf8');
+ const studio=readFileSync(new URL('./workspace.css',import.meta.url),'utf8');
+ const gameHtml=readFileSync(new URL('./index.html',import.meta.url),'utf8');
+ const screenHtml=readFileSync(new URL('./presenter.html',import.meta.url),'utf8');
+ assert.doesNotMatch(audience,/background:\s*(?:#160e41|linear-gradient\(135deg,#190e46)/);
+ assert.doesNotMatch(arcade,/#6cbee4/i);
+ assert.doesNotMatch(gameplay,/#54a3d8|#8291db/i);
+ assert.doesNotMatch(studio,/#497d91|#e9f3fa/i);
+ assert.match(gameHtml,/arcade\.css\?v=lavender-no-blue-20261024-9/);
+ assert.match(screenHtml,/arcade\.css\?v=lavender-no-blue-20261024-9/);
 });
 test('New JavaScript parses independently of legacy app.js',()=>{assert.doesNotThrow(()=>new Function(js));assert.doesNotMatch(html,/\.\/\.\.\/(app\.js|styles\.css)/)});
 test('All direct DOM IDs referenced by client exist in HTML',()=>{
