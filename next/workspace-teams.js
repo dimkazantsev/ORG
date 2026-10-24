@@ -9,7 +9,7 @@ function roomReadiness(s){
  // Completed sessions can always be replayed; readiness only guards a NEW lobby start.
  // The prior readiness code silently disabled the renamed “Повторить игру” button.
  const replay=s.phase==='finished';
- $('liveStart').disabled=teamUI.busy||(!replay&&(s.phase!=='lobby'||!ready||waiting>0));
+ $('liveStart').disabled=!replay&&(teamUI.busy||s.phase!=='lobby'||!ready||waiting>0);
  $('liveStart').title=replay?'Создать новую игровую комнату с теми же заданиями. История результатов сохранится.':
   !ready?'Добавьте вопросы или картографический раунд в сборку':waiting?'Распределите ожидающих участников':'';
 }
