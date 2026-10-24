@@ -119,7 +119,7 @@ begin
   end if;
  else raise exception 'Недопустимое действие для текущего этапа';end if;
  return (select phase from public.org_next_rooms where id=p_room);
-end $function$
+end $function$;
 
 
 CREATE OR REPLACE FUNCTION public.qwiz_tick(p_code text)
@@ -173,7 +173,7 @@ begin
  elsif r.phase='result' then perform public.qwiz_advance_room(r.id,'next');
  end if;
  return true;
-end $function$
+end $function$;
 
 
 CREATE OR REPLACE FUNCTION public.qwiz_party_control(p_room uuid, p_action text)
@@ -229,7 +229,7 @@ begin
   return jsonb_build_object('phase',public.org_next_advance(p_room,p_action),'paused',false);
  end if;
  raise exception 'Неизвестное действие';
-end $function$
+end $function$;
 
 
 CREATE OR REPLACE FUNCTION public.qwiz_public_screen(p_code text)
@@ -272,7 +272,7 @@ begin
   then public.qwiz_round_results(r.id,(select x.card_position from public.qwiz_room_activity x where x.room_id=r.id)) else null end,
  'round_sound',q->>'round_sound',
  'lobby_teams',case when r.phase='lobby' then (select coalesce(jsonb_agg(jsonb_build_object('id',t.id,'position',t.position,'name',t.name,'members',(select count(*) from public.org_next_players p where p.team_id=t.id)) order by t.position),'[]'::jsonb) from public.org_next_teams t where t.room_id=r.id) else '[]'::jsonb end)||metrics;
-end $function$
+end $function$;
 
 
 CREATE OR REPLACE FUNCTION public.org_next_state(p_code text)
