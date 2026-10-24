@@ -216,3 +216,28 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
  .player-compact #gameContent .arcade-player.is-boost-voting .arcade-vote-title p{margin:0 0 4px}
  .player-compact #gameContent .arcade-player.is-boost-voting .arcade-vote-rule{margin-top:3px}
 }
+
+
+/* Put the student's session/stats action at the lower thumb zone. */
+.player-more-label{display:none}
+.player-compact #gameView .player-layout{padding-bottom:0}
+.player-compact #gameView .game-card{order:1;flex:1 1 auto}
+.player-compact #gameView .game-top{order:3;position:relative;flex:none;align-items:center;
+ padding:7px 10px max(7px,env(safe-area-inset-bottom));
+ min-height:62px;background:#faf7ff;border:1px solid #e5daf5;
+ border-radius:17px;box-shadow:0 -3px 14px #4e3f7420}
+.player-compact #gameView .game-top>div:first-child{flex:1}
+.player-compact #gameView .game-top .game-name{font-size:13px}
+.player-compact #gameView .player-more{min-width:127px;width:auto;min-height:46px;
+ display:inline-flex;align-items:center;justify-content:center;gap:7px;
+ padding:7px 13px;background:#eee5ff;border-color:#d8c7f8;color:#6538b9;font-weight:750}
+.player-compact #gameView .player-more svg{width:21px;height:21px}
+.player-compact #gameView .player-more-label{display:inline;font-size:12px}
+.player-compact #gameView .game-card:has(.player-final-results){overflow-y:auto!important;justify-content:flex-start}
+.player-compact #gameView .game-empty:has(.player-final-results){min-height:0;flex:none;justify-content:flex-start;
+ padding:16px 8px;gap:12px;text-align:left;align-items:stretch}
+.player-compact #gameView .game-empty:has(.player-final-results)>h1{font-size:clamp(20px,5vw,31px)}
+.player-compact #gameView .player-final-results{display:grid!important;flex:none;min-height:0;width:100%;margin:3px 0}
+.player-compact #gameView .player-final-results .habitat-grid{grid-template-columns:minmax(0,1fr)}
+@media(max-height:500px){.player-compact #gameView .game-top{min-height:48px;padding:3px 8px}
+ .player-compact #gameView .player-more{min-height:42px}.player-compact #gameView .game-card{padding:7px}}
