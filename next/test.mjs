@@ -6,6 +6,22 @@ const html=readFileSync(new URL('./index.html',import.meta.url),'utf8');
 const css=readFileSync(new URL('./app.css',import.meta.url),'utf8');
 const js=readFileSync(new URL('./app.js',import.meta.url),'utf8');
 const sql=readFileSync(new URL('./migration.sql',import.meta.url),'utf8');
+test('The public home opens the current quiz and preserves QR room invitations',()=>{
+ const root=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ const redirect=root.match(/<script data-org-canonical-entry>([\\s\\S]*?)<\\/script>/)?.[1];
+ assert.ok(redirect,'The legacy home must forward to the current quiz');
+ function destination(initial){
+  let redirected=null;
+  const location={href:initial,replace(url){redirected=url}};
+  runInNewContext(redirect,{window:{location},URL});
+  return redirected;
+ }
+ assert.equal(
+  destination('https://dimkazantsev.github.io/ORG/?room=A1B2C3D4#player'),
+  'https://dimkazantsev.github.io/ORG/next/?room=A1B2C3D4#player'
+ );
+ assert.equal(destination('https://dimkazantsev.github.io/ORG/?legacy=1'),null);
+});
 test('New JavaScript parses independently of legacy app.js',()=>{assert.doesNotThrow(()=>new Function(js));assert.doesNotMatch(html,/\.\/\.\.\/(app\.js|styles\.css)/)});
 test('All direct DOM IDs referenced by client exist in HTML',()=>{
  const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]));
