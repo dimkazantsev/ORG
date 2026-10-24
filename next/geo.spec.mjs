@@ -87,3 +87,32 @@ test('Geography Russia question round has eight mechanics and teacher-owned topi
  await expect(page.locator('#roundCards [data-index="2"]')).toContainText('27 случайных субъектов');
  await expect(page.locator('#cardGeoSettings')).toBeHidden();
 });
+
+
+test('Geography textual choice reveals the correct answer in green and a wrong selection in red',async({page})=>{
+ await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({status:200,contentType:'application/javascript',
+  body:'window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}})}})};'}));
+ await page.setViewportSize({width:390,height:720});
+ await page.goto(HOME);
+ await page.evaluate(()=>{
+  const host=document.createElement('div');host.id='geoAnswerColors';document.body.appendChild(host);
+  const q={mode:'capital',name:'Тестовая область',options:[{id:'correct',text:'Барнаул'},{id:'wrong',text:'Новосибирск'}]};
+  const client={rpc:async(name,args)=>{
+   if(name!=='qwiz_geo_play')throw Error('Unexpected method');
+   const answered=args.p_answer!==null;
+   return {data:{active:true,open:true,remaining:90,index:answered?1:0,total:5,score:0,correct:0,
+    last_correct:answered?false:null,last_answer:answered?{correct:false,correct_text:'Барнаул'}:null,
+    question:q},error:null};
+  }};
+  QwizGeo.mountPlayer(host,{code:'AAAABBBB',room_id:'00000000-0000-4000-8000-000000000333',
+   phase:'intermission',activity:{settings:{arcade_mode:'russia_map'}}},{client});
+ });
+ await expect(page.locator('#geoAnswerColors [data-geo-answer]')).toHaveCount(2);
+ await page.locator('#geoAnswerColors [data-geo-answer="wrong"]').click();
+ await expect(page.locator('#geoAnswerColors [data-geo-answer="correct"]')).toHaveClass(/geo-option-correct/);
+ await expect(page.locator('#geoAnswerColors [data-geo-answer="wrong"]')).toHaveClass(/geo-option-wrong/);
+ await expect(page.locator('#geoAnswerColors [data-geo-answer="correct"]')).toBeDisabled();
+ await expect(page.locator('#geoAnswerColors [data-geo-answer="correct"]')).toContainText('✓');
+ const paint=await page.locator('#geoAnswerColors [data-geo-answer="correct"]').evaluate(el=>getComputedStyle(el).backgroundColor);
+ expect(paint).toBe('rgb(229, 247, 237)');
+});
