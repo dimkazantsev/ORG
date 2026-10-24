@@ -75,6 +75,7 @@ for(const width of [390,768,1440]){
 
 
 test('Mechanics expand by default with aligned SVG chevron and selected card has even borders',async({page})=>{
+ await page.emulateMedia({reducedMotion:'reduce'});
  const cards=page.locator('#roundCards .round-card');
  await cards.nth(1).click();
  await expect(cards.nth(1)).toHaveAttribute('aria-current','true');
