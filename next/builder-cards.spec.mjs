@@ -72,3 +72,41 @@ for(const width of [390,768,1440]){
   expect(overflow).toBeLessThanOrEqual(2);
  });
 }
+
+
+test('Mechanics expand by default with aligned SVG chevron and selected card has even borders',async({page})=>{
+ const cards=page.locator('#roundCards .round-card');
+ await cards.nth(1).click();
+ await expect(cards.nth(1)).toHaveAttribute('aria-current','true');
+ const bounds=await cards.nth(1).evaluate(el=>{
+  const style=getComputedStyle(el);
+  return {left:style.borderLeftWidth,right:style.borderRightWidth,decoration:getComputedStyle(el,'::before').content};
+ });
+ expect(bounds.left).toBe(bounds.right);
+ expect(bounds.decoration).toBe('none');
+ await cards.nth(1).locator('[data-edit-card]').click();
+ const mechanics=page.locator('#cardModesDetails');
+ await expect(mechanics).toHaveAttribute('open','');
+ await expect(page.locator('#cardFlagModes [data-card-mode]')).toHaveCount(12);
+ const svg=mechanics.locator('.card-modes-chevron');
+ await expect(svg).toBeVisible();
+ const box=await svg.evaluate(el=>{
+  const a=el.getBoundingClientRect(),b=el.closest('summary').getBoundingClientRect();
+  return {x:a.x,y:a.y,w:a.width,h:a.height,inside:a.x>=b.x&&a.right<=b.right&&a.y>=b.y&&a.bottom<=b.bottom};
+ });
+ expect(box.w).toBe(34);
+ expect(box.h).toBe(34);
+ expect(box.inside).toBe(true);
+ await mechanics.locator('summary').click();
+ await expect(mechanics).not.toHaveAttribute('open','');
+ await mechanics.locator('summary').click();
+ await expect(mechanics).toHaveAttribute('open','');
+});
+
+test('QWIZ favicon loads on editor without external assets',async({page})=>{
+ const href=await page.locator('link[rel="icon"]').getAttribute('href');
+ expect(href).toContain('favicon.svg');
+ const response=await page.request.get(new URL(href,'http://127.0.0.1:8080/next/workspace.html').toString());
+ expect(response.ok()).toBe(true);
+ expect(await response.text()).toContain('qwiz-violet');
+});
