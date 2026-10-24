@@ -415,3 +415,30 @@ body:fullscreen .projection-shell{height:100dvh}
  .projection-setup-form .projection-switch-row{grid-template-columns:minmax(0,1fr)}
  .projection-setup-form .projection-switch-row>button{width:100%}
 }
+
+
+/* Audience lobby: one scan-first global QR plus compact team codes, no oversized blank columns. */
+.projection-shell:has(.projection-team-entry) #projectionMain{justify-content:flex-start}
+.projection-shell .projection-lobby.has-team-entry{width:100%;display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:18px;align-items:center;padding:14px 22px;background:#fff;border:1px solid #e5ddf2;border-radius:22px;margin:12px 0 0}
+.projection-shell .projection-lobby.has-team-entry .projection-eyebrow{margin-bottom:8px}
+.projection-shell .projection-lobby.has-team-entry h1{font-size:clamp(27px,3.3vw,43px);margin:3px 0 7px}
+.projection-shell .projection-lobby.has-team-entry p{font-size:clamp(13px,1.2vw,17px);margin:5px 0 9px;max-width:none}
+.projection-shell .projection-lobby.has-team-entry .projection-code{font-size:clamp(23px,2.4vw,37px);letter-spacing:.13em;margin:0;padding:8px 13px}
+.projection-shell .projection-lobby.has-team-entry .projection-qr{width:180px;height:180px;min-width:0;min-height:0;margin:0;padding:10px;cursor:pointer;border-color:#daccf0}
+.projection-shell .projection-lobby.has-team-entry .projection-qr :is(img,canvas){width:160px!important;height:160px!important;max-width:100%!important;max-height:100%!important}
+.projection-shell .projection-team-entry{margin-top:15px}
+.projection-shell .projection-team-entry>h2{margin:0 0 3px;font-size:clamp(18px,2vw,25px)}
+.projection-shell .projection-team-entry>p{margin:0 0 12px}
+@media(min-width:761px){.projection-shell .team-board{grid-template-columns:repeat(auto-fit,minmax(165px,1fr));gap:10px}
+.projection-shell .team-board-card{padding:11px}
+.projection-shell .team-board-heading{min-height:38px;margin-bottom:4px}
+.projection-shell .team-board-qr{padding:4px}
+.projection-shell .team-board-qr :is(img,canvas){width:124px!important;height:124px!important}}
+@media(max-width:760px){.projection-shell .projection-lobby.has-team-entry{grid-template-columns:1fr auto;gap:12px;padding:14px}
+.projection-shell .projection-lobby.has-team-entry .projection-qr{display:grid;width:125px;height:125px;padding:7px}
+.projection-shell .projection-lobby.has-team-entry .projection-qr :is(img,canvas){width:110px!important;height:110px!important}
+.projection-shell .projection-lobby.has-team-entry h1{font-size:27px}
+.projection-shell .projection-lobby.has-team-entry .projection-code{font-size:21px}}
+@media(max-width:430px){.projection-shell .projection-lobby.has-team-entry{grid-template-columns:1fr}
+.projection-shell .projection-lobby.has-team-entry .projection-qr{width:165px;height:165px}
+.projection-shell .projection-lobby.has-team-entry .projection-qr :is(img,canvas){width:148px!important;height:148px!important}}

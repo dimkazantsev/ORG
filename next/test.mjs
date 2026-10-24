@@ -274,9 +274,10 @@ test('Majority boost votes, host controls, and auto-advance are server-owned',()
  const arcade=readFileSync(new URL('./arcade.js',import.meta.url),'utf8');
  const layout=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
  const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
- for(const name of ['liveStart','livePause','liveNext','liveFinish','liveScreenMirror','liveRoundStats'])
+ for(const name of ['liveStart','livePause','liveNext','liveFinish','showRoomProjection','liveRoundStats'])
   assert.match(layout,new RegExp('id="'+name+'"'));
- assert.match(migration,/winner_votes<=total_members\/2/);
+ assert.doesNotMatch(layout,/id="liveScreenMirror"/); // A duplicated projector iframe obstructed the host controls.
+  assert.match(migration,/winner_votes<=total_members\/2/);
  assert.match(migration,/create or replace function public\.qwiz_tick/);
  assert.match(migration,/create or replace function public\.qwiz_vote_boost/);
  assert.match(migration,/qwiz_round_boost_apply/);

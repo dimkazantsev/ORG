@@ -64,18 +64,20 @@ test('Projector displays geography theme and group metrics but not student answe
  await expect(page.locator('#geoProjPlayers')).toHaveText('30');
  await expect(page.locator('#geoPublicTest [data-geo-answer]')).toHaveCount(0);
 });
-test('Geo round is an extra configurable card with eight active modes and reserved heraldry',async({page})=>{
+test('Geography Russia question round has eight mechanics and teacher-owned topic',async({page})=>{
  await page.goto(HOME+'workspace.html');
  await page.locator('[data-section="builder"]').click();
+ await page.evaluate(()=>{state.topics.push({id:'00000000-0000-4000-8000-000000001234',name:'География России',category:'География'});updateSelectors()});
  await page.locator('#newBuild').click();
  await page.locator('#cardPalette [data-geo="russia_map"]').click();
- await expect(page.locator('#roundCards .round-card[data-type="bonus"]')).toHaveCount(1);
- await page.locator('#roundCards .round-card[data-type="bonus"] [data-edit-card]').click();
+ await expect(page.locator('#roundCards .round-card[data-type="round"]')).toHaveCount(2);
+ await page.locator('#roundCards [data-index="2"] [data-edit-card]').click();
  await expect(page.locator('#cardGeoSettings')).toBeVisible();
  await expect(page.locator('#cardGeoModes input:not(:disabled)')).toHaveCount(8);
  await expect(page.locator('#cardGeoModes [value="coat"]')).toBeDisabled();
  await expect(page.locator('#cardGeoCount')).toHaveValue('15');
  await page.locator('#cardGeoCount').fill('27');
  await page.locator('#cardForm button[type="submit"]').click();
- await expect(page.locator('#roundCards .round-card[data-type="bonus"]')).toContainText('27 случайных субъектов');
+ await expect(page.locator('#roundCards [data-index="2"]')).toContainText('27 случайных субъектов');
+ await expect(page.locator('#cardGeoSettings')).toBeHidden();
 });

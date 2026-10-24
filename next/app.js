@@ -274,6 +274,7 @@ function updateClocks(){if(ctx.room?.paused)return;if(ctx.room?.phase==='countdo
 async function restore(){if(!ctx.client)return;try{
  const data=await ctx.client.auth.getSession();if(data.error)throw data.error;const session=data.data.session;if(!session){teacherSession(null);return}
  const incoming=new URLSearchParams(location.search).get('room');
+  if(incoming&&/^[A-F0-9]{8}$/i.test(incoming)){setRole('player');$('joinCode').value=incoming.toUpperCase()}
  if(incoming&&/^[A-F0-9]{8}$/i.test(incoming)){
    const code=incoming.toUpperCase();$('joinCode').value=code;
    try{
@@ -294,6 +295,17 @@ async function restore(){if(!ctx.client)return;try{
 function attach(){q('#logoHome').addEventListener('click',home);
  $('teamInvitationNotice').hidden=!QwizTeams.intent().team;if(QwizTeams.intent().team)setRole('player');
  setRole(storage.get('entry-role')==='host'?'host':'player');
+  // Room QR is a student invitation. No student profile is required.
+  const invited=QwizTeams.intent();
+  if(/^[A-F0-9]{8}$/.test(invited.room||'')){
+    setRole('player');
+    $('joinCode').value=invited.room;
+    $('teamInvitationNotice').hidden=!invited.team;
+    text('codeHint','Комната из QR уже выбрана. Введите имя и сразу присоединяйтесь.');
+    $('joinButton').textContent='Войти в игру →';
+    requestAnimationFrame(()=>{if(ctx.mode==='home'&&!$('joinName').value)$('joinName').focus({preventScroll:true})});
+  }
+
  $('changeTeacherAccount').onclick=logout;$('resumeGameButton').onclick=resumeGame;
  $('togglePassword').onclick=()=>{const visible=$('loginPassword').type==='password';$('loginPassword').type=visible?'text':'password';$('togglePassword').setAttribute('aria-pressed',String(visible));$('togglePassword').setAttribute('aria-label',visible?'Скрыть пароль':'Показать пароль')};
  // The welcome page now has no redundant left-hand navigation.

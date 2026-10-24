@@ -1,13 +1,13 @@
 'use strict';
 const teamUI={key:'',dragged:null,busy:false};
 function roomReadiness(s){
- const issues=s.setup_issues||[],waiting=Number(s.unassigned_count)||0,ready=s.total>0&&!issues.length;
+ const issues=s.setup_issues||[],waiting=Number(s.unassigned_count)||0,ready=!issues.length&&(s.total>0||s.has_geo_round===true);
  $('roomReadiness').hidden=s.phase!=='lobby';
- $('roomReadinessTitle').textContent=ready?'Вопросы готовы · '+s.total: 'Комната создана · вопросы ещё не готовы';
+ $('roomReadinessTitle').textContent=ready?(s.total>0?'Вопросы готовы · '+s.total:'Карта России готова · 89 субъектов'): 'Комната создана · вопросы ещё не готовы';
  $('roomReadinessText').textContent=issues.length?issues.map(x=>x.title+': '+x.reason).join('. '):waiting?'Ожидают распределения: '+waiting+'. Назначьте им команды перед началом.':'Можно собирать команды и начинать игру.';
  $('addRoomQuestions').hidden=ready;$('refreshRoomContent').hidden=s.phase!=='lobby';
- $('liveStart').disabled=!ready||waiting>0||teamUI.busy;
- $('liveStart').title=!ready?'Добавьте вопросы и нажмите «Обновить вопросы»':waiting?'Распределите ожидающих участников':'';
+ $('liveStart').disabled=s.phase!=='lobby'||!ready||waiting>0||teamUI.busy;
+ $('liveStart').title=!ready?'Добавьте вопросы или картографический раунд в сборку':waiting?'Распределите ожидающих участников':'';
 }
 function teamMember(p,s){
  const movable=!teamUI.busy&&(s.phase==='lobby'||(!p.team_id&&s.phase!=='finished'));
