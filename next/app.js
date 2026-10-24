@@ -190,7 +190,13 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
    if(window.QwizArcade?.mountPlayer(el,s,ctx)){
     text('playerStatus','Командное испытание. Действуйте вместе, зарабатывайте достижения и жетоны.');return;
   }
-   el.innerHTML='<div class="game-empty"><div class="eyebrow">ДОПОЛНИТЕЛЬНАЯ АКТИВНОСТЬ</div><h1>'+esc(s.activity?.title||'Перерыв')+'</h1><p>Следующий этап откроет преподаватель.</p></div>';
+   const type=s.activity?.type||'break';
+   const hasStandings=['team_stats','player_stats'].includes(type);
+   el.innerHTML=hasStandings?
+     '<div class="game-empty game-statistics-panel"><span class="eyebrow">РЕЗУЛЬТАТЫ РАУНДА</span><h1>'+esc(s.activity?.title||'Рейтинг')+'</h1>'+
+     '<p>Следующий этап начнётся автоматически после показа результатов.</p>'+
+     personalResults(s,true)+'</div>':
+     '<div class="game-empty"><div class="eyebrow">ДОПОЛНИТЕЛЬНАЯ АКТИВНОСТЬ</div><h1>'+esc(s.activity?.title||'Перерыв')+'</h1><p>Переход к следующему этапу произойдёт автоматически.</p></div>';
    text('playerStatus','Ожидаем продолжения.');
    return;
  }
