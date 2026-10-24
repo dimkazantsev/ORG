@@ -141,3 +141,19 @@ input:focus{border-color:var(--accent);outline-color:var(--accent)}
 .avatar-picker .avatar-pick{min-height:121px;background:linear-gradient(155deg,#fff,#f9f6ff)}
 .big-avatar .animal-portrait{width:88px;height:88px;border-radius:20px}
 @media(max-width:480px){.avatar-picker .avatar-pick .animal-portrait{height:70px;width:70px}.avatar-picker .avatar-pick{min-height:109px}}
+
+
+/* New high-quality 3D character gallery, with the original 12 choices preserved. */
+.avatar-picker .avatar-pick .team-avatar.animal-portrait{width:min(100%,84px);height:84px;
+ min-width:0;min-height:0;border-radius:17px;box-shadow:0 4px 14px #59448c1c}
+.avatar-picker .avatar-pick .animal-photo{height:100%;width:100%;object-fit:cover}
+.avatar-more{grid-column:1/-1;margin-top:12px}
+.avatar-more>summary{display:flex;align-items:center;justify-content:space-between;
+ padding:14px 16px;border-radius:13px;background:#f3ecff;border:1px solid #e3d4ff;
+ color:#6338b4;font-size:13px;font-weight:750;cursor:pointer;list-style:none}
+.avatar-more>summary::-webkit-details-marker{display:none}
+.avatar-more>summary span{background:#7341d2;border-radius:12px;padding:3px 8px;color:white;font-size:10px}
+.avatar-more-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;margin-top:10px}
+.avatar-more .avatar-pick{min-height:118px}
+.avatar-picker .avatar-pick.selected .animal-portrait{outline:2px solid #7341d2;outline-offset:2px}
+@media(max-width:680px){.avatar-more-grid{grid-template-columns:repeat(3,minmax(0,1fr))}.avatar-picker .avatar-pick .team-avatar.animal-portrait{height:71px;width:71px}.avatar-more .avatar-pick{min-height:108px}}
