@@ -78,19 +78,19 @@
   let hint='';
   if(q?.mode==='detective')hint='<div class="geo-clues"><span>Подсказка 1: '+esc(q.region_type)+'</span><span>Подсказка 2: '+esc(q.district)+'</span><span>Подсказка 3: центр — '+esc(q.capital)+'</span></div>';
   const img=q?.mode==='flag'&&q.flag?'<img class="geo-flag" loading="lazy" decoding="async" alt="Флаг субъекта России" src="https://raw.githubusercontent.com/russian-flags/regions/3c411c7b305c678c49798cc610538c66108adbde/assets/'+encodeURIComponent(q.flag)+'/index.svg">':'';
-  const qmode=q?.mode||'locate';const interactive=qmode==='locate',silhouette=qmode==='silhouette';
+  const qmode=q?.mode||'locate';const interactive=qmode==='locate',silhouette=qmode==='silhouette';const showMap=['locate','identify','silhouette'].includes(qmode);
   const feedback=t.lastAnswer&&Date.now()<t.feedbackUntil?'<div class="geo-answer-feedback '+(t.lastAnswer.correct?'':'is-wrong')+'" role="status">'+(t.lastAnswer.correct?'Верно! ':'Неверно. ')+'Правильный ответ: '+esc(t.lastAnswer.correct_text||'—')+'.</div>':'';
    root.innerHTML='<section class="geo-game"><div class="geo-header"><span>КАРТА РОССИИ / '+esc(labels[qmode]||'Знание регионов')+'</span><strong>'+v.index+' / '+v.total+' пройдено · '+v.score+' очков</strong></div>'+
    '<div class="geo-progress"><span style="width:'+Math.min(100,100*v.index/Math.max(1,v.total))+'%"></span></div>'+feedback+
    (done?'<div class="geo-done"><h2>'+(v.finished?'Готово!':'Время вышло')+'</h2><p>Верно: '+v.correct+' из '+v.total+'. Баллы сохранены на сервере.</p></div>':
    '<h2>'+esc(prompt(q))+'</h2>'+hint+img+
-   (t.mapError?'<div class="geo-map-loading">Не удалось загрузить карту. <button type="button" data-geo-map-retry>Повторить загрузку</button></div>':(geometry&&qmode==='silhouette'?mapMarkup(q.region,false,true):mapMarkup(qmode==='identify'?q.region:null,interactive)))+
+   (showMap?(t.mapError?'<div class="geo-map-loading">Не удалось загрузить карту. <button type="button" data-geo-map-retry>Повторить загрузку</button></div>':(geometry&&qmode==='silhouette'?mapMarkup(q.region,false,true):mapMarkup(qmode==='identify'?q.region:null,interactive))):'')+
    (interactive?'<p class="geo-tip">Нажмите на нужный субъект. Для мелких регионов приблизьте карту.</p>':options(q)))+
    '<p class="geo-message" role="status" aria-live="polite">'+esc(t.message||'')+'</p>'+
    '<div class="geo-footer"><span>Осталось '+v.remaining+' сек.</span><small>Результат каждого игрока индивидуален</small></div></section>';
   const nextSvg=root.querySelector('.geo-map-frame .geo-map-svg');
    if(nextSvg&&t.zoomBox&&!nextSvg.classList.contains('geo-silhouette'))nextSvg.setAttribute('viewBox',t.zoomBox);
-   if(!geometry&&!done&&!t.mapPending&&!t.mapError){t.mapPending=true;loadMap().then(()=>{t.mapPending=false;roundState(t)}).catch(e=>{t.mapPending=false;t.mapError=true;t.message='Геометрия недоступна: '+e.message;roundState(t)})}
+   if(showMap&&!geometry&&!done&&!t.mapPending&&!t.mapError){t.mapPending=true;loadMap().then(()=>{t.mapPending=false;roundState(t)}).catch(e=>{t.mapPending=false;t.mapError=true;t.message='Геометрия недоступна: '+e.message;roundState(t)})}
  }
  async function fetchView(t,answer=null){
   if(t.busy||t.closed)return;
