@@ -335,4 +335,4 @@ begin
  else (select jsonb_build_object('type',a.kind,'title',a.title,'settings',a.settings) from public.qwiz_room_activity a where a.room_id=v_room.id) end,
  'answers_count',v_answers,
  'has_answer',case when v_player.id is null then false else exists(select 1 from public.org_next_answers where room_id=v_room.id and player_id=v_player.id and question_index=v_room.question_index) end)||public.qwiz_team_state(v_room.id,v_host,v_player.id);
-end $function$
+end $function$;
