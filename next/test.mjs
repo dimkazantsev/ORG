@@ -765,7 +765,7 @@ test('Studio game selector keeps full names, uses consistent icons and an access
   assert.equal(runInNewContext(labelExpression[1],{b:{textContent:name}}),name);
  }
  assert.match(host,/const game=b\.closest\('#arcadePalette'\)/);
- assert.match(layout,/id="openGamesPalette"[^>]*aria-expanded="false"[^>]*>[\\s\\S]*?<svg class="games-chevron"/);
+ assert.match(layout,/id="openGamesPalette"[^>]*aria-expanded="false"[^>]*>[^]*?<svg class="games-chevron"/);
  assert.match(styles,/#openGamesPalette\[aria-expanded=true\] \.games-chevron\{transform:rotate\(180deg\)\}/);
  assert.match(styles,/#arcadePalette \[data-arcade\],#arcadePalette \[data-geo\]\{/);
  assert.match(styles,/\.game-palette #arcadePalette button>span:last-child\{[^}]*overflow-wrap:break-word/);
