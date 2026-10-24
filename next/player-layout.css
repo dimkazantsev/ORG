@@ -115,3 +115,28 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
  .player-compact #gameView .assembly-preview{height:40px}
 }
 @media(prefers-reduced-motion:reduce){.player-sheet[open]{animation:none}}
+
+
+/* Full results must scroll inside the fixed mobile player view. */
+.player-compact #gameView .game-card:has(.player-final-results){
+ overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;justify-content:flex-start;
+ -webkit-overflow-scrolling:touch;
+}
+.player-compact #gameView .game-empty:has(.player-final-results){
+ flex:none;display:flex;align-items:stretch;justify-content:flex-start;
+ gap:14px;text-align:left;padding:10px 6px 25px;min-height:100%;
+}
+.player-compact #gameView .game-empty:has(.player-final-results)>h1,
+.player-compact #gameView .game-empty:has(.player-final-results)>p,
+.player-compact #gameView .game-empty:has(.player-final-results)>.eyebrow{
+ text-align:left;margin:0;max-width:100%;
+}
+.player-compact .player-final-results{display:grid;gap:14px;width:100%;min-width:0;margin:5px 0 25px;text-align:left}
+.player-compact .player-final-results .habitat-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:9px}
+.player-compact .player-final-results .player-leaderboard{min-width:0;max-width:100%}
+.player-compact .player-final-results .player-leaderboard li{min-width:0}
+.player-compact .player-final-results h2{font-size:19px;margin:12px 0 7px;line-height:1.25}
+.player-compact #gameView .game-card:has(.geo-game){overflow-y:auto;overflow-x:hidden;scrollbar-gutter:stable;overscroll-behavior:contain;justify-content:flex-start}
+.player-compact #gameContent .geo-game{width:100%;min-width:0;align-content:start}
+.player-compact #gameContent .geo-map-frame,.player-compact #gameContent .geo-options{flex:none;min-width:0}
+.player-compact #gameView .game-card:has(.geo-game)>.game-empty{display:none}
