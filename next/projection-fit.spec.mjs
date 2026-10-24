@@ -90,3 +90,68 @@ test('Moderator-controlled music loops across game phases until explicitly disab
  await page.evaluate(()=>applyProjectionSettings({sound_enabled:true,music_enabled:false,volume:28}));
  await expect.poll(()=>page.evaluate(()=>QwizStage.audio.themeTimer===null)).toBe(true);
 });
+
+
+test('Real flag frame stays attached to artwork and all four flag choices remain inside answer cells',async({page})=>{
+ for(const [width,height] of [[1280,720],[1920,1080],[3840,2160]]){
+  await page.setViewportSize({width,height});
+  await page.evaluate(()=>{
+   ctx.renderKey='';
+   render({code:'A1B2C3D4',phase:'question',index:1,total:12,
+    ends_at:new Date(Date.now()+60000).toISOString(),
+    question:{kind:'flag',prompt:'Какой стране принадлежит изображённый флаг?',
+      media_url:'https://dimkazantsev.github.io/ORG/next/assets/flags-world/uz.svg',
+      options:['Узбекистан','Казахстан','Таджикистан','Киргизия']},
+    teams:[],players:[],screen_settings:{sound_enabled:false,volume:0}});
+  });
+  await page.locator('.flag-media-frame img.question-art').waitFor({state:'visible'});
+  await page.waitForTimeout(250);
+  await expect(page.locator('.flag-media-frame .frame-orbit')).toHaveCount(0);
+  const flag=await page.locator('.flag-media-frame').evaluate(el=>{
+   const img=el.querySelector('img').getBoundingClientRect();
+   const pic=el.querySelector('.question-picture').getBoundingClientRect();
+   const main=document.querySelector('#projectionMain').getBoundingClientRect();
+   return {img:{left:img.left,right:img.right,top:img.top,bottom:img.bottom},
+     pic:{left:pic.left,right:pic.right,top:pic.top,bottom:pic.bottom},main:{left:main.left,right:main.right}};
+  });
+  expect(flag.img.left).toBeGreaterThanOrEqual(flag.pic.left-2);
+  expect(flag.img.right).toBeLessThanOrEqual(flag.pic.right+2);
+  expect(flag.img.left).toBeGreaterThanOrEqual(flag.main.left-2);
+  expect(flag.img.right).toBeLessThanOrEqual(flag.main.right+2);
+  await page.evaluate(()=>{
+   ctx.renderKey='';
+   render({code:'A1B2C3D4',phase:'result',index:2,total:12,
+    ends_at:new Date(Date.now()+60000).toISOString(),
+    question:{kind:'flag',prompt:'Выберите флаг государства «Гамбия».',
+      options:[{image_url:'https://dimkazantsev.github.io/ORG/next/assets/flags-world/ye.svg'},
+       {image_url:'https://dimkazantsev.github.io/ORG/next/assets/flags-world/gm.svg'},
+       {image_url:'https://dimkazantsev.github.io/ORG/next/assets/flags-world/lv.svg'},
+       {image_url:'https://dimkazantsev.github.io/ORG/next/assets/flags-world/rs.svg'}]},
+    answer:{indices:[1],text:'Гамбия',explanation:'Верный вариант — флаг Гамбии.'},
+    teams:[],players:[],screen_settings:{sound_enabled:false,volume:0}});
+  });
+  await page.waitForTimeout(280);
+  await expect(page.locator('.projection-reveal-option')).toHaveCount(4);
+  const layout=await page.locator('.projection-answer-reveal').evaluate(el=>{
+   const main=document.querySelector('#projectionMain').getBoundingClientRect();
+   const outer=el.getBoundingClientRect();
+   const opts=[...el.querySelectorAll('.projection-reveal-option')].map(card=>{
+    const box=card.getBoundingClientRect(),img=card.querySelector('img')?.getBoundingClientRect();
+    return {box:{left:box.left,right:box.right,top:box.top,bottom:box.bottom},
+      img:img?{left:img.left,right:img.right,top:img.top,bottom:img.bottom}:null};
+   });
+   return {main:{left:main.left,right:main.right,bottom:main.bottom},
+     outer:{left:outer.left,right:outer.right,bottom:outer.bottom},opts};
+  });
+  expect(layout.outer.left).toBeGreaterThanOrEqual(layout.main.left-3);
+  expect(layout.outer.right).toBeLessThanOrEqual(layout.main.right+3);
+  expect(layout.outer.bottom).toBeLessThanOrEqual(layout.main.bottom+3);
+  for(const item of layout.opts){
+   expect(item.box.left).toBeGreaterThanOrEqual(layout.outer.left-3);
+   expect(item.box.right).toBeLessThanOrEqual(layout.outer.right+3);
+   expect(item.img?.left).toBeGreaterThanOrEqual(item.box.left-3);
+   expect(item.img?.right).toBeLessThanOrEqual(item.box.right+3);
+   expect(item.img?.bottom).toBeLessThanOrEqual(item.box.bottom+3);
+  }
+ }
+});
