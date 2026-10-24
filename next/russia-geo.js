@@ -84,7 +84,7 @@
    (t.mapError?'<div class="geo-map-loading">Не удалось загрузить карту. <button type="button" data-geo-map-retry>Повторить загрузку</button></div>':(geometry&&qmode==='silhouette'?mapMarkup(q.region,false,true):mapMarkup(qmode==='identify'?q.region:null,interactive)))+
    (interactive?'<p class="geo-tip">Нажмите на нужный субъект. Для мелких регионов приблизьте карту.</p>':options(q)))+
    '<p class="geo-message" role="status" aria-live="polite">'+esc(t.message||'')+'</p>'+
-   '<div class="geo-footer"><span>Осталось '+v.remaining+' сек.</span><small>Результат каждого игрока индивидуален</small></div></section>';
+   '<div class="geo-footer"><span>'+(v.paused?'⏸ Пауза · осталось ':'Осталось ')+v.remaining+' сек.</span><small>Результат каждого игрока индивидуален</small></div></section>';
   if(!geometry&&!done&&!t.mapPending&&!t.mapError){t.mapPending=true;loadMap().then(()=>{t.mapPending=false;roundState(t)}).catch(e=>{t.mapPending=false;t.mapError=true;t.message='Геометрия недоступна: '+e.message;roundState(t)})}
  }
  async function fetchView(t,answer=null){
@@ -141,6 +141,7 @@
     svg.setAttribute('viewBox',[x,y,w,h].join(' '));return;
    }
    if(e.target.closest('.geo-map-frame')&&Date.now()<t.suppressUntil)return;
+   if(t.view?.paused)return;
    const b=e.target.closest('[data-geo-answer],[data-region]');if(!b||!t.view?.open||t.busy||!t.view?.question)return;
    const selected=b.dataset.geoAnswer||b.dataset.region;
    if(b.dataset.region&&t.view.question.mode!=='locate')return;
@@ -179,6 +180,7 @@
   };
   t.onKeyDown=e=>{
    if((e.key!=='Enter'&&e.key!==' ')||!e.target.matches?.('.geo-region[data-region]'))return;
+   if(t.view?.paused)return;
    e.preventDefault();if(t.busy||!t.view?.open||t.view?.question?.mode!=='locate')return;
    fetchView(t,e.target.dataset.region);
   };
@@ -190,7 +192,7 @@
   root.addEventListener('keydown',t.onKeyDown);
 
   fetchView(t);
-  t.interval=setInterval(()=>{if(document.hidden||t.busy)return;if(t.view?.remaining>0)t.view.remaining-=1; if(t.view){const foot=root.querySelector('.geo-footer>span');if(foot)foot.textContent='Осталось '+Math.max(0,t.view.remaining)+' сек.';} if(!t.view||t.view.remaining%5===0)fetchView(t)},1000);
+  t.interval=setInterval(()=>{if(document.hidden||t.busy)return;if(t.view?.remaining>0&&!t.view.paused)t.view.remaining-=1; if(t.view){const foot=root.querySelector('.geo-footer>span');if(foot)foot.textContent='Осталось '+Math.max(0,t.view.remaining)+' сек.';} if(!t.view||t.view.remaining%5===0)fetchView(t)},1000);
   return true;
  }
  function mountProjector(root,s,client){

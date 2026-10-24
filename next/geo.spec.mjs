@@ -64,10 +64,11 @@ test('Projector displays geography theme and group metrics but not student answe
  await expect(page.locator('#geoProjPlayers')).toHaveText('30');
  await expect(page.locator('#geoPublicTest [data-geo-answer]')).toHaveCount(0);
 });
-test('Geo round is an extra configurable card with eight active modes and reserved heraldry',async({page})=>{
+test('Geography question round offers eight active modes and reserved heraldry',async({page})=>{
  await page.goto(HOME+'workspace.html');
  await page.locator('[data-section="builder"]').click();
  await page.locator('#newBuild').click();
+ await page.evaluate(()=>{state.topics=[{id:'b2a412f3-4011-4b12-8b14-123456789abc',name:'География России',category:'География'}];});
  await page.locator('#cardPalette [data-geo="russia_map"]').click();
  await expect(page.locator('#roundCards .round-card[data-type="bonus"]')).toHaveCount(1);
  await page.locator('#roundCards .round-card[data-type="bonus"] [data-edit-card]').click();

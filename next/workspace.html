@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="./teams.css?v=quiz-live-20261023-1"><script defer src="./teams.js?v=quiz-live-20261023-1"></script><script defer src="./workspace-teams.js?v=quiz-live-20261023-1"></script>
 <link rel="stylesheet" href="./arcade.css?v=quiz-live-20261023-1"><script defer src="./arcade.js?v=quiz-live-20261023-1"></script>
 <link rel="stylesheet" href="./russia-geo.css?v=geo-20261023-1"><script defer src="./russia-geo.js?v=geo-20261023-1"></script>
+<link rel="stylesheet" href="./quiz-flow-polish.css?v=quiz-flow-20261024-1">
 </head><body class="studio-polish" data-design="lavender-20261022"><a class="skip-link" href="#mainContent">К содержимому</a>
 <header class="top"><div class="top-wrap"><a class="brand" href="./"><span class="brand-mark"><svg viewBox="0 0 32 32" fill="none" aria-hidden="true"><path d="M24 15.5a8.5 8.5 0 1 1-17 0 8.5 8.5 0 0 1 17 0Z" stroke="currentColor" stroke-width="3.5"/><path d="m19.5 20 5 5" stroke="currentColor" stroke-width="3.5" stroke-linecap="round"/></svg></span><span>QWIZ<span class="brand-mid">-</span>PARTY<small>СТУДИЯ ПРЕПОДАВАТЕЛЯ</small></span></a>
 <div class="top-tools">
@@ -39,6 +40,11 @@
  <label>Сортировка<select id="bankSort"><option value="newest">Сначала новые</option><option value="oldest">Сначала старые</option><option value="difficulty">По сложности</option></select></label></div>
  <div class="section-head"><h2>Темы</h2><button class="text-button" id="newTopic" hidden>+ Добавить тему</button></div>
  <div class="topic-chips" id="topicChips"></div>
+ <section id="geographyBankInfo" class="geography-bank-info" hidden>
+ <div><span class="eyebrow">БИБЛИОТЕКА ВОПРОСОВ / ГЕОГРАФИЯ РОССИИ</span><h3>89 субъектов · индивидуальные карты</h3>
+ <p>Для каждого студента сервер случайно подбирает субъекты и задания. Выберите механики и число субъектов в раунде — не требуется вручную создавать 89 одинаковых вопросов.</p></div>
+ <button type="button" id="newGeoRound" class="primary-button">+ Добавить географический раунд</button>
+ </section>
  <div class="section-head"><h2>Вопросы <span class="subtle" id="questionsTotal"></span></h2><span class="small-help">По 25 вопросов на странице</span></div>
  <div id="bankItems" class="question-list"><div class="empty">Загрузка вопросов…</div></div>
  <nav class="bank-pager" aria-label="Страницы банка вопросов">
@@ -54,10 +60,10 @@
  <label>Название сборки<input id="buildTitle" placeholder="Например, Большая игра: 7 раундов" maxlength="140"></label>
  <div class="composer-actions"><button type="button" class="small-button" id="generalSettings">Общие настройки</button><button type="button" class="small-button" id="addCard">+ Карточка</button><button type="button" class="primary-button" id="saveBuild">Сохранить сборку</button></div></div>
  <div class="card-library" id="cardPalette">
- <button type="button" data-card="round">▦ Вопросы</button><button type="button" data-card="intro">◉ Вступление</button>
+ <button type="button" data-card="round">▦ Вопросы</button><button type="button" data-card="round" data-geo="russia_map">⌖ География России</button><button type="button" data-card="intro">◉ Вступление</button>
  <button type="button" data-card="break">♫ Перерыв</button><button type="button" data-card="team_stats">▥ Команды</button>
  <button type="button" data-card="player_stats">♙ Игроки</button><button type="button" data-card="bonus">✦ Бонус</button>
- <button type="button" data-card="duel">⇄ Дуэль</button><button type="button" data-card="bonus" data-geo="russia_map">⌖ Карта России · 89 регионов</button></div>
+ <button type="button" data-card="duel">⇄ Дуэль</button></div>
  <div class="section-head arcade-palette-heading"><h2>Командные мини-игры</h2><span class="small-help">Дополнительные карточки · награды за достижения</span></div><div class="card-library arcade-palette" id="arcadePalette"><button type="button" data-card="bonus" data-arcade="rocket">🚀 Ракета</button><button type="button" data-card="bonus" data-arcade="blitz">⚡ Блиц-вопрос</button><button type="button" data-card="bonus" data-arcade="tug">↔ Перетягивание очков</button><button type="button" data-card="duel" data-arcade="captain">♛ Дуэль капитанов</button></div>
  <div class="section-head"><h2>Последовательность карточек</h2><span class="small-help">Перетащите карточку или используйте стрелки. Финал всегда последний.</span></div>
  <div id="roundCards" class="round-grid"></div><div class="composer-bottom"><button type="button" class="secondary-button" id="appendRound">+ Добавить раунд</button><span id="buildMessage" role="status" class="message"></span></div></div>
@@ -74,12 +80,13 @@
  <section id="liveConsole" class="live-console" hidden>
  <div class="live-console-head"><div><div class="eyebrow">ПОДКЛЮЧЕННАЯ КОМНАТА</div><h2 id="activeRoomName"></h2><strong class="live-code" id="activeRoomCode"></strong></div>
  <div class="console-actions"><button type="button" class="secondary-button" id="manageTeams">Управление командами</button><button type="button" class="secondary-button" id="copyRoomUrl">Скопировать вход</button><button type="button" class="secondary-button" id="openScreen">◫ Экран аудитории</button></div></div>
+ <div class="live-actions" role="group" aria-label="Постоянный пульт ведущего"><button id="liveStart" class="primary-button" type="button">▶ Начать</button><button id="livePause" class="secondary-button" type="button">⏸ Пауза</button><button id="liveNext" class="primary-button" type="button">Далее →</button><button id="liveFinish" class="danger-button" type="button">Завершить</button><button id="liveReveal" type="button" hidden aria-hidden="true" tabindex="-1">Показать ответ</button></div>
  <div class="live-metrics"><div><span>Участников</span><strong id="livePlayers">0</strong></div><div><span>Команд</span><strong id="liveTeams">0</strong></div><div><span>Этап</span><strong id="livePhase">—</strong></div><div><span>Ответов</span><strong id="liveAnswers">0</strong></div></div>
  <div class="room-readiness" id="roomReadiness"><div><strong id="roomReadinessTitle"></strong><p id="roomReadinessText"></p></div><div class="room-readiness-actions"><button type="button" class="primary-button" id="addRoomQuestions">Добавить вопросы</button><button type="button" class="secondary-button" id="refreshRoomContent">Обновить вопросы</button></div></div>
  <div id="liveClock" class="moderator-clock"></div><div class="live-question" id="liveQuestion">Ожидание начала игры.</div>
-  <div class="live-projection-mirror"><h3>Экран студентов / проектора · синхронизирован</h3><iframe id="liveScreenMirror" title="Точный вид общего экрана студентов" loading="lazy" referrerpolicy="strict-origin-when-cross-origin" allow="fullscreen" style="width:100%;height:clamp(240px,42vw,620px);border:0;border-radius:14px;background:white"></iframe></div>
+  <div class="live-projector-shortcut"><div><strong>Экран аудитории открывается отдельно</strong><p>Здесь только управление и статистика — без дублирования большого проектора.</p></div><button type="button" class="secondary-button" id="showPublicScreen">◫ Открыть на отдельном экране</button></div>
  <section id="arcadeHostPanel" class="arcade-host-panel" hidden></section>
- <div class="live-actions" role="group" aria-label="Постоянный пульт ведущего"><button id="liveStart" class="primary-button" type="button">▶ Начать</button><button id="livePause" class="secondary-button" type="button">⏸ Пауза</button><button id="liveNext" class="primary-button" type="button">Далее →</button><button id="liveFinish" class="danger-button" type="button">Завершить</button><button id="liveReveal" type="button" hidden aria-hidden="true" tabindex="-1">Показать ответ</button></div>
+ 
  <p class="message" id="liveMessage" role="status"></p>
  <div class="live-columns"><div class="panel"><h3>Статистика игры и рейтинг команд</h3><div id="liveRoundStats" class="small-help" role="status"></div><div id="liveRanking"></div></div><div class="panel"><h3>Участники</h3><div id="liveRoster"></div></div></div>
   <section class="team-manager" id="teamManager" aria-labelledby="teamManagerHeading"><div class="team-manager-head"><div><span class="eyebrow">СОСТАВЫ И ПРИГЛАШЕНИЯ</span><h3 id="teamManagerHeading" tabindex="-1">Команды</h3><p>Распределите участников случайно или перенесите их вручную. QR-коды ведут сразу в выбранную команду.</p></div><button type="button" class="secondary-button" id="showTeamBoard">QR-коды на экран</button></div><form id="teamSettings" class="team-controls"><label>Число команд<input id="teamCount" type="number" min="1" max="15" required value="5"></label><label>Распределение<select id="teamMode"><option value="random">Случайное с балансировкой</option><option value="manual">Вручную преподавателем</option></select></label><button type="submit" class="secondary-button" id="applyTeamSettings">Применить</button><button type="button" class="primary-button" id="shuffleTeams">Перемешать всех</button></form><p class="small-help" id="teamEditHint"></p><p class="message" id="teamMessage" role="status"></p><div class="team-pool" id="teamPool" data-drop-team="" hidden></div><div class="team-grid" id="teamGrid"></div></section>

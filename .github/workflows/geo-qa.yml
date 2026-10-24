@@ -4,6 +4,11 @@ on:
     paths:
       - 'next/russia-geo.*'
       - 'next/geo.spec.mjs'
+      - 'next/flow.spec.mjs'
+      - 'next/quiz-flow-polish.css'
+      - 'next/teams.js'
+      - 'next/workspace-teams.js'
+      - 'next/index.html'
       - 'next/migrations/20261023_geo*'
       - 'next/workspace.*'
       - 'next/app.js'
@@ -13,6 +18,11 @@ on:
     paths:
       - 'next/russia-geo.*'
       - 'next/geo.spec.mjs'
+      - 'next/flow.spec.mjs'
+      - 'next/quiz-flow-polish.css'
+      - 'next/teams.js'
+      - 'next/workspace-teams.js'
+      - 'next/index.html'
       - 'next/migrations/20261023_geo*'
       - 'next/workspace.*'
       - 'next/app.js'
@@ -47,4 +57,4 @@ jobs:
         run: |
           mkdir -p visual-artifacts
           python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/qwiz-geo-http.log 2>&1 &
-          npx playwright test next/geo.spec.mjs --workers=1 --reporter=list
+          npx playwright test next/geo.spec.mjs next/flow.spec.mjs --workers=1 --reporter=list

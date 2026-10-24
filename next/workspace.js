@@ -127,6 +127,8 @@ function section(section){state.activePage=section;for(const id of ['bank','buil
 function createOption(value,label){const n=document.createElement('option');n.value=value;n.textContent=label;return n}
 function fillSelect(select,options,placeholder,selected=''){select.replaceChildren();if(placeholder!==null)select.add(createOption('',placeholder));for(const [value,title]of options)select.add(createOption(value,title));select.value=selected}
 function nameTopic(id){return state.topics.find(t=>t.id===id)?.name||'Все темы'}
+function geoTopic(){return state.topics.find(t=>t.name==='География России')}
+const geoModes=[['locate','Найти субъект'],['identify','Угадать название'],['capital','Административный центр'],['flag','Узнать по флагу'],['silhouette','Угадать по силуэту'],['neighbour','Соседние субъекты'],['detective','Географический детектив'],['district','Федеральный округ']];
 async function overview(){const d=await studio('overview');state.topics=d.topics||[];state.builds=d.builds||[];renderTopics();renderBuilds();updateSelectors();await loadQuestions()}
 function updateSelectors(){
  const items=state.topics.map(t=>[t.id,t.name]);
@@ -138,6 +140,8 @@ function renderTopics(){
  $('topicChips').innerHTML=items.map(t=>'<button type="button" class="topic-chip '+($('bankTopic').value===t.id?'current':'')+'" data-topic="'+esc(t.id)+'">'+esc(t.name)+'</button>').join('');
 }
 async function loadQuestions(){
+ if($('bankTopic').value&&$('bankTopic').value===geoTopic()?.id)return loadGeographyBank();
+ $('geographyBankInfo').hidden=true;$('newQuestion').hidden=false;
  const input={search:$('bankSearch').value.trim().slice(0,90),topic_id:$('bankTopic').value,kind:'flag',mode:$('bankMode').value,sort:$('bankSort').value,offset:state.bankOffset,limit:state.bankPageSize};
  try{const data=await studio('questions',input);state.questions=data.items||[];state.questionTotal=data.total||0;
   $('navQuestionCount').textContent=fmt(state.questionTotal);$('questionsTotal').textContent='('+fmt(state.questionTotal)+')';
@@ -146,6 +150,18 @@ async function loadQuestions(){
   $('bankPrevious').disabled=state.bankOffset===0;
   $('bankNext').disabled=state.bankOffset+state.bankPageSize>=state.questionTotal;
   renderQuestions();renderTopics();msg('bankMessage','');
+ }catch(e){msg('bankMessage',e.message,true)}
+}
+async function loadGeographyBank(){
+ try{
+  $('geographyBankInfo').hidden=false;$('newQuestion').hidden=true;
+  const d=await rpc('qwiz_geo_catalog',{p_search:$('bankSearch').value.trim(),p_offset:state.bankOffset,p_limit:state.bankPageSize});
+  state.questions=[];state.questionTotal=Number(d.total)||0;
+  $('navQuestionCount').textContent=fmt(state.questionTotal);$('questionsTotal').textContent='('+fmt(state.questionTotal)+' субъектов)';
+  $('bankItems').innerHTML=(d.items||[]).map(r=>'<article class="question-row"><div><div class="question-meta"><span class="chip lilac">География России</span><span class="chip">'+esc(r.kind)+'</span></div><h3>'+esc(r.name)+'</h3><p>Центр: '+esc(r.capital)+' · '+esc(r.fd)+' · '+esc(r.neighbor_count)+' соседних субъектов</p></div><button type="button" class="small-button" data-new-geo-round>В раунд →</button></article>').join('')||'<div class="empty">Ничего не найдено.</div>';
+  $('bankPageInfo').textContent='Страница '+(Math.floor(state.bankOffset/state.bankPageSize)+1)+' из '+Math.max(1,Math.ceil(state.questionTotal/state.bankPageSize));
+  $('bankPrevious').disabled=state.bankOffset===0;$('bankNext').disabled=state.bankOffset+state.bankPageSize>=state.questionTotal;
+  renderTopics();msg('bankMessage','');
  }catch(e){msg('bankMessage',e.message,true)}
 }
 let previewWindow=null,previewPage=[],previewOffset=0,previewIndex=0,previewTotal=0;
@@ -360,19 +376,28 @@ function card(type){return {type,title:titles[type]||'Раунд',icon:icons[typ
 function ensureFinale(){state.cards=state.cards.filter((c,i)=>c.type!=='finale'||i===state.cards.length-1);
  if(!state.cards.some(c=>c.type==='finale'))state.cards.push(card('finale'))}
 function newBuild(){state.buildId=null;state.cards=[card('intro'),card('round'),card('finale')];$('buildTitle').value='';$('composer').hidden=false;renderCards();$('buildTitle').focus()}
+function addGeoRound(){
+ if($('composer').hidden)newBuild();
+ const topic=geoTopic();if(!topic){msg('buildMessage','Тема «География России» не найдена. Обновите кабинет.',true);return}
+ const c=card('bonus');c.title='География России · интерактивная карта';c.icon='⌖';c.topic_id=topic.id;
+ c.settings={...c.settings,arcade_mode:'russia_map',geo_count:15,geo_seconds:180,geo_modes:geoModes.map(x=>x[0])};
+ const blank=state.cards.findIndex(x=>x.type==='round'&&!x.topic_id&&!x.settings?.arcade_mode);
+ if(blank>=0)state.cards.splice(blank,1,c);else state.cards.splice(state.cards.length-1,0,c);
+ renderCards();section('builder');msg('buildMessage','Географический раунд добавлен. Настройте число субъектов и механики.');
+}
 function appendCard(type='round',arcadeMode=null){if(state.cards.length>=60){msg('buildMessage','Не больше 60 карточек.',true);return}
  const added=card(type);
  if(arcadeMode&&arcadeGames[arcadeMode]){const meta=arcadeGames[arcadeMode];added.title=meta.title;added.icon=meta.icon;added.settings.arcade_mode=arcadeMode;added.settings.arcade_seconds=meta.seconds;}
  state.cards.splice(Math.max(0,state.cards.length-1),0,added);renderCards()}
 function cardDesc(c){const settings=c.settings||{};
- if(settings.arcade_mode==='russia_map')return 'Карта России · '+(settings.geo_count||15)+' случайных субъектов каждому игроку · '+(settings.geo_seconds||180)+' сек. · индивидуальный прогресс';
+ if(settings.arcade_mode==='russia_map')return 'География России · '+(settings.geo_count||15)+' случайных субъектов каждому игроку · '+(settings.geo_seconds||180)+' сек. · индивидуальный прогресс';
   if(arcadeGames[settings.arcade_mode])return 'Командная мини-игра · '+(settings.arcade_seconds||arcadeGames[settings.arcade_mode].seconds)+' секунд · достижения и жетоны';
  if(c.type==='round')return (c.topic_id?nameTopic(c.topic_id):'Тема не выбрана')+' · '+(Array.isArray(settings.flag_modes)&&settings.flag_modes.length?settings.flag_modes.map(titleKind).join(', '):'Все доступные механики')+' · '+(settings.count||5)+' вопр. · '+(settings.seconds||30)+' сек. · ответ '+(settings.answer_seconds||10)+' сек.';
  if(c.type==='finale')return 'Команды, личный рейтинг и вопросы, которые запомнились';
  return 'Дополнительная активность · настройки в карточке'}
 function renderCards(){ensureFinale();$('roundCards').innerHTML=state.cards.map((c,i)=>{
  const final=c.type==='finale',emblem=final?'<svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M15 7h18v13c0 13-18 13-18 0V7ZM15 11H7v6c0 7 8 10 12 8M33 11h8v6c0 7-8 10-12 8M24 30v10M16 41h16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':cardIconSvg(c.type,c.icon);
- return '<article class="round-card" data-index="'+i+'" data-type="'+esc(c.type)+'" tabindex="0" role="group" aria-label="'+esc(c.title)+'. Открыть настройки" draggable="'+!final+'"><div class="round-card-heading"><span class="round-icon" aria-hidden="true">'+emblem+'</span><span class="small-help">'+(final?'ФИНАЛ ИГРЫ':'КАРТОЧКА '+(i+1).toString().padStart(2,'0'))+'</span></div><h3>'+esc(c.title)+'</h3><p class="round-sub">'+esc(cardDesc(c))+'</p>'+
+ return '<article class="round-card" data-index="'+i+'" data-type="'+esc(c.type)+'" tabindex="0" role="group" aria-label="'+esc(c.title)+'. Открыть настройки" draggable="'+!final+'"><div class="round-card-heading"><span class="round-icon" aria-hidden="true">'+emblem+'</span><span class="small-help">'+(final?'ФИНАЛ ИГРЫ':c.settings?.arcade_mode==='russia_map'?'РАУНД · ГЕОГРАФИЯ':'КАРТОЧКА '+(i+1).toString().padStart(2,'0'))+'</span></div><h3>'+esc(c.title)+'</h3><p class="round-sub">'+esc(cardDesc(c))+'</p>'+
  (final?'<div class="finale-card-tags"><span>Команды</span><span>Участники</span><span>3 + 3 вопроса</span></div>':'')+'<div class="round-actions">'+(!final?'<button type="button" data-move="'+i+':-1" aria-label="Раньше" '+(i===0?'disabled':'')+'>←</button><button type="button" data-move="'+i+':1" aria-label="Позже" '+(i>=state.cards.length-2?'disabled':'')+'>→</button>':'')+'<button type="button" class="round-edit" data-edit-card="'+i+'">'+(final?'Настроить финал':'Настроить')+'</button></div>'+(!final?'<button type="button" class="card-trash round-trash" data-delete-card="'+i+'" title="Удалить раунд" aria-label="Удалить раунд '+esc(c.title)+'">'+trashSvg+'</button>':'')+'</article>';
  }).join('');}
 function moveCard(i,j){if(j<0||j>=state.cards.length-1||i<0||i>=state.cards.length-1)return;
@@ -383,6 +408,7 @@ function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{}
  $('cardRoundSettings').hidden=c.type!=='round';$('cardFinalePreview').hidden=c.type!=='finale';
  const arcade=arcadeGames[s.arcade_mode];$('cardArcadeSettings').hidden=!arcade;
   const geo=s.arcade_mode==='russia_map';$('cardGeoSettings').hidden=!geo;
+ $('cardGeoSettings').querySelector('h3').textContent='География России · механики вопросов';
   if(geo){$('cardGeoCount').value=s.geo_count||15;$('cardGeoSeconds').value=s.geo_seconds||180;
    for(const item of all('#cardGeoModes input:not(:disabled)'))item.checked=!Array.isArray(s.geo_modes)||s.geo_modes.includes(item.value);}
  $('cardArcadeSeconds').value=s.arcade_seconds||arcade?.seconds||12;
@@ -403,7 +429,7 @@ function saveCard(event){event.preventDefault();const c=state.cards[state.editin
   first?.addEventListener('change',()=>first.setCustomValidity(''),{once:true});return;
  }
  c.title=$('cardTitle').value.trim();
- c.topic_id=$('cardTopic').value||null;c.icon=$('cardIcon').value||icons[c.type]||'▦';
+ c.topic_id=c.settings?.arcade_mode==='russia_map'?(geoTopic()?.id||c.topic_id):($('cardTopic').value||null);c.icon=$('cardIcon').value||icons[c.type]||'▦';
  c.settings={...c.settings,count:Number($('cardCount').value),seconds:Number($('cardSeconds').value),answer_seconds:Number($('cardAnswerSeconds').value),
   order:$('cardOrder').value,offset:Math.max(0,Number($('cardOffset').value)-1),
   team_cap:$('cardTeamCap').value?Number($('cardTeamCap').value):null,
@@ -458,7 +484,7 @@ async function loadBuild(id){try{const r=await studio('build_get',{id});state.bu
  $('buildTitle').value=r.build.title;state.cards=r.cards||[];ensureFinale();$('composer').hidden=false;renderCards();section('builder');savePosition();
  }catch(e){msg('buildMessage',e.message,true)}}
 async function saveBuild(){disable('saveBuild',true);msg('buildMessage','Сохранение…');
- try{ensureFinale();if(!state.cards.some(c=>c.type==='round'))throw Error('Добавьте хотя бы один раунд вопросов.');
+ try{ensureFinale();if(!state.cards.some(c=>c.type==='round'||c.settings?.arcade_mode==='russia_map'))throw Error('Добавьте хотя бы один раунд вопросов.');
  const result=await studio('build_save',{id:state.buildId||undefined,title:$('buildTitle').value.trim(),
   cards:state.cards});state.buildId=result.id;
  await overview();savePosition();msg('buildMessage','Сборка сохранена. Её можно запустить с любого вашего устройства.');}
@@ -494,7 +520,7 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  $('livePhase').textContent=QwizStage.phaseLabel(s.phase);
  $('liveAnswers').textContent=s.answers_count||0;
  $('liveStart').hidden=false;$('liveStart').disabled=s.phase!=='lobby';$('liveStart').setAttribute('aria-label',s.phase==='lobby'?'Начать игру':'Игра уже начата');
- $('livePause').hidden=false;$('livePause').disabled=!['countdown','question','result'].includes(s.phase);$('livePause').textContent=s.paused?'▶ Продолжить':'⏸ Пауза';$('livePause').setAttribute('aria-pressed',String(!!s.paused));
+ $('livePause').hidden=false;$('livePause').disabled=!(['countdown','question','result'].includes(s.phase)||(s.phase==='intermission'&&!['rocket','blitz','tug','captain'].includes(s.activity?.settings?.arcade_mode)));$('livePause').textContent=s.paused?'▶ Продолжить':'⏸ Пауза';$('livePause').setAttribute('aria-pressed',String(!!s.paused));
  $('liveNext').hidden=false;$('liveNext').disabled=!!s.paused||!['question','result','intermission'].includes(s.phase);$('liveNext').textContent='Далее →';$('liveReveal').hidden=true;$('liveFinish').hidden=false;$('liveFinish').disabled=s.phase==='finished';
  $('liveQuestion').textContent=s.phase==='intermission'?(s.activity?.title||'Дополнительная активность')+
   ' · следующий этап откроется автоматически (можно перейти вручную)':
@@ -516,9 +542,18 @@ async function control(action){if(!state.room)return;for(const id of ['liveStart
  state.channel?.send({type:'broadcast',event:'phase',payload:{room:state.roomCode}})?.catch(()=>{});
  await refreshLive()}catch(e){msg('liveMessage',e.message,true)}
  finally{for(const id of ['liveStart','livePause','liveReveal','liveNext','liveFinish'])disable(id,false);if(state.room){roomReadiness(state.room);renderLive(state.room)}}}
-function projection(){const u=new URL('./presenter.html',location.href);if(state.roomCode)u.searchParams.set('room',state.roomCode);
- window.open(u.toString(),'qwiz_party_public_screen','noopener,width=1280,height=760')}
-async function copyRoom(){const u=new URL('./',location.href);u.searchParams.set('room',state.roomCode);
+function projection(){
+ const u=new URL('./presenter.html',location.href);if(state.roomCode)u.searchParams.set('room',state.roomCode);
+ const w=window.open(u.toString(),'qwiz_party_public_screen','popup=yes,width=1280,height=760,resizable=yes');
+ if(!w){msg('liveMessage','Разрешите открытие окон: экран аудитории не запустился. Нажмите «Экран аудитории» вручную.',true);return}
+ // Window Placement is optional. Never prevent the start if permission is refused.
+ if('getScreenDetails' in window)void window.getScreenDetails().then(info=>{
+  const second=info.screens.find(s=>!s.isPrimary)||info.screens.find(s=>s!==info.currentScreen);
+  if(second&&!w.closed){w.moveTo(second.availLeft,second.availTop);w.resizeTo(second.availWidth,second.availHeight)}
+ }).catch(()=>{});
+ w.focus();
+}
+async function copyRoom(){const u=new URL('./',location.href);u.searchParams.set('room',state.roomCode);u.searchParams.set('join','1');
  try{await navigator.clipboard.writeText(u.toString());msg('liveMessage','Ссылка на вход скопирована.')}
  catch{prompt('Ссылка:',u.toString())}}
 async function loadInsights(){try{state.insights=await rpc('qwiz_teacher_stats');renderInsights()}
@@ -554,13 +589,15 @@ function wire(){
  $('refreshAll').onclick=refreshWorkspace;
  document.addEventListener('keydown',event=>{if(event.key!=='/'||event.ctrlKey||event.metaKey||event.altKey||event.target.closest('input,textarea,select,[contenteditable="true"]')||document.querySelector('dialog[open]')||state.activePage!=='bank')return;event.preventDefault();$('bankSearch').focus()});
  $('bankSearch').oninput=()=>{clearTimeout(state.bankTimer);state.bankOffset=0;state.bankTimer=setTimeout(loadQuestions,350)};
- for(const id of ['bankTopic','bankMode','bankSort'])$(id).onchange=()=>{state.bankOffset=0;loadQuestions()};
+ for(const id of ['bankTopic','bankMode','bankSort'])$(id).onchange=()=>{state.bankOffset=0;if(id==='bankTopic')fillSelect($('bankMode'),$('bankTopic').value===geoTopic()?.id?geoModes:flagModes.map(x=>[x[0],x[1]]),'Все механики');loadQuestions()};
  $('topicChips').onclick=e=>{const b=e.target.closest('[data-topic]');if(!b)return;$('bankTopic').value=b.dataset.topic;state.bankOffset=0;loadQuestions()};
  $('bankPrevious').onclick=()=>{state.bankOffset=Math.max(0,state.bankOffset-state.bankPageSize);loadQuestions()};
  $('bankNext').onclick=()=>{if(state.bankOffset+state.bankPageSize<state.questionTotal){state.bankOffset+=state.bankPageSize;loadQuestions()}};
+ $('newGeoRound').onclick=addGeoRound;
  $('newTopic').onclick=()=>{$('topicDialog').showModal();$('topicName').focus()};$('topicForm').onsubmit=saveTopic;$('newQuestion').onclick=()=>editQuestion();
  $('bankItems').onclick=async e=>{
-  const preview=e.target.closest('[data-preview-question]');
+  if(e.target.closest('[data-new-geo-round]')){addGeoRound();return}
+   const preview=e.target.closest('[data-preview-question]');
   if(preview){previewQuestion(preview.dataset.previewQuestion);return}
   const publish=e.target.closest('[data-publish-question]');
   if(publish){
@@ -582,11 +619,7 @@ function wire(){
  $('cardSoundPreview').onclick=async()=>{if(!QwizStage.audio.enabled)await QwizStage.audio.toggle();await QwizStage.audio.unlock();QwizStage.audio.play($('cardSound').value)};
  $('addCard').onclick=()=>appendCard('round');$('appendRound').onclick=()=>appendCard('round');
  $('cardPalette').onclick=e=>{const b=e.target.closest('[data-card]');if(!b)return;
-   if(b.dataset.geo==='russia_map'){
-    appendCard('bonus');const c=state.cards[state.cards.length-2];c.title='Карта России · 89 субъектов';c.icon='map';
-    c.settings={...c.settings,arcade_mode:'russia_map',geo_count:15,geo_seconds:180,geo_modes:['locate','identify','capital','flag','silhouette','neighbour','detective','district']};renderCards();
-   }else appendCard(b.dataset.card,b.dataset.arcade||null);
-  };
+  if(b.dataset.geo==='russia_map')addGeoRound();else appendCard(b.dataset.card,b.dataset.arcade||null)};
  $('arcadePalette').onclick=e=>{const b=e.target.closest('[data-arcade]');if(b)appendCard(b.dataset.card,b.dataset.arcade)};
  $('roundCards').onclick=e=>{
   const edit=e.target.closest('[data-edit-card]');if(edit){editCard(Number(edit.dataset.editCard));return}
@@ -609,7 +642,7 @@ function wire(){
  // Team setup handlers are owned by workspace-teams.js; no duplicate listeners here.
  $('hostRoomList').onclick=e=>{const d=e.target.closest('[data-delete-room]');if(d){deleteRoom(d.dataset.deleteRoom);return}
   const b=e.target.closest('[data-room]');if(b)selectRoom(b.dataset.room)};
- $('liveStart').onclick=()=>control('start');$('liveReveal').onclick=()=>control('reveal');
+ $('liveStart').onclick=()=>{projection();control('start')};$('liveReveal').onclick=()=>control('reveal');
  $('liveNext').onclick=()=>control('next');$('livePause').onclick=()=>control(state.room?.paused?'resume':'pause');$('liveFinish').onclick=()=>control('finish');
  $('copyRoomUrl').onclick=copyRoom;$('openScreen').onclick=projection;$('showPublicScreen').onclick=projection;
  $('reloadInsights').onclick=loadInsights;$('studentSort').onchange=renderInsights;

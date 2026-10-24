@@ -12,7 +12,7 @@ window.QwizTeams=(()=>{
   const args={p_code:code,p_name:name,p_group:group};
   return target.room===code&&target.team?{method:'qwiz_join_team',args:{...args,p_team:target.team,p_inviter:target.via}}:{method:'org_next_join',args};
  }
- function url(code,team=null,via=null){const u=new URL('./',location.href);u.searchParams.set('room',code);
+ function url(code,team=null,via=null){const u=new URL('./',location.href);u.searchParams.set('room',code);u.searchParams.set('join','1');
   if(team&&uuid.test(team))u.searchParams.set('team',team);if(via&&uuid.test(via))u.searchParams.set('via',via);return u.toString();}
  function avatar(key){return '<svg class="team-avatar" aria-hidden="true" viewBox="0 0 100 100"><use href="./assets/animals.svg#'+(animals.has(key)?key:'fox')+'"></use></svg>';}
  function qr(node,link,size=180){if(!node||qrCache.get(node)===link+':'+size)return;node.replaceChildren();

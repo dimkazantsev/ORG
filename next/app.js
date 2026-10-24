@@ -53,7 +53,7 @@ async function joinRoom(event){event.preventDefault();const button=$('joinButton
  try{await ensureAuth();const code=$('joinCode').value.trim().toUpperCase();const name=$('joinName').value.trim();const group=$('joinGroup').value.trim();
   if(!/^[A-F0-9]{8}$/.test(code))throw Error('Код комнаты должен содержать восемь символов.');
   const request=QwizTeams.joinRequest(code,name,group);await rpc(request.method,request.args);
-  ctx.roomCode=code;storage.set('room',code);showScreen('game');await refreshRoom();signal('team');
+  ctx.roomCode=code;storage.set('room',code);try{localStorage.setItem('qwiz-player-name',name)}catch{}showScreen('game');await refreshRoom();signal('team');
   notice('joinNotice','');
  }catch(error){notice('joinNotice',error.message,'error')}finally{busy(button,false)}}
 async function login(event){event.preventDefault();busy($('loginButton'),true);notice('loginNotice','Проверка доступа…');
@@ -293,7 +293,13 @@ async function restore(){if(!ctx.client)return;try{
  }catch{showScreen('home')}}
 function attach(){q('#logoHome').addEventListener('click',home);
  $('teamInvitationNotice').hidden=!QwizTeams.intent().team;if(QwizTeams.intent().team)setRole('player');
- setRole(storage.get('entry-role')==='host'?'host':'player');
+ const directJoin=new URLSearchParams(location.search).get('room');
+ setRole(directJoin?'player':storage.get('entry-role')==='host'?'host':'player');
+ if(directJoin&&/^[A-F0-9]{8}$/i.test(directJoin)){
+  $('qrDirectJoin').hidden=false;$('qrDirectCode').textContent=directJoin.toUpperCase();
+  try{const cached=localStorage.getItem('qwiz-player-name');if(cached&&!$('joinName').value)$('joinName').value=cached}catch{}
+  requestAnimationFrame(()=>$('joinName').focus({preventScroll:true}));
+ }
  $('changeTeacherAccount').onclick=logout;$('resumeGameButton').onclick=resumeGame;
  $('togglePassword').onclick=()=>{const visible=$('loginPassword').type==='password';$('loginPassword').type=visible?'text':'password';$('togglePassword').setAttribute('aria-pressed',String(visible));$('togglePassword').setAttribute('aria-label',visible?'Скрыть пароль':'Показать пароль')};
  // The welcome page now has no redundant left-hand navigation.
@@ -360,7 +366,7 @@ function attach(){q('#logoHome').addEventListener('click',home);
 let activeQrCode=null;
 function joinUrl(code=null){
  const url=new URL('./',window.location.href);
- if(code)url.searchParams.set('room',String(code).toUpperCase());
+ if(code){url.searchParams.set('room',String(code).toUpperCase());url.searchParams.set('join','1')}
  return url.toString();
 }
 const qrCache=new WeakMap();
