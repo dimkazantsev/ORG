@@ -153,7 +153,7 @@ test('Audience screen retains the approved light lavender palette',()=>{
  assert.doesNotMatch(css,/body\.projection-screen-ready\{background:\s*#160e41/);
  assert.doesNotMatch(css,/linear-gradient\(135deg,#190e46/);
  assert.match(css,/\.projection-screen-ready \.projection-footer/);
- assert.match(html,/presenter\.css\?v=single-answer-20261025-11/);
+ assert.match(html,/presenter\.css\?v=large-stage-20261025-13/);
 });
 test('The classroom and live mini-games retain purple and lavender, never blue UI accents',()=>{
  const audience=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
@@ -828,6 +828,15 @@ test('Correct flag is an actual flag image, not a textual stripe order',()=>{
  const screen=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
  assert.match(screen,/answerArt&&q\.kind==='flag'/);
  assert.match(screen,/const hideFiller=state\.phase==='result'&&q\.kind==='flag'/);
- assert.match(readFileSync(new URL('./index.html',import.meta.url),'utf8'),/stage\.js\?v=actual-flag-20261025-11/);
- assert.match(readFileSync(new URL('./presenter.html',import.meta.url),'utf8'),/stage\.js\?v=actual-flag-20261025-11/);
+ assert.match(readFileSync(new URL('./index.html',import.meta.url),'utf8'),/stage\.js\?v=large-stage-20261025-13/);
+ assert.match(readFileSync(new URL('./presenter.html',import.meta.url),'utf8'),/stage\.js\?v=large-stage-20261025-13/);
+});
+
+test('Projector keeps generic decoration out of text-only questions and preserves real media',()=>{
+ const src=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
+ assert.match(src,/const hasVisual=Boolean\(q\.media_url\|\|q\.illustration_url/);
+ assert.match(src,/\|\|!hasVisual\?'':QwizStage\.illustration/);
+ assert.match(css,/figure\.question-frame figcaption\{/);
+ assert.match(css,/max-height:none!important;overflow:visible!important/);
 });
