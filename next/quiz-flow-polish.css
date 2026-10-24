@@ -47,3 +47,11 @@
 @media(max-width:749px){.team-board{grid-template-columns:repeat(2,minmax(0,1fr))}.projection-lobby.has-team-entry{grid-template-columns:minmax(0,1fr) 120px;gap:8px}.projection-lobby.has-team-entry .projection-qr{display:grid;width:120px;height:120px;padding:8px}.projection-lobby.has-team-entry .projection-qr :is(img,canvas){width:102px!important;height:102px!important}}
 @media(max-width:600px){.geography-bank-info,.live-projector-shortcut{align-items:stretch;flex-direction:column}.geography-bank-info button{max-width:none}.live-projector-shortcut button{width:100%}#liveConsole .live-actions{grid-template-columns:repeat(2,minmax(0,1fr))}.team-board-qr :is(img,canvas){width:clamp(86px,25vw,130px)!important;height:clamp(86px,25vw,130px)!important}.projection-lobby.has-team-entry h1{font-size:26px}}
 @media(max-width:380px){.projection-lobby.has-team-entry{grid-template-columns:1fr}.projection-lobby.has-team-entry .projection-qr{width:120px;height:120px}}
+
+/* The existing 11–15 team compact overrides had more-specific :has() rules. */
+#projectionMain .projection-lobby.has-team-entry{grid-template-columns:minmax(0,1fr) 150px;gap:20px;padding:8px 0 16px;position:static}
+#projectionMain .projection-lobby.has-team-entry .projection-code{position:static;margin:4px 0 0;padding:7px 14px;font-size:clamp(19px,2vw,30px)}
+#projectionMain .projection-lobby.has-team-entry .projection-qr{width:150px;height:150px;padding:11px}
+#projectionMain .projection-lobby.has-team-entry .projection-qr :is(img,canvas){width:126px!important;height:126px!important;max-width:100%;max-height:100%}
+@media(max-width:749px){#projectionMain .projection-lobby.has-team-entry{grid-template-columns:minmax(0,1fr) 120px;gap:8px}#projectionMain .projection-lobby.has-team-entry .projection-qr{width:120px;height:120px;padding:8px}#projectionMain .projection-lobby.has-team-entry .projection-qr :is(img,canvas){width:102px!important;height:102px!important}}
+@media(max-width:380px){#projectionMain .projection-lobby.has-team-entry{grid-template-columns:1fr}}
