@@ -137,9 +137,13 @@ function automaticRoundStandings(state){
  const rewardBanner=reward?'<div class="projection-reward-banner is-'+(reward.tone==='harm'?'harm':'boost')+'">'+
  '<strong>'+(reward.tone==='harm'?'Красный манёвр':'Зелёный маршрут')+' · '+escapeText(reward.title)+'</strong>'+
  '<span>'+(reward.tone==='harm'?'Против команды ':'Для команды ')+escapeText(reward.target)+'</span></div>':'';
- const list=(rows,unit)=>'<ol class="projection-round-leaders">'+rows.slice(0,15).map((r,i)=>
+ // On a short 720p projector display the leading rows at a readable scale.
+ // All participants retain their complete individual scoreboard on their own device.
+ const displayLimit=window.innerHeight<900?5:8;
+ const list=(rows,unit)=>'<ol class="projection-round-leaders">'+rows.slice(0,displayLimit).map((r,i)=>
  '<li><span>'+(i+1)+'</span><strong>'+escapeText(r.nickname||r.name||'Участник')+'</strong><b>'+
- Number(r.score||0).toLocaleString('ru-RU')+'</b></li>').join('')+'</ol>';
+ Number(r.score||0).toLocaleString('ru-RU')+'</b></li>').join('')+'</ol>'+
+ (rows.length>displayLimit?'<p class="projection-rank-more">Ещё '+(rows.length-displayLimit)+' · полный список доступен участникам</p>':'');
  $('projectionMain').innerHTML='<section class="projection-round-results" aria-label="Результаты завершённого раунда">'+
  '<span class="projection-eyebrow">РАУНД ЗАВЕРШЁН · РЕЗУЛЬТАТЫ</span><h1>Итоги раунда</h1>'+rewardBanner+
  '<div class="projection-round-columns"><section><h2>Команды <small>· '+escapeText(d.team_unit||'очки')+'</small></h2>'+list(teams)+'</section>'+
