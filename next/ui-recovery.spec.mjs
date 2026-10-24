@@ -54,7 +54,7 @@ for(const fallback of [false,true])test('The player can answer and leave '+(fall
 });
 test('The audience screen explains where to answer and links to the same room',async({page})=>{
  await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({contentType:'application/javascript',body:'window.supabase={createClient:()=>({rpc:async()=>({data:{code:"ABCDEF12",phase:"lobby",teams:[],lobby_teams:[]}}),channel:()=>({on(){return this},subscribe(){return this}})})};'}));
- await page.goto(base+'presenter.html?room=ABCDEF12');await expect(page.locator('#projectionPlay')).toBeVisible();await expect(page.locator('#projectionPlay')).toHaveAttribute('href',base+'?room=ABCDEF12');
+ await page.goto(base+'presenter.html?room=ABCDEF12');await expect(page.locator('#projectionPlay')).toBeVisible();await expect(page.locator('#projectionPlay')).toHaveAttribute('href',base+'?room=ABCDEF12&join=1');
  for(const width of [1280,320]){await page.setViewportSize({width,height:900});await expect(page.locator('#projectionPlay')).toBeInViewport();expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1)}
  await expect(page.locator('.projection-footer')).toContainText('Отвечайте на своём устройстве');
 });
