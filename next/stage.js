@@ -316,6 +316,7 @@ window.QwizStage=(()=>{
    answers.hidden=studying;
    answers.setAttribute('aria-hidden',String(studying));
    for(const control of answers.querySelectorAll('button,input,select')){
+    if(control.dataset.memoryWasDisabled===undefined)control.dataset.memoryWasDisabled=String(control.disabled);
     control.disabled=studying||control.dataset.memoryWasDisabled==='true';
    }
   }
