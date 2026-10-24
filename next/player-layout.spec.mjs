@@ -64,3 +64,50 @@ test('Rotation and desktop restore preserve controls and result details',async({
  await page.setViewportSize({width:1440,height:1000});await expect(page.locator('html')).not.toHaveClass(/player-compact/);await expect(page.locator('#playerMore')).not.toBeVisible();await expect(page.locator('#gameView .game-top #gameFullscreen')).toBeVisible();await expect(page.locator('#gameContent .personal-results')).toBeVisible();
  await page.setViewportSize({width:390,height:700});await fits(page);await page.locator('#playerMore').click();await page.locator('#leaveGame').click();await expect(page.locator('html')).not.toHaveClass(/player-compact/);await expect(page.locator('#playerDetails')).not.toBeVisible();
 });
+
+
+test('Finished arcade boost ballot stays entirely visible and accepts a vote at 390x650 and 320x480',async({page})=>{
+ for(const [width,height] of [[390,650],[320,480]]){
+  await page.setViewportSize({width,height});
+  await setup(page);
+  await page.evaluate(()=>{
+   showScreen('game');
+   const now=Date.now();
+   const view={code:'ABCDEF12',mode:'rocket',running:false,
+    server_now:new Date(now).toISOString(),
+    started_at:new Date(now-13000).toISOString(),
+    ends_at:new Date(now-1000).toISOString(),
+    mine:{team_id:'team-a',captain:false},
+    teams:[{id:'team-a',name:'Несгибаемые',points:8,place:1}],
+    awards:[],vote:{winner_team:'team-a',can_vote:true,open:true,
+      vote_ends_at:new Date(now+30000).toISOString(),counts:{},my_choice:null}};
+   window.boostVoteFixture=view;
+   const client={rpc:async name=>{
+    if(name==='qwiz_vote_boost'){view.vote.my_choice='headstart';view.vote.counts.headstart=1;return {data:{ok:true},error:null}}
+    return {data:view,error:null};
+   }};
+   QwizArcade.mountPlayer(document.querySelector('#gameContent'),{
+     code:'ABCDEF12',room_id:'00000000-0000-4000-8000-000000000091',
+     activity:{settings:{arcade_mode:'rocket'}}}, {client});
+  });
+  await expect(page.locator('.arcade-player.is-boost-voting')).toBeVisible();
+  await expect(page.locator('[data-boost-choice]')).toHaveCount(3);
+  const bounds=await page.evaluate(()=>{
+   const container=document.querySelector('#gameContent').getBoundingClientRect();
+   return [...document.querySelectorAll('[data-boost-choice]')].map(b=>{
+    const r=b.getBoundingClientRect();
+    return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,hostTop:container.top,hostBottom:container.bottom,
+      hostLeft:container.left,hostRight:container.right};
+   });
+  });
+  for(const r of bounds){
+   expect(r.top).toBeGreaterThanOrEqual(r.hostTop-2);
+   expect(r.bottom).toBeLessThanOrEqual(r.hostBottom+2);
+   expect(r.left).toBeGreaterThanOrEqual(r.hostLeft-2);
+   expect(r.right).toBeLessThanOrEqual(r.hostRight+2);
+  }
+  await expect(page.locator('[data-boost-choice="headstart"]')).toBeEnabled();
+  await page.locator('[data-boost-choice="headstart"]').click();
+  await expect(page.locator('[data-boost-choice="headstart"]')).toHaveClass(/selected/);
+ }
+});
