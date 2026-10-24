@@ -298,7 +298,7 @@ function render(state){
    $('projectorResultCountdown').textContent=state.ends_at?seconds(state.ends_at):'—';
   }
   if(state.phase==='lobby'){QwizTeams.board($('projectionTeamBoard'),state.lobby_teams||[],state.code);scheduleFitProjection();}
-  if(state.phase==='question'){QwizStage.patchTeams($('projectionMain'),state.teams);if($('teamAnswerCount'))$('teamAnswerCount').textContent=(state.teams||[]).reduce((a,t)=>a+Number(t.answered||0),0)}
+  if(state.phase==='question'){QwizStage.patchTeams($('projectionMain'),state.teams);if($('teamAnswerCount'))$('teamAnswerCount').textContent=(state.teams||[]).reduce((a,t)=>a+Number(t.answered||0),0)+' ответов получено'}
   if(!state.paused)QwizStage.updateClock(state,ctx.offset);return;
  }
  ctx.renderKey=key;const previous=ctx.lastPhase;ctx.lastPhase=state.phase;QwizStage.audio.stopMusic();
