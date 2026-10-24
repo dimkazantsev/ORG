@@ -169,12 +169,23 @@ function questionScene(state){
    (state.teams||[]).reduce((n,t)=>n+Number(t.answered||0),0)+' ответов получено</div>'+
   '</section>';
 }
+function applyProjectionSettings(settings){
+ if(!settings)return;
+ const sound=Boolean(settings.sound_enabled),volume=Number(settings.volume);
+ if(Number.isFinite(volume))QwizStage.audio.setVolume(Math.max(0,Math.min(1,volume/100)));
+ if(QwizStage.audio.enabled!==sound){
+   if(!sound)QwizStage.audio.stopMusic();
+   QwizStage.audio.enabled=sound;
+ }
+}
 function render(state){
+ applyProjectionSettings(state.screen_settings);
+ document.body.classList.toggle('projection-screen-ready',Boolean(state.code));
  clearError();$('projectionRoom').textContent=state.code||'';$('projectionPaused').hidden=!state.paused;
  if(state.code&&/^[A-F0-9]{8}$/.test(state.code)){
   rememberRoom(state.code);
   const joinQr=$('projectionJoinQr');if(joinQr.dataset.room!==state.code){joinQr.dataset.room=state.code;qr($('projectionJoinQrImage'),link(state.code))}
-  joinQr.hidden=state.phase==='lobby'; // One enlarged QR already appears in the lobby.
+  joinQr.hidden=true; // The lobby has one large QR; live questions stay QR-free.
  }
  $('projectionPlay').hidden=!state.code;$('projectionPlay').href=link(state.code);
  const key=[state.code,state.phase,state.index,state.activity?.title,state.activity?.type,state.activity?.settings?.arcade_mode].join(':');
