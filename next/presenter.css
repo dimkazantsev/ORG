@@ -618,3 +618,9 @@ body:fullscreen .projection-shell{height:100dvh}
  .projection-question-only{max-width:2200px}
  .projection-question-only h1{font-size:clamp(50px,3vw,95px)}
 }
+
+
+/* Preserve a clear tap-target gap in the optional manual room picker on narrow screens. */
+@media(max-width:550px){
+ .projection-setup-form .projection-switch-row{row-gap:14px}
+}
