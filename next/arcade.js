@@ -67,7 +67,7 @@ window.QwizArcade=(()=>{
   const badges=tr.root.querySelector('[data-arcade-badges]');if(badges)badges.innerHTML=(v.awards||[]).slice(0,12).map(a=>'<span class="arcade-award">'+escape(a.title)+' · +'+Number(a.credits)+' жет.</span>').join('');
   const vote=v.vote,ballot=tr.root.querySelector('[data-arcade-vote]');
   // The ballot replaces the spent arcade scene on a player's phone; never send it below the viewport.
-  tr.root.classList.toggle('is-boost-voting',Boolean(vote&&tr.kind==='player'));
+  tr.root.querySelector('.arcade-shell.arcade-player')?.classList.toggle('is-boost-voting',Boolean(vote&&tr.kind==='player'));
   if(ballot){
    ballot.hidden=!vote;
    if(vote){
