@@ -180,7 +180,16 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  if((!s.has_answer||s.phase!=='question')&&$('gameNotice').classList.contains('success'))notice('gameNotice','');
  if(s.phase!=='intermission')window.QwizArcade?.stop('player');
   if(s.phase!=='intermission'||s.activity?.settings?.arcade_mode!=='russia_map')window.QwizGeo?.stop('player');
- if(s.phase==='lobby'){el.innerHTML='<div class="game-empty"><div class="eyebrow">Вы в комнате '+esc(s.code)+'</div><h1>Вы в игре.</h1><p>Преподаватель собирает участников. Игра начнётся на всех устройствах одновременно.</p><div class="phase-label">'+esc(myTeam?.name||'Ожидание команды')+'</div></div>';text('playerStatus','Подключён. Ожидайте начала.');return}
+ if(s.phase==='lobby'){el.innerHTML='<section class="game-empty game-lobby-wait" aria-label="Ожидание начала игры">'+
+ '<div class="lobby-ambient" aria-hidden="true"><span>✦</span><span>✳</span><span>✦</span><span>✧</span></div>'+
+ '<div class="lobby-signal" aria-hidden="true"><span class="lobby-signal-ring"></span><span class="lobby-signal-ring"></span>'+
+ '<svg viewBox="0 0 100 100" fill="none"><path d="M30 72 48 20c2-6 9-6 11 0l12 32-21 4-20-4m-11 21 31-17 31 17" stroke="currentColor" stroke-width="6" stroke-linejoin="round" stroke-linecap="round"/><circle cx="50" cy="47" r="7" fill="currentColor"/></svg></div>'+
+ '<div class="eyebrow lobby-room-code">КОМНАТА '+esc(s.code)+'</div>'+
+ '<h1>Скоро начнём!</h1><p>Команды собираются. Игра откроется одновременно для всех участников.</p>'+
+ '<div class="lobby-team-chip"><span class="lobby-team-dot" aria-hidden="true"></span>'+esc(myTeam?.name||'Ожидание команды')+'</div>'+
+ '<div class="lobby-progress" aria-label="Ожидание старта"><span></span></div>'+
+ '<div class="lobby-people">'+Number(s.players?.length||0)+' участников подключено</div></section>';
+ text('playerStatus','Подключён. Ожидайте начала.');return}
  if(s.phase==='finished'){el.innerHTML='<div class="game-empty"><div class="eyebrow">Игра завершена</div><h1>Финальный рейтинг</h1><p>Спасибо за участие. Результаты зафиксированы на сервере.</p>'+personalResults(s,true)+'</div>';text('playerStatus','Игра завершена.');return}
  const question=s.question;
  if(s.phase==='intermission'){
