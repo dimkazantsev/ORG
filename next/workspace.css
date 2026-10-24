@@ -721,3 +721,26 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 .moderator-choice.has-stripes .flag-stripe-art{width:min(100%,170px);height:auto;aspect-ratio:3/2;max-height:92px;margin:0 auto;border-radius:5px}
 .moderator-slide.is-current .moderator-choice.has-stripes .flag-stripe-art{width:min(100%,195px);max-height:100px}
 @media(max-width:650px){.moderator-slide-choices:has(.has-stripes){grid-template-columns:minmax(0,1fr)}.moderator-choice.has-stripes .flag-stripe-art,.moderator-slide.is-current .moderator-choice.has-stripes .flag-stripe-art{max-height:70px;max-width:100%}}
+
+
+/* Finished-room controls: a single clear replay action, not four fake disabled buttons. */
+#liveConsole .live-actions button{display:inline-flex;justify-content:center;align-items:center;gap:9px;
+ transition:transform .16s,box-shadow .16s,background .16s,color .16s}
+#liveConsole .live-actions .ui-icon{width:20px;height:20px;flex:none}
+#liveConsole.is-finished .live-actions{display:flex;justify-content:center;align-items:center;
+ position:relative;top:auto;bottom:auto;grid-template-columns:none;background:#faf7ff;
+ border:1px solid #e3d8fa;box-shadow:none;padding:14px}
+#liveConsole.is-finished .live-actions #livePause,
+#liveConsole.is-finished .live-actions #liveNext,
+#liveConsole.is-finished .live-actions #liveFinish{display:none!important}
+#liveConsole.is-finished .live-actions #liveStart{width:min(100%,390px);min-height:58px;
+ opacity:1!important;cursor:pointer;font-size:15px;font-weight:800;color:#fff;
+ background:linear-gradient(135deg,#8042ec,#6231ca);border:0;border-radius:15px;
+ box-shadow:0 7px 18px #7346c34d}
+#liveConsole.is-finished .live-actions #liveStart:hover{transform:translateY(-2px);
+ box-shadow:0 12px 22px #7346c361}
+#liveConsole.is-finished .live-actions #liveStart:disabled{opacity:.5!important;cursor:wait}
+#liveConsole.is-finished .live-actions #liveStart:focus-visible{outline:3px solid #7d49e4;outline-offset:4px}
+.live-controls-hint{margin:8px 14px 14px;text-align:center;font-size:13px;color:#615477;line-height:1.5}
+.live-controls-hint[hidden]{display:none}
+@media(prefers-reduced-motion:reduce){#liveConsole .live-actions button{transition:none}}
