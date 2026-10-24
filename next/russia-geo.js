@@ -89,7 +89,12 @@
    '<p class="geo-message" role="status" aria-live="polite">'+esc(t.message||'')+'</p>'+
    '<div class="geo-footer"><span>Осталось '+v.remaining+' сек.</span><small>Результат каждого игрока индивидуален</small></div></section>';
   const nextSvg=root.querySelector('.geo-map-frame .geo-map-svg');
-   if(nextSvg&&t.zoomBox&&!nextSvg.classList.contains('geo-silhouette'))nextSvg.setAttribute('viewBox',t.zoomBox);
+   if(nextSvg&&!nextSvg.classList.contains('geo-silhouette')){
+     // Fill the available phone viewport without distorting the outline.
+     // Touch drag and zoom controls expose regions outside the initial crop.
+     if(window.matchMedia('(max-width:680px)').matches)nextSvg.setAttribute('preserveAspectRatio','xMidYMid slice');
+     if(t.zoomBox)nextSvg.setAttribute('viewBox',t.zoomBox);
+   }
    if(showMap&&!geometry&&!done&&!t.mapPending&&!t.mapError){t.mapPending=true;loadMap().then(()=>{t.mapPending=false;roundState(t)}).catch(e=>{t.mapPending=false;t.mapError=true;t.message='Геометрия недоступна: '+e.message;roundState(t)})}
  }
  async function fetchView(t,answer=null){
