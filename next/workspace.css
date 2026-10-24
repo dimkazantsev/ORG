@@ -831,3 +831,67 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
  #generalDialog .dialog-body>.two-inputs{grid-template-columns:minmax(0,1fr);gap:16px}
  #generalDialog .dialog-body>.two-inputs>label :is(input,select){height:52px;min-height:52px}
 }
+
+
+/* Palette geometry is defined in one final scope. No text clipping at narrow widths. */
+#cardPalette.card-main-palette button{
+  box-sizing:border-box;min-width:0;min-height:64px;height:auto;
+  padding:10px 12px;white-space:normal;overflow:visible;line-height:1.35;
+  overflow-wrap:anywhere;align-items:center;
+}
+#cardPalette.card-main-palette .palette-name{
+  flex:0 1 auto;min-width:0;white-space:normal;text-align:center;
+  text-overflow:clip;overflow:visible;line-height:1.35;
+}
+#openGamesPalette .games-chevron-box{
+  display:grid;place-items:center;flex:0 0 28px;width:28px;height:28px;
+  border:1px solid #d8c5f5;border-radius:9px;color:#7040db;background:#f3edff;
+  transition:background-color .18s,border-color .18s;
+}
+#openGamesPalette .games-chevron-box .games-chevron{
+  display:block;width:16px;height:16px;stroke-width:2.1;
+  transition:transform .2s ease;
+}
+#openGamesPalette[aria-expanded="true"] .games-chevron-box{
+  background:#dfd0ff;border-color:#b99aea;
+}
+#openGamesPalette[aria-expanded="true"] .games-chevron-box .games-chevron{
+  transform:rotate(180deg);
+}
+#openGamesPalette:focus-visible .games-chevron-box{
+  outline:2px solid #7040db;outline-offset:2px;
+}
+.game-palette #arcadePalette.arcade-palette{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));
+  align-items:stretch;
+  gap:10px;
+}
+.game-palette #arcadePalette.arcade-palette button{
+  box-sizing:border-box;min-width:0;min-height:76px;height:auto;
+  display:flex;align-items:center;justify-content:flex-start;
+  padding:12px 14px;gap:12px;font-size:14px;line-height:1.4;
+  white-space:normal;overflow:visible;text-overflow:clip;
+  word-break:normal;overflow-wrap:anywhere;
+}
+.game-palette #arcadePalette.arcade-palette button>.arcade-palette-icon{
+  flex:0 0 38px;
+}
+.game-palette #arcadePalette.arcade-palette button>span:last-child{
+  display:block;flex:1 1 0;min-width:0;
+  white-space:normal;overflow:visible;text-overflow:clip;
+  -webkit-line-clamp:unset;line-clamp:unset;
+  word-break:normal;overflow-wrap:anywhere;
+}
+@media(max-width:760px){
+  #cardPalette.card-main-palette{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:400px){
+  #cardPalette.card-main-palette button{padding:10px 7px;gap:6px;font-size:13px}
+  #openGamesPalette .games-chevron-box{width:26px;height:26px;flex-basis:26px}
+  .game-palette #arcadePalette.arcade-palette{grid-template-columns:minmax(0,1fr)}
+}
+@media(prefers-reduced-motion:reduce){
+  #openGamesPalette .games-chevron-box,
+  #openGamesPalette .games-chevron-box .games-chevron{transition:none}
+}
