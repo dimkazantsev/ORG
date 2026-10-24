@@ -652,7 +652,7 @@ async function updateModeratorSlides(s){
      const stripes=QwizStage.stripeOption(choice);
      const content=imageUrl?'<img class="moderator-option-flag" src="'+esc(imageUrl)+'" alt="Флаг, вариант '+letter+'" loading="lazy" decoding="async">':
        stripes||'<span>'+esc(typeof choice==='string'?choice:choice?.label||choice?.text||'Вариант '+letter)+'</span>';
-     return '<span class="moderator-choice '+(imageUrl?'has-flag ':'')+(done&&Number(slide.correct)===index?'is-correct':'')+'">'+
+     return '<span class="moderator-choice '+(imageUrl?'has-flag ':'')+(stripes?'has-stripes ':'')+(done&&Number(slide.correct)===index?'is-correct':'')+'">'+
        '<b class="moderator-option-letter">'+letter+'</b>'+content+'</span>';
    }).join(''):'';
    const map=slide.mode==='russia_map';
