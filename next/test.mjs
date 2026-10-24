@@ -112,7 +112,7 @@ test('Audience screen retains the approved light lavender palette',()=>{
  assert.doesNotMatch(css,/body\.projection-screen-ready\{background:\s*#160e41/);
  assert.doesNotMatch(css,/linear-gradient\(135deg,#190e46/);
  assert.match(css,/\.projection-screen-ready \.projection-footer/);
- assert.match(html,/presenter\.css\?v=answer-reveal-20261024-11/);
+ assert.match(html,/presenter\.css\?v=rounds-responsive-20261024-13/);
 });
 test('The classroom and live mini-games retain purple and lavender, never blue UI accents',()=>{
  const audience=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
@@ -125,8 +125,8 @@ test('The classroom and live mini-games retain purple and lavender, never blue U
  assert.doesNotMatch(arcade,/#6cbee4/i);
  assert.doesNotMatch(gameplay,/#54a3d8|#8291db/i);
  assert.doesNotMatch(studio,/#497d91|#e9f3fa/i);
- assert.match(gameHtml,/arcade\.css\?v=lavender-no-blue-20261024-9/);
- assert.match(screenHtml,/arcade\.css\?v=lavender-no-blue-20261024-9/);
+ assert.match(gameHtml,/arcade\.css\?v=rounds-responsive-20261024-13/);
+ assert.match(screenHtml,/arcade\.css\?v=rounds-responsive-20261024-13/);
 });
 test('Flag imagery remains visible and visual answers show the flag instead of placeholder labels',()=>{
  const shared=readFileSync(new URL('./stage.js',import.meta.url),'utf8');
@@ -176,7 +176,43 @@ test('Moderator slide cards shrink to content and do not reserve blank height',(
  assert.match(compact,/\.moderator-slide\s*\{[^}]*min-height:0;height:auto/);
  assert.match(compact,/\.moderator-slide-choices\s*\{[^}]*margin:2px 0 0/);
  assert.doesNotMatch(compact,/min-height:290px|margin-top:auto/);
- assert.match(html,/workspace\.css\?v=compact-storyboard-20261024-12/);
+ assert.match(html,/workspace\.css\?v=rounds-responsive-20261024-13/);
+});
+test('Result lifecycle has automatic expiry with full timeline preview',()=>{
+ const timer=readFileSync(new URL('./migrations/20261024_auto_result_transition.sql',import.meta.url),'utf8');
+ const deck=readFileSync(new URL('./migrations/20261024_host_full_card_storyboard.sql',import.meta.url),'utf8');
+ const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ assert.match(timer,/ends_at=clock_timestamp\(\)\+interval ''8 seconds''/);
+ assert.match(deck,/public\.qwiz_room_builds/);
+ assert.match(deck,/public\.qwiz_room_activity/);
+ assert.match(deck,/'russia_map'/);
+ assert.match(deck,/FOR slot IN -1\.\.1 LOOP/);
+ assert.match(host,/qwiz_geo_projection/);
+ assert.match(host,/qwiz_party_arcade/);
+ assert.match(host,/moderator-slide-live/);
+});
+test('Projection fits TV sizes and phones show actual round standings',()=>{
+ const projector=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ assert.match(projector,/fitProjectionScene/);
+ assert.match(projector,/scheduleFitProjection/);
+ assert.match(css,/height:100dvh;min-height:0/);
+ assert.match(app,/game-statistics-panel/);
+ assert.match(app,/personalResults\(s,true\)/);
+});
+test('Animal avatars have visible fallback and animated arcade receives tap reactions',()=>{
+ const teams=readFileSync(new URL('./teams.js',import.meta.url),'utf8');
+ const profile=readFileSync(new URL('./profile.js',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./teams.css',import.meta.url),'utf8');
+ const arcade=readFileSync(new URL('./arcade.js',import.meta.url),'utf8');
+ const motion=readFileSync(new URL('./arcade.css',import.meta.url),'utf8');
+ assert.match(teams,/animal-fallback-svg/);
+ assert.match(profile,/portrait\(me.avatar/);
+ assert.match(css,/not\(\.portrait-atlas-verified\)/);
+ assert.match(arcade,/animateTap\(tr\)/);
+ assert.match(motion,/@keyframes arcade-burst/);
+ assert.match(motion,/prefers-reduced-motion/);
 });
 test('New JavaScript parses independently of legacy app.js',()=>{assert.doesNotThrow(()=>new Function(js));assert.doesNotMatch(html,/\.\/\.\.\/(app\.js|styles\.css)/)});
 test('All direct DOM IDs referenced by client exist in HTML',()=>{
