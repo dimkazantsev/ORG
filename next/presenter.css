@@ -878,3 +878,29 @@ body:fullscreen .projection-shell{height:100dvh}
  #projectionMain .projection-question-only.is-result .projection-answer-single{min-height:0}
 }
 @media(prefers-reduced-motion:reduce){#projectionMain .projection-intro-card .projection-intro-orbit.is-flag svg{animation:none!important}}
+
+
+/* Figcaption and media must stay together at every classroom aspect ratio. */
+#projectionMain .projection-question-only figure.question-frame{display:flex;flex-direction:column;
+ align-items:center;justify-content:flex-start;row-gap:clamp(7px,.75dvh,14px);
+ padding:0;margin:0 auto!important;max-height:none!important;overflow:visible!important}
+#projectionMain .projection-question-only figure.question-frame .question-picture{
+ width:100%;min-height:0!important;flex:none;margin:0;
+ box-sizing:border-box;max-height:min(32dvh,310px);overflow:hidden}
+#projectionMain .projection-question-only figure.question-frame .question-picture>img{
+ box-sizing:border-box;display:block;width:auto!important;height:auto!important;
+ max-width:100%!important;max-height:min(29dvh,278px)!important;
+ object-fit:contain!important;margin:auto}
+#projectionMain .projection-question-only figure.question-frame figcaption{
+ display:block;position:relative;flex:none;margin:0!important;max-width:100%;
+ text-align:center;line-height:1.4;font-size:clamp(14px,1.35vw,22px);
+ padding:0 4px;overflow-wrap:anywhere}
+#projectionMain .projection-question-only.is-result figure.question-frame .question-picture{
+ max-height:min(16dvh,150px)}
+#projectionMain .projection-question-only.is-result figure.question-frame .question-picture>img{
+ max-height:min(14dvh,130px)!important}
+@media(max-height:740px){
+ #projectionMain .projection-question-only figure.question-frame{row-gap:5px}
+ #projectionMain .projection-question-only figure.question-frame .question-picture{max-height:27dvh}
+ #projectionMain .projection-question-only figure.question-frame figcaption{font-size:clamp(12px,1.15vw,18px)}
+}
