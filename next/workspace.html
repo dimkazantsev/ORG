@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="./workspace.css?v=geo-launch-20261024-2">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="./stage.css?v=quiz-live-20261023-1"><script defer src="./stage.js?v=quiz-live-20261023-1"></script>
-<script defer src="./vendor/qrcode.min.js"></script><script defer src="./workspace.js?v=geo-launch-20261024-2"></script>
+<script defer src="./vendor/qrcode.min.js"></script><script defer src="./workspace.js?v=geo-bank-20261024-3"></script>
 <link rel="stylesheet" href="./motion.css?v=2">
 <link rel="stylesheet" href="./teams.css?v=quiz-live-20261023-1"><script defer src="./teams.js?v=quiz-live-20261023-1"></script><script defer src="./workspace-teams.js?v=geo-launch-20261024-2"></script>
 <link rel="stylesheet" href="./arcade.css?v=quiz-live-20261023-1"><script defer src="./arcade.js?v=quiz-live-20261023-1"></script>
@@ -32,7 +32,7 @@
 <div class="nav-end"><details class="studio-help"><summary>Как провести игру</summary><p>Сохраните сборку, создайте комнату и откройте пульт на телефоне или планшете.</p></details><button type="button" id="showPublicScreen" class="nav-project"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v13H3zM8 21h8M12 17v4"></path></svg><span>Экран аудитории</span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"></path></svg></button></div></aside>
 <main class="content" id="mainContent">
 <section class="page" id="bankPage">
- <div class="page-head"><div><span class="eyebrow">ВАША КОЛЛЕКЦИЯ</span><h1>Флаги мира</h1><p>Чистая библиотека: 193 государства — члена ООН и два наблюдателя. Сначала проверенные изображения, затем вопросы.</p></div><button class="primary-button" id="newQuestion"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg> Создать вопрос</button></div>
+ <div class="page-head"><div><span class="eyebrow">ВАША КОЛЛЕКЦИЯ</span><h1 id="bankHeading">Все вопросы</h1><p id="bankDescription">Все темы и игровые задания в одной библиотеке. Выберите тему для фильтрации.</p></div><button class="primary-button" id="newQuestion"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg> Создать вопрос</button></div>
  <div class="filter-panel"><label class="search-label">Поиск по вопросам<span class="search-field"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 5 5"></path></svg><input id="bankSearch" type="search" placeholder="Название, тема или слово из вопроса…" autocomplete="off" aria-keyshortcuts="/"><kbd aria-hidden="true">/</kbd></span></label>
  <label>Тема<select id="bankTopic"><option value="">Все темы</option></select></label>
  <label>Механика<select id="bankMode"><option value="">Все механики</option></select></label>
