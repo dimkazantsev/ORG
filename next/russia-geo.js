@@ -113,7 +113,7 @@
        });
      }
    }
-   if(showMap&&!geometry&&!done&&!t.mapPending&&!t.mapError){t.mapPending=true;loadMap().then(()=>{t.mapPending=false;roundState(t)}).catch(e=>{t.mapPending=false;t.mapError=true;t.message='Геометрия недоступна: '+e.message;roundState(t)})}
+   if(showMap&&!geometry&&!done&&!t.mapPending&&!t.mapError){t.mapPending=true;loadMap().then(()=>{t.mapPending=false;t.renderKey=null;roundState(t)}).catch(e=>{t.mapPending=false;t.mapError=true;t.renderKey=null;t.message='Геометрия недоступна: '+e.message;roundState(t)})}
  }
  async function fetchView(t,answer=null){
   if(t.busy||t.closed)return;
