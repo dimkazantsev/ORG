@@ -928,3 +928,30 @@ test('Game buttons fit their full labels and the Games chevron stays inside its 
   if(width===320||width===768)await page.screenshot({path:'visual-artifacts/palette-games-fit-'+width+'.png',fullPage:true,animations:'disabled'});
  }
 });
+
+test('Player start screen does not expose auditorium link; waiting icon is centered',async({page})=>{
+ for(const [width,height] of [[320,700],[390,844],[768,900]]){
+  await page.setViewportSize({width,height});
+  await page.goto('http://127.0.0.1:8080/next/');
+  await expect(page.locator('#homeView')).toBeVisible();
+  await expect(page.locator('header a[href*="presenter.html"]')).toHaveCount(0);
+  await page.evaluate(()=>{
+   ctx.room={code:'A1B2C3D4',phase:'lobby',index:-1,total:10,
+    title:'Пробная игра',teams:[{id:'t',name:'Команда 1',score:0}],
+    players:[],me:{id:'p',team_id:'t'},has_answer:false};
+   showScreen('game');renderGame();
+  });
+  await expect(page.locator('.game-lobby-wait .lobby-signal-core')).toBeVisible();
+  const g=await page.locator('.game-lobby-wait .lobby-signal').evaluate(el=>{
+   const a=el.getBoundingClientRect(),b=el.querySelector('.lobby-signal-core').getBoundingClientRect();
+   const c=el.querySelector('.lobby-play-mark').getBoundingClientRect();
+   return {x:Math.abs((a.left+a.width/2)-(b.left+b.width/2)),
+    y:Math.abs((a.top+a.height/2)-(b.top+b.height/2)),
+    ix:Math.abs((b.left+b.width/2)-(c.left+c.width/2)),
+    iy:Math.abs((b.top+b.height/2)-(c.top+c.height/2))};
+  });
+  expect(g.x).toBeLessThanOrEqual(1);expect(g.y).toBeLessThanOrEqual(1);
+  expect(g.ix).toBeLessThanOrEqual(3);expect(g.iy).toBeLessThanOrEqual(1);
+  if(width===390)await page.screenshot({path:'visual-artifacts/lobby-centered-390.png',fullPage:true,animations:'disabled'});
+ }
+});
