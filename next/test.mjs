@@ -31,6 +31,24 @@ test('Moderator can finish rooms without a PL/pgSQL activity alias conflict',()=
  assert.match(host,/\$\('liveFinish'\)\.onclick=\(\)=>control\('finish'\)/);
  assert.match(host,/qwiz_party_control/);
 });
+test('Geography of Russia is a real question bank, not a list of regions',()=>{
+ const workspace=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const layout=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ const seed=readFileSync(new URL('./migrations/20261024_geo_verified_question_bank.sql',import.meta.url),'utf8');
+ assert.match(layout,/id="bankHeading"/);
+ assert.match(layout,/id="bankDescription"/);
+ assert.doesNotMatch(layout,/<h1>Флаги мира<\/h1>/);
+ assert.match(workspace,/qwiz_geo_questions/);
+ assert.match(workspace,/geoModeNames/);
+ assert.match(workspace,/isGeoTopic\(topic\)/);
+ assert.match(workspace,/state\.bankRequest/);
+ assert.doesNotMatch(workspace,/89 регионов\. Индивидуальное задание создаётся случайно/);
+ assert.match(seed,/CROSS JOIN \(VALUES\('capital'\),\('district'\)\)/);
+ assert.match(seed,/INSERT INTO public\.qwiz_bank/);
+ assert.match(seed,/geo:verified:v1/);
+ assert.match(seed,/REVOKE ALL ON FUNCTION public\.qwiz_geo_questions/);
+ assert.match(seed,/GRANT EXECUTE ON FUNCTION public\.qwiz_geo_questions/);
+});
 test('New JavaScript parses independently of legacy app.js',()=>{assert.doesNotThrow(()=>new Function(js));assert.doesNotMatch(html,/\.\/\.\.\/(app\.js|styles\.css)/)});
 test('All direct DOM IDs referenced by client exist in HTML',()=>{
  const ids=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]));
