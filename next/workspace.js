@@ -152,6 +152,18 @@ async function loadQuestions(){
   renderQuestions();renderTopics();msg('bankMessage','');
  }catch(e){msg('bankMessage',e.message,true)}
 }
+async function loadGeographyBank(){
+ try{
+  $('geographyBankInfo').hidden=false;$('newQuestion').hidden=true;
+  const d=await rpc('qwiz_geo_catalog',{p_search:$('bankSearch').value.trim(),p_offset:state.bankOffset,p_limit:state.bankPageSize});
+  state.questions=[];state.questionTotal=Number(d.total)||0;
+  $('navQuestionCount').textContent=fmt(state.questionTotal);$('questionsTotal').textContent='('+fmt(state.questionTotal)+' субъектов)';
+  $('bankItems').innerHTML=(d.items||[]).map(r=>'<article class="question-row"><div><div class="question-meta"><span class="chip lilac">География России</span><span class="chip">'+esc(r.kind)+'</span></div><h3>'+esc(r.name)+'</h3><p>Центр: '+esc(r.capital)+' · '+esc(r.fd)+' · '+esc(r.neighbor_count)+' соседних субъектов</p></div><button type="button" class="small-button" data-new-geo-round>В раунд →</button></article>').join('')||'<div class="empty">Ничего не найдено.</div>';
+  $('bankPageInfo').textContent='Страница '+(Math.floor(state.bankOffset/state.bankPageSize)+1)+' из '+Math.max(1,Math.ceil(state.questionTotal/state.bankPageSize));
+  $('bankPrevious').disabled=state.bankOffset===0;$('bankNext').disabled=state.bankOffset+state.bankPageSize>=state.questionTotal;
+  renderTopics();msg('bankMessage','');
+ }catch(e){msg('bankMessage',e.message,true)}
+}
 let previewWindow=null,previewPage=[],previewOffset=0,previewIndex=0,previewTotal=0;
 function previewFilter(offset){
  return {search:$('bankSearch').value.trim().slice(0,90),topic_id:$('bankTopic').value,kind:'flag',
@@ -364,6 +376,15 @@ function card(type){return {type,title:titles[type]||'Раунд',icon:icons[typ
 function ensureFinale(){state.cards=state.cards.filter((c,i)=>c.type!=='finale'||i===state.cards.length-1);
  if(!state.cards.some(c=>c.type==='finale'))state.cards.push(card('finale'))}
 function newBuild(){state.buildId=null;state.cards=[card('intro'),card('round'),card('finale')];$('buildTitle').value='';$('composer').hidden=false;renderCards();$('buildTitle').focus()}
+function addGeoRound(){
+ if($('composer').hidden)newBuild();
+ const topic=geoTopic();if(!topic){msg('buildMessage','Тема «География России» не найдена. Обновите кабинет.',true);return}
+ const c=card('bonus');c.title='География России · интерактивная карта';c.icon='⌖';c.topic_id=topic.id;
+ c.settings={...c.settings,arcade_mode:'russia_map',geo_count:15,geo_seconds:180,geo_modes:geoModes.map(x=>x[0])};
+ const blank=state.cards.findIndex(x=>x.type==='round'&&!x.topic_id&&!x.settings?.arcade_mode);
+ if(blank>=0)state.cards.splice(blank,1,c);else state.cards.splice(state.cards.length-1,0,c);
+ renderCards();section('builder');msg('buildMessage','Географический раунд добавлен. Настройте число субъектов и механики.');
+}
 function appendCard(type='round',arcadeMode=null){if(state.cards.length>=60){msg('buildMessage','Не больше 60 карточек.',true);return}
  const added=card(type);
  if(arcadeMode&&arcadeGames[arcadeMode]){const meta=arcadeGames[arcadeMode];added.title=meta.title;added.icon=meta.icon;added.settings.arcade_mode=arcadeMode;added.settings.arcade_seconds=meta.seconds;}
@@ -559,13 +580,15 @@ function wire(){
  $('refreshAll').onclick=refreshWorkspace;
  document.addEventListener('keydown',event=>{if(event.key!=='/'||event.ctrlKey||event.metaKey||event.altKey||event.target.closest('input,textarea,select,[contenteditable="true"]')||document.querySelector('dialog[open]')||state.activePage!=='bank')return;event.preventDefault();$('bankSearch').focus()});
  $('bankSearch').oninput=()=>{clearTimeout(state.bankTimer);state.bankOffset=0;state.bankTimer=setTimeout(loadQuestions,350)};
- for(const id of ['bankTopic','bankMode','bankSort'])$(id).onchange=()=>{state.bankOffset=0;loadQuestions()};
+ for(const id of ['bankTopic','bankMode','bankSort'])$(id).onchange=()=>{state.bankOffset=0;if(id==='bankTopic')fillSelect($('bankMode'),$('bankTopic').value===geoTopic()?.id?geoModes:flagModes.map(x=>[x[0],x[1]]),'Все механики');loadQuestions()};
  $('topicChips').onclick=e=>{const b=e.target.closest('[data-topic]');if(!b)return;$('bankTopic').value=b.dataset.topic;state.bankOffset=0;loadQuestions()};
  $('bankPrevious').onclick=()=>{state.bankOffset=Math.max(0,state.bankOffset-state.bankPageSize);loadQuestions()};
  $('bankNext').onclick=()=>{if(state.bankOffset+state.bankPageSize<state.questionTotal){state.bankOffset+=state.bankPageSize;loadQuestions()}};
+ $('newGeoRound').onclick=addGeoRound;
  $('newTopic').onclick=()=>{$('topicDialog').showModal();$('topicName').focus()};$('topicForm').onsubmit=saveTopic;$('newQuestion').onclick=()=>editQuestion();
  $('bankItems').onclick=async e=>{
-  const preview=e.target.closest('[data-preview-question]');
+  if(e.target.closest('[data-new-geo-round]')){addGeoRound();return}
+   const preview=e.target.closest('[data-preview-question]');
   if(preview){previewQuestion(preview.dataset.previewQuestion);return}
   const publish=e.target.closest('[data-publish-question]');
   if(publish){
@@ -587,11 +610,7 @@ function wire(){
  $('cardSoundPreview').onclick=async()=>{if(!QwizStage.audio.enabled)await QwizStage.audio.toggle();await QwizStage.audio.unlock();QwizStage.audio.play($('cardSound').value)};
  $('addCard').onclick=()=>appendCard('round');$('appendRound').onclick=()=>appendCard('round');
  $('cardPalette').onclick=e=>{const b=e.target.closest('[data-card]');if(!b)return;
-   if(b.dataset.geo==='russia_map'){
-    appendCard('bonus');const c=state.cards[state.cards.length-2];c.title='Карта России · 89 субъектов';c.icon='map';
-    c.settings={...c.settings,arcade_mode:'russia_map',geo_count:15,geo_seconds:180,geo_modes:['locate','identify','capital','flag','silhouette','neighbour','detective','district']};renderCards();
-   }else appendCard(b.dataset.card,b.dataset.arcade||null);
-  };
+  if(b.dataset.geo==='russia_map')addGeoRound();else appendCard(b.dataset.card,b.dataset.arcade||null)};
  $('arcadePalette').onclick=e=>{const b=e.target.closest('[data-arcade]');if(b)appendCard(b.dataset.card,b.dataset.arcade)};
  $('roundCards').onclick=e=>{
   const edit=e.target.closest('[data-edit-card]');if(edit){editCard(Number(edit.dataset.editCard));return}
