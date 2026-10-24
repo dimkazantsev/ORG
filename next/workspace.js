@@ -621,9 +621,15 @@ async function updateModeratorSlides(state){
    const image=typeof slide.media_url==='string'&&/^https:\/\//i.test(slide.media_url)
     ?'<div class="moderator-slide-image"><img loading="lazy" decoding="async" src="'+esc(slide.media_url)+'" alt="Иллюстрация вопроса"></div>':'';
    const choices=Array.isArray(slide.options)?slide.options.slice(0,4).map((choice,index)=>{
-     const label=typeof choice==='string'?choice:choice?.label||choice?.text||'Вариант '+(index+1);
      const done=i===0||state.phase==='result'||state.phase==='finished';
-     return '<span class="moderator-choice '+(done&&Number(slide.correct)===index?'is-correct':'')+'">'+esc(label)+'</span>';
+     const letter=String.fromCharCode(65+index);
+     // Picture-choice questions use actual flag images; the value is not the name of the country.
+     const imageUrl=choice&&typeof choice==='object'&&typeof choice.image_url==='string'&&/^https:\/\//i.test(choice.image_url)?choice.image_url:'';
+     const stripes=QwizStage.stripeOption(choice);
+     const content=imageUrl?'<img class="moderator-option-flag" src="'+esc(imageUrl)+'" alt="Флаг, вариант '+letter+'" loading="lazy" decoding="async">':
+       stripes||'<span>'+esc(typeof choice==='string'?choice:choice?.label||choice?.text||'Вариант '+letter)+'</span>';
+     return '<span class="moderator-choice '+(imageUrl?'has-flag ':'')+(done&&Number(slide.correct)===index?'is-correct':'')+'">'+
+       '<b class="moderator-option-letter">'+letter+'</b>'+content+'</span>';
    }).join(''):'';
    return '<article class="moderator-slide '+(i===1?'is-current':'')+'"><span class="moderator-slide-overline">'+where+'</span>'+
      '<h4>'+esc(title)+'</h4><p>'+esc(slide.prompt||slide.title||'Нет слайда')+'</p>'+
