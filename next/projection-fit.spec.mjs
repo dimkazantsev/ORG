@@ -218,3 +218,39 @@ test('Real flag frame stays attached to artwork and all four flag choices remain
   }
  }
 });
+
+
+test('Final audience screen shows readable leaders instead of shrinking all 40 players',async({page})=>{
+ for(const [width,height] of [[1280,720],[1366,768],[1920,1080],[768,1024]]){
+  await page.setViewportSize({width,height});
+  const teams=Array.from({length:15},(_,i)=>({id:'t'+i,position:i+1,name:'Команда '+(i+1),score:1500-i*30}));
+  const players=Array.from({length:40},(_,i)=>({id:'p'+i,position:i+1,nickname:'Игрок '+(i+1),score:800-i*7}));
+  await page.evaluate(({teams,players})=>{
+   ctx.renderKey='';
+   render({code:'A1B2C3D4',title:'Большой квиз',phase:'finished',index:12,total:12,
+    teams,players,question_stats:Array.from({length:12},()=>({answered:40,correct:20})),
+    activity:{title:'Финал игры'},screen_settings:{sound_enabled:false,volume:0}});
+  },{teams,players});
+  await page.waitForTimeout(250);
+  const limit=width<=800?3:height<900?4:6;
+  await expect(page.locator('.projection-finale-compact')).toBeVisible();
+  await expect(page.locator('.projection-finale-compact .stage-team-results li')).toHaveCount(limit);
+  await expect(page.locator('.projection-finale-compact .stage-player-results li')).toHaveCount(limit);
+  await expect(page.locator('.projection-finale-compact .stage-team-results li').first()).toContainText('Команда 1');
+  await expect(page.locator('.projection-finale-compact .stage-player-results li').first()).toContainText('Игрок 1');
+  await expect(page.locator('.projection-finale-compact .finale-summary')).toContainText('50%');
+  await expect(page.locator('.projection-finale-compact .projection-rank-more')).toHaveCount(2);
+  const box=await page.evaluate(()=>{
+   const stage=document.getElementById('projectionMain').getBoundingClientRect();
+   const scene=document.querySelector('.projection-finale-compact').getBoundingClientRect();
+   return {stage:{top:stage.top,bottom:stage.bottom,left:stage.left,right:stage.right},
+    scene:{top:scene.top,bottom:scene.bottom,left:scene.left,right:scene.right},
+    zoom:Number(document.querySelector('.projection-finale-compact').dataset.fittedZoom)};
+  });
+  expect(box.scene.top,'top at '+width).toBeGreaterThanOrEqual(box.stage.top-4);
+  expect(box.scene.bottom,'bottom at '+width).toBeLessThanOrEqual(box.stage.bottom+4);
+  expect(box.scene.left,'left at '+width).toBeGreaterThanOrEqual(box.stage.left-4);
+  expect(box.scene.right,'right at '+width).toBeLessThanOrEqual(box.stage.right+4);
+  expect(box.zoom).toBeGreaterThan(0);
+ }
+});
