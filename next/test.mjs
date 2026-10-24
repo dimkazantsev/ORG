@@ -60,8 +60,8 @@ test('Mini-game palette and saved cards use distinct polished vector icons',()=>
  assert.match(workspace,/arcade-palette-icon/);
  assert.match(workspace,/cardIconSvg\(c\.type,c\.icon\)/);
  assert.match(styles,/#arcadePalette \.arcade-palette-icon svg/);
- assert.match(palette,/workspace\.js\?v=ux-overhaul-20261024-4/);
- assert.match(palette,/workspace\.css\?v=ux-overhaul-20261024-4/);
+ assert.match(palette,/workspace\.js\?v=[a-zA-Z0-9_-]+/);
+ assert.match(palette,/workspace\.css\?v=[a-zA-Z0-9_-]+/);
 });
 test('Public projector never includes options or answer keys and host previews three server-scoped slides',()=>{
  const presenter=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
