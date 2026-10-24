@@ -331,7 +331,10 @@ async function init(){
  setInterval(()=>{
   const s=ctx.last;if(!s||document.hidden)return;
   if(['question','result'].includes(s.phase)&&!s.paused){const left=QwizStage.updateClock(s,ctx.offset);if(left===0&&Date.now()-ctx.lastReleaseAttempt>750){ctx.lastReleaseAttempt=Date.now();refresh()}}
-  if(s.phase==='countdown'&&!s.paused){const n=seconds(s.ends_at);if($('countdownNumber'))$('countdownNumber').textContent=n;if(n===0&&Date.now()-ctx.lastReleaseAttempt>750){ctx.lastReleaseAttempt=Date.now();refresh()}}
+  if((s.phase==='countdown'||(s.phase==='intermission'&&s.activity?.type==='card_intro'))&&!s.paused){
+   const n=seconds(s.ends_at);if($('countdownNumber'))$('countdownNumber').textContent=n;
+   if(n===0&&Date.now()-ctx.lastReleaseAttempt>750){ctx.lastReleaseAttempt=Date.now();refresh()}
+  }
  },200);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
 }
