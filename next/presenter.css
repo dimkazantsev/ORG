@@ -624,3 +624,44 @@ body:fullscreen .projection-shell{height:100dvh}
 @media(max-width:550px){
  .projection-setup-form .projection-switch-row{row-gap:14px}
 }
+
+
+/* Animated 1–5 sec round-introduction scene — semantic flag/compass, white/lavender only. */
+.projection-intro-card{width:min(100%,1200px);height:auto;min-height:0;display:flex;
+ flex-direction:column;align-items:center;justify-content:center;text-align:center;
+ gap:clamp(7px,1.7dvh,24px);margin:auto}
+.projection-intro-orbit{width:clamp(105px,22dvh,250px);aspect-ratio:1;
+ display:grid;place-items:center;flex:none;border-radius:50%;
+ background:radial-gradient(circle,#fff,#e9ddff);border:2px solid #daccf5;
+ box-shadow:0 12px 40px #6537ac26;
+ animation:projection-intro-enter .8s cubic-bezier(.2,.7,.2,1) both,projection-intro-bob 3s 1s infinite ease-in-out}
+.projection-intro-orbit svg{width:62%;height:62%;color:#7945cf}
+.projection-intro-card h1{font-size:clamp(32px,min(4.6vw,7dvh),86px);
+ letter-spacing:-.05em;line-height:1.08;margin:0;text-wrap:balance}
+.projection-intro-card p{font-size:clamp(16px,2vw,28px);color:#7c6d9b;margin:0}
+.projection-intro-card .countdown-number{font-size:clamp(30px,6dvh,75px);margin:0}
+@keyframes projection-intro-enter{from{opacity:.25;transform:scale(.7) rotate(-9deg)}to{opacity:1;transform:scale(1) rotate(0)}}
+@keyframes projection-intro-bob{50%{transform:translateY(-9px)}}
+/* Team and individual round scoreboard, measured and fitted into available projector dimensions. */
+.projection-round-results{width:min(100%,1550px);min-width:0;display:flex;flex-direction:column;
+ justify-content:flex-start;align-items:center;gap:clamp(6px,1.1dvh,16px);
+ margin:0 auto;padding:clamp(9px,1.2dvh,19px)}
+.projection-round-results h1{font-size:clamp(28px,min(3.6vw,5.5dvh),68px);
+ margin:0;line-height:1.08;letter-spacing:-.04em}
+.projection-round-columns{width:100%;min-width:0;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:clamp(10px,1.5vw,22px)}
+.projection-round-columns>section{min-width:0;background:#f8f5ff;border:1px solid #e3d9f1;
+ border-radius:20px;padding:clamp(10px,1.5dvh,22px)}
+.projection-round-columns h2{font-size:clamp(17px,min(2vw,3dvh),32px);margin:0 0 10px;color:#58349a}
+.projection-round-columns h2 small{color:#786a92;font-size:.55em}
+.projection-round-leaders{list-style:none;padding:0;margin:0;display:grid;gap:3px}
+.projection-round-leaders li{min-width:0;display:grid;grid-template-columns:35px minmax(0,1fr) auto;
+ align-items:center;gap:11px;border-bottom:1px solid #e9e0f5;
+ padding:clamp(4px,.6dvh,9px);font-size:clamp(14px,min(1.4vw,2.35dvh),24px)}
+.projection-round-leaders li strong{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.projection-round-leaders li b{color:#653db5;font-variant-numeric:tabular-nums}
+.projection-round-results>p{font-size:clamp(13px,1.5vw,21px);color:#74668f;margin:0}
+@media(max-width:760px){.projection-round-columns{grid-template-columns:1fr}
+ .projection-round-leaders{grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+ .projection-round-leaders li{font-size:12px;gap:5px;grid-template-columns:22px minmax(0,1fr) auto}}
+@media(prefers-reduced-motion:reduce){.projection-intro-orbit{animation:none}}
