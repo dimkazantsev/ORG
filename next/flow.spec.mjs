@@ -63,6 +63,7 @@ test('Moderator Start is enabled for ready room and opens separate exact-room pu
    return {data:{},error:null};
   }};
   wire();renderLive(room);roomReadiness(room);
+  document.getElementById('roomsPage').hidden=false;
   document.getElementById('liveConsole').hidden=false;
  });
  await expect(page.locator('#liveStart')).toBeEnabled();
