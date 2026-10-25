@@ -663,8 +663,10 @@ async function previewLaunchBuild(){
   list.innerHTML=plan.map((row,i)=>'<li class="launch-plan-item'+(row.invalid?' is-unconfigured':'')+'">'+
    '<span class="launch-plan-number">'+(i+1)+'</span><span class="launch-plan-detail"><strong>'+
    esc(row.title)+'</strong><span>'+esc(row.description)+'</span></span></li>').join('');
+  const obsolete=cards.some(c=>['team_stats','player_stats'].includes(c.type));
   $('launchPlanNotice').textContent=plan.some(x=>x.invalid)?
-   'Внимание: есть карточки без темы или механик. Настройте их перед запуском.':
+   'Внимание: есть карточки без темы или механик либо устаревшие рейтинги. Настройте или удалите их перед запуском.'+
+   (obsolete?' Чтобы исключить старые отдельные рейтинги, откройте и сохраните сборку.':''):
    'Будут запущены все перечисленные карточки по порядку. Для изменения состава откройте настройки сборки.';
  }catch(error){
   if(serial!==launchPlanRequest)return;
