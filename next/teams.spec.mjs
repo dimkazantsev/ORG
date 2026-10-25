@@ -20,6 +20,22 @@ async function mock(page,room,{host=true,registered=false}={}){
  if(name==='qwiz_prepare_room')return {data:{code:s.code,room_id:s.room_id,total_questions:s.total,issues:s.setup_issues}};
  if(name==='qwiz_party_state')return {data:s};
  if(name==='qwiz_party_projection')return {data:{...s,players:[],lobby_teams:s.teams.map(t=>({...t,members:s.players.filter(p=>p.team_id===t.id).length}))}};
+ if(name==='qwiz_lobby_action'){
+  if(args.p_action==='confirm'&&s.team_lobby?.mode==='random'){
+   s.team_lobby.confirmed=true;
+   s.players.forEach((p,i)=>p.team_id=s.teams[i%s.teams.length].id);
+   s.unassigned_count=0;
+   s.teams.forEach(t=>t.players=s.players.filter(p=>p.team_id===t.id).length);
+  }
+  if(args.p_action==='claim'&&s.team_lobby?.mode==='captain'){
+   s.team_lobby.captain_count++;s.team_lobby.my_captain=true;
+   s.team_lobby.captain_started_at=new Date().toISOString();
+   s.me.team_id=s.teams[0].id;
+   s.team_lobby.captains_ready=s.team_lobby.captain_count===s.team_lobby.team_count;
+  }
+  if(args.p_action==='rename')s.teams[0].name=args.p_input.name;
+  return {data:{ok:true}};
+ }
  if(name==='qwiz_team_admin'){
   if(window.failMove&&args.p_action==='move')return {error:{message:'Перенос не сохранён. Повторите попытку.'}};
   if(args.p_action==='move'){const p=s.players.find(p=>p.id===args.p_input.player_id);p.team_id=args.p_input.team_id;}
@@ -218,4 +234,46 @@ test('TV overscan keeps all QR cards, readable emblems, and screen chrome within
   expect(report.overflow,'no horizontal scrolling on TV').toBeLessThanOrEqual(2);
   expect(report.pageScroll,'no hidden vertical QR rows').toBeLessThanOrEqual(2);
  }
+});
+
+
+test('New random room requires moderator confirmation before public team QR',async({page})=>{
+ const s=fixture(3,9);s.total=10;s.setup_issues=[];s.players.forEach(p=>p.team_id=null);s.unassigned_count=9;
+ s.team_lobby={mode:'random',confirmed:false,team_count:3,captain_count:0,captains_ready:false,effects_history:[],captains:[]};
+ await host(page,s);
+ await expect(page.locator('#confirmTeams')).toBeVisible();
+ await expect(page.locator('#liveStart')).toBeDisabled();
+ await page.locator('#confirmTeams').click();
+ await expect(page.locator('#liveStart')).toBeEnabled();
+ expect(await page.evaluate(()=>window.actions.some(([n,a])=>n==='qwiz_lobby_action'&&a.p_action==='confirm'))).toBe(true);
+ await mock(page,s,{host:false});await page.goto(base+'presenter.html?room=AABBCCDD');
+ await expect(page.locator('.team-board-card')).toHaveCount(3);
+ await expect(page.locator('#projectionMain')).toContainText('Идите к своей команде');
+});
+test('Cinematic projector lobby has exactly one large room QR, no team QR',async({page})=>{
+ const s=fixture(5,12);s.team_lobby={mode:'random',confirmed:false,team_count:5,captain_count:0,captains_ready:false};
+ await mock(page,s,{host:false});await page.setViewportSize({width:1280,height:720});
+ await page.goto(base+'presenter.html?room=AABBCCDD');
+ await expect(page.locator('.lobby-cinematic')).toBeVisible();
+ await expect(page.locator('.lobby-cinema-qr img')).toHaveCount(1);
+ await expect(page.locator('.team-board-card')).toHaveCount(0);
+ await expect(page.locator('.lobby-cinema-code')).toHaveText('AABBCCDD');
+ const b=await page.locator('.lobby-qr-frame').boundingBox();
+ expect(b.width).toBeGreaterThan(170);
+ expect(b.x).toBeGreaterThan(40);
+ expect(b.x+b.width).toBeLessThan(1240);
+});
+test('Captain signup and QR are directly visible on mobile, not hidden in statistics',async({page})=>{
+ const s=fixture(2,2);s.host=false;s.me={id:uid(701),team_id:null};s.team_mode='captain';
+ s.team_lobby={mode:'captain',confirmed:false,team_count:2,captain_count:0,captains_ready:false,can_claim:true,my_captain:false,team_members:[]};
+ await mock(page,s,{host:false});await page.setViewportSize({width:390,height:844});
+ await page.goto(base);
+ await page.evaluate(()=>{ctx.roomCode='AABBCCDD';ctx.room=window.fixture;showScreen('game');renderGame()});
+ await expect(page.locator('#playerTeamPanel [data-captain-claim]')).toBeVisible();
+ await page.locator('#playerTeamPanel [data-captain-claim]').click();
+ await expect.poll(()=>page.evaluate(()=>window.actions.some(([n,a])=>n==='qwiz_lobby_action'&&a.p_action==='claim'))).toBe(true);
+ await page.evaluate(()=>{window.fixture.team_lobby.captains_ready=true;window.fixture.team_lobby.captain_count=2;dataState(window.fixture)});
+ await expect(page.locator('#playerTeamPanel .captain-qr-image img')).toHaveCount(1);
+ const rect=await page.locator('#playerTeamPanel .captain-qr-image').boundingBox();
+ expect(rect.width).toBeGreaterThan(230);
 });
