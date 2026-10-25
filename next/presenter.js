@@ -262,7 +262,7 @@ function questionScene(state){
    '<div class="projection-question-outcome">'+(finished?reveal:publicChoices)+'</div>'+
   '</div></div>'+
   (!finished?'<div class="projection-response-count" id="teamAnswerCount">'+
-    QwizStage.countLabel((state.teams||[]).reduce((n,t)=>n+Number(t.answered||0),0),{one:'ответ',few:'ответа',many:'ответов'})+' получено</div>':'')+
+    (typeof QwizStage.countLabel==='function'?QwizStage.countLabel((state.teams||[]).reduce((n,t)=>n+Number(t.answered||0),0),{one:'ответ',few:'ответа',many:'ответов'}):((state.teams||[]).reduce((n,t)=>n+Number(t.answered||0),0))+' ответов')+' получено</div>':'')+
   '</section>';
 }
  // Keep the visible scene inside the actual TV/projector viewport.
@@ -415,7 +415,7 @@ function render(state){
    $('projectorResultCountdown').textContent=state.ends_at?seconds(state.ends_at):'—';
   }
   if(state.phase==='lobby'){QwizTeams.board($('projectionTeamBoard'),state.lobby_teams||[],state.code);scheduleFitProjection();}
-  if(state.phase==='question'){QwizStage.patchTeams($('projectionMain'),state.teams);if($('teamAnswerCount'))$('teamAnswerCount').textContent=QwizStage.countLabel((state.teams||[]).reduce((a,t)=>a+Number(t.answered||0),0),{one:'ответ',few:'ответа',many:'ответов'})+' получено'}
+  if(state.phase==='question'){QwizStage.patchTeams($('projectionMain'),state.teams);if($('teamAnswerCount'))$('teamAnswerCount').textContent=(typeof QwizStage.countLabel==='function'?QwizStage.countLabel((state.teams||[]).reduce((a,t)=>a+Number(t.answered||0),0),{one:'ответ',few:'ответа',many:'ответов'}):((state.teams||[]).reduce((a,t)=>a+Number(t.answered||0),0))+' ответов')+' получено'}
   if(!state.paused)updateProjectorClock(state);return;
  }
  ctx.renderKey=key;const previous=ctx.lastPhase;ctx.lastPhase=state.phase;QwizStage.audio.stopMusic();
