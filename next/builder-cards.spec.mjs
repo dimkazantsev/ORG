@@ -288,3 +288,56 @@ test('All builder card types keep their settings, form fields, and dialog contro
  }));
  expect(fields.childWidth).toBeLessThanOrEqual(fields.parentWidth+1);
 });
+
+test('Launch preview distinguishes map mechanics from geography questions and exposes legacy bonus cards',async({page})=>{
+ await page.evaluate(()=>{
+  section('rooms');
+  state.topics=[{id:'geo',name:'География России'},{id:'flags',name:'Флаги мира'}];
+  const input=$('launchBuild');
+  input.add(new Option('ОРГ','build-one'));input.value='build-one';
+  studio=async(action,args)=>{
+   if(action!=='build_get')throw Error('Unexpected mock action');
+   return {build:{id:'build-one',title:'ОРГ'},cards:[
+    {type:'intro',title:'Старт',settings:{}},
+    {type:'round',title:'Карта России',topic_id:'geo',settings:{arcade_mode:'russia_map',geo_modes:['locate','identify','flag']}},
+    {type:'round',title:'Вопросы по географии',topic_id:'geo',settings:{geo_modes:['capital'],count:5}},
+    {type:'bonus',title:'Ненастроенная мини-игра',settings:{}},
+    {type:'team_stats',title:'Старый отдельный рейтинг команд',settings:{}},
+    {type:'finale',title:'Финал',settings:{}}
+   ]};
+  };
+  input.dispatchEvent(new Event('change',{bubbles:true}));
+ });
+ await expect(page.locator('#launchPlan')).toBeVisible();
+ await expect(page.locator('#launchPlanCards .launch-plan-item')).toHaveCount(6);
+ await expect(page.locator('#launchPlanCards .launch-plan-item').nth(1)).toContainText('Найти субъект');
+ await expect(page.locator('#launchPlanCards .launch-plan-item').nth(1)).not.toContainText('Административный центр');
+ await expect(page.locator('#launchPlanCards .launch-plan-item').nth(2)).toContainText('Административный центр');
+ await expect(page.locator('#launchPlanCards .launch-plan-item').nth(2)).not.toContainText('Найти субъект');
+ await expect(page.locator('#launchPlanCards .launch-plan-item').nth(3)).toHaveClass(/is-unconfigured/);
+ await expect(page.locator('#launchPlanCards .launch-plan-item').nth(4)).toHaveClass(/is-unconfigured/);
+ await expect(page.locator('#launchPlanCards .launch-plan-item').nth(4)).toContainText('Устаревшая карточка');
+ await expect(page.locator('#launchPlanNotice')).toContainText('есть карточки без темы или механик');
+ for(const width of [320,390,768,1440]){
+  await page.setViewportSize({width,height:900});
+  await expect.poll(()=>page.locator('#launchPlan').evaluate(el=>{
+   const r=el.getBoundingClientRect();return r.right<=innerWidth+2&&r.left>=-2;
+  })).toBe(true);
+ }
+});
+
+test('Changing saved build ignores a delayed preview of the previous selection',async({page})=>{
+ await page.evaluate(()=>{
+  const input=$('launchBuild');input.add(new Option('Старая','one'));input.add(new Option('Новая','two'));
+  window.finishOldPreview=null;
+  studio=async(action,{id})=>{
+   if(id==='one')return new Promise(resolve=>window.finishOldPreview=resolve);
+   return {build:{id:'two'},cards:[{type:'round',title:'Новый раунд',topic_id:'x',settings:{count:3,flag_modes:[]}}]};
+  };
+  input.value='one';input.dispatchEvent(new Event('change'));
+  input.value='two';input.dispatchEvent(new Event('change'));
+ });
+ await expect(page.locator('#launchPlanCards')).toContainText('Новый раунд');
+ await page.evaluate(()=>window.finishOldPreview({cards:[{type:'intro',title:'Старый раунд',settings:{}}]}));
+ await expect(page.locator('#launchPlanCards')).not.toContainText('Старый раунд');
+});
