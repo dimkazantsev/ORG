@@ -29,6 +29,7 @@ function renderTeamManager(s){
  for(const id of ['teamCount','teamMode','applyTeamSettings'])$(id).disabled=!editable||teamUI.busy;
  const manualOption=$('teamMode').querySelector('option[value="manual"]');
  if(manualOption){manualOption.hidden=!!lobby&&s.team_mode!=='manual';manualOption.disabled=!!lobby&&s.team_mode!=='manual';}
+ const captainOption=$('teamMode').querySelector('option[value="captain"]');if(captainOption){captainOption.hidden=!lobby;captainOption.disabled=!lobby;}
  $('shuffleTeams').hidden=s.team_mode!=='random'||!!lobby?.confirmed;
  $('shuffleTeams').disabled=!editable||teamUI.busy;
  $('confirmTeams').hidden=!lobby||s.team_mode!=='random'||!!lobby.confirmed||s.phase!=='lobby';
