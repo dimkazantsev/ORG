@@ -133,6 +133,18 @@ BEGIN
  RETURN public.qwiz_lobby_view(p_room);
 END $lobby_action$;
 
+-- Unified teacher-only history also covers legacy rooms without lobby_config.
+CREATE OR REPLACE FUNCTION public.qwiz_team_effect_history(p_room uuid,p_host boolean)
+RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO '' AS $effects$
+ SELECT CASE WHEN p_host THEN
+  (SELECT coalesce(jsonb_agg(jsonb_build_object('team_id',b.team_id,'choice',b.choice,
+   'points_awarded',b.points_awarded,'applied_at',b.applied_at,
+   'round_index',b.round_index,'card_position',b.card_position)
+   ORDER BY b.card_position),'[]'::jsonb) FROM public.qwiz_round_boosts b WHERE b.room_id=p_room)
+  ELSE '[]'::jsonb END;
+$effects$;
+REVOKE ALL ON FUNCTION public.qwiz_team_effect_history(uuid,boolean) FROM PUBLIC,anon,authenticated;
+
 -- Patch existing production functions at guarded anchor points instead of copying large
 -- business logic, and keep all legacy rooms compatible.
 DO $patch$
@@ -234,7 +246,7 @@ BEGIN
  JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='qwiz_party_state' LIMIT 1;
  IF position('return s||jsonb_build_object(' IN src)=0 THEN RAISE EXCEPTION 'Player state ABI changed';END IF;
  changed:=replace(src,'return s||jsonb_build_object(',
-  'return s||jsonb_build_object(''team_lobby'',public.qwiz_lobby_view(r,false))||jsonb_build_object(');
+  'return s||jsonb_build_object(''team_effects'',public.qwiz_team_effect_history(r,coalesce((s->>''host'')::boolean,false)),''team_lobby'',public.qwiz_lobby_view(r,false))||jsonb_build_object(');
  EXECUTE changed;
 
  SELECT pg_get_functiondef(p.oid) INTO src FROM pg_proc p
