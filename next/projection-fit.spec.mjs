@@ -377,9 +377,9 @@ test('Flag artwork is fully visible without an illustration caption in question 
 
 
 test('Flag choices and the correct flag stay inside their cards without clipping',async({page})=>{
- const imageUrl='https://assets.example.test/panama.svg';
+ const imageUrl='https://assets.example.test/flag-pa.svg';
  await page.route('https://assets.example.test/**',route=>route.fulfill({status:200,contentType:'image/svg+xml',
-  body:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600"><rect width="900" height="600" fill="#fff"/><rect x="450" width="450" height="300" fill="#ad1731"/><rect y="300" width="450" height="300" fill="#002e63"/></svg>'}));
+  body:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600"><rect width="900" height="600" fill="#fff"/><rect width="450" height="300" x="450" fill="#b21e35"/><rect width="450" height="300" y="300" fill="#06366b"/><polygon points="225,60 255,162 155,102 295,102 195,162" fill="#06366b"/></svg>'}));
  for(const [width,height] of [[1280,720],[1920,1080],[768,1024]]){
   await page.setViewportSize({width,height});
   for(const phase of ['question','result']){
@@ -393,7 +393,7 @@ test('Flag choices and the correct flag stay inside their cards without clipping
    },{phase,imageUrl});
    const selector=phase==='question'?'.projection-public-options .flag-choice-art':'.projection-answer-reveal .correct-flag-art img';
    await expect(page.locator(selector).first()).toBeVisible();
-   await page.locator(selector).first().evaluate(img=>img.decode());
+   await expect.poll(()=>page.locator(selector).first().evaluate(img=>img.naturalWidth),{timeout:12000}).toBeGreaterThan(0);
    await expect.poll(()=>page.evaluate(()=>Number(document.querySelector('.projection-question-only')?.dataset.fittedZoom))).toBeGreaterThan(0);
    const boxes=await page.locator(selector).evaluateAll((images,phase)=>images.map(img=>{
     const r=img.getBoundingClientRect();
