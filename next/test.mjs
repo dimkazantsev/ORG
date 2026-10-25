@@ -197,7 +197,7 @@ test('Mini-game palette and saved cards use distinct polished vector icons',()=>
    assert.match(palette,new RegExp('data-arcade="'+mode+'"'));
  }
  assert.match(workspace,/arcade-palette-icon/);
- assert.match(workspace,/cardIconSvg\(c\.type,c\.icon\)/);
+ assert.match(workspace,/cardIconSvg\(c\.type,arcadeGames\[c\.settings\?\.arcade_mode\]\?\.icon/);
  assert.match(styles,/#arcadePalette \.arcade-palette-icon svg/);
  assert.match(palette,/workspace\.js\?v=[a-zA-Z0-9_-]+/);
  assert.match(palette,/workspace\.css\?v=[a-zA-Z0-9_-]+/);
@@ -975,4 +975,27 @@ test('Round editor opens mechanics by default with vector arrow and even selecti
  assert.match(styles,/#roundCards \.round-card\.is-selected::before\{content:none\}/);
  assert.match(styles,/#cardModesDetails\[open\] \.card-modes-chevron/);
  assert.match(markup,/class="small-help card-order-explainer"/);
+});
+
+
+test('All builder mechanism cards share readable complete styling and semantic vector controls',()=>{
+ const source=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const styles=readFileSync(new URL('./workspace.css',import.meta.url),'utf8');
+ const markup=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ for(const mode of ['russia_map','rocket','blitz','tug','captain']){
+  assert.match(styles,new RegExp('data-mechanic="'+mode+'"'));
+  assert.match(source,new RegExp(mode));
+ }
+ assert.match(source,/data-mechanic/);
+ assert.match(source,/moveIconLeft/);
+ assert.match(source,/moveIconRight/);
+ assert.match(source,/arcadeGames\[c\.settings\?\.arcade_mode\]\?\.icon/);
+ assert.match(source,/Анимированная заставка перед первым раундом/);
+ assert.match(source,/Устаревшая карточка статистики/);
+ assert.match(styles,/#roundCards \.round-card h3,/);
+ assert.match(styles,/-webkit-line-clamp:unset;line-clamp:unset/);
+ assert.match(styles,/min-height:max-content/);
+ assert.match(styles,/#roundCards \.round-actions \.move-svg/);
+ assert.match(markup,/workspace\.css\?v=mechanic-card-20261025-34/);
+ assert.match(markup,/workspace\.js\?v=mechanic-card-20261025-34/);
 });
