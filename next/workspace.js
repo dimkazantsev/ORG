@@ -826,7 +826,7 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  $('livePause').hidden=false;$('livePause').disabled=!['countdown','question','result','intermission'].includes(s.phase);QwizStage.iconLabel($('livePause'),s.paused?'Продолжить':'Пауза',s.paused?'play':'pause');$('livePause').setAttribute('aria-pressed',String(!!s.paused));
  $('liveNext').hidden=false;$('liveNext').disabled=!!s.paused||!['question','result','intermission'].includes(s.phase);const geoPlaying=s.phase==='intermission'&&s.activity?.settings?.arcade_mode==='russia_map';
  const introPlaying=s.phase==='intermission'&&s.activity?.type==='card_intro';
- QwizStage.iconLabel($('liveNext'),geoPlaying?'Показать итоги':introPlaying?'Запустить испытание':'Далее','forward');$('liveReveal').hidden=true;$('liveFinish').hidden=false;$('liveFinish').disabled=s.phase==='finished';
+ QwizStage.iconLabel($('liveNext'),geoPlaying?'Показать итоги':introPlaying?'Запустить испытание':'Далее','forward');$('liveReveal').hidden=true;$('liveFinish').hidden=false;$('liveFinish').disabled=['lobby','finished'].includes(s.phase);
  $('liveConsole').classList.toggle('is-finished',s.phase==='finished');
  $('liveControlsHint').textContent=s.phase==='finished'?
    'Начните новую сессию той же сборки. Предыдущая игра и результаты сохранятся.':
