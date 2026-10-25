@@ -39,3 +39,16 @@ for(const [width,height] of [[390,844],[1280,720]]){
   expect(await page.evaluate(()=>document.documentElement.scrollWidth-window.innerWidth)).toBeLessThanOrEqual(2);
  });
 }
+
+
+test('A repeated Memory card resets the old deck instead of showing previous revealed faces',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.goto(URL);
+ await page.evaluate(()=>window.mountExample('captain'));
+ await expect(page.locator('.arcade-memory-tile')).toHaveCount(12);
+ await page.locator('.arcade-memory-tile').first().click();
+ await expect(page.locator('.arcade-memory-tile').first()).toHaveClass(/is-open/);
+ await page.evaluate(()=>window.mountExample('captain'));
+ await expect(page.locator('.arcade-memory-tile').first()).not.toHaveClass(/is-open/,{timeout:6000});
+ await expect(page.locator('.arcade-memory-tile')).toHaveCount(12);
+});
