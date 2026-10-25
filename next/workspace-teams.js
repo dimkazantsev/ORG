@@ -24,7 +24,6 @@ function teamMember(p,s){
 function renderTeamManager(s){
  roomReadiness(s);
  const lobby=s.team_lobby,old=!lobby,editable=s.phase==='lobby'&&!lobby?.confirmed&&!(lobby?.mode==='captain'&&lobby.captain_count>0);
- const manualOption=$('teamMode').querySelector('option[value="manual"]');if(manualOption){manualOption.hidden=!!lobby;manualOption.disabled=!!lobby;}
  const editing=$('teamSettings').contains(document.activeElement);
  if(!editing){$('teamCount').value=s.teams?.length||1;$('teamMode').value=s.team_mode||'random';}
  for(const id of ['teamCount','teamMode','applyTeamSettings'])$(id).disabled=!editable||teamUI.busy;
