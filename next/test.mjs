@@ -197,7 +197,7 @@ test('Mini-game palette and saved cards use distinct polished vector icons',()=>
    assert.match(palette,new RegExp('data-arcade="'+mode+'"'));
  }
  assert.match(workspace,/arcade-palette-icon/);
- assert.match(workspace,/cardIconSvg\(c\.type,c\.icon\)/);
+ assert.match(workspace,/cardIconSvg\(c\.type,arcadeGames\[c\.settings\?\.arcade_mode\]\?\.icon/);
  assert.match(styles,/#arcadePalette \.arcade-palette-icon svg/);
  assert.match(palette,/workspace\.js\?v=[a-zA-Z0-9_-]+/);
  assert.match(palette,/workspace\.css\?v=[a-zA-Z0-9_-]+/);
