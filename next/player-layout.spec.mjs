@@ -145,8 +145,8 @@ test('Phone displays synchronized card introductions, round rankings and full fi
   await expect(page.locator('#playerMore .player-more-label')).toHaveText('Статистика');
   await page.evaluate(()=>{
    const r=window.roundFixture;r.activity={type:'round_stats',title:'Итоги раунда'};
-   r.round_results={teams:r.teams.map(t=>({...t,score:100+t.rank})),
-     players:r.public_stats.players.map(p=>({...p,score:p.score-30}))};
+   r.round_results={teams:r.teams.map(t=>({...t,score:9999999999+t.rank})),
+     players:r.public_stats.players.map(p=>({...p,score:5555555555-p.score}))};
    ctx.gameRenderKey='';renderGame();
   });
   await expect(page.locator('.round-results-grid .round-score-list')).toHaveCount(2);
