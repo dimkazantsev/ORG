@@ -292,3 +292,22 @@ test('Question, long variants and answer reveal keep the exact same fixed clock 
   }
  }
 });
+
+
+test('Question and answer content enter gently after fit while clock remains stationary',async({page})=>{
+ await page.setViewportSize({width:1280,height:720});
+ for(const phase of ['question','result']){
+  await page.evaluate(phase=>{
+   ctx.renderKey='';
+   render({code:'A1B2C3D4',phase,index:1,total:7,ends_at:new Date(Date.now()+20000).toISOString(),
+    question:{kind:'single',prompt:'Определите страну по описанию',options:['Россия','Бразилия','Аргентина','Индия']},
+    answer:phase==='result'?{indices:[0],text:'Россия'}:null,teams:[],
+    screen_settings:{sound_enabled:false,volume:0}});
+  },phase);
+  const flow=page.locator('.projection-question-flow');
+  await expect(flow).toBeVisible();
+  await expect(flow).toHaveCSS('transition-property',/opacity/);
+  await expect.poll(()=>page.evaluate(()=>document.querySelector('.projection-question-flow')?.dataset.motionReady)).toBe('true');
+  await expect(page.locator('.stage-clock')).toBeVisible();
+ }
+});
