@@ -403,7 +403,7 @@ test('Replay remains enabled in finished state after the team readiness check',(
  assert.match(host,/QwizStage\.iconLabel\(\$\('liveStart'\)/);
  assert.match(host,/qwiz_repeat_finished_room/);
  assert.match(page,/id="liveControlsHint"/);
- assert.match(page,/workspace-teams\.js\?v=avatar-3d-20261024-16/);
+ assert.match(page,/workspace-teams\.js\?v=unified-lobby-20261026/);
 });
 test('3D avatars render in team roster, profile and new optional gallery',()=>{
  const src=readFileSync(new URL('./teams.js',import.meta.url),'utf8');
@@ -584,7 +584,7 @@ test('QWIZ-PARTY brand, QR library, presenter-only route and 15 teams',()=>{
  assert.match(html,/id="homeQr"/);
  assert.match(html,/id="qrDialog"/);
  assert.match(html,/id="openPresenter"/);
- assert.match(html,/<option>15<\/option>/);
+ assert.doesNotMatch(html,/id="roomTeamCount"/);assert.match(readFileSync(new URL('./workspace.html',import.meta.url),'utf8'),/id="teamCount" type="number" min="1" max="15"/);
  const presenterHtml=readFileSync(new URL('./presenter.html',import.meta.url),'utf8');
  const presenterJs=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
  const presenterCss=readFileSync(new URL('./presenter.css',import.meta.url),'utf8');
