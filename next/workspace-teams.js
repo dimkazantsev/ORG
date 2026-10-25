@@ -47,7 +47,7 @@ function renderTeamManager(s){
  $('teamPool').hidden=!pending.length;
  $('teamPool').innerHTML='<h4>Ожидают команду · '+pending.length+'</h4><div class="team-members">'+pending.map(p=>teamMember(p,s)).join('')+'</div>';
  const captains=new Map((lobby?.captains||[]).map(x=>[x.team_id,x.player_id]));
- const effectMap=new Map((lobby?.effects_history||[]).reduce((a,e)=>{a.set(e.team_id,[...(a.get(e.team_id)||[]),e]);return a;},new Map()));
+ const effectMap=new Map((s.team_effects||lobby?.effects_history||[]).reduce((a,e)=>{a.set(e.team_id,[...(a.get(e.team_id)||[]),e]);return a;},new Map()));
  $('teamGrid').innerHTML=teams.map(t=>{
    const members=players.filter(p=>p.team_id===t.id),effects=effectMap.get(t.id)||[];
    return '<article class="team-card" data-drop-team="'+esc(t.id)+'"><div class="team-card-head">'+QwizStage.icon(t,true)+
