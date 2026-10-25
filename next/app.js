@@ -31,7 +31,7 @@ function busy(button,active){if(!button)return;button.disabled=active;button.set
 async function rpc(name,params={}){if(!ctx.client)throw Error('Нет соединения с игрой. Проверьте подключение к интернету.');const {data,error}=await ctx.client.rpc(name,params);if(error)throw Error(error.message||'Ошибка запроса');return data}
 async function ensureAuth(){const {data:{session},error}=await ctx.client.auth.getSession();if(error)throw Error(error.message);if(session)return session;const r=await ctx.client.auth.signInAnonymously();if(r.error)throw Error(r.error.message);return r.data.session}
 function dataState(room){if(room?.server_now)ctx.clockOffset=Date.parse(room.server_now)-Date.now();ctx.room=room; if(!room)return;renderQrPanels();connectRoom(room.code); if(ctx.mode==='studio'){renderRoom();renderResults()}else if(ctx.mode==='game')renderGame()}
-function cleanupRoom(){if(ctx.channel){ctx.client?.removeChannel(ctx.channel);ctx.channel=null}ctx.room=null;ctx.roomCode=null;storage.del('room');renderQrPanels();}
+function cleanupRoom(){if(ctx.channel){ctx.client?.removeChannel(ctx.channel);ctx.channel=null}if(ctx.reconnectRetryTimer)clearTimeout(ctx.reconnectRetryTimer);ctx.reconnectRetryTimer=null;ctx.connectionStale=false;ctx.connectionNotice=false;ctx.reconnectDelay=2000;ctx.room=null;ctx.roomCode=null;storage.del('room');renderQrPanels();}
 function connectRoom(code){if(!ctx.client||!code)return;if(ctx.channel&&ctx.channel.topic==='realtime:org-next-'+code)return;if(ctx.channel)ctx.client.removeChannel(ctx.channel);
  ctx.channel=ctx.client.channel('org-next-'+code,{config:{broadcast:{ack:false}}})
  .on('broadcast',{event:'phase'},()=>scheduleRefresh(500))
