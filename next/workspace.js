@@ -708,10 +708,22 @@ async function saveBuild(){disable('saveBuild',true);msg('buildMessage','Сох�
   cards:state.cards});state.buildId=result.id;
  await overview();savePosition();msg('buildMessage','Сборка сохранена. Её можно запустить с любого вашего устройства.');}
  catch(e){msg('buildMessage',e.message,true)}finally{disable('saveBuild',false)}}
-async function loadRooms(){try{const list=await rpc('qwiz_host_rooms');state.hostRooms=list;$('hostRoomList').innerHTML=list.length?list.map(r=>
- '<article class="room-row"><div><div class="question-meta"><span class="chip">'+esc(QwizStage.phaseLabel(r.phase))+'</span><span class="chip lilac">'+esc(r.code)+'</span></div><h3>'+esc(QwizStage.capitalize(r.title))+'</h3><p>'+esc(QwizStage.countLabel(r.players,{one:'участник',few:'участника',many:'участников',other:'участника'}))+' · '+esc(QwizStage.countLabel(r.teams,{one:'команда',few:'команды',many:'команд',other:'команды'}))+'</p></div><div class="room-row-actions"><button class="primary-button" data-room="'+esc(r.code)+'">Управлять →</button><button type="button" class="card-trash" data-delete-room="'+esc(r.id)+'" title="Удалить комнату" aria-label="Удалить комнату '+esc(r.title)+'">'+trashSvg+'</button></div></article>').join(''):
- '<div class="empty">Создайте комнату из сохранённой сборки.</div>';
- }catch(e){msg('launchMessage',e.message,true)}}
+function roomRowMarkup(room){
+ return '<article class="room-row"><div><div class="question-meta"><span class="chip">'+esc(QwizStage.phaseLabel(room.phase))+'</span><span class="chip lilac">'+esc(room.code)+'</span></div><h3>'+esc(QwizStage.capitalize(room.title))+'</h3><p>'+esc(QwizStage.countLabel(room.players,{one:'участник',few:'участника',many:'участников',other:'участника'}))+' · '+esc(QwizStage.countLabel(room.teams,{one:'команда',few:'команды',many:'команд',other:'команды'}))+'</p></div><div class="room-row-actions"><button class="primary-button" data-room="'+esc(room.code)+'">'+(room.phase==='finished'?'Результаты →':'Управлять →')+'</button><button type="button" class="card-trash" data-delete-room="'+esc(room.id)+'" title="Удалить комнату" aria-label="Удалить комнату '+esc(room.title)+'">'+trashSvg+'</button></div></article>';
+}
+function roomsListMarkup(rooms){
+ const current=rooms.filter(room=>room.phase!=='finished');
+ const history=rooms.filter(room=>room.phase==='finished');
+ return '<div class="active-rooms" aria-label="Текущие комнаты">'+(current.length?current.map(roomRowMarkup).join(''):'<p class="empty rooms-empty-active">Активных комнат пока нет. Выберите сборку и создайте новую игру.</p>')+'</div>'+
+ (history.length?'<details class="rooms-history"><summary>История завершённых игр <span class="rooms-history-count">'+history.length+'</span><span class="rooms-history-hint">Прошлые сессии и результаты</span></summary><div class="rooms-history-list">'+history.map(roomRowMarkup).join('')+'</div></details>':'');
+}
+async function loadRooms(){
+ try{
+  const list=await rpc('qwiz_host_rooms');
+  state.hostRooms=list;
+  $('hostRoomList').innerHTML=roomsListMarkup(list);
+ }catch(e){msg('launchMessage',e.message,true)}
+}
 // Preview the *entire* saved build, not just the currently edited card.
 // In particular, map modes and normal Geography of Russia question modes
 // are independent cards, so show them distinctly before creating a room.
