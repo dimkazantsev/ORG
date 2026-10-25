@@ -310,3 +310,19 @@ test('Four indie-inspired game stages use distinct palettes and never clip at mo
   await page.locator('#arcadeStyleFixture .arcade-scene').screenshot({path:'visual-artifacts/indie-arcade-'+mode+'-390.png',animations:'disabled'});
  }
 });
+
+
+test('Unstarted lobby cannot be finished accidentally, but active games can be ended',async({page})=>{
+ await workspace(page);
+ await page.evaluate(s=>{
+  window.fixture={...s,phase:'lobby',room_id:'room',players:[],teams:[],control_revision:'test-lobby'};
+  state.roomCode=s.code;state.room=window.fixture;
+  document.getElementById('liveConsole').hidden=false;section('rooms');renderLive(window.fixture);
+ },state());
+ await expect(page.locator('#liveFinish')).toBeDisabled();
+ await expect(page.locator('#liveStart')).toBeEnabled();
+ await page.evaluate(()=>{state.room={...state.room,phase:'question',question:window.fixture.question};renderLive(state.room)});
+ await expect(page.locator('#liveFinish')).toBeEnabled();
+ await page.evaluate(()=>{state.room={...state.room,phase:'finished'};renderLive(state.room)});
+ await expect(page.locator('#liveFinish')).toBeDisabled();
+});
