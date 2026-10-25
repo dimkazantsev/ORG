@@ -9,18 +9,21 @@ function roomReadiness(s){
  // Completed sessions can always be replayed; readiness only guards a NEW lobby start.
  // The prior readiness code silently disabled the renamed “Повторить игру” button.
  const replay=s.phase==='finished';
- $('liveStart').disabled=!replay&&(teamUI.busy||s.phase!=='lobby'||!ready||waiting>0);
+ const lobby=s.team_lobby;
+ const formed=!lobby||(lobby.mode==='random'&&lobby.confirmed)||(lobby.mode==='captain'&&lobby.captains_ready);
+ const hasPlayers=(s.players||[]).length>0;
+ $('liveStart').disabled=!replay&&(teamUI.busy||s.phase!=='lobby'||!ready||waiting>0||!formed||(!!lobby&&!hasPlayers));
  $('liveStart').title=replay?'Создать новую игровую комнату с теми же заданиями. История результатов сохранится.':
   !ready?'Добавьте вопросы или картографический раунд в сборку':waiting?'Распределите ожидающих участников':!formed?'Сначала завершите формирование команд':'';
 }
 function teamMember(p,s){
- const movable=!teamUI.busy&&(s.phase==='lobby'||(!p.team_id&&s.phase!=='finished'));
+ const movable=!teamUI.busy&&((s.phase==='lobby'&&!s.team_lobby?.confirmed)||(s.phase!=='finished'&&!p.team_id&&!s.team_lobby));
  return '<div class="team-member" data-player-id="'+esc(p.id)+'" draggable="'+movable+'">'+QwizTeams.avatar(p.avatar)+'<div class="team-member-name">'+esc(p.name)+(p.group?'<small>'+esc(p.group)+'</small>':'')+'</div>'+
  '<select data-team-player="'+esc(p.id)+'" aria-label="Команда: '+esc(p.name)+'" '+(!movable?'disabled':'')+'><option value="">Без команды</option>'+(s.teams||[]).map(t=>'<option value="'+esc(t.id)+'" '+(t.id===p.team_id?'selected':'')+'>'+esc(t.name)+'</option>').join('')+'</select></div>';
 }
 function renderTeamManager(s){
  roomReadiness(s);
- const lobby=s.team_lobby,old=!lobby,editable=s.phase==='lobby'&&!lobby?.confirmed;
+ const lobby=s.team_lobby,old=!lobby,editable=s.phase==='lobby'&&!lobby?.confirmed&&!(lobby?.mode==='captain'&&lobby.captain_count>0);
  const editing=$('teamSettings').contains(document.activeElement);
  if(!editing){$('teamCount').value=s.teams?.length||1;$('teamMode').value=s.team_mode||'random';}
  for(const id of ['teamCount','teamMode','applyTeamSettings'])$(id).disabled=!editable||teamUI.busy;
@@ -58,7 +61,7 @@ function renderTeamManager(s){
 }
 async function teamAction(action,input={}){
  if(!state.room||teamUI.busy)return;teamUI.busy=true;msg('teamMessage','Сохраняем…');renderTeamManager(state.room);
- try{await rpc('qwiz_team_admin',{p_room:state.room.room_id,p_action:action,p_input:input});
+ try{await rpc(action==='confirm'?'qwiz_lobby_action':'qwiz_team_admin',{p_room:state.room.room_id,p_action:action,p_input:input});
   state.channel?.send({type:'broadcast',event:'team',payload:{changed:true}})?.catch(()=>{});
   if('BroadcastChannel' in window){const c=new BroadcastChannel('qwiz-projector-'+state.roomCode);c.postMessage({event:'team'});c.close();}
   teamUI.key='';await refreshLive();msg('teamMessage',action==='shuffle'?'Участники распределены случайно и поровну.':action==='confirm'?'Команды подтверждены. Экран аудитории показывает их расположение.':action==='refresh_content'?'Вопросы обновлены из сохранённой сборки.':'Распределение сохранено.');QwizStage.audio.play('accept');
@@ -68,11 +71,11 @@ async function teamAction(action,input={}){
 function teamDropClear(){teamUI.dragged=null;all('.is-drop-target,.is-dragging').forEach(el=>el.classList.remove('is-drop-target','is-dragging'));}
 window.addEventListener('DOMContentLoaded',()=>{
  $('manageTeams').onclick=()=>{$('teamManager').scrollIntoView({behavior:motionPreference.matches?'instant':'smooth',block:'start'});$('teamManagerHeading').focus({preventScroll:true});};
- $('showTeamBoard').onclick=projection;
+
  $('teamSettings').onsubmit=e=>{e.preventDefault();if(e.target.reportValidity())teamAction('settings',{count:Number($('teamCount').value),mode:$('teamMode').value});};
- $('shuffleTeams').onclick=()=>teamAction('shuffle');$('refreshRoomContent').onclick=()=>teamAction('refresh_content');
+ $('shuffleTeams').onclick=()=>teamAction('shuffle');$('confirmTeams').onclick=()=>teamAction('confirm');$('refreshRoomContent').onclick=()=>teamAction('refresh_content');
  $('addRoomQuestions').onclick=()=>{section('bank');const topic=state.room?.setup_issues?.find(x=>x.topic_id)?.topic_id;if(topic){$('bankTopic').value=topic;loadQuestions();}};
- $('teamManager').addEventListener('click',e=>{const b=e.target.closest('[data-team-qr]');if(b){const team=state.room?.teams.find(t=>t.id===b.dataset.teamQr);if(team)QwizTeams.showQr({code:state.roomCode,team});}});
+
  $('teamManager').addEventListener('change',e=>{if(e.target.matches('[data-team-player]')){const input={player_id:e.target.dataset.teamPlayer,team_id:e.target.value||null};e.target.blur();teamAction('move',input);}});
  $('teamManager').addEventListener('pointerdown',e=>{if(e.target.closest('.team-member'))window.scrollTo({top:window.scrollY,left:window.scrollX,behavior:'instant'});});
  $('teamManager').addEventListener('dragstart',e=>{const row=e.target.closest('[data-player-id]');if(!row||row.draggable!==true||e.target.closest('select')){e.preventDefault();return;}teamUI.dragged=row.dataset.playerId;e.dataTransfer.setData('text/plain',teamUI.dragged);e.dataTransfer.effectAllowed='move';row.classList.add('is-dragging');});
