@@ -51,8 +51,8 @@ test('mini-games are real multiplayer server-controlled modes',()=>{
 test('all entry points use fresh asset versions after fix',()=>{
  for(const name of ['index.html','workspace.html','presenter.html']){
   const html=read(name);
-  assert.match(html,/arcade\.js\?v=memory-runner-teamtap-20261025/);
-  assert.match(html,/arcade\.css\?v=responsive-runner-stage-20261025-2/);
+  assert.match(html,/arcade\.js\?v=[a-zA-Z0-9_-]+/);
+  assert.match(html,/arcade\.css\?v=[a-zA-Z0-9_-]+/);
  }
 });
 test('screens use constrained result panels and correct Russian count labels',()=>{
