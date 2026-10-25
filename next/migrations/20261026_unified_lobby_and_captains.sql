@@ -298,7 +298,7 @@ BEGIN
  THEN RAISE EXCEPTION 'Memory arena captain selector has changed; inspect before deployment';END IF;
  changed:=replace(src,
   'JOIN LATERAL (SELECT x.id FROM public.org_next_players x WHERE x.team_id=t.id'||
-   E'\n' || '          AND x.room_id=r.id AND x.joined_at<=v.started_at ORDER BY x.joined_at,x.id LIMIT 1) p ON true',
+   E'\n' || '         AND x.room_id=r.id AND x.joined_at<=v.started_at ORDER BY x.joined_at,x.id LIMIT 1) p ON true',
   'JOIN LATERAL (SELECT COALESCE('||
    ' (SELECT c.player_id FROM public.qwiz_lobby_captains c WHERE c.room_id=r.id AND c.team_id=t.id),'||
    ' (SELECT x.id FROM public.org_next_players x WHERE x.team_id=t.id'||
