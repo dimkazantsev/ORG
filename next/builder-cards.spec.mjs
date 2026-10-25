@@ -341,3 +341,44 @@ test('Changing saved build ignores a delayed preview of the previous selection',
  await page.evaluate(()=>window.finishOldPreview({cards:[{type:'intro',title:'Старый раунд',settings:{}}]}));
  await expect(page.locator('#launchPlanCards')).not.toContainText('Старый раунд');
 });
+
+
+test('Finished rooms are stored only in a collapsed history, while active rooms remain visible',async({page})=>{
+ const rooms=[
+  {id:'active-1',title:'ОРГ',code:'A1B2C3D4',phase:'lobby',players:0,teams:4},
+  {id:'old-1',title:'ОРГ',code:'D9F77416',phase:'finished',players:0,teams:4},
+  {id:'old-2',title:'ОРГ',code:'F086A033',phase:'finished',players:0,teams:4}
+ ];
+ await page.evaluate(rooms=>{
+  const root=document.getElementById('hostRoomList');
+  root.innerHTML=roomsListMarkup(rooms);
+ },rooms);
+ await expect(page.locator('#hostRoomList .active-rooms .room-row')).toHaveCount(1);
+ await expect(page.locator('#hostRoomList .rooms-history')).toHaveCount(1);
+ await expect(page.locator('#hostRoomList .rooms-history')).not.toHaveAttribute('open','');
+ await expect(page.locator('#hostRoomList .rooms-history-count')).toHaveText('2');
+ await page.locator('#hostRoomList .rooms-history summary').click();
+ await expect(page.locator('#hostRoomList .rooms-history .room-row')).toHaveCount(2);
+ await expect(page.locator('#hostRoomList .rooms-history [data-room="D9F77416"]')).toContainText('Результаты');
+ await expect(page.locator('#hostRoomList .rooms-history [data-delete-room="old-1"]')).toHaveCount(1);
+});
+
+test('New Russia map mechanic never silently selects all eight geography modes',async({page})=>{
+ await page.evaluate(()=>{
+  state.topics=[{id:'geography',name:'География России'},{id:'flags',name:'Флаги мира'}];
+  fillSelect($('cardTopic'),[['geography','География России'],['flags','Флаги мира']],'Без темы','geography');
+ });
+ await page.locator('#openGamesPalette').click();
+ await page.locator('#arcadePalette [data-geo="russia_map"]').click();
+ const mode=await page.evaluate(()=>state.selectedCard?.settings?.geo_modes);
+ expect(mode).toEqual([]);
+ const ix=await page.evaluate(()=>state.cards.indexOf(state.selectedCard));
+ await page.evaluate(index=>editCard(index),ix);
+ await expect(page.locator('#cardGeoModes input:checked')).toHaveCount(0);
+ await page.locator('#cardForm button[type="submit"]').click();
+ await expect(page.locator('#cardDialog')).toBeVisible();
+ await page.locator('#cardGeoModes input[value="locate"]').check();
+ await page.locator('#cardForm button[type="submit"]').click();
+ await expect(page.locator('#cardDialog')).not.toBeVisible();
+ expect(await page.evaluate(()=>state.selectedCard.settings.geo_modes)).toEqual(['locate']);
+});
