@@ -130,6 +130,9 @@ async function refreshRoom(showError=true){
     if(showError)notice('hostNotice','');
    }catch(error){
     if(code!==ctx.roomCode){ctx.refreshQueued=Boolean(ctx.roomCode);continue;}
+    // A timed-out poll may have accumulated many phase signals. Do not turn
+    // them into immediate failing RPCs; use the bounded retry backoff instead.
+    ctx.refreshQueued=false;
     updateConnectionHealth(false);
     if(showError)notice('hostNotice',error.message,'error');
    }
