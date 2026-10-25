@@ -37,8 +37,8 @@ test('mini-games are real multiplayer server-controlled modes',()=>{
  assert.match(arcade,/data-runner-obstacle/);
  assert.match(arcade,/arcade-tap-center/);
  assert.match(arcade,/Победившая команда выбирает/);
- assert.match(studio,/Дуэль капитанов · Memory/);
- assert.match(studio,/Командная тапалка/);
+ assert.match(studio,/Мэмори капитанов/);
+ assert.match(studio,/Тап-баттл/);
  assert.match(sql,/qwiz_arcade_memory_players/);
  assert.match(sql,/qwiz_arcade_runner_players/);
  assert.match(sql,/ORDER BY random\(\) LIMIT 1/);
