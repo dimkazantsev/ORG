@@ -24,7 +24,7 @@ BEGIN
      OR position('''teams'',v_teams,''players'',v_players,' IN def)=0
   THEN RAISE EXCEPTION 'State/team contract changed: review manually'; END IF;
 
-  first_pos:=position(E' select coalesce(jsonb_agg(jsonb_build_object(\\n  \'id\',t.id' IN def);
+  first_pos:=position(' select coalesce(jsonb_agg(jsonb_build_object(' IN def);
   last_pos:=position(' select count(*) into v_answers from public.org_next_answers' IN def);
   IF first_pos<1 OR last_pos<=first_pos
   THEN RAISE EXCEPTION 'Unexpected roster aggregate layout'; END IF;
