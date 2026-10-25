@@ -145,6 +145,7 @@ test('Changing to Russia geography never imports stale flag selectors and changi
   state.cards[1].settings.flag_modes=['country','picker'];
   editCard(1);
   fillSelect($('cardTopic'),[['geo-topic','География России'],['flags-topic','Флаги мира']],'Без темы','flags-topic');
+  syncCardModePanels();
  });
  await expect(page.locator('#cardFlagModes')).toBeVisible();
  await page.locator('#cardTopic').selectOption('geo-topic');
