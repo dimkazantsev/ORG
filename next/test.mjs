@@ -646,7 +646,7 @@ test('Flags subcategories are a metadata filter, not duplicated topic tables',()
  assert.match(h,/id="bankMode"/);
  assert.match(h,/id="cardModesDetails"/);
  assert.match(w,/data-card-mode/);
- assert.match(w,/flag_modes:selected.length===flagModes\.filter\(x=>x\[2\]\)\.length/);
+ assert.match(w,/flag_modes:geography\?\[\]:selected/);
  assert.match(w,/studio\('flag_publish'/);
  assert.match(migration,/q\.solution->>'flag_mode'=p_input->>'mode'/);
  assert.match(migration,/b\.solution->>'flag_mode' in \(select jsonb_array_elements_text\(v_modes\)\)/);
