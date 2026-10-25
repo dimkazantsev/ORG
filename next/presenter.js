@@ -181,7 +181,7 @@ function finalShow(state){
   :'<p class="projection-final-empty">Результаты появятся после первых ответов.</p>';
  $('projectionMain').innerHTML='<section class="projection-finale projection-finale-compact" aria-label="Итоги всей игры">'+
   '<div class="finale-heading"><div><span class="projection-eyebrow">QWIZ-PARTY / ФИНАЛ</span><h1>'+escapeText(title)+
-  '</h1><p>'+escapeText(state.title||'Квиз')+' · '+QwizStage.countLabel(teams.length,{one:'команда',few:'команды',many:'команд'})+' · '+QwizStage.countLabel(players.length,{one:'участник',few:'участника',many:'участников'})</p></div>'+
+  '</h1><p>'+escapeText(state.title||'Квиз')+' · '+QwizStage.countLabel(teams.length,{one:'команда',few:'команды',many:'команд'})+' · '+QwizStage.countLabel(players.length,{one:'участник',few:'участника',many:'участников'})+'</p></div>'+
   '<span class="finale-star" aria-hidden="true">✦</span></div>'+
   '<div class="finale-summary"><div><strong>'+stats.length+'</strong><span>'+({one:'вопрос',few:'вопроса',many:'вопросов'})[new Intl.PluralRules('ru').select(stats.length)]+'</span></div>'+
   '<div><strong>'+answered+'</strong><span>'+({one:'ответ',few:'ответа',many:'ответов'})[new Intl.PluralRules('ru').select(answered)]+' участников</span></div>'+
