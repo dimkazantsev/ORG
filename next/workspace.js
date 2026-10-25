@@ -490,6 +490,7 @@ function syncCardModePanels(){
  $('cardFlagModes').hidden=mapMode||geoQuestion;
  $('cardGeoQuestionModes').hidden=!geoQuestion;
  $('cardGeoSettings').hidden=!mapMode;
+ $('cardModesDetails').querySelector('.card-modes-title').textContent=mapMode?'Механики карты России':geoQuestion?'Механики географии':'Механики внутри темы';
  $('cardModesInfo').textContent=mapMode?'Карта России · режимы игрока':geoQuestion?'Обычные вопросы · выбирайте только нужные':'Механики выбранной темы';
 }
 function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{};

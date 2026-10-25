@@ -993,3 +993,175 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
  #cardModesDetails .card-modes-chevron{grid-column:2;grid-row:1/3}
 }
 @media(prefers-reduced-motion:reduce){#cardModesDetails .card-modes-chevron{transition:none}}
+
+
+/* 2026-10-25 / Builder mechanics: one reusable choice-tile grid for every
+   question topic and for the separate Russia-map game card.
+   Prevent the generic label{display:grid} and input{width:100%} rules from
+   separating checkboxes from their captions. */
+#cardModesDetails .card-mode-grid,
+#cardModesDetails .geo-modes-grid{
+ box-sizing:border-box;
+ display:grid;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ align-items:stretch;
+ gap:10px;
+ width:100%;
+ min-width:0;
+}
+#cardModesDetails>#cardFlagModes,
+#cardModesDetails>#cardGeoQuestionModes{
+ padding:0 14px 15px;
+ margin:0;
+}
+#cardModesDetails>#cardGeoQuestionModes{align-items:stretch}
+#cardModesDetails .card-mode-grid>label.check-row,
+#cardModesDetails .geo-modes-grid>label{
+ box-sizing:border-box;
+ display:flex!important;
+ flex-flow:row nowrap;
+ align-items:center;
+ justify-content:flex-start;
+ min-width:0;
+ min-height:56px;
+ width:100%;
+ gap:11px!important;
+ margin:0;
+ padding:11px 13px;
+ border:1px solid #dfd3ef;
+ border-radius:12px;
+ background:#fff;
+ color:var(--ink);
+ font-size:13px!important;
+ font-weight:700;
+ line-height:1.45;
+ cursor:pointer;
+ transition:border-color .15s ease,background-color .15s ease,box-shadow .15s ease;
+}
+#cardModesDetails .card-mode-grid>label.check-row>input[type="checkbox"],
+#cardModesDetails .geo-modes-grid>label>input[type="checkbox"]{
+ box-sizing:border-box;
+ display:block;
+ flex:0 0 20px;
+ width:20px!important;
+ min-width:20px!important;
+ max-width:20px!important;
+ height:20px!important;
+ min-height:20px!important;
+ max-height:20px!important;
+ margin:0!important;
+ padding:0!important;
+ border-radius:5px;
+ accent-color:var(--accent);
+ cursor:pointer;
+}
+#cardModesDetails .card-mode-grid>label.check-row>span,
+#cardModesDetails .geo-modes-grid>label>span{
+ display:block;
+ flex:1 1 auto;
+ min-width:0;
+ max-width:100%;
+ overflow-wrap:anywhere;
+ text-align:left;
+}
+#cardModesDetails .card-mode-grid>label.check-row:hover,
+#cardModesDetails .geo-modes-grid>label:hover{
+ border-color:#c4adee;
+ background:#fbf9ff;
+}
+#cardModesDetails .card-mode-grid>label.check-row:has(>input:checked),
+#cardModesDetails .geo-modes-grid>label:has(>input:checked){
+ border-color:#a982e8;
+ background:#f1eaff;
+ box-shadow:inset 0 0 0 1px #a982e84d;
+}
+#cardModesDetails .card-mode-grid>label.check-row:focus-within,
+#cardModesDetails .geo-modes-grid>label:focus-within{
+ outline:2px solid var(--accent);
+ outline-offset:2px;
+}
+#cardModesDetails .card-mode-grid>label.check-row:has(>input:disabled),
+#cardModesDetails .geo-modes-grid>label:has(>input:disabled){
+ opacity:.57;
+ background:#f5f3f9;
+ border-color:#e7e1ec;
+ box-shadow:none;
+ cursor:not-allowed;
+}
+#cardModesDetails .card-mode-grid>label.check-row:has(>input:disabled)>input,
+#cardModesDetails .geo-modes-grid>label:has(>input:disabled)>input{
+ cursor:not-allowed;
+}
+/* This note describes BOTH ordinary-geography choices, not one grid cell. */
+#cardModesDetails #cardGeoQuestionModes>p.small-help{
+ box-sizing:border-box;
+ display:block;
+ grid-column:1 / -1;
+ width:100%;
+ min-width:0;
+ margin:3px 0 0;
+ padding:10px 12px;
+ border:1px solid #e9e1f3;
+ border-radius:10px;
+ background:#fff;
+ color:#6e6085;
+ font-size:12px;
+ line-height:1.55;
+ overflow-wrap:anywhere;
+}
+#cardModesDetails>#cardGeoSettings{
+ display:grid;
+ align-items:start;
+ gap:12px;
+ min-width:0;
+ margin:2px 14px 15px;
+}
+#cardModesDetails #cardGeoSettings>h3{
+ margin:0;
+ font-size:15px;
+ line-height:1.35;
+ letter-spacing:-.02em;
+}
+#cardModesDetails #cardGeoSettings>p.small-help{
+ min-width:0;
+ font-size:12px;
+ line-height:1.6;
+ margin:0;
+}
+#cardModesDetails #cardGeoSettings>.two-inputs{
+ min-width:0;
+ grid-template-columns:repeat(2,minmax(0,1fr));
+ align-items:start;
+ gap:10px;
+}
+#cardModesDetails #cardGeoSettings>.two-inputs>label{
+ min-width:0;
+ align-content:start;
+}
+#cardModesDetails #cardGeoSettings>.two-inputs input{
+ min-width:0;
+ width:100%;
+}
+#cardModesDetails #cardGeoModes{margin:0}
+@media(max-width:600px){
+ #cardModesDetails .card-mode-grid,
+ #cardModesDetails .geo-modes-grid{
+  grid-template-columns:minmax(0,1fr);
+  gap:8px;
+ }
+ #cardModesDetails .card-mode-grid>label.check-row,
+ #cardModesDetails .geo-modes-grid>label{
+  min-height:52px;
+  padding:10px 12px;
+ }
+ #cardModesDetails #cardGeoSettings>.two-inputs{
+  grid-template-columns:minmax(0,1fr);
+  gap:13px;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ #cardModesDetails .card-mode-grid>label.check-row,
+ #cardModesDetails .geo-modes-grid>label{
+  transition:none;
+ }
+}
