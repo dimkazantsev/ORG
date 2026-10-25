@@ -29,6 +29,26 @@ async function resumeGame(){
 function tab(name){ctx.visibleTab=name;for(const id of ['library','room','results'])$(id+'Tab').hidden=id!==name;for(const el of qa('[data-tab]'))el.setAttribute('aria-current',name===el.dataset.tab?'page':'false');text('studioHeading',({library:'Библиотека',room:'Провести игру',results:'Результаты'})[name]);text('studioDescription',({library:'Все наборы вопросов в одном месте.',room:'Комната, команды и управление раундами.',results:'Командный рейтинг и результаты.'})[name]);if(name==='results')renderResults();if(name==='room')renderRoom()}
 function busy(button,active){if(!button)return;button.disabled=active;button.setAttribute('aria-busy',String(active))}
 async function rpc(name,params={}){if(!ctx.client)throw Error('Нет соединения с игрой. Проверьте подключение к интернету.');const {data,error}=await ctx.client.rpc(name,params);if(error)throw Error(error.message||'Ошибка запроса');return data}
+// A stalled PostgREST call must never block all subsequent room updates.
+// Supabase's PostgrestBuilder supports abortSignal; Promise mocks in tests do not.
+async function fetchRoomSnapshot(code,timeoutMs=10000){
+ if(!ctx.client)throw Error('Нет соединения с игрой.');
+ const controller=new AbortController();
+ let timer=null;
+ const request=ctx.client.rpc('qwiz_party_state',{p_code:code});
+ const pending=typeof request?.abortSignal==='function'?request.abortSignal(controller.signal):request;
+ try{
+  const result=await Promise.race([pending,new Promise((_,reject)=>{
+   timer=setTimeout(()=>{
+    reject(Error('Сервер игры не ответил за 10 секунд. Пробуем восстановить соединение.'));
+    controller.abort();
+   },timeoutMs);
+  })]);
+  if(result?.error)throw Error(result.error.message||'Ошибка получения состояния комнаты');
+  if(!result?.data||result.data.code!==code)throw Error('Не удалось подтвердить состояние выбранной комнаты');
+  return result.data;
+ }finally{if(timer!==null)clearTimeout(timer)}
+}
 async function ensureAuth(){const {data:{session},error}=await ctx.client.auth.getSession();if(error)throw Error(error.message);if(session)return session;const r=await ctx.client.auth.signInAnonymously();if(r.error)throw Error(r.error.message);return r.data.session}
 function dataState(room){if(room?.server_now)ctx.clockOffset=Date.parse(room.server_now)-Date.now();ctx.room=room; if(!room)return;renderQrPanels();connectRoom(room.code); if(ctx.mode==='studio'){renderRoom();renderResults()}else if(ctx.mode==='game')renderGame()}
 // Preserve draft inputs across short and long outages. Only the server can
@@ -101,7 +121,7 @@ async function refreshRoom(showError=true){
    const code=ctx.roomCode;
    if(!code)break;
    try{
-    const data=await rpc('qwiz_party_state',{p_code:code});
+    const data=await fetchRoomSnapshot(code);
     // A response that arrived during a network outage is not trusted.
     if(!navigator.onLine){updateConnectionHealth(false);ctx.refreshQueued=false;break;}
     // A slow response from room A must never overwrite room B after a switch.
