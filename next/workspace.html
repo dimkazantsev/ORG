@@ -5,10 +5,10 @@
 <meta name="theme-color" content="#faf9fd"><title>QWIZ-PARTY — Студия преподавателя</title>
 <link rel="preload" href="./assets/manrope-variable.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="./theme.css?v=lavender-2">
-<link rel="stylesheet" href="./workspace.css?v=mechanic-tiles-20261025-31">
+<link rel="stylesheet" href="./workspace.css?v=launch-review-20261025-33">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="./stage.css?v=repeat-flag-20261024-15"><script defer src="./stage.js?v=large-stage-20261025-13"></script>
-<script defer src="./vendor/qrcode.min.js"></script><script defer src="./workspace.js?v=mechanic-tiles-20261025-31"></script>
+<script defer src="./vendor/qrcode.min.js"></script><script defer src="./workspace.js?v=launch-review-20261025-33"></script>
 <link rel="stylesheet" href="./motion.css?v=2">
 <link rel="stylesheet" href="./teams.css?v=avatar-align-20261025-1"><script defer src="./avatar-art.js?v=avatar-3d-20261024-16"></script><script defer src="./teams.js?v=avatar-3d-20261024-16"></script><script defer src="./workspace-teams.js?v=avatar-3d-20261024-16"></script>
 <link rel="stylesheet" href="./arcade.css?v=vibrant-indie-worlds-20261025-30"><script defer src="./arcade.js?v=3d-stages-20261025-26"></script>
@@ -78,7 +78,15 @@
  <label>Название занятия<input id="launchTitle" placeholder="Например, Семинар № 4"></label>
  <label>Команды<select id="launchTeams"></select></label>
  <button type="button" class="primary-button" id="launchButton">Создать комнату</button></div>
- <p class="small-help">До 15 команд. Комнату можно подготовить заранее: вопросы добавляются до начала игры.</p><p class="message" id="launchMessage" role="status"></p></div>
+ <p class="small-help">До 15 команд. Комнату можно подготовить заранее: вопросы добавляются до начала игры.</p>
+ <section class="launch-plan" id="launchPlan" hidden aria-label="План запуска выбранной сборки">
+  <div class="launch-plan-heading"><div><h3>Что запустится в этой игре</h3>
+  <p>Механики выбираются <strong>отдельно для каждой карточки</strong>. Ни одна другая карточка не отключается автоматически.</p></div>
+  <button type="button" id="launchPlanEdit" class="secondary-button">Настроить сборку</button></div>
+  <ol id="launchPlanCards" class="launch-plan-list"></ol>
+  <p id="launchPlanNotice" class="small-help" role="status"></p>
+ </section>
+ <p class="message" id="launchMessage" role="status"></p></div>
  <div class="section-head"><h2>Последние комнаты</h2></div><div id="hostRoomList" class="rooms-list"><div class="empty">Загрузка комнат…</div></div>
  <section id="liveConsole" class="live-console" hidden>
  <div class="live-console-head"><div><div class="eyebrow">ПОДКЛЮЧЕННАЯ КОМНАТА</div><h2 id="activeRoomName"></h2><strong class="live-code" id="activeRoomCode"></strong></div>
