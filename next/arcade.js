@@ -76,7 +76,7 @@ window.QwizArcade=(()=>{
  function paint(tr){const v=tr.view;if(!v?.mode||tr.closed)return;const now=currentTime(tr),capture=Date.parse(v.capture_until||'')||0,end=Date.parse(v.ends_at||'')||0;
   const valid=v.running&&now<end,claim=v.mode==='blitz'&&now<capture;
   const list=tr.root.querySelector('[data-arcade-ranks]');if(list)list.innerHTML=rankMarkup(v);
-  sceneProgress(tr,v);
+
   const mine=v.mine||{},myTeam=mine.team_id,leader=(v.teams||[]).find(t=>t.place===1&&Number(t.points)>0),canAnswer=v.mode==='blitz'&&valid&&!claim&&v.blitz_eligible_team===myTeam&&v.answer_correct!==true&&v.question;
   const qroot=tr.root.querySelector('[data-arcade-question]');
   if(qroot){const qkey=v.question?JSON.stringify([v.question.prompt,v.answered_at,v.blitz_attempts,canAnswer,v.question.correct]):'';
