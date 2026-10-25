@@ -1089,7 +1089,8 @@ test('Geography mobile taps confirm immediately and correct region is enlarged',
  }
  for(const name of ['index.html','presenter.html','workspace.html']){
   const page=readFileSync(new URL('./'+name,import.meta.url),'utf8');
-  assert.match(page,/russia-geo\.js\?v=region-focus-20261025-14/);
+  assert.match(page,/russia-geo\.js\?v=geo-indie-choices-20261025-61/);
+  assert.match(page,/russia-geo\.css\?v=geo-indie-choices-20261025-61/);
   assert.match(page,/arcade\.js\?v=firsttap-timerguard-20261025-27/);
  }
 });
