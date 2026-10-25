@@ -78,7 +78,15 @@
  <label>Название занятия<input id="launchTitle" placeholder="Например, Семинар № 4"></label>
  <label>Команды<select id="launchTeams"></select></label>
  <button type="button" class="primary-button" id="launchButton">Создать комнату</button></div>
- <p class="small-help">До 15 команд. Комнату можно подготовить заранее: вопросы добавляются до начала игры.</p><p class="message" id="launchMessage" role="status"></p></div>
+ <p class="small-help">До 15 команд. Комнату можно подготовить заранее: вопросы добавляются до начала игры.</p>
+ <section class="launch-plan" id="launchPlan" hidden aria-label="План запуска выбранной сборки">
+  <div class="launch-plan-heading"><div><h3>Что запустится в этой игре</h3>
+  <p>Механики выбираются <strong>отдельно для каждой карточки</strong>. Ни одна другая карточка не отключается автоматически.</p></div>
+  <button type="button" id="launchPlanEdit" class="secondary-button">Настроить сборку</button></div>
+  <ol id="launchPlanCards" class="launch-plan-list"></ol>
+  <p id="launchPlanNotice" class="small-help" role="status"></p>
+ </section>
+ <p class="message" id="launchMessage" role="status"></p></div>
  <div class="section-head"><h2>Последние комнаты</h2></div><div id="hostRoomList" class="rooms-list"><div class="empty">Загрузка комнат…</div></div>
  <section id="liveConsole" class="live-console" hidden>
  <div class="live-console-head"><div><div class="eyebrow">ПОДКЛЮЧЕННАЯ КОМНАТА</div><h2 id="activeRoomName"></h2><strong class="live-code" id="activeRoomCode"></strong></div>
