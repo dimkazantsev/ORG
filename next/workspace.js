@@ -453,7 +453,7 @@ function appendCard(type='round',arcadeMode=null){
 function cardDesc(c){const settings=c.settings||{};
  if(settings.arcade_mode==='russia_map')return 'География России · карта · '+(settings.geo_count||15)+' случайных субъектов каждому игроку · '+(settings.geo_seconds||180)+' сек. · индивидуальный прогресс';
   if(arcadeGames[settings.arcade_mode])return 'Командная мини-игра · '+Math.max(30,Math.min(120,Number(settings.arcade_seconds)||arcadeGames[settings.arcade_mode].seconds))+' секунд · достижения и жетоны';
- if(c.type==='round')return (c.topic_id?nameTopic(c.topic_id):'Тема не выбрана')+' · '+(Array.isArray(settings.flag_modes)&&settings.flag_modes.length?settings.flag_modes.map(titleKind).join(', '):'Все доступные механики')+' · '+(settings.count||5)+' вопр. · '+(settings.seconds||30)+' сек. · ответ '+(settings.answer_seconds||10)+' сек.';
+ if(c.type==='round'){const geography=state.topics.some(t=>t.id===c.topic_id&&t.name==='География России');const selected=geography?(settings.geo_modes||[]).map(m=>({capital:'Административный центр',district:'Федеральный округ'}[m]||m)):(settings.flag_modes||[]).map(titleKind);return (c.topic_id?nameTopic(c.topic_id):'Тема не выбрана')+' · '+(selected.length?selected.join(', '):'Выберите механики перед запуском')+' · '+(settings.count||5)+' вопр. · '+(settings.seconds||30)+' сек. · ответ '+(settings.answer_seconds||10)+' сек.';}
  if(c.type==='finale')return 'Итог всей игры: результаты команд и каждого игрока · автоматически';
  return 'Дополнительная активность · настройки в карточке'}
 function renderCards(){ensureFinale();if(!state.cards.includes(state.selectedCard))state.selectedCard=null;$('roundCards').innerHTML=state.cards.map((c,i)=>{
@@ -482,13 +482,22 @@ function duplicateCard(index){
 }
 function moveCard(i,j){if(j<0||j>=state.cards.length-1||i<0||i>=state.cards.length-1)return;
  const [item]=state.cards.splice(i,1);state.cards.splice(j,0,item);renderCards()}
+function syncCardModePanels(){
+ const card=state.cards[state.editingCard];if(!card)return;
+ const mapMode=card.settings?.arcade_mode==='russia_map';
+ const topic=state.topics.find(t=>t.id===$('cardTopic').value);
+ const geoQuestion=card.type==='round'&&!mapMode&&topic?.name==='География России';
+ $('cardFlagModes').hidden=mapMode||geoQuestion;
+ $('cardGeoQuestionModes').hidden=!geoQuestion;
+ $('cardGeoSettings').hidden=!mapMode;
+ $('cardModesInfo').textContent=mapMode?'Карта России · режимы игрока':geoQuestion?'Обычные вопросы · выбирайте только нужные':'Механики выбранной темы';
+}
 function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{};
  $('cardTitle').value=c.title;$('cardTopic').value=c.topic_id||'';$('cardIcon').value=c.icon||'▦';
  $('cardCount').value=s.count||5;$('cardSeconds').value=s.seconds||30;$('cardAnswerSeconds').value=s.answer_seconds||10;
  $('cardRoundSettings').hidden=c.type!=='round';$('cardFinalePreview').hidden=c.type!=='finale';
  const arcade=arcadeGames[s.arcade_mode];$('cardArcadeSettings').hidden=!arcade;
-  const geo=s.arcade_mode==='russia_map';$('cardGeoSettings').hidden=!geo;
-  $('cardFlagModes').hidden=geo;$('cardModesDetails').open=c.type==='round';
+  const geo=s.arcade_mode==='russia_map';$('cardModesDetails').open=c.type==='round';
   if(geo)$('cardModesInfo').textContent='8 способов ответа · выберите нужные';
   if(geo){if(!c.topic_id)c.topic_id=state.topics.find(t=>t.name==='География России')?.id||null;$('cardTopic').value=c.topic_id||'';
    $('cardGeoCount').value=s.geo_count||15;$('cardGeoSeconds').value=s.geo_seconds||180;
@@ -498,19 +507,25 @@ function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{}
  $('cardOrder').value=s.order||'random';$('cardOffset').value=(s.offset||0)+1;
  $('cardTeamCap').value=s.team_cap||'';$('cardPlayerCap').value=s.player_cap||'';
  $('cardSound').value=s.sound||'fanfare';
- const selected=Array.isArray(s.flag_modes)&&s.flag_modes.length?s.flag_modes:flagModes.filter(x=>x[2]).map(x=>x[0]);
+ const selected=Array.isArray(s.flag_modes)?s.flag_modes:[];
+ for(const el of all('#cardGeoQuestionModes [data-geo-question-mode]'))el.checked=Array.isArray(s.geo_modes)&&s.geo_modes.includes(el.value);
  $('cardFlagModes').innerHTML=flagModes.map(([id,name,ready])=>'<label class="check-row flag-mode-item '+(!ready?'unavailable':'')+'"><input type="checkbox" data-card-mode="'+esc(id)+'" '+(selected.includes(id)&&ready?'checked ':'')+(ready?'':'disabled ')+'><span>'+esc(name)+(ready?'':' · скоро')+'</span></label>').join('');
- $('cardModesInfo').textContent=geo?'8 механик · настройте для каждого игрока':selected.length===1?'Одна механика':selected.length===2?'Две механики':'Все доступные механики';
+ syncCardModePanels();
  $('cardModesDetails').open=c.type==='round';
  $('cardDialog').showModal()}
+$('cardTopic').addEventListener('change',syncCardModePanels);
 function saveCard(event){event.preventDefault();const c=state.cards[state.editingCard];
  const selected=all('[data-card-mode]:checked',$('cardFlagModes')).map(x=>x.dataset.cardMode);
+ const geography=state.topics.some(t=>t.id===$('cardTopic').value&&t.name==='География России');
+ const ordinaryGeo=c.type==='round'&&c.settings?.arcade_mode!=='russia_map'&&geography;
+ const geoSelected=all('#cardGeoQuestionModes [data-geo-question-mode]:checked').map(x=>x.value);
   if(c.settings?.arcade_mode==='russia_map'){
    const geoTopic=state.topics.find(t=>t.name==='География России');
    if(!geoTopic){msg('buildMessage','Тема «География России» недоступна. Обновите библиотеку.',true);return}
    $('cardTopic').value=geoTopic.id;
   }
- if(c.type==='round'&&c.settings?.arcade_mode!=='russia_map'&&!selected.length){
+ if(ordinaryGeo&&!geoSelected.length){const first=$('cardGeoQuestionModes').querySelector('input');first?.setCustomValidity('Выберите административный центр и/или федеральный округ');first?.reportValidity();first?.addEventListener('change',()=>first.setCustomValidity(''),{once:true});return;}
+ if(c.type==='round'&&c.settings?.arcade_mode!=='russia_map'&&!geography&&!!$('cardTopic').value&&!selected.length){
   const first=$('cardFlagModes').querySelector('[data-card-mode]:not(:disabled)');
   first?.setCustomValidity('Выберите хотя бы одну доступную механику');first?.reportValidity();
   first?.addEventListener('change',()=>first.setCustomValidity(''),{once:true});return;
@@ -523,7 +538,7 @@ function saveCard(event){event.preventDefault();const c=state.cards[state.editin
   player_cap:$('cardPlayerCap').value?Number($('cardPlayerCap').value):null,
   sound:$('cardSound').value,lead_seconds:c.settings.lead_seconds??buildDefaults.lead_seconds,
   stats_seconds:c.settings.stats_seconds??buildDefaults.stats_seconds,bonus_percent:c.settings.bonus_percent??buildDefaults.bonus_percent,
-  bonus_lead:c.settings.bonus_lead??buildDefaults.bonus_lead,flag_modes:selected.length===flagModes.filter(x=>x[2]).length?[]:selected};
+  bonus_lead:c.settings.bonus_lead??buildDefaults.bonus_lead,flag_modes:geography?[]:selected,geo_modes:ordinaryGeo?geoSelected:(c.settings.arcade_mode==='russia_map'?c.settings.geo_modes:[])};
  if(arcadeGames[c.settings.arcade_mode])c.settings.arcade_seconds=Math.max(30,Math.min(120,Number($('cardArcadeSeconds').value)||arcadeGames[c.settings.arcade_mode].seconds));
   if(c.settings.arcade_mode==='russia_map'){
    const modes=all('#cardGeoModes input:checked:not(:disabled)').map(x=>x.value);
@@ -595,12 +610,13 @@ async function loadRooms(){try{const list=await rpc('qwiz_host_rooms');state.hos
  '<article class="room-row"><div><div class="question-meta"><span class="chip">'+esc(QwizStage.phaseLabel(r.phase))+'</span><span class="chip lilac">'+esc(r.code)+'</span></div><h3>'+esc(QwizStage.capitalize(r.title))+'</h3><p>'+esc(QwizStage.countLabel(r.players,{one:'участник',few:'участника',many:'участников',other:'участника'}))+' · '+esc(QwizStage.countLabel(r.teams,{one:'команда',few:'команды',many:'команд',other:'команды'}))+'</p></div><div class="room-row-actions"><button class="primary-button" data-room="'+esc(r.code)+'">Управлять →</button><button type="button" class="card-trash" data-delete-room="'+esc(r.id)+'" title="Удалить комнату" aria-label="Удалить комнату '+esc(r.title)+'">'+trashSvg+'</button></div></article>').join(''):
  '<div class="empty">Создайте комнату из сохранённой сборки.</div>';
  }catch(e){msg('launchMessage',e.message,true)}}
-async function launch(){projection();disable('launchButton',true);msg('launchMessage','');
+let launchRequestBusy=false;
+async function launch(){if(launchRequestBusy)return;launchRequestBusy=true;disable('launchButton',true);msg('launchMessage','');
  try{if(!$('launchBuild').value)throw Error('Выберите сборку.');
  const created=await rpc('qwiz_prepare_room',{p_build:$('launchBuild').value,p_title:$('launchTitle').value.trim()||null,p_teams:Number($('launchTeams').value)});
- msg('launchMessage','Комната '+created.code+' создана. '+(created.issues?.length?'Можно собирать команды; вопросы добавьте перед началом.':'Вопросов: '+created.total_questions));
+ msg('launchMessage','Комната '+created.code+' создана. Вопросов: '+created.total_questions+'. Пригласите участников и затем начните игру.');
  await loadRooms();await selectRoom(created.code);if(audienceWindow&&!audienceWindow.closed){const url=new URL('./presenter.html',location.href);url.searchParams.set('room',created.code);audienceWindow.location.href=url.toString()}}
- catch(e){msg('launchMessage',e.message,true)}finally{disable('launchButton',false)}}
+ catch(e){msg('launchMessage',e.message,true)}finally{launchRequestBusy=false;disable('launchButton',false)}}
 function subscribeRoom(code){if(state.channel){state.db.removeChannel(state.channel);state.channel=null}
  state.channel=state.db.channel('org-next-'+code,{config:{broadcast:{ack:false}}})
  .on('broadcast',{event:'phase'},()=>refreshLive())
