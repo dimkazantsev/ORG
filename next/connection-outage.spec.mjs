@@ -76,6 +76,34 @@ test('Failed polls retry with capped backoff rather than a tight request loop',a
  expect(await page.evaluate(()=>window.attempts)).toBe(3);
 });
 
+test('A hanging room RPC times out and retries, without accepting a late stale answer',async({page})=>{
+ await page.clock.install();await ready(page);
+ await page.evaluate(room=>{
+  ctx.roomCode=room.code;ctx.room=room;showScreen('game');renderGame();
+  window.roomCalls=0;window.hungSignal=null;
+  ctx.client.rpc=(name)=>{
+   if(name!=='qwiz_party_state')return Promise.resolve({data:null,error:null});
+   window.roomCalls++;
+   if(window.roomCalls===1)return {
+    abortSignal(signal){window.hungSignal=signal;return this;},
+    then(){return new Promise(()=>{});}
+   };
+   return Promise.resolve({data:{...room,ends_at:new Date(Date.now()+30000).toISOString(),
+    server_now:new Date().toISOString()},error:null});
+  };
+  window.firstRoomRead=refreshRoom(false);
+ },fixture());
+ await expect.poll(()=>page.evaluate(()=>window.roomCalls)).toBe(1);
+ await page.clock.fastForward(10100);
+ await expect.poll(()=>page.evaluate(()=>ctx.connectionStale)).toBe(true);
+ expect(await page.evaluate(()=>window.hungSignal?.aborted)).toBe(true);
+ await expect(page.locator('#richTextAnswer')).toBeDisabled();
+ await page.clock.fastForward(2100);
+ await expect.poll(()=>page.evaluate(()=>window.roomCalls)).toBe(2);
+ await expect.poll(()=>page.evaluate(()=>ctx.connectionStale)).toBe(false);
+ await expect(page.locator('#richTextAnswer')).toBeEnabled();
+});
+
 test('40 virtual players spread background refreshes across a 20-second window',async({page})=>{
  await ready(page);
  const offsets=await page.evaluate(()=>Array.from({length:40},(_,i)=>roomPollOffset(()=>(i+0.5)/40)));
