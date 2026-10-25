@@ -597,7 +597,7 @@ async function deleteRoom(id){
 }
 async function loadBuild(id){try{const r=await studio('build_get',{id});state.buildId=r.build.id;
  $('buildTitle').value=r.build.title;
- state.selectedCard=null;state.cards=(r.cards||[]).filter(c=>!['team_stats','player_stats'].includes(c.type)&&!(c.type==='bonus'&&!c.settings?.arcade_mode));
+ state.selectedCard=null;state.cards=(r.cards||[]).filter(c=>!['team_stats','player_stats'].includes(c.type)); // Keep unconfigured legacy bonuses visible for deletion.
  ensureFinale();$('composer').hidden=false;renderCards();section('builder');savePosition();
  }catch(e){msg('buildMessage',e.message,true)}}
 async function saveBuild(){disable('saveBuild',true);msg('buildMessage','Сохранение…');
@@ -627,6 +627,7 @@ function describeLaunchCard(c){
  const settings=c.settings||{},mode=settings.arcade_mode||'';
  const title=c.title||titles[c.type]||'Карточка';
  if(c.type==='finale')return {title,description:'Финал всей игры и общая статистика'};
+ if(['team_stats','player_stats'].includes(c.type))return {title,description:'Устаревшая карточка рейтинга. Откройте редактор и сохраните сборку, чтобы исключить её.',invalid:true};
  if(mode==='russia_map'){
   const selected=Array.isArray(settings.geo_modes)?settings.geo_modes:[];
   return {title,description:'Карта России · '+(selected.length?selected.map(x=>launchModeNames[x]||x).join(', '):'механики не выбраны'),invalid:!selected.length};
