@@ -203,7 +203,7 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  const cue=s.phase+':'+s.index;if(cue!==ctx.gameCue){ctx.gameCue=cue;if(s.phase==='result')QwizStage.audio.play('reveal');else if(s.phase==='finished')QwizStage.audio.play(s.activity?.sound||'fanfare');else if(s.phase==='question')QwizStage.audio.play('pop')}
  $('playerTeamProgress').hidden=s.phase!=='question';if(s.phase==='question')QwizStage.progress($('playerTeamProgress'),s.public_stats?.teams||[]);
  window.QwizArcade?.syncWallet(s,ctx);
- const renderKey=[s.code,s.index,s.phase,s.activity?.title,s.activity?.settings?.arcade_mode,s.has_answer,s.eligible,s.total,s.question?.kind,s.question?.prompt,me?.team_id].join(':');
+ const renderKey=[s.code,s.index,s.phase,s.activity?.title,s.activity?.settings?.arcade_mode,s.has_answer,s.eligible,s.total,s.question?.kind,s.question?.prompt,s.paused,me?.team_id].join(':');
  if(ctx.gameRenderKey===renderKey)return;
  ctx.gameRenderKey=renderKey;
  if((!s.has_answer||s.phase!=='question')&&$('gameNotice').classList.contains('success'))notice('gameNotice','');
@@ -256,7 +256,7 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  }
  if(!question){el.innerHTML='<p class="placeholder">Ожидаем вопрос.</p>';return}
  const time=remaining(s.ends_at);
- const done=!!s.has_answer;const eligible=s.eligible!==false;const locked=s.phase!=='question'||done||time===0||!eligible;
+ const done=!!s.has_answer;const eligible=s.eligible!==false;const locked=s.phase!=='question'||done||time===0||!eligible||!!s.paused;
  const richKind=question.kind||'single';
  const richLocked=locked;
  let optsMarkup=gameRichMarkup({...question,_phase:s.phase},richLocked);
@@ -267,6 +267,7 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  const media=QwizStage.illustration(question,s.answer,interactive);
  const clip=typeof question.media_url==='string'&&/^https:\/\//i.test(question.media_url)&&['audio','video'].includes(richKind)?'<'+richKind+' class="rich-media" controls preload="metadata" src="'+esc(question.media_url)+'"></'+richKind+'>':'';
  el.innerHTML='<div class="player-question-top"><span class="eyebrow">Вопрос '+(s.index+1)+' / '+s.total+'</span>'+QwizStage.clockMarkup(s,'playerTimer')+'</div><div class="player-question-layout"><div class="player-prompt">'+media+'<h1>'+esc(question.prompt)+'</h1>'+clip+hint+'</div><div class="player-responses">'+
+ (s.paused&&s.phase==='question'?'<p class="notice" role="status">Игра на паузе. Отправка ответов временно недоступна.</p>':'')+
  (s.phase==='result'?'<section class="player-answer answer-reveal" role="status"><span>'+(richKind==='poll'?'ИТОГ ГОЛОСОВАНИЯ':'ПРАВИЛЬНЫЙ ОТВЕТ')+'</span>'+
  (QwizStage.correctFlagMarkup(question,s.answer)
    ?QwizStage.correctFlagMarkup(question,s.answer)
@@ -278,19 +279,19 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
   const controls=el.querySelector('.option-list');if(controls)controls.setAttribute('data-memory-answer','');
  }
  if(s.phase==='result')el.querySelector('.player-answer')?.insertAdjacentHTML('beforeend',QwizStage.sourceLinks(s.answer));
- QwizStage.updateClock(s,ctx.clockOffset,document,'playerTimer');QwizStage.hydrateIllustrations(el);QwizStage.hydrateAssembly(el,question);
- text('playerStatus',!eligible?(me?.team_id&&Number(me.entry_question)>s.index?'Вы подключились во время игры. Участвуете со следующего вопроса.':!me?.team_id?'Ожидайте распределения в команду.':'Этот раунд не назначен вашей команде или участнику.'):s.phase==='result'?'Результат открыт. Скоро следующий вопрос.':done?'Ответ записан на сервере.':'Ваш ответ ещё не отправлен.');
+ QwizStage.updateClock(s,ctx.clockOffset,document,'playerTimer',!s.paused);QwizStage.hydrateIllustrations(el);QwizStage.hydrateAssembly(el,question);
+ text('playerStatus',s.paused?'Игра приостановлена ведущим. Ожидайте продолжения.':!eligible?(me?.team_id&&Number(me.entry_question)>s.index?'Вы подключились во время игры. Участвуете со следующего вопроса.':!me?.team_id?'Ожидайте распределения в команду.':'Этот раунд не назначен вашей команде или участнику.'):s.phase==='result'?'Результат открыт. Скоро следующий вопрос.':done?'Ответ записан на сервере.':'Ваш ответ ещё не отправлен.');
 }
 async function advance(action){const s=ctx.room;if(!s)return;busy($('host'+({start:'Start',reveal:'Reveal',next:'Next',finish:'Finish'})[action]),true);notice('hostNotice','');
  try{if(action==='finish'&&!confirm('Завершить эту игру?'))return;
   await rpc('qwiz_party_control',{p_room:s.room_id,p_action:action});signal('phase');await refreshRoom();if(action==='finish')tab('results');
  }catch(e){notice('hostNotice',e.message,'error')}finally{for(const b of ['hostStart','hostReveal','hostNext','hostFinish'])busy($(b),false)}}
 async function assign(playerId,teamId){if(!ctx.room||ctx.room.phase!=='lobby')return;try{await rpc('org_next_assign',{p_room:ctx.room.room_id,p_player:playerId,p_team:teamId});signal('team');await refreshRoom()}catch(e){notice('hostNotice',e.message,'error')}}
-async function submitAnswer(choice){if(ctx.mode!=='game'||!ctx.room||ctx.room.phase!=='question'||ctx.room.has_answer)return;const buttons=qa('[data-answer]');buttons.forEach(x=>busy(x,true));
+async function submitAnswer(choice){if(ctx.mode!=='game'||!ctx.room||ctx.room.phase!=='question'||ctx.room.paused||ctx.room.has_answer)return;const buttons=qa('[data-answer]');buttons.forEach(x=>busy(x,true));
  notice('gameNotice','Отправляем ответ…');try{await (['single','boolean','flag','portrait','image'].includes(ctx.room.question?.kind||'single')?rpc('org_next_answer',{p_room:ctx.room.room_id,p_choice:choice}):rpc('qwiz_submit_answer',{p_room:ctx.room.room_id,p_payload:{index:choice}}));QwizStage.audio.play('accept');signal('answer');notice('gameNotice','Ответ сохранён.','success');await refreshRoom(false);
  }catch(e){notice('gameNotice',e.message,'error');await refreshRoom(false)}finally{buttons.forEach(x=>busy(x,false))}}
 async function submitRichAnswer(){
- const s=ctx.room,q=s?.question;if(!s||!q||s.phase!=='question'||s.has_answer||s.eligible===false)return;
+ const s=ctx.room,q=s?.question;if(!s||!q||s.phase!=='question'||s.paused||s.has_answer||s.eligible===false)return;
  const kind=q.kind||'single';let payload={};
  if(kind==='multi'){
   const indices=qa('#gameContent [data-multi]').filter(x=>x.checked).map(x=>Number(x.dataset.multi));
