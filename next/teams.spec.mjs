@@ -188,7 +188,7 @@ test('TV overscan keeps all QR cards, readable emblems, and screen chrome within
    const root=document.getElementById('projectionShell');
    const cards=[...document.querySelectorAll('.team-board-card')];
    return {safe:box(root),padding:getComputedStyle(root).padding,
-    bounds:[...document.querySelectorAll('.projection-header,.projection-footer,#projectionMain .projection-lobby,#projectionMain .projection-team-entry')].map(box),
+    bounds:[...document.querySelectorAll('.projection-header,.projection-footer,#projectionMain .projection-lobby,#projectionMain .projection-team-entry')].map(el=>({name:el.className,hidden:getComputedStyle(el).display==='none',...box(el)})),
     entries:cards.map(el=>({card:box(el),icon:box(el.querySelector('.habitat-icon')),
      title:box(el.querySelector('.team-board-heading strong')),
      qr:box(el.querySelector('.team-board-qr canvas')),
@@ -198,7 +198,8 @@ test('TV overscan keeps all QR cards, readable emblems, and screen chrome within
   });
   const marginX=Math.min(width*.04,164),marginY=Math.min(height*.035,90);
   for(const item of report.bounds){
-   expect(item.left,'left TV overscan at '+width+' for '+count).toBeGreaterThanOrEqual(marginX-2);
+   if(item.hidden)continue;
+   expect(item.left,'left TV overscan in '+item.name+' at '+width+' for '+count+' with '+report.padding).toBeGreaterThanOrEqual(marginX-2);
    expect(item.right,'right TV overscan at '+width+' for '+count).toBeLessThanOrEqual(width-marginX+2);
    expect(item.top,'top TV overscan at '+height+' for '+count).toBeGreaterThanOrEqual(marginY-2);
    expect(item.bottom,'bottom TV overscan at '+height+' for '+count).toBeLessThanOrEqual(height-marginY+2);
