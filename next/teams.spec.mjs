@@ -2,7 +2,7 @@ import {test,expect} from '@playwright/test';
 const base='http://127.0.0.1:8080/next/';
 const uid=n=>'10000000-0000-4000-8000-'+String(n).padStart(12,'0');
 const names=['Космические','Лавандовые','Невозмутимые','Бархатные','Зазеркальные','Гравитационные','Пружинистые','Невесомые','Молниеносные','Запредельные','Искристые','Неслучайные','Шелестящие','Фантастические','Непотопляемые'];
-function fixture(count=5,people=30){const teams=names.slice(0,count).map((name,i)=>({id:uid(i+1),position:i+1,name,score:0,players:0}));
+function fixture(count=5,people=30){const teams=Array.from({length:count},(_,i)=>({id:uid(i+1),position:i+1,name:names[i]||'Команда '+(i+1),score:0,players:0}));
  const players=Array.from({length:people},(_,i)=>({id:uid(i+101),name:'Тестовый Студент '+(i+1),group:'Группа 101',avatar:i%2?'owl':'fox',team_id:teams[i%count].id}));
  for(const t of teams)t.players=players.filter(p=>p.team_id===t.id).length;
  return {room_id:uid(999),code:'AABBCCDD',title:'Семинар · команды',phase:'lobby',index:-1,total:0,teams,players,host:true,team_mode:'random',unassigned_count:0,setup_issues:[{title:'Флаги стран',topic_id:uid(555),reason:'Нет игровых вопросов с выбранного номера'}],me:null};
@@ -94,6 +94,45 @@ test('Fifteen teams and their QR controls fit a 720p classroom screen',async({pa
  await expect(page.locator('.team-board-card').last()).toBeInViewport();
 });
 
+test('Adaptive classroom layout shows every QR at 1, 3, 8 and 16 teams without scrolling',async({page})=>{
+ for(const {count,width,height,columns,rows} of [
+  {count:1,width:1280,height:720,columns:1,rows:1},
+  {count:3,width:1280,height:720,columns:3,rows:1},
+  {count:8,width:1280,height:720,columns:4,rows:2},
+  {count:16,width:1280,height:720,columns:8,rows:2},
+  {count:16,width:1440,height:900,columns:8,rows:2},
+  {count:16,width:1920,height:1080,columns:8,rows:2}
+ ]){
+  await page.setViewportSize({width,height});
+  await mock(page,fixture(count,count*2),{host:false});
+  await page.goto(base+'presenter.html?room=AABBCCDD');
+  await expect(page.locator('.team-board-card')).toHaveCount(count);
+  await expect.poll(()=>page.locator('#projectionTeamBoard').getAttribute('data-columns')).toBe(String(columns));
+  await expect(page.locator('#projectionTeamBoard')).toHaveAttribute('data-rows',String(rows));
+  await expect(page.locator('.team-board-qr canvas')).toHaveCount(count);
+  const bounds=await page.evaluate(()=>{
+   const viewport=document.querySelector('#projectionMain').getBoundingClientRect();
+   const cards=[...document.querySelectorAll('.team-board-card')].map(c=>{
+    const r=c.getBoundingClientRect();return {left:r.left,right:r.right,top:r.top,bottom:r.bottom};
+   });
+   const board=document.querySelector('#projectionTeamBoard');
+   return {viewport,cards,qrSize:parseFloat(getComputedStyle(board).getPropertyValue('--team-qr-size')),
+    pageScroll:document.documentElement.scrollHeight-innerHeight};
+  });
+  expect(bounds.qrSize,'QR size at '+width+'x'+height+' for '+count+' teams').toBeGreaterThanOrEqual(70);
+  for(const card of bounds.cards){
+   expect(card.left,'card left at '+width+'x'+height).toBeGreaterThanOrEqual(bounds.viewport.left-2);
+   expect(card.right,'card right at '+width+'x'+height).toBeLessThanOrEqual(bounds.viewport.right+2);
+   expect(card.top,'card top at '+width+'x'+height).toBeGreaterThanOrEqual(bounds.viewport.top-2);
+   expect(card.bottom,'card bottom at '+width+'x'+height).toBeLessThanOrEqual(bounds.viewport.bottom+2);
+  }
+  expect(bounds.pageScroll,'page must fit at '+width+'x'+height).toBeLessThanOrEqual(2);
+  await page.locator('.team-board-card').last().click();
+  await expect(page.locator('#teamQrDialog')).toBeVisible();
+  await expect(page.locator('.team-qr-large canvas')).toHaveCount(1);
+  await page.keyboard.press('Escape');
+ }
+});
 test('Shared classroom QR enlarges without consuming a team slot',async({page})=>{
  await mock(page,fixture(15,30),{host:false});await page.setViewportSize({width:1440,height:900});await page.goto(base+'presenter.html?room=AABBCCDD');
  await expect(page.locator('.team-board-card')).toHaveCount(15);
