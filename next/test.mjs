@@ -863,9 +863,9 @@ test('Studio game selector keeps full names, uses consistent icons and an access
  const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
  const names=[
   ['data-geo="russia_map"','Карта регионов России'],
-  ['data-arcade="rocket"','Ракета'],
+  ['data-arcade="rocket"','Забег с препятствиями'],
   ['data-arcade="blitz"','Блиц-вопрос'],
-  ['data-arcade="tug"','Перетягивание очков'],
+  ['data-arcade="tug"','Командная тапалка'],
   ['data-arcade="captain"','Дуэль капитанов']
  ];
  for(const [attribute,title] of names){
@@ -890,7 +890,7 @@ test('Mini-game buttons keep complete labels and the disclosure uses a separate 
  const html=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
  const styles=readFileSync(new URL('./workspace.css',import.meta.url),'utf8');
  const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
- const games=['Карта регионов России','Ракета','Блиц-вопрос','Перетягивание очков','Дуэль капитанов'];
+ const games=['Карта регионов России','Забег с препятствиями','Блиц-вопрос','Командная тапалка','Дуэль капитанов'];
  for(const label of games)assert.ok(html.includes('>'+label+'</button>'),'Missing game '+label);
  assert.match(host,/const label=b\.textContent\.replace\(\/\\s\+\/g,' '\)\.trim\(\)/);
  assert.match(html,/class="games-chevron-box" aria-hidden="true"/);
@@ -1089,9 +1089,9 @@ test('Geography mobile taps confirm immediately and correct region is enlarged',
  }
  for(const name of ['index.html','presenter.html','workspace.html']){
   const page=readFileSync(new URL('./'+name,import.meta.url),'utf8');
-  assert.match(page,/russia-geo\.js\?v=geo-indie-choices-20261025-61/);
+  assert.match(page,/russia-geo\.js\?v=hide-region-names-20261025/);
   assert.match(page,/russia-geo\.css\?v=geo-indie-choices-20261025-61/);
-  assert.match(page,/arcade\.js\?v=firsttap-timerguard-20261025-27/);
+  assert.match(page,/arcade\.js\?v=memory-runner-teamtap-20261025/);
  }
 });
 
