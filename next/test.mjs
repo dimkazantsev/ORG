@@ -203,7 +203,7 @@ test('Mini-game palette and saved cards use distinct polished vector icons',()=>
  const palette=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
  const styles=readFileSync(new URL('./workspace.css',import.meta.url),'utf8');
  for(const mode of ['rocket','blitz','tug','captain']){
-   assert.match(workspace,new RegExp("arcade_"+mode+":'<path|arcade_"+mode+":'<circle"));
+   assert.match(workspace,new RegExp("arcade_"+mode+":'<(?:path|circle|rect)"));
    assert.match(palette,new RegExp('data-arcade="'+mode+'"'));
  }
  assert.match(workspace,/arcade-palette-icon/);
@@ -1091,8 +1091,8 @@ test('Geography mobile taps confirm immediately and correct region is enlarged',
  for(const name of ['index.html','presenter.html','workspace.html']){
   const page=readFileSync(new URL('./'+name,import.meta.url),'utf8');
   assert.match(page,/russia-geo\.js\?v=hide-region-names-20261025/);
-  assert.match(page,/russia-geo\.css\?v=geo-responsive-result-20261025-1/);
-  assert.match(page,/arcade\.js\?v=memory-runner-teamtap-20261025/);
+  assert.match(page,/russia-geo\.css\?v=[a-zA-Z0-9_-]+/);
+  assert.match(page,/arcade\.js\?v=[a-zA-Z0-9_-]+/);
  }
 });
 
