@@ -1165,3 +1165,19 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
   transition:none;
  }
 }
+/* One-source launch briefing: per-card mechanics, visible before a room is created. */
+.launch-plan{margin-top:18px;padding:17px 18px;border:1px solid #dfd3f2;background:#fbf9ff;border-radius:16px}
+.launch-plan-heading{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.launch-plan-heading h3{font-size:16px;font-weight:750;margin:0 0 5px;color:#282137}
+.launch-plan-heading p{margin:0;font-size:13px;line-height:1.5;color:#61566f;max-width:660px}
+.launch-plan-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;list-style:none;padding:0;margin:15px 0 10px}
+.launch-plan-item{display:flex;gap:11px;min-width:0;padding:12px 13px;border:1px solid #e5daf5;background:white;border-radius:12px;align-items:flex-start}
+.launch-plan-number{flex:none;display:grid;place-items:center;width:28px;height:28px;border-radius:9px;background:#eee5fc;color:#6939c6;font-size:12px;font-weight:800}
+.launch-plan-detail{min-width:0;display:grid;gap:3px}
+.launch-plan-detail strong{font-size:13px;line-height:1.35;color:#30273f;overflow-wrap:anywhere}
+.launch-plan-detail span{font-size:12px;line-height:1.5;color:#625a6e;overflow-wrap:anywhere}
+.launch-plan-item.is-unconfigured{border-color:#d7a6b6;background:#fff9fb}
+.launch-plan-item.is-unconfigured .launch-plan-number{background:#ffe5ec;color:#8b2d49}
+.launch-plan #launchPlanNotice{margin:5px 0 0;color:#5b4b76}
+@media(max-width:780px){.launch-plan-list{grid-template-columns:1fr}}
+@media(max-width:480px){.launch-plan{padding:12px}.launch-plan-heading .secondary-button{width:100%}}
