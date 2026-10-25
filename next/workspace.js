@@ -761,7 +761,7 @@ function describeLaunchCard(c){
   const modeText=needsModes?
     (Array.isArray(selected)&&selected.length?selected.map(x=>launchModeNames[x]||x).join(', '):'механики не выбраны'):
     'Вопросы выбранной темы';
-  return {title,description:'Раунд вопросов · '+topic+' · '+modeText+' · до '+(settings.count||5)+' вопросов',invalid};
+  return {title,description:'Раунд вопросов · '+topic+' · '+modeText+' · до '+QwizStage.countLabel(settings.count||5,{one:'вопрос',few:'вопроса',many:'вопросов'}),invalid};
  }
  return {title,description:({'intro':'Вступительная заставка','break':'Пауза',
   'duel':'Дополнительная игра','bonus':'Бонусная карточка'}[c.type]||'Дополнительная карточка')};
