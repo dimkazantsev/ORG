@@ -63,12 +63,18 @@ window.QwizArcade=(()=>{
   '<div class="arcade-head"><div><span class="arcade-kicker">QWIZ-PARTY · КОМАНДНОЕ ИСПЫТАНИЕ</span><h2>'+escape(m.title)+'</h2></div><span class="arcade-countdown" data-arcade-clock>—</span></div>'+
   '<p class="arcade-lead">'+escape(m.desc)+'</p><div class="arcade-scene">'+art(mode)+'</div>'+
   '<div data-arcade-question hidden></div><div class="arcade-ranks" data-arcade-ranks></div>'+
-  (kind==='player'?'<button type="button" class="arcade-tap-btn" data-arcade-tap>'+escape(m.cta)+'</button><span class="arcade-tap-caption" data-arcade-personal>Ждём команды…</span>':'')+
+  (kind==='player'?'<button type="button" class="arcade-tap-btn" data-arcade-tap disabled>'+escape(m.cta)+'</button><span class="arcade-tap-caption" data-arcade-personal>Подключаем игровое время…</span>':'')+
   '<div class="arcade-alert" role="status" aria-live="polite" data-arcade-alert>Подключаем результаты…</div><div class="arcade-badges" data-arcade-badges></div><section class="arcade-vote" data-arcade-vote hidden></section></div>';
  }
  function stop(kind){const tr=ui[kind];if(!tr)return;if(tr.interval)clearInterval(tr.interval);if(tr.clock)clearInterval(tr.clock);if(tr.flushTimer)clearTimeout(tr.flushTimer);if(tr.onClick)tr.root?.removeEventListener('click',tr.onClick);tr.closed=true;ui[kind]=null;}
  async function fetchState(tr){if(tr.closed||tr.fetching)return;tr.fetching=true;const id=tr.key;
   try{const {data,error}=await tr.client.rpc('qwiz_party_arcade',{p_code:tr.code});if(error)throw error;if(tr.closed||tr.key!==id)return;
+   // A repeated mechanic in a later card is a new game, not a continuation
+   // of the previous card's taps, question, selection or pending work.
+   if(tr.view?.card_position!==undefined&&tr.view.card_position!==data.card_position){
+     tr.pending=0;tr.qkey='';tr.alertOverride=0;
+     if(tr.flushTimer){clearTimeout(tr.flushTimer);tr.flushTimer=null;}
+   }
    tr.view=data;tr.offset=Date.parse(data.server_now)-Date.now();paint(tr);if(tr.kind==='player')paintWallet(data);
   }catch(e){showMessage(tr,e.message||'Состояние игры недоступно',true)}finally{tr.fetching=false}
  }
@@ -189,7 +195,11 @@ window.QwizArcade=(()=>{
   animateTap(tr);
   if(v.mode==='captain'){sendTap(tr,1);return;}
   tr.pending=Math.min(24,tr.pending+1);
-  if(!tr.flushTimer)tr.flushTimer=setTimeout(()=>flush(tr),750);
+  const label=tr.root.querySelector('[data-arcade-personal]');
+  if(label)label.textContent='Нажатие получено · передаём очки серверу…';
+  // Start the first batch promptly while keeping subsequent batches below
+  // the server's eight-clicks-per-second acceptance limit.
+  if(!tr.flushTimer)tr.flushTimer=setTimeout(()=>flush(tr),220);
  }
  async function flush(tr){if(tr.closed)return;tr.flushTimer=null;if(tr.sending||!tr.pending)return;
   const amount=Math.min(6,tr.pending);tr.pending-=amount;await sendTap(tr,amount);
