@@ -152,13 +152,15 @@ test('Adaptive classroom layout shows every QR at 1, 3, 8 and 16 teams without s
 });
 test('Shared classroom QR enlarges without consuming a team slot',async({page})=>{
  await mock(page,fixture(15,30),{host:false});await page.setViewportSize({width:1440,height:900});await page.goto(base+'presenter.html?room=AABBCCDD');
- await expect(page.locator('.team-board-card')).toHaveCount(15);
+ await expect(page.locator('.team-board-card')).toHaveCount(0);
+ await expect(page.locator('.lobby-cinema-qr')).toBeVisible();
  await page.locator('#projectionQr').click();await expect(page.locator('#projectionQrDialog')).toBeVisible();
  await expect(page.locator('#projectionQrZoom canvas')).toHaveCount(1);
  await page.locator('#projectionQrClose').click();await expect(page.locator('#projectionQrDialog')).toBeHidden();
 });
 test('Classroom membership refresh keeps QR elements stable',async({page})=>{
- await mock(page,fixture(),{host:false});await page.goto(base+'presenter.html?room=AABBCCDD');await expect(page.locator('.team-board-card')).toHaveCount(5);
+ const state=fixture();state.team_lobby={mode:'random',confirmed:true,team_count:5,captain_count:0,captains_ready:false};
+ await mock(page,state,{host:false});await page.goto(base+'presenter.html?room=AABBCCDD');await expect(page.locator('.team-board-card')).toHaveCount(5);
  await page.evaluate(()=>{window.firstQr=document.querySelector('.team-board-qr canvas');window.fixture.lobby_teams=window.fixture.teams.map((t,i)=>({...t,members:i===0?7:6}));render(window.fixture);});
  await expect(page.locator('.board-count').first()).toHaveText('7 участников');expect(await page.evaluate(()=>window.firstQr===document.querySelector('.team-board-qr canvas'))).toBe(true);
 });
@@ -246,6 +248,8 @@ test('New random room requires moderator confirmation before public team QR',asy
  await page.locator('#confirmTeams').click();
  await expect(page.locator('#liveStart')).toBeEnabled();
  expect(await page.evaluate(()=>window.actions.some(([n,a])=>n==='qwiz_lobby_action'&&a.p_action==='confirm'))).toBe(true);
+ s.team_lobby.confirmed=true;
+ s.players.forEach((p,i)=>p.team_id=s.teams[i%s.teams.length].id);
  await mock(page,s,{host:false});await page.goto(base+'presenter.html?room=AABBCCDD');
  await expect(page.locator('.team-board-card')).toHaveCount(3);
  await expect(page.locator('#projectionMain')).toContainText('Идите к своей команде');
