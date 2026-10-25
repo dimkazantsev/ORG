@@ -18,7 +18,7 @@ jobs:
         with:
           node-version: '22'
       - name: Validate new app
-        run: node --test next/test.mjs next/flags-six.test.cjs
+        run: node --test next/test.mjs next/arcade-20261025.spec.mjs next/flags-six.test.cjs
       - name: Static asset checks
         run: |
           test -s next/index.html
