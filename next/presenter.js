@@ -183,7 +183,7 @@ function finalShow(state){
   '<div class="finale-heading"><div><span class="projection-eyebrow">QWIZ-PARTY / ФИНАЛ</span><h1>'+escapeText(title)+
   '</h1><p>'+escapeText(state.title||'Квиз')+' · '+teams.length+' команд · '+players.length+' участников</p></div>'+
   '<span class="finale-star" aria-hidden="true">✦</span></div>'+
-  '<div class="finale-summary"><div><strong>'+stats.length+'</strong><span>вопросов</span></div>'+
+  '<div class="finale-summary"><div><strong>'+stats.length+'</strong><span>'+({one:'вопрос',few:'вопроса',many:'вопросов'})[new Intl.PluralRules('ru').select(stats.length)]+'</span></div>'+
   '<div><strong>'+answered+'</strong><span>ответов участников</span></div>'+
   '<div><strong>'+accuracy+'%</strong><span>верных ответов</span></div></div>'+
   '<div class="projection-round-columns"><section class="stage-team-results"><h2>Рейтинг команд</h2>'+list(teams)+'</section>'+
