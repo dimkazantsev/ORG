@@ -31,8 +31,8 @@ const examples=[
  ,{id:'round-statistics',phase:'intermission',
    activity:{type:'round_stats',title:'Итоги раунда',settings:{stats_seconds:7}},
    round_results:{team_unit:'баллы',player_unit:'баллы',
-     teams:Array.from({length:14},(_,i)=>({name:'Команда '+(i+1)+' с названием',score:280-i*7})),
-     players:Array.from({length:18},(_,i)=>({nickname:'Студент участник '+(i+1),score:500-i*12}))}}
+     teams:Array.from({length:14},(_,i)=>({name:'Команда '+(i+1)+' с названием',score:999999999999-i*7000})),
+     players:Array.from({length:18},(_,i)=>({nickname:'Студент участник '+(i+1),score:555555555555-i*12000}))}}
 ];
 for(const [width,height] of [[1280,720],[1366,768],[1920,1080],[3840,2160],[7680,4320]]){
  test('Audience content fits '+width+'x'+height,async({page})=>{
@@ -63,7 +63,14 @@ for(const [width,height] of [[1280,720],[1366,768],[1920,1080],[3840,2160],[7680
    if(sample.id==='pick-flag')await expect(page.locator('.question-frame')).toHaveCount(0);
    if(sample.phase==='result')await expect(page.locator('.projection-answer-reveal')).toBeVisible();
    if(sample.id==='map-card-intro'||sample.id==='question-card-intro')await expect(page.locator('.projection-intro-card')).toBeVisible();
-   if(sample.id==='round-statistics')await expect(page.locator('.projection-round-results')).toBeVisible();
+   if(sample.id==='round-statistics'){
+    await expect(page.locator('.projection-round-results')).toBeVisible();
+    const exceeds=await page.locator('.projection-round-leaders li>b').evaluateAll(nodes=>nodes.some(el=>{
+      const elBox=el.getBoundingClientRect(),rowBox=el.closest('li').getBoundingClientRect();
+      return elBox.right>rowBox.right+2 || el.scrollWidth>el.clientWidth+2;
+    }));
+    expect(exceeds,'Huge result numbers must fit projection rows at '+width).toBe(false);
+   }
   }
  });
 }
