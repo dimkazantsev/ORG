@@ -1181,3 +1181,168 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 .launch-plan #launchPlanNotice{margin:5px 0 0;color:#5b4b76}
 @media(max-width:780px){.launch-plan-list{grid-template-columns:1fr}}
 @media(max-width:480px){.launch-plan{padding:12px}.launch-plan-heading .secondary-button{width:100%}}
+
+
+/* One card system for all five games, normal rounds, introduction and finale.
+   Keep the square footprint when text fits; allow vertical growth rather than
+   clipping titles, descriptions or the accessible controls. */
+#roundCards.round-grid{
+  grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));
+  align-items:start;
+  gap:12px;
+}
+#roundCards .round-card,
+#roundCards .round-card:has(.round-card-tools){
+  --mechanic-surface:#fff;
+  --mechanic-border:#e2d7f2;
+  --mechanic-ink:#7147bf;
+  aspect-ratio:1/1;
+  min-height:max-content;
+  height:auto;
+  overflow:visible;
+  padding:48px clamp(12px,1.1vw,17px) 14px;
+  border:1px solid var(--mechanic-border);
+  background:var(--mechanic-surface);
+  box-shadow:0 3px 12px #4f358612;
+  gap:9px;
+}
+#roundCards .round-card[data-type="intro"]{
+  --mechanic-surface:#f8f3ff;--mechanic-border:#ded0f6;--mechanic-ink:#6b43b8;
+}
+#roundCards .round-card[data-type="finale"]{
+  --mechanic-surface:#f2eafb;--mechanic-border:#d6c3f1;--mechanic-ink:#7140c3;
+}
+#roundCards .round-card[data-mechanic="russia_map"]{
+  --mechanic-surface:#f3faff;--mechanic-border:#cbe5f7;--mechanic-ink:#2676ac;
+}
+#roundCards .round-card[data-mechanic="rocket"]{
+  --mechanic-surface:#f6f3ff;--mechanic-border:#d9ccfb;--mechanic-ink:#7250c9;
+}
+#roundCards .round-card[data-mechanic="blitz"]{
+  --mechanic-surface:#fff9ee;--mechanic-border:#f0ddba;--mechanic-ink:#9b6a1b;
+}
+#roundCards .round-card[data-mechanic="tug"]{
+  --mechanic-surface:#f1f9f8;--mechanic-border:#c8e5e0;--mechanic-ink:#297e78;
+}
+#roundCards .round-card[data-mechanic="captain"]{
+  --mechanic-surface:#fff4f8;--mechanic-border:#f0d2e2;--mechanic-ink:#a34878;
+}
+#roundCards .round-card-heading{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:9px;min-height:40px;min-width:0;
+}
+#roundCards .round-card-heading .small-help{
+  min-width:0;white-space:normal;text-align:right;
+  font-size:10px;line-height:1.4;overflow-wrap:anywhere;
+}
+#roundCards .round-icon,
+#roundCards .round-card[data-type="finale"] .round-icon{
+  display:grid;place-items:center;
+  width:42px;height:42px;flex:0 0 42px;
+  background:#fff;border:1px solid var(--mechanic-border);
+  color:var(--mechanic-ink);border-radius:13px;
+}
+#roundCards .round-icon svg,
+#roundCards .round-card[data-type="finale"] .round-icon svg{
+  display:block;width:25px;height:25px;
+}
+#roundCards .round-card h3,
+#roundCards .round-card[data-type="finale"] h3{
+  display:block;
+  min-height:0;max-height:none;
+  -webkit-line-clamp:unset;line-clamp:unset;
+  overflow:visible;overflow-wrap:anywhere;
+  font-size:clamp(15px,1.18vw,18px);
+  line-height:1.32;font-weight:750;letter-spacing:-.025em;
+  margin:2px 0;
+}
+#roundCards .round-card .round-sub,
+#roundCards .round-card[data-type="finale"] .round-sub{
+  display:block;
+  min-height:0;max-height:none;
+  -webkit-line-clamp:unset;line-clamp:unset;
+  overflow:visible;overflow-wrap:anywhere;
+  font-size:12px;line-height:1.5;
+  color:#655974;margin:0;
+}
+#roundCards .round-actions{
+  display:grid;
+  grid-template-columns:auto auto minmax(0,1fr);
+  align-items:stretch;gap:7px;
+  width:100%;min-width:0;
+  margin-top:auto;padding-top:10px;
+  border-top:1px solid #e8ddf2;
+}
+#roundCards .round-card[data-type="finale"] .round-actions{
+  grid-template-columns:minmax(0,1fr);
+}
+#roundCards .round-actions button{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:40px;min-height:42px;padding:8px;
+  border:1px solid #dfd4ef;border-radius:10px;
+  background:#fff;color:#62468f;
+  font-size:12px;line-height:1.25;
+}
+#roundCards .round-actions .round-edit{
+  min-width:0;padding:9px;
+  font-weight:750;overflow-wrap:anywhere;
+  color:var(--mechanic-ink);
+}
+#roundCards .round-actions .move-svg{
+  display:block;width:19px;height:19px;flex:none;
+}
+#roundCards .round-actions button:not(:disabled):hover{
+  color:var(--mechanic-ink);border-color:var(--mechanic-ink);
+  background:#fff;
+}
+#roundCards .round-actions button:disabled{opacity:.42;cursor:not-allowed}
+#roundCards .round-card-tools{top:6px;right:8px;gap:4px}
+#roundCards .round-card-tools button{
+  color:#7751ba;background:#ffffffa8;
+}
+#roundCards .round-card-tools .round-trash{color:#a05f76}
+#roundCards .round-card.is-selected{
+  border:2px solid #8e59ef;
+  box-shadow:0 0 0 2px #8e59ef1c,0 7px 20px #8651c925;
+}
+#roundCards .round-card.is-selected .round-icon{
+  background:#8551de;color:#fff;border-color:#8551de;
+}
+#cardPalette.card-main-palette button{
+  gap:10px;justify-content:center;text-align:center;
+  border-radius:14px;
+}
+#cardPalette.card-main-palette button>svg{
+  display:block;width:22px;height:22px;flex:0 0 22px;
+  stroke-width:1.9;
+}
+#arcadePalette [data-geo="russia_map"]{
+  --arcade-icon-color:#2676ac;--arcade-icon-surface:#e5f5ff;
+}
+#arcadePalette [data-arcade="rocket"]{
+  --arcade-icon-color:#7250c9;--arcade-icon-surface:#eee8ff;
+}
+#arcadePalette [data-arcade="blitz"]{
+  --arcade-icon-color:#9b6a1b;--arcade-icon-surface:#fff0ce;
+}
+#arcadePalette [data-arcade="tug"]{
+  --arcade-icon-color:#297e78;--arcade-icon-surface:#e1f5f2;
+}
+#arcadePalette [data-arcade="captain"]{
+  --arcade-icon-color:#a34878;--arcade-icon-surface:#ffebf4;
+}
+#arcadePalette .arcade-palette-icon{
+  border:1px solid #ffffffa8;
+}
+@media(max-width:600px){
+  #roundCards.round-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}
+  #roundCards .round-card,
+  #roundCards .round-card:has(.round-card-tools){padding:49px 13px 14px}
+  #roundCards .round-card .round-sub{font-size:12px}
+}
+@media(pointer:coarse){
+  #roundCards .round-actions button{min-width:44px;min-height:44px}
+}
+@media(prefers-reduced-motion:reduce){
+  #roundCards .round-card{transition:none}
+}
