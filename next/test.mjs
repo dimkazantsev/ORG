@@ -1091,7 +1091,7 @@ test('Geography mobile taps confirm immediately and correct region is enlarged',
  for(const name of ['index.html','presenter.html','workspace.html']){
   const page=readFileSync(new URL('./'+name,import.meta.url),'utf8');
   assert.match(page,/russia-geo\.js\?v=hide-region-names-20261025/);
-  assert.match(page,/russia-geo\.css\?v=geo-indie-choices-20261025-61/);
+  assert.match(page,/russia-geo\.css\?v=geo-responsive-result-20261025-1/);
   assert.match(page,/arcade\.js\?v=memory-runner-teamtap-20261025/);
  }
 });
