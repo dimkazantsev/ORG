@@ -1111,3 +1111,12 @@ test('Room preparation reuses a safe empty lobby and never enables unselected ma
  assert.match(sql,/v_stored_timeline is distinct from v_current->''timeline''/);
  assert.match(sql,/EXECUTE body/);
 });
+
+test('A room that never started cannot be finished by the host controls',()=>{
+ const sql=readFileSync(new URL('./migrations/20261025_block_finish_in_lobby.sql',import.meta.url),'utf8');
+ const client=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ assert.match(sql,/Prevent finishing a lobby that has never started/);
+ assert.match(sql,/p_action='finish' and r.phase='lobby'/);
+ assert.match(sql,/refusing unsafe patch/);
+ assert.match(client,/\$\('liveFinish'\)\.disabled=\['lobby','finished'\]\.includes\(s\.phase\)/);
+});
