@@ -276,3 +276,37 @@ test('Moderator Next in Russia geography opens results and clearly signals the t
  await expect(page.locator('#liveNext')).toContainText('Далее');
  expect(await page.evaluate(()=>window.actions.some(([name,args])=>name==='qwiz_party_control_checked'&&args.p_action==='next'))).toBe(true);
 });
+
+
+test('Four indie-inspired game stages use distinct palettes and never clip at mobile width',async({page})=>{
+ await page.route('https://cdn.jsdelivr.net/**',r=>r.fulfill({contentType:'application/javascript',body:'window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}})},rpc:async()=>({data:{registered:false},error:null}),channel:()=>({on(){return this},subscribe(){return this}})})};'}));
+ await page.setViewportSize({width:390,height:850});
+ await page.goto(base);
+ for(const mode of ['rocket','tug','captain','blitz']){
+  await page.evaluate(mode=>{
+   QwizArcade.stop('player');document.getElementById('arcadeStyleFixture')?.remove();
+   const root=document.createElement('section');root.id='arcadeStyleFixture';root.style.width='min(100%,390px)';
+   document.querySelector('#mainContent').append(root);
+   const now=Date.now(),state={code:'ABCDEF12',room_id:'room',
+    activity:{settings:{arcade_mode:mode}}};
+   const view={code:'ABCDEF12',mode,running:true,server_now:new Date(now).toISOString(),
+    started_at:new Date(now-2000).toISOString(),ends_at:new Date(now+30000).toISOString(),
+    teams:[],mine:{team_id:'t',credits:0},awards:[]};
+   QwizArcade.mountPlayer(root,state,{client:{rpc:async()=>({data:view,error:null})}});
+  },mode);
+  const world=page.locator('#arcadeStyleFixture .arcade-3d-world');
+  await expect(world).toBeVisible();
+  await expect(world).toHaveClass(new RegExp('arcade-world-'+mode));
+  const computed=await world.evaluate(el=>{
+   const r=el.getBoundingClientRect(),s=getComputedStyle(el);
+   return {width:r.width,height:r.height,right:r.right,background:s.backgroundImage,
+    scene:getComputedStyle(el.closest('.arcade-scene')).borderTopWidth}
+  });
+  expect(computed.width).toBeGreaterThan(220);
+  expect(computed.height).toBeGreaterThanOrEqual(160);
+  expect(computed.right).toBeLessThanOrEqual(392);
+  expect(computed.background).toContain('radial-gradient');
+  expect(computed.scene).toBe('2px');
+  await page.screenshot({path:'visual-artifacts/indie-arcade-'+mode+'-390.png',animations:'disabled'});
+ }
+});
