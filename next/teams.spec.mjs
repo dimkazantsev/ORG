@@ -311,6 +311,7 @@ test('Switching lobby from random to captain updates the phone and projector wit
  await page.evaluate(()=>{window.fixture.team_mode='captain';window.fixture.team_lobby.mode='captain';window.fixture.team_lobby.can_claim=true;dataState(window.fixture)});
  await expect(page.locator('#gameContent')).toContainText('Выбираем капитанов');
  await expect(page.locator('#playerTeamPanel [data-captain-claim]')).toBeVisible();
+ s.team_mode='captain';s.team_lobby.mode='captain';s.team_lobby.can_claim=true;
  await page.setViewportSize({width:1280,height:720});
  await mock(page,s,{host:false});await page.goto(base+'presenter.html?room=AABBCCDD');
  await expect(page.locator('.lobby-cinema-instructions')).toContainText('Выбираем капитанов');
