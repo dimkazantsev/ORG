@@ -216,3 +216,31 @@ END $patch$;
 REVOKE ALL ON FUNCTION public.qwiz_lobby_action(uuid,text,jsonb),public.qwiz_lobby_view(uuid,boolean) FROM PUBLIC,anon,authenticated;
 GRANT EXECUTE ON FUNCTION public.qwiz_lobby_action(uuid,text,jsonb) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.qwiz_lobby_view(uuid,boolean) TO authenticated,anon;
+
+
+-- Visual effect metadata, including the THREE penalties. The actual balance
+-- and point calculations continue to use qwiz_apply_round_boost unchanged.
+CREATE OR REPLACE FUNCTION public.qwiz_boost_teams(p_teams jsonb,p_room uuid,p_index integer)
+RETURNS jsonb LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO '' AS $effectview$
+SELECT coalesce(jsonb_agg(t.row||CASE WHEN b.choice IS NULL THEN '{}'::jsonb
+ ELSE jsonb_build_object('boost',jsonb_build_object(
+   'title',CASE b.choice
+    WHEN 'headstart' THEN 'Фора +12'
+    WHEN 'teamwork' THEN 'Командный рывок'
+    WHEN 'momentum' THEN 'Импульс +15%'
+    WHEN 'fog' THEN 'Туман −5'
+    WHEN 'storm' THEN 'Шторм −8'
+    WHEN 'drain' THEN 'Потеря −12'
+    ELSE b.choice END,
+   'tone',CASE WHEN b.choice IN ('fog','storm','drain') THEN 'harm' ELSE 'boost' END,
+   'points',b.points_awarded)) END ORDER BY t.n),'[]'::jsonb)
+FROM jsonb_array_elements(coalesce(p_teams,'[]'::jsonb)) WITH ORDINALITY t(row,n)
+LEFT JOIN LATERAL (
+ SELECT choice,points_awarded FROM public.qwiz_round_boosts x
+ JOIN public.org_next_rooms rr ON rr.id=x.room_id
+ JOIN public.org_next_quizzes q ON q.id=rr.quiz_id
+ WHERE x.room_id=p_room AND x.team_id=(t.row->>'id')::uuid
+  AND x.round_index=coalesce((q.questions->greatest(p_index,0)->>'round_index')::int,0)
+ ORDER BY x.card_position DESC LIMIT 1
+) b ON true;
+$effectview$;
