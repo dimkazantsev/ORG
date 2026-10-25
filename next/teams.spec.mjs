@@ -191,7 +191,7 @@ test('TV overscan keeps all QR cards, readable emblems, and screen chrome within
     bounds:[...document.querySelectorAll('.projection-header,.projection-footer,#projectionMain .projection-lobby,#projectionMain .projection-team-entry')].map(el=>({name:el.className,hidden:getComputedStyle(el).display==='none',...box(el)})),
     entries:cards.map(el=>({card:box(el),icon:box(el.querySelector('.habitat-icon')),
      title:box(el.querySelector('.team-board-heading strong')),
-     qr:box(el.querySelector('.team-board-qr canvas')),
+     qr:box([...el.querySelectorAll('.team-board-qr img,.team-board-qr canvas')].find(node=>{const style=getComputedStyle(node);return style.display!=='none'&&style.visibility!=='hidden'&&node.getBoundingClientRect().width>0})||el.querySelector('.team-board-qr')),
      count:box(el.querySelector('.board-count'))})),
     overflow:document.documentElement.scrollWidth-innerWidth,
     pageScroll:document.documentElement.scrollHeight-innerHeight};
@@ -206,6 +206,7 @@ test('TV overscan keeps all QR cards, readable emblems, and screen chrome within
   }
   for(const item of report.entries){
    expect(item.icon.width,'emblem visibility at '+width+' for '+count).toBeGreaterThanOrEqual(minIcon-2);
+   expect(item.qr.width,'QR must be genuinely visible at '+width+' for '+count).toBeGreaterThan(30);
    for(const part of [item.icon,item.title,item.qr,item.count]){
     expect(part.left,'content left at '+width+' for '+count).toBeGreaterThanOrEqual(item.card.left-2);
     expect(part.right,'content right at '+width+' for '+count).toBeLessThanOrEqual(item.card.right+2);
