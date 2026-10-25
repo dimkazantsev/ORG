@@ -80,10 +80,10 @@ window.QwizTeams=(()=>{
   root.innerHTML='<div class="my-team-identity">'+QwizStage.icon(team,true)+'<div><span>ВАША КОМАНДА</span><strong>'+escape(team.name)+'</strong></div></div>'+
     (mode==='random'&&lobby.confirmed&&s.phase==='lobby'?'<p class="go-to-team">Идите к своей команде</p>':'')+
     (captain&&!lobby.captains_ready&&s.phase==='lobby'?'<div class="team-captain-pending"><span class="team-infinity">∞</span><p>Ожидаем капитанов: '+lobby.captain_count+' / '+lobby.team_count+'</p><span data-captain-elapsed="'+escape(lobby.captain_started_at||'')+'"></span></div>':'')+
-    (captain&&lobby.captains_ready?'<div class="captain-qr-hero"><h3>Ваш QR-код команды</h3><div class="captain-qr-image" aria-label="Приглашение к капитану"></div><p>Покажите код другим игрокам. Сканирование сразу присоединяет к вашей команде.</p></div>':'')+
+    (captain&&lobby.captains_ready&&s.phase==='lobby'?'<div class="captain-qr-hero"><h3>Ваш QR-код команды</h3><div class="captain-qr-image" aria-label="Приглашение к капитану"></div><p>Покажите код другим игрокам. Сканирование сразу присоединяет к вашей команде.</p></div>':'')+
     (captain?'<form class="captain-rename-form"><label>Название команды<input data-captain-name maxlength="40" minlength="3" value="'+escape(team.name)+'"></label><button type="submit" class="team-invite-button">Сохранить название</button></form>':'')+
     (captain&&s.phase!=='lobby'&&members.length?'<form class="captain-transfer-form"><label>Передать капитанство<select data-captain-successor>'+members.map(m=>'<option value="'+escape(m.id)+'">'+escape(m.name)+'</option>').join('')+'</select></label><button type="submit" class="team-invite-button">Назначить капитана</button></form>':'');
-  if(captain&&lobby.captains_ready)qr(root.querySelector('.captain-qr-image'),url(s.code,team.id,s.me.id),Math.max(240,Math.min(330,Math.floor(window.innerWidth*.83))));
+  if(captain&&lobby.captains_ready&&s.phase==='lobby')qr(root.querySelector('.captain-qr-image'),url(s.code,team.id,s.me.id),Math.max(240,Math.min(330,Math.floor(window.innerWidth*.83))));
   const rename=root.querySelector('.captain-rename-form');if(rename)rename.onsubmit=e=>{e.preventDefault();window.QwizLobbyAction?.('rename',{name:rename.querySelector('input').value})};
   const transfer=root.querySelector('.captain-transfer-form');if(transfer)transfer.onsubmit=e=>{e.preventDefault();window.QwizLobbyAction?.('transfer',{player_id:transfer.querySelector('select').value})};
  }
