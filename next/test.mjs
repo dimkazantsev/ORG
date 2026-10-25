@@ -49,6 +49,23 @@ test('Only explicitly selected mechanics compile and empty rooms cannot auto-pla
  assert.match(layout,/data-geo-question-mode value="capital"/);
  assert.match(layout,/data-geo-question-mode value="district"/);
 });
+test('Room preparation is serialized per build and never duplicates an empty lobby',()=>{
+ const migration=readFileSync(new URL('./migrations/20261025_idempotent_room_preparation_and_hide_empty_history.sql',import.meta.url),'utf8');
+ const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ assert.match(migration,/public\.qwiz_prepare_room\(/);
+ assert.match(migration,/WHERE id=p_build AND owner_id=v_owner FOR UPDATE/);
+ assert.match(migration,/rb\.timeline=compiled->'timeline'/);
+ assert.match(migration,/r\.phase='lobby'/);
+ assert.match(migration,/NOT EXISTS\(SELECT 1 FROM public\.org_next_players/);
+ assert.match(migration,/NOT EXISTS\(SELECT 1 FROM public\.org_next_answers/);
+ assert.match(migration,/jsonb_array_length\(q\.questions\)=jsonb_array_length\(compiled->'questions'\)/);
+ assert.match(migration,/'reused',true/);
+ assert.match(migration,/'reused',false/);
+ assert.match(migration,/public\.qwiz_host_rooms\(\)/);
+ assert.match(migration,/rooms\.phase='finished'/);
+ assert.doesNotMatch(migration,/DELETE FROM public\.org_next_rooms|DROP TABLE/i);
+ assert.match(host,/created\.reused\?/);
+});
 test('Paused rooms preserve frozen memory and reject both answer RPCs',()=>{
  const migration=readFileSync(new URL('./migrations/20261025_pause_resume_memory_and_answer_guard.sql',import.meta.url),'utf8');
  const client=readFileSync(new URL('./app.js',import.meta.url),'utf8');
