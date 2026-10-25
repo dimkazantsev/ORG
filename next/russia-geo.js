@@ -71,13 +71,13 @@
  function options(q,t=null,feedbackActive=false){
   const correct=feedbackActive?String(t?.lastAnswer?.correct_text||'').trim():null;
   const chosen=feedbackActive?t?.chosenAnswerId:null;
-  return '<div class="geo-options">'+(q.options||[]).map(x=>{
+  return '<div class="geo-options">'+(q.options||[]).map((x,index)=>{
     const right=Boolean(correct&&String(x.text||'').trim()===correct);
     const wrong=feedbackActive&&!right&&x.id===chosen;
     const css=right?'geo-option-correct':wrong?'geo-option-wrong':'';
     const explanation=right?'Правильный ответ':wrong?'Ваш ответ':'Вариант ответа';
     return '<button type="button" data-geo-answer="'+esc(x.id)+'" class="'+css+'" aria-label="'+explanation+': '+esc(x.text)+'"'+
-      (feedbackActive?' disabled':'')+'>'+esc(x.text)+(right?' ✓':'')+'</button>';
+      (feedbackActive?' disabled':'')+'><span class="geo-choice-number" aria-hidden="true">'+String.fromCharCode(65+index)+'</span><span class="geo-choice-label">'+esc(x.text)+(right?' ✓':'')+'</span></button>';
    }).join('')+'</div>';
  }
  function prompt(q){
