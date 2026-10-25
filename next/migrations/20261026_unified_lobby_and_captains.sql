@@ -45,6 +45,14 @@ BEGIN
   'my_captain',pid IS NOT NULL AND EXISTS(SELECT 1 FROM public.qwiz_lobby_captains c WHERE c.room_id=p_room AND c.player_id=pid),
   'captain_team',(SELECT c.team_id FROM public.qwiz_lobby_captains c WHERE c.room_id=p_room AND c.player_id=pid),
   'can_claim',r.phase='lobby' AND r.team_mode='captain' AND pid IS NOT NULL AND team IS NULL AND claimed<n,
+  'team_members',CASE WHEN pid IS NOT NULL AND EXISTS(SELECT 1 FROM public.qwiz_lobby_captains c WHERE c.room_id=p_room AND c.player_id=pid)
+   THEN (SELECT coalesce(jsonb_agg(jsonb_build_object('id',p.id,'name',p.name) ORDER BY p.joined_at),'[]'::jsonb)
+    FROM public.org_next_players p WHERE p.room_id=p_room AND p.team_id=team) ELSE '[]'::jsonb END,
+  'effects_history',CASE WHEN host THEN
+   (SELECT coalesce(jsonb_agg(jsonb_build_object('team_id',b.team_id,'choice',b.choice,
+    'points_awarded',b.points_awarded,'round_index',b.round_index,'card_position',b.card_position)
+    ORDER BY b.card_position),'[]'::jsonb) FROM public.qwiz_round_boosts b WHERE b.room_id=p_room)
+    ELSE '[]'::jsonb END,
   'captains',CASE WHEN host THEN
    (SELECT coalesce(jsonb_agg(jsonb_build_object('team_id',c.team_id,'player_id',c.player_id)),'[]'::jsonb)
     FROM public.qwiz_lobby_captains c WHERE c.room_id=p_room) ELSE '[]'::jsonb END);
@@ -68,6 +76,7 @@ BEGIN
   IF pid IS NULL THEN RAISE EXCEPTION 'Вы не участник этой комнаты';END IF;
  END IF;
  IF p_action='claim' THEN
+  IF is_host THEN RAISE EXCEPTION 'Роль капитана доступна только участникам';END IF;
   IF r.phase<>'lobby' OR r.team_mode<>'captain' THEN RAISE EXCEPTION 'Капитанский набор не активен';END IF;
   IF EXISTS(SELECT 1 FROM public.qwiz_lobby_captains c WHERE c.room_id=p_room AND c.player_id=pid) THEN
    RETURN public.qwiz_lobby_view(p_room);
