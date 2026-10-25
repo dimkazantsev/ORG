@@ -235,7 +235,7 @@ window.QwizArcade=(()=>{
  function mountPlayer(el,s,ctx){if(!isArcade(s.activity))return false;activate('player',el,s.code,s.room_id,ctx.client,s.activity.settings.arcade_mode);return true;}
  function mountProjector(el,s,client){if(!isArcade(s.activity))return false;activate('screen',el,s.code,null,client,s.activity.settings.arcade_mode);return true;}
  function mountHost(el,s,client){if(!el)return;if(s.phase==='intermission'&&isArcade(s.activity)){el.hidden=false;activate('host',el,s.code,s.room_id,client,s.activity.settings.arcade_mode)}else{el.hidden=true;stop('host')}}
- const UPGRADES=[['turbo','Ускоритель (архив)',15,'Не влияет на новую игру'],['grip','Хват (архив)',15,'Не влияет на число тапов'],['navigator','Навигатор',20,'+10% в командных тап-раундах']];
+ const UPGRADES=[['turbo','Ускоритель (архив)',15,'Не влияет на новую игру'],['grip','Хват (архив)',15,'Не влияет на число тапов'],['navigator','Навигатор',20,'+10% к результату захвата блиц-вопроса']];
  function paintWallet(view){wallet.view=view;
   const el=document.getElementById('arcadeWalletPanel');if(!el)return;
   if(!view?.mine){el.hidden=true;return}
