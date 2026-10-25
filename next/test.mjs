@@ -435,6 +435,7 @@ test('Projector hides flag-picker filler art, reveals actual answers and fits th
   escapeText:String,
   projectionOption:(option)=>'<div class="fixture-flag">'+String(option.label||option)+'</div>',
   QwizStage:{
+   countLabel:(n,forms)=>String(n)+' '+forms[new Intl.PluralRules('ru').select(Number(n))],
    illustration:()=>'<div class="fixture-filler-art">Not a real flag</div>',
    clockMarkup:()=>'<div>12 sec</div>',
    correctFlagMarkup:()=>'<div class="fixture-correct-flag">Flag</div>'
