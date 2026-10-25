@@ -558,3 +558,11 @@
 @keyframes arcade-jump{0%,100%{transform:translateY(0) rotate(0)}45%{transform:translateY(-93px) rotate(-8deg)}}
 @media(max-width:520px){.arcade-shell .arcade-rank{grid-template-columns:minmax(62px,1fr) minmax(20px,1fr) minmax(48px,auto)}.arcade-memory-board{gap:8px}.arcade-memory-tile{min-height:56px}.arcade-runner-character{transform:scale(.86);transform-origin:bottom left}}
 @media(prefers-reduced-motion:reduce){.arcade-memory-tile-inner{transition:none}.arcade-memory-star,.arcade-tap-sparks,.arcade-runner-sky i,.arcade-runner-floor{animation:none}.arcade-runner-character.runner-jump{animation:arcade-jump .75s linear}}
+
+/* Runner jump is in the arena, never below a long ranking on a phone. */
+.arcade-player[data-arcade-root="rocket"] .arcade-scene{position:relative;padding:0;overflow:hidden}
+.arcade-player .arcade-runner-jump-btn{position:absolute;z-index:5;right:clamp(11px,2vw,23px);bottom:clamp(11px,2vw,20px);width:clamp(105px,31%,165px);min-height:clamp(60px,10dvh,84px);padding:8px;border:3px solid #fff;border-radius:20px;background:linear-gradient(155deg,#ec68d0,#994cda 75%);box-shadow:0 9px 0 #5a2da4,0 18px 24px #2b236955;color:white;font-size:clamp(16px,3vw,25px);font-weight:950;touch-action:manipulation;user-select:none}
+.arcade-player .arcade-runner-jump-btn:not(:disabled):active{transform:translateY(7px) scale(.97);box-shadow:0 2px 0 #5a2da4,0 5px 10px #2b236955}
+.arcade-player .arcade-runner-jump-btn:disabled{opacity:.65}
+.arcade-player .arcade-runner-jump-btn:focus-visible{outline:3px solid #21114d;outline-offset:3px}
+@media(max-width:440px){.arcade-player .arcade-runner-jump-btn{width:104px;min-height:64px;font-size:17px}}
