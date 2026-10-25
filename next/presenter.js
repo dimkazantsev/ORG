@@ -257,10 +257,12 @@ function questionScene(state){
    (state.phase==='result'?'Время ответа завершено. Разбор появится на общем экране.':
     'Ответьте на задание на своём устройстве.')+'</div>';
  return '<section class="projection-question projection-question-only'+(state.phase==='result'?' is-result':'')+'">'+top+
-  '<h1>'+escapeText(q.prompt)+'</h1>'+frame+media+
-  (finished?reveal:publicChoices)+
+  '<div class="projection-question-viewport"><div class="projection-question-flow">'+
+   '<h1>'+escapeText(q.prompt)+'</h1>'+frame+media+
+   '<div class="projection-question-outcome">'+(finished?reveal:publicChoices)+'</div>'+
+  '</div></div>'+
   (!finished?'<div class="projection-response-count" id="teamAnswerCount">'+
-   (state.teams||[]).reduce((n,t)=>n+Number(t.answered||0),0)+' ответов получено</div>':'')+
+    (state.teams||[]).reduce((n,t)=>n+Number(t.answered||0),0)+' ответов получено</div>':'')+
   '</section>';
 }
  // Keep the visible scene inside the actual TV/projector viewport.
@@ -269,6 +271,34 @@ function questionScene(state){
   fitQueued=false;
   const main=$('projectionMain'),scene=main?.firstElementChild;
   if(!main||!scene||main.clientHeight<100||main.clientWidth<100)return;
+  // The clock and round heading are permanent screen coordinates: NEVER zoom
+  // the question scene itself. Fit only its content viewport on overflow.
+  if(scene.matches('.projection-question-only')){
+   scene.style.zoom='1';scene.style.flexShrink='0';
+   scene.style.maxHeight='100%';scene.style.height='100%';
+   scene.style.width='100%';scene.style.marginTop='0';scene.style.marginBottom='0';
+   const viewport=scene.querySelector('.projection-question-viewport');
+   const flow=scene.querySelector('.projection-question-flow');
+   if(viewport&&flow){
+    flow.style.zoom='1';
+    const w=Math.max(100,viewport.clientWidth-8),h=Math.max(100,viewport.clientHeight-8);
+    const measure=()=>({w:Math.max(flow.scrollWidth,flow.getBoundingClientRect().width),
+       h:Math.max(flow.scrollHeight,flow.getBoundingClientRect().height)});
+    const m=measure();
+    let zoom=Math.min(1,w/Math.max(1,m.w),h/Math.max(1,m.h));
+    zoom=Math.max(.08,zoom);
+    flow.style.zoom=String(zoom);
+    for(let i=0;i<4;i++){
+     const rect=flow.getBoundingClientRect();
+     const next=Math.min(1,w/Math.max(1,rect.width),h/Math.max(1,rect.height));
+     if(next>=.995)break;
+     zoom=Math.max(.08,zoom*next*.985);
+     flow.style.zoom=String(zoom);
+    }
+    scene.dataset.fittedZoom=zoom.toFixed(3);
+   }
+   return;
+  }
   // Measure at natural size. No hard minimum zoom: it used to crop long answers on 720p TVs.
   scene.style.zoom='1';
   scene.style.flexShrink='0';
@@ -303,7 +333,7 @@ function questionScene(state){
   const memoryChoices=$('projectionMain')?.querySelector('[data-memory-answer]');
   const wasHidden=memoryChoices?.hidden;
   const left=QwizStage.updateClock(state,ctx.offset);
-  // Revealed options may need a different scene scale than the study image.
+  // Reveal/hide memory options without changing the fixed projector header.
   if(memoryChoices&&memoryChoices.hidden!==wasHidden)scheduleFitProjection();
   return left;
  }
