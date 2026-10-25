@@ -22,7 +22,7 @@ BEGIN
    -- Above block only creates a task on first access. Enforce configured modes
    -- for existing runs as well (including sessions compiled by older versions).
    old:=' v_count:=jsonb_array_length(run.tasks);';
-   replacement:=E' if exists(select 1 from jsonb_array_elements(run.tasks) old_task\n   where not (modes ? (old_task->>''mode''))) then\n   raise exception ''В комнате сохранены задания невыбранных механик. Создайте новую комнату из исправленной сборки.'';\n end if;\n v_count:=jsonb_array_length(run.tasks);';
+   replacement:=E' -- Check configured selections for existing runs, too.\n modes:=a.settings->''geo_modes'';\n if jsonb_typeof(modes) is distinct from ''array'' or jsonb_array_length(modes)=0 then\n   raise exception ''Для карты России выберите механики и пересоздайте комнату.'';\n end if;\n if exists(select 1 from jsonb_array_elements(run.tasks) as old_task(value)\n   where not (modes ? (old_task.value->>''mode''))) then\n   raise exception ''В комнате сохранены задания невыбранных механик. Создайте новую комнату из исправленной сборки.'';\n end if;\n v_count:=jsonb_array_length(run.tasks);';
    IF strpos(body,old)=0 THEN RAISE EXCEPTION 'Unexpected qwiz_geo_play run position';END IF;
    body:=replace(body,old,replacement);
    EXECUTE body;
