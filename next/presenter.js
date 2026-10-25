@@ -11,6 +11,13 @@ const seconds=t=>Math.max(0,Math.ceil((Date.parse(t)-Date.now()-ctx.offset)/1000
 function showError(s){$('projectionError').textContent=s;$('projectionError').hidden=false}
 function clearError(){$('projectionError').hidden=true}
 function qr(div,url,size=240){if(typeof QRCode==='function'&&div){div.replaceChildren();new QRCode(div,{text:url,width:size,height:size,colorLight:'#fff',colorDark:'#342257',correctLevel:QRCode.CorrectLevel.M})}}
+function makeRoomQrExpandable(node,code){
+ if(!node)return;
+ node.setAttribute('role','button');node.setAttribute('tabindex','0');
+ node.setAttribute('aria-label','Увеличить общий QR-код комнаты');
+ node.onclick=()=>openJoinQr(code);
+ node.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openJoinQr(code)}};
+}
 function link(code){const u=new URL('./',location.href);u.searchParams.set('room',code);return u.toString()}
 const recentRoomKey='qwiz-presenter-recent-room';
 const roomPattern=/^[A-F0-9]{8}$/;
@@ -434,7 +441,7 @@ function render(state){
   const lobby=state.team_lobby;
   if(lobby.mode==='random'&&lobby.confirmed){
    $('projectionMain').innerHTML='<section class="projection-lobby has-team-entry"><div><div class="projection-eyebrow">КОМАНДЫ СФОРМИРОВАНЫ</div><h1>Идите к своей команде!</h1><p>Найдите название и значок своей команды. При необходимости сканируйте её QR-код.</p><strong class="projection-code">'+escapeText(state.code)+'</strong></div><div class="projection-qr" id="projectionQr"></div></section><section class="projection-team-entry"><h2>Ваши команды</h2><p>Команды отмечены иконками и названиями.</p><div class="team-board" id="projectionTeamBoard"></div></section>';
-   qr($('projectionQr'),link(state.code));QwizTeams.board($('projectionTeamBoard'),state.lobby_teams||[],state.code);
+   qr($('projectionQr'),link(state.code));makeRoomQrExpandable($('projectionQr'),state.code);QwizTeams.board($('projectionTeamBoard'),state.lobby_teams||[],state.code);
    scheduleFitProjection();return;
   }
   const n=lobby.team_count||1,c=lobby.captain_count||0;
@@ -450,7 +457,7 @@ function render(state){
    '<div id="projectionQr" class="lobby-cinema-qr" role="img" aria-label="QR-код комнаты"></div></div>'+
    '<span class="lobby-cinema-code-label">КОД КОМНАТЫ</span><strong class="lobby-cinema-code">'+escapeText(state.code)+'</strong>'+
    '<p class="lobby-cinema-instructions">'+escapeText(hint)+'</p></div></section>';
-  qr($('projectionQr'),link(state.code),320);
+  qr($('projectionQr'),link(state.code),320);makeRoomQrExpandable($('projectionQr'),state.code);
   scheduleFitProjection();return;
  }
  if(state.phase==='lobby'){
