@@ -44,7 +44,7 @@ test('Only explicitly selected mechanics compile and empty rooms cannot auto-pla
  assert.match(migration,/previous_build/);
  assert.match(migration,/NOT EXISTS\(SELECT 1 FROM public\.org_next_answers/);
  assert.match(studio,/cardGeoQuestionModes/);
- assert.match(studio,/geo_modes:ordinaryGeo\?geoSelected/);
+ assert.match(studio,/geo_modes:mapMode\?mapModes:\(ordinaryGeo\?geoSelected:\[\]\)/);
  assert.match(studio,/if\(launchRequestBusy\)return/);
  assert.match(layout,/data-geo-question-mode value="capital"/);
  assert.match(layout,/data-geo-question-mode value="district"/);
@@ -690,7 +690,7 @@ test('Flags subcategories are a metadata filter, not duplicated topic tables',()
  assert.match(h,/id="bankMode"/);
  assert.match(h,/id="cardModesDetails"/);
  assert.match(w,/data-card-mode/);
- assert.match(w,/flag_modes:geography\?\[\]:selected/);
+ assert.match(w,/flag_modes:flagQuestion\?selected:\[\]/);
  assert.match(w,/studio\('flag_publish'/);
  assert.match(migration,/q\.solution->>'flag_mode'=p_input->>'mode'/);
  assert.match(migration,/b\.solution->>'flag_mode' in \(select jsonb_array_elements_text\(v_modes\)\)/);
@@ -998,4 +998,38 @@ test('All builder mechanism cards share readable complete styling and semantic v
  assert.match(styles,/#roundCards \.round-actions \.move-svg/);
  assert.match(markup,/workspace\.css\?v=mechanic-card-20261025-34/);
  assert.match(markup,/workspace\.js\?v=mechanic-card-20261025-34/);
+});
+
+test('Each card topic follows explicitly selected mechanics and never guesses a conflicting topic',()=>{
+ const src=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const html=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ assert.match(src,/function synchronizeCardTopic\(card,\{defaultFlag=false\}=\{\}\)/);
+ assert.match(src,/synchronizeCardTopic\(created,\{defaultFlag:true\}\)/);
+ assert.match(src,/state\.cards\.filter\(c=>synchronizeCardTopic\(c\)\)/);
+ assert.match(src,/flag_modes:flagQuestion\?selected:\[\]/);
+ assert.match(src,/geo_modes:mapMode\?mapModes:\(ordinaryGeo\?geoSelected:\[\]\)/);
+ assert.match(src,/if\(\(flags\|\|geo\)&&!topic\)throw Error/);
+ assert.match(src,/select\.disabled=mapMode/);
+ assert.match(src,/select\.required=card\.type==='round'&&!mapMode/);
+ assert.match(html,/id="cardOtherTopicNote"/);
+ const first=src.indexOf('function topicIdByName(name)');
+ const last=src.indexOf('function ensureFinale()',first);
+ assert.ok(first>0&&last>first);
+ const state={topics:[{id:'flags',name:'Флаги мира'},{id:'russia',name:'География России'}]};
+ const code=src.slice(first,last);
+ const cases=[
+  {type:'round',topic_id:null,settings:{flag_modes:['fragments','errors'],geo_modes:[]}},
+  {type:'round',topic_id:null,settings:{flag_modes:[],geo_modes:['capital']}},
+  {type:'round',topic_id:'flags',settings:{arcade_mode:'russia_map',geo_modes:['locate']}},
+  {type:'round',topic_id:null,settings:{flag_modes:['country'],geo_modes:['district']}},
+  {type:'round',topic_id:null,settings:{flag_modes:[],geo_modes:[]}},
+  {type:'round',topic_id:'custom',settings:{flag_modes:['country']}}
+ ];
+ const result=runInNewContext(code+';({changes:cases.map(c=>synchronizeCardTopic(c)),ids:cases.map(c=>c.topic_id),newCard:card("round")})',
+  {state,cases,buildDefaults:{count:5},titles:{round:'Раунд'},icons:{round:'▦'}});
+ assert.deepEqual(Array.from(result.changes),[true,true,true,false,false,false]);
+ assert.deepEqual(Array.from(result.ids),['flags','russia','russia',null,null,'custom']);
+ assert.equal(result.newCard.topic_id,'flags');
+ assert.equal(result.newCard.settings.flag_modes.length,0);
+ assert.equal(result.newCard.settings.geo_modes.length,0);
 });
