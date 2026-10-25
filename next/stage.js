@@ -92,7 +92,7 @@ window.QwizStage=(()=>{
    const picture=img.closest('.question-picture'),marker=picture.querySelector('.answer-hotspot');
    const fit=()=>{if(!marker||!img.naturalWidth)return;const box={width:picture.clientWidth,height:picture.clientHeight},scale=Math.min(box.width/img.naturalWidth,box.height/img.naturalHeight),w=img.naturalWidth*scale,h=img.naturalHeight*scale;
     Object.assign(marker.style,{left:(box.width-w)/2+w*Number(marker.dataset.x)/100+'px',top:(box.height-h)/2+h*Number(marker.dataset.y)/100+'px',width:w*Number(marker.dataset.radius)/50+'px',height:h*Number(marker.dataset.radius)/50+'px'})};
-   img.onload=fit;img.onerror=()=>{const fallback=document.createElement('div');fallback.innerHTML=illustration({});picture.replaceChildren(fallback.querySelector('svg'));(()=>{const caption=picture.closest('figure')?.querySelector('figcaption');if(caption)caption.textContent='Изображение недоступно';})()};
+   img.onload=fit;img.onerror=()=>{const fallback=document.createElement('div');fallback.innerHTML=illustration({});picture.replaceChildren(fallback.querySelector('svg'));(()=>{const figure=picture.closest('figure');let caption=figure?.querySelector('figcaption');if(figure&&!caption){caption=document.createElement('figcaption');figure.appendChild(caption)}if(caption)caption.textContent='Иллюстрация недоступна';})()};
    if(img.complete){if(img.naturalWidth)fit();else img.onerror()}
    if(marker){const observer=new ResizeObserver(()=>{if(picture.isConnected)fit();else observer.disconnect()});observer.observe(picture)}
   }
