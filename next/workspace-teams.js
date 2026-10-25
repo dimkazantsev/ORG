@@ -17,13 +17,14 @@ function roomReadiness(s){
   !ready?'Добавьте вопросы или картографический раунд в сборку':waiting?'Распределите ожидающих участников':!formed?'Сначала завершите формирование команд':'';
 }
 function teamMember(p,s){
- const movable=!teamUI.busy&&((s.phase==='lobby'&&!s.team_lobby?.confirmed)||(s.phase!=='finished'&&!p.team_id&&!s.team_lobby));
+ const movable=!teamUI.busy&&((s.phase==='lobby'&&(!s.team_lobby||s.team_lobby.mode==='random'&&!s.team_lobby.confirmed))||(s.phase!=='finished'&&!p.team_id&&!s.team_lobby));
  return '<div class="team-member" data-player-id="'+esc(p.id)+'" draggable="'+movable+'">'+QwizTeams.avatar(p.avatar)+'<div class="team-member-name">'+esc(p.name)+(p.group?'<small>'+esc(p.group)+'</small>':'')+'</div>'+
  '<select data-team-player="'+esc(p.id)+'" aria-label="Команда: '+esc(p.name)+'" '+(!movable?'disabled':'')+'><option value="">Без команды</option>'+(s.teams||[]).map(t=>'<option value="'+esc(t.id)+'" '+(t.id===p.team_id?'selected':'')+'>'+esc(t.name)+'</option>').join('')+'</select></div>';
 }
 function renderTeamManager(s){
  roomReadiness(s);
  const lobby=s.team_lobby,old=!lobby,editable=s.phase==='lobby'&&!lobby?.confirmed&&!(lobby?.mode==='captain'&&lobby.captain_count>0);
+ const manualOption=$('teamMode').querySelector('option[value="manual"]');if(manualOption){manualOption.hidden=!!lobby;manualOption.disabled=!!lobby;}
  const editing=$('teamSettings').contains(document.activeElement);
  if(!editing){$('teamCount').value=s.teams?.length||1;$('teamMode').value=s.team_mode||'random';}
  for(const id of ['teamCount','teamMode','applyTeamSettings'])$(id).disabled=!editable||teamUI.busy;
@@ -79,7 +80,7 @@ window.addEventListener('DOMContentLoaded',()=>{
  $('addRoomQuestions').onclick=()=>{section('bank');const topic=state.room?.setup_issues?.find(x=>x.topic_id)?.topic_id;if(topic){$('bankTopic').value=topic;loadQuestions();}};
 
  $('teamManager').addEventListener('change',e=>{if(e.target.matches('[data-team-player]')){const input={player_id:e.target.dataset.teamPlayer,team_id:e.target.value||null};e.target.blur();teamAction('move',input);}});
- $('teamManager').addEventListener('pointerdown',e=>{if(e.target.closest('.team-member'))window.scrollTo({top:window.scrollY,left:window.scrollX,behavior:'instant'});});
+
  $('teamManager').addEventListener('dragstart',e=>{const row=e.target.closest('[data-player-id]');if(!row||row.draggable!==true||e.target.closest('select')){e.preventDefault();return;}teamUI.dragged=row.dataset.playerId;e.dataTransfer.setData('text/plain',teamUI.dragged);e.dataTransfer.effectAllowed='move';row.classList.add('is-dragging');});
  $('teamManager').addEventListener('dragover',e=>{const card=e.target.closest('[data-drop-team]');if(!card||!teamUI.dragged)return;e.preventDefault();card.classList.add('is-drop-target');e.dataTransfer.dropEffect='move';});
  $('teamManager').addEventListener('dragleave',e=>{const card=e.target.closest('[data-drop-team]');if(card&&!card.contains(e.relatedTarget))card.classList.remove('is-drop-target');});
