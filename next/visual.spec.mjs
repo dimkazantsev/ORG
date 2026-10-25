@@ -916,7 +916,7 @@ test('Game buttons fit their full labels and the Games chevron stays inside its 
     scrollWidth:label.scrollWidth,clientWidth:label.clientWidth,
     scrollHeight:label.scrollHeight,clientHeight:label.clientHeight};
   }));
-  expect(items.map(x=>x.text)).toEqual(['Карта регионов России','Забег с препятствиями','Блиц-вопрос','Командная тапалка','Дуэль капитанов']);
+  expect(items.map(x=>x.text)).toEqual(['Карта регионов России','Дино-забег','Блиц-вопрос','Тап-баттл','Дуэль капитанов']);
   for(const item of items){
    expect(item.labelLeft,'label starts inside button at '+width).toBeGreaterThanOrEqual(item.buttonLeft);
    expect(item.labelRight,'label ends inside button at '+width).toBeLessThanOrEqual(item.buttonRight+1);
