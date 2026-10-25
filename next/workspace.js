@@ -533,7 +533,7 @@ function syncCardModePanels(){
  $('cardGeoQuestionModes').hidden=!geoQuestion;
  $('cardGeoSettings').hidden=!mapMode;
  $('cardOtherTopicNote').hidden=!genericQuestion;
- $('cardModesDetails').querySelector('.card-modes-title').textContent=mapMode?'Механики карты России':geoQuestion?'Механики географии':flagQuestion?'Механики флагов':'Механики внутри темы';
+ $('cardModesDetails').querySelector('.card-modes-title').textContent=mapMode?'Механики карты России':geoQuestion?'Механики географии':flagQuestion?'Механики внутри темы':'Механики внутри темы';
  $('cardModesInfo').textContent=mapMode?'Карта России · режимы игрока':geoQuestion?'Вопросы о регионах':flagQuestion?'Флаги мира · выберите нужные':genericQuestion?'Вопросы выбранной темы':'Выберите тему';
  select.disabled=mapMode;
  select.required=card.type==='round'&&!mapMode;
