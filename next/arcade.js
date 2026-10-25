@@ -42,7 +42,10 @@ window.QwizArcade=(()=>{
    '</div><span class="arcade-blitz-ring ring-a"></span><span class="arcade-blitz-ring ring-b"></span></div>';
  }
  function rankMarkup(v){const teams=v?.teams||[],max=Math.max(1,...teams.map(t=>Number(t.points)||0));
-  return teams.map((t,i)=>'<div class="arcade-rank"><span class="arcade-rank-name" title="'+escape(t.name)+'">'+escape(t.name)+'</span><div class="arcade-rank-track"><div class="arcade-rank-fill" style="--arcade-value:'+Math.max(0,100*(Number(t.points)||0)/max).toFixed(2)+'%;--arcade-team-color:'+COLORS[i%COLORS.length]+'"></div></div><span class="arcade-rank-score">'+(v.mode==='captain'?(t.points>0?(10000-Number(t.points)).toFixed(0)+' мс':'—'):Number(t.points||0).toFixed(1))+'</span></div>').join('');
+  return teams.map((t,i)=>{const d=(v.extra?.players||[]).find(p=>p.team_id===t.id);
+   const score=v.mode==='captain'?(d?.completed_ms!=null?(d.completed_ms/1000).toFixed(2)+' сек.':(d?.pairs||0)+'/6 пар'):
+    v.mode==='rocket'?(d?.cleared||0)+' препятствий':v.mode==='tug'?Number(t.taps||0).toLocaleString('ru-RU')+' тапов':Number(t.points||0).toFixed(1);
+   return '<div class="arcade-rank"><span class="arcade-rank-name" title="'+escape(t.name)+'">'+escape(t.name)+'</span><div class="arcade-rank-track"><div class="arcade-rank-fill" style="--arcade-value:'+Math.max(0,100*(Number(t.points)||0)/max).toFixed(2)+'%;--arcade-team-color:'+COLORS[i%COLORS.length]+'"></div></div><span class="arcade-rank-score">'+score+'</span></div>';}).join('');
  }
  function rootMarkup(mode,kind='player'){const m=META[mode];return '<div class="arcade-shell arcade-'+kind+'" data-arcade-root="'+mode+'">'+
   '<div class="arcade-head"><div><span class="arcade-kicker">QWIZ-PARTY · КОМАНДНОЕ ИСПЫТАНИЕ</span><h2>'+escape(m.title)+'</h2></div><span class="arcade-countdown" data-arcade-clock>—</span></div>'+
@@ -60,7 +63,7 @@ window.QwizArcade=(()=>{
      tr.pending=0;tr.qkey='';tr.alertOverride=0;
      if(tr.flushTimer){clearTimeout(tr.flushTimer);tr.flushTimer=null;}
    }
-   tr.view=data;tr.offset=Date.parse(data.server_now)-Date.now();paint(tr);if(tr.kind==='player')paintWallet(data);
+   if(['captain','rocket'].includes(data?.mode)){const ex=await tr.client.rpc('qwiz_arcade_extras',{p_code:tr.code});if(ex.error)throw ex.error;data.extra=ex.data||{};}tr.view=data;tr.offset=Date.parse(data.server_now)-Date.now();paint(tr);if(tr.kind==='player')paintWallet(data);
   }catch(e){showMessage(tr,e.message||'Состояние игры недоступно',true)}finally{tr.fetching=false}
  }
  function showMessage(tr,msg,bad=false){const el=tr.root?.querySelector('[data-arcade-alert]');if(el){el.textContent=msg;el.dataset.error=String(!!bad)}}
@@ -84,10 +87,10 @@ window.QwizArcade=(()=>{
   }
   const tap=tr.root.querySelector('[data-arcade-tap]');
   if(tap){let eligible=valid&&(v.mode!=='blitz'||claim)&&!!myTeam;
-   if(v.mode==='captain')eligible=eligible&&mine.captain;
-   tap.disabled=!eligible;tap.textContent=v.mode==='captain'?(mine.captain?'НАЖАТЬ ПО СИГНАЛУ':'ОЖИДАЕМ КАПИТАНА'):META[v.mode].cta;
+   if(v.mode==='captain')eligible=false;if(v.mode==='rocket')eligible=eligible&&!!v.extra?.selected&&!!v.extra?.alive;
+   tap.disabled=!eligible;tap.textContent=META[v.mode].cta;
    const personal=tr.root.querySelector('[data-arcade-personal]');
-   if(personal)personal.textContent=v.mode==='captain'?(mine.captain?'Вы капитан. Приготовьтесь к сигналу.':'Дуэль проводит капитан команды.'):v.mode==='blitz'&&!claim?(canAnswer?'Ваша команда выиграла захват! Выберите ответ.':'Захват завершён. Проверьте команду-победителя.'):'Нажатия засчитываются сервером, максимум 8 за секунду.';
+    if(personal)personal.textContent=v.mode==='captain'?(v.extra?.captain?'Переворачивайте по две плитки.':'Наблюдайте за вашим капитаном.'):v.mode==='rocket'?(v.extra?.selected?(v.extra.alive?'Вы бегун! Прыгайте перед препятствием.':'Столкновение. Сравниваем результаты.'):'От команды выбран один случайный бегун.'):v.mode==='blitz'&&!claim?(canAnswer?'Ваша команда выиграла захват! Выберите ответ.':'Захват завершён. Смотрите рейтинг.'):'Все игроки нажимают. До 8 нажатий в секунду на человека.';
   }
   const badges=tr.root.querySelector('[data-arcade-badges]');if(badges)badges.innerHTML=(v.awards||[]).slice(0,12).map(a=>'<span class="arcade-award">'+escape(a.title)+' · +'+Number(a.credits)+' жет.</span>').join('');
   const vote=v.vote,ballot=tr.root.querySelector('[data-arcade-vote]');
@@ -124,7 +127,7 @@ window.QwizArcade=(()=>{
   const status=v.awarded_at?'Результат зафиксирован. Награды зачислены.':
    !v.running?'Соревнование завершено.':
    v.mode==='blitz'?(claim?'Борьба за право ответа.':v.answer_correct===true?'Правильный ответ! Блиц завершён.':v.blitz_eligible_team===null?'Попытки закончились.':canAnswer?'Ваш ход! Ответьте на блиц-вопрос.':'Право ответа у команды '+escape((v.teams||[]).find(t=>t.id===v.blitz_eligible_team)?.name||'лидера')+'.') :
-   v.mode==='captain'&&now<Date.parse(v.started_at)+3000?'Не нажимайте до сигнала — фальстарт лишает попытки.':
+   v.mode==='captain'?'Все капитаны одновременно ищут пары. Учитываются время и ходы.':
    !valid?'Время вышло. Ведущий продолжит игру.':'Идёт командная битва! Показатели обновляются автоматически.';
   if(!tr.alertOverride||Date.now()>tr.alertOverride)showMessage(tr,status);
   tick(tr);
@@ -132,7 +135,7 @@ window.QwizArcade=(()=>{
  function tick(tr){const v=tr.view;if(!v||tr.closed)return;
   const clock=tr.root.querySelector('[data-arcade-clock]');const sec=left(v.ends_at,tr);
   if(clock){clock.textContent=sec+' сек.';clock.dataset.urgent=String(sec<=3);}
-  if(v.mode==='captain'){const signal=tr.root.querySelector('[data-reflex-signal]');if(signal){const prep=Math.max(0,Math.ceil((Date.parse(v.started_at)+3000-currentTime(tr))/1000));signal.textContent=prep?prep+'…':'ЖМИ!';signal.classList.toggle('go',prep===0)}}
+  if(v.mode==='rocket'){const obstacle=tr.root.querySelector('[data-runner-obstacle]');if(obstacle&&!obstacle.hidden){const dt=(Date.parse(v.extra?.next_at)-currentTime(tr))/1000;obstacle.style.left=(20+78*Math.max(0,Math.min(1,dt/2.25)))+'%';}}
   const button=tr.root.querySelector('[data-arcade-tap]');
   if(button&&sec===0)button.disabled=true;
  }
