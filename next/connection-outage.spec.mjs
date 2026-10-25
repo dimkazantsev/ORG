@@ -92,11 +92,15 @@ test('A hanging room RPC times out and retries, without accepting a late stale a
     server_now:new Date().toISOString()},error:null});
   };
   window.firstRoomRead=refreshRoom(false);
+  // Simulate a wave of notifications while the first RPC is still hung.
+  for(let n=0;n<12;n++)refreshRoom(false);
  },fixture());
  await expect.poll(()=>page.evaluate(()=>window.roomCalls)).toBe(1);
  await page.clock.fastForward(10100);
+ await expect.poll(()=>page.evaluate(()=>window.hungSignal?.aborted)).toBe(true);
  await expect.poll(()=>page.evaluate(()=>ctx.connectionStale)).toBe(true);
- expect(await page.evaluate(()=>window.hungSignal?.aborted)).toBe(true);
+ // Queued notifications must not bypass exponential backoff after failure.
+ expect(await page.evaluate(()=>window.roomCalls)).toBe(1);
  await expect(page.locator('#richTextAnswer')).toBeDisabled();
  await page.clock.fastForward(2100);
  await expect.poll(()=>page.evaluate(()=>window.roomCalls)).toBe(2);
