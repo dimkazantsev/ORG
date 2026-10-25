@@ -606,7 +606,7 @@ function subscribeRoom(code){if(state.channel){state.db.removeChannel(state.chan
  .on('broadcast',{event:'phase'},()=>refreshLive())
  .on('broadcast',{event:'team'},()=>refreshLive())
  .on('broadcast',{event:'answer'},()=>refreshLive())
- .subscribe();
+ .subscribe(status=>{if(status==='SUBSCRIBED'&&code===state.roomCode&&state.room)refreshLive();});
 }
 async function selectRoom(code){state.roomCode=code;sessionStorage.setItem('qwiz-host-room',code);
  $('liveConsole').hidden=false;subscribeRoom(code);await refreshLive();void loadProjectorPreferences();
@@ -770,12 +770,26 @@ async function repeatFinishedRoom(){
  }catch(error){msg('liveMessage','Не удалось повторить игру: '+error.message,true)}
  finally{repeatRoomBusy=false;if(state.room)renderLive(state.room)}
 }
-async function control(action){if(!state.room)return;for(const id of ['liveStart','livePause','liveReveal','liveNext','liveFinish'])disable(id,true);
- try{if(action==='finish'&&!confirm('Завершить игру?'))return;
- await rpc('qwiz_party_control',{p_room:state.room.room_id,p_action:action});
- state.channel?.send({type:'broadcast',event:'phase',payload:{room:state.roomCode}})?.catch(()=>{});
- await refreshLive()}catch(e){msg('liveMessage',e.message,true)}
- finally{for(const id of ['liveStart','livePause','liveReveal','liveNext','liveFinish'])disable(id,false);if(state.room){roomReadiness(state.room);renderLive(state.room)}}}
+let controlRequestBusy=false;
+async function control(action){
+ if(!state.room||controlRequestBusy)return;
+ controlRequestBusy=true;
+ const roomId=state.room.room_id,roomCode=state.roomCode;
+ for(const id of ['liveStart','livePause','liveReveal','liveNext','liveFinish'])disable(id,true);
+ try{
+  if(action==='finish'&&!confirm('Завершить игру?'))return;
+  await rpc('qwiz_party_control',{p_room:roomId,p_action:action});
+  // A slow response for a previous room must not signal the newly selected room.
+  if(roomCode===state.roomCode){
+   state.channel?.send({type:'broadcast',event:'phase',payload:{room:roomCode}})?.catch(()=>{});
+   await refreshLive();
+  }
+ }catch(e){if(roomCode===state.roomCode)msg('liveMessage',e.message,true)}
+ finally{
+  controlRequestBusy=false;
+  if(state.room){roomReadiness(state.room);renderLive(state.room)}
+ }
+}
 let audienceWindow=null;
 function projection(){const u=new URL('./presenter.html',location.href);if(state.roomCode)u.searchParams.set('room',state.roomCode);
   try{if(audienceWindow&&!audienceWindow.closed){audienceWindow.location.href=u.toString();audienceWindow.focus();return true}
@@ -949,6 +963,7 @@ async function init(){
   state.roomTimer=setInterval(()=>{if(state.roomCode&&!document.hidden)refreshLive()},8000);
   setInterval(()=>{if(!state.room||document.hidden)return;const s=state.room;if(['question','result'].includes(s.phase)&&!s.paused){const left=QwizStage.updateClock(s,state.clockOffset,document,'liveTimer');if(left===0&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}}else if(s.phase==='countdown'&&!s.paused&&Date.parse(s.ends_at)<=Date.now()+state.clockOffset&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}},250);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.roomCode)refreshLive()});
+  window.addEventListener('online',()=>{if(state.roomCode)refreshLive()});
  }catch(e){restoringView=false;connection('error',e.message);$('bankItems').innerHTML='<div class="empty">'+esc(e.message)+' <a href="./">Вернуться ко входу</a></div>'}
  finally{workspaceReady()}
 }

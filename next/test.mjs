@@ -865,7 +865,7 @@ test('Round results expose large personal and team summaries before detailed lis
  assert.match(player,/myIndex=players\.findIndex/);
  assert.match(player,/teamIndex=rows\.findIndex/);
  assert.match(styles,/\.round-self-summary strong\{/);
- assert.match(readFileSync(new URL('./index.html',import.meta.url),'utf8'),/app\.js\?v=round-self-20261025-14/);
+ assert.match(readFileSync(new URL('./index.html',import.meta.url),'utf8'),/<script defer src="\.\/app\.js\?v=[a-z0-9-]+"><\/script>/);
 });
 
 test('QWIZ favicon is provided on all entry and moderator pages',()=>{

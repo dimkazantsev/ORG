@@ -392,14 +392,23 @@ function render(state){
 
  updateProjectorClock(state);QwizStage.hydrateIllustrations($('projectionMain'));scheduleFitProjection();
 }
-async function refresh(){if(!ctx.client||!room||ctx.checking)return;ctx.checking=true;
+async function refresh(){
+ if(!ctx.client||!room)return;
+ // Never discard a live phase update that arrives while a slow poll is pending.
+ if(ctx.checking){ctx.refreshQueued=true;return;}
+ ctx.checking=true;
  try{const sentAt=Date.now();const {data,error}=await ctx.client.rpc('qwiz_party_projection',{p_code:room});if(error)throw Error(error.message);
   if(data.server_now)ctx.offset=Date.parse(data.server_now)-(sentAt+Date.now())/2;ctx.last=data;render(data);clearError();
- }catch(e){showError('Связь с игрой прервана. Пробуем восстановить: '+e.message)}finally{ctx.checking=false}}
+ }catch(e){showError('Связь с игрой прервана. Пробуем восстановить: '+e.message)}
+ finally{
+  ctx.checking=false;
+  if(ctx.refreshQueued){ctx.refreshQueued=false;queueMicrotask(()=>refresh());}
+ }
+}
 function subscribe(){if(ctx.channel)ctx.client.removeChannel(ctx.channel);
  ctx.channel=ctx.client.channel('org-next-'+room,{config:{broadcast:{ack:false}}});
  for(const event of ['phase','answer','team'])ctx.channel.on('broadcast',{event},()=>refresh());
- ctx.channel.subscribe();
+ ctx.channel.subscribe(status=>{if(status==='SUBSCRIBED'&&ctx.last)refresh();});
  if('BroadcastChannel' in window){ctx.local=new BroadcastChannel('qwiz-projector-'+room);ctx.local.onmessage=()=>refresh()}
 }
 async function init(){
@@ -432,6 +441,7 @@ async function init(){
   }
  },200);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()});
+ window.addEventListener('online',()=>refresh());
 }
 window.addEventListener('resize',scheduleFitProjection,{passive:true});
  document.addEventListener('load',e=>{if(e.target?.closest?.('#projectionMain'))scheduleFitProjection()},true);

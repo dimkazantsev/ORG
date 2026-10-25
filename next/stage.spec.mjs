@@ -154,3 +154,98 @@ test('Participant sees answer and the same real team and individual results at p
  await page.evaluate(s=>{ctx.room={...s,room_id:'r',public_stats:{teams:s.teams,players:s.players,question_stats:[]},me:{id:'me',team_id:'team-1'}};showScreen('game');renderGame()},state('result'));
  await expect(page.locator('.player-answer h2')).toHaveText('Меркурий');await expect(page.locator('.personal-results .habitat-team')).toHaveCount(15);await expect(page.locator('.personal-results .player-leaderboard li')).toHaveCount(10);expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);await page.screenshot({path:'visual-artifacts/player-answer-390.png',fullPage:true,animations:'disabled'});
 });
+
+
+test('Overlapping student refreshes keep the latest phase instead of dropping the notification',async({page})=>{
+ await page.route('https://cdn.jsdelivr.net/**',r=>r.fulfill({contentType:'application/javascript',body:'window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}})},rpc:async()=>({data:{},error:null}),channel:()=>({on(){return this},subscribe(){return this}}),removeChannel:()=>{}})};'}));
+ await page.goto(base);await page.waitForFunction(()=>ctx.client!==null);
+ await page.evaluate(()=>{
+  const room={code:'ABCDEF12',room_id:'room-1',phase:'question',index:0,total:1,duration:30,
+   ends_at:new Date(Date.now()+30000).toISOString(),title:'Первый вопрос',
+   question:{kind:'single',prompt:'Какой вариант?',options:['А','Б']},
+   teams:[],public_stats:{teams:[],players:[]},me:{id:'player',team_id:'team-1'},eligible:true};
+  ctx.roomCode=room.code;ctx.room=room;showScreen('game');renderGame();
+  window.pendingReads=[];ctx.client.rpc=(name,args)=>new Promise(resolve=>window.pendingReads.push({name,args,resolve}));
+  window.refreshA=refreshRoom(false);window.refreshB=refreshRoom(false);
+ });
+ await expect.poll(()=>page.evaluate(()=>window.pendingReads.length)).toBe(1);
+ await page.evaluate(()=>window.pendingReads[0].resolve({data:{...ctx.room,server_now:new Date().toISOString()},error:null}));
+ await expect.poll(()=>page.evaluate(()=>window.pendingReads.length)).toBe(2);
+ await page.evaluate(()=>{
+  const s={...ctx.room,phase:'result',answer:{text:'А'},ends_at:new Date(Date.now()+10000).toISOString()};
+  window.pendingReads[1].resolve({data:s,error:null});
+ });
+ await expect.poll(()=>page.evaluate(()=>ctx.room?.phase)).toBe('result');
+ await expect(page.locator('.player-answer')).toBeVisible();
+});
+
+test('Switching rooms rejects the previous room late response and reads the selected room',async({page})=>{
+ await page.route('https://cdn.jsdelivr.net/**',r=>r.fulfill({contentType:'application/javascript',body:'window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}})},rpc:async()=>({data:{},error:null}),channel:()=>({on(){return this},subscribe(){return this}}),removeChannel:()=>{}})};'}));
+ await page.goto(base);await page.waitForFunction(()=>ctx.client!==null);
+ await page.evaluate(()=>{
+  const room={code:'ABCDEF12',room_id:'room-A',phase:'question',index:0,total:1,duration:30,
+   ends_at:new Date(Date.now()+30000).toISOString(),title:'Старая комната',
+   question:{kind:'single',prompt:'Старый вопрос?',options:['А','Б']},
+   teams:[],public_stats:{teams:[],players:[]},me:{id:'player',team_id:'team-1'},eligible:true};
+  ctx.roomCode=room.code;ctx.room=room;showScreen('game');renderGame();
+  window.pendingReads=[];ctx.client.rpc=(name,args)=>new Promise(resolve=>window.pendingReads.push({name,args,resolve}));
+  window.requestOld=refreshRoom(false);
+  ctx.roomCode='1234ABCD';ctx.room=null;
+  window.requestNew=refreshRoom(false);
+ });
+ await expect.poll(()=>page.evaluate(()=>window.pendingReads.length)).toBe(1);
+ await page.evaluate(()=>{
+  const old={code:'ABCDEF12',title:'Старая комната',phase:'lobby',index:0,total:1,teams:[],me:null};
+  window.pendingReads[0].resolve({data:old,error:null});
+ });
+ await expect.poll(()=>page.evaluate(()=>window.pendingReads.length)).toBe(2);
+ expect(await page.evaluate(()=>ctx.room)).toBeNull();
+ expect(await page.evaluate(()=>window.pendingReads[1].args.p_code)).toBe('1234ABCD');
+ await page.evaluate(()=>{
+  const room={code:'1234ABCD',room_id:'room-B',phase:'lobby',index:0,total:1,title:'Новая комната',
+   teams:[],public_stats:{teams:[]},me:{id:'player',team_id:'team-1'}};
+  window.pendingReads[1].resolve({data:room,error:null});
+ });
+ await expect.poll(()=>page.evaluate(()=>ctx.room?.code)).toBe('1234ABCD');
+ await expect(page.locator('#playerGameTitle')).toHaveText('Новая комната');
+});
+
+test('Projector processes a phase event that arrives during a slow state request',async({page})=>{
+ await projector(page,state());
+ await page.evaluate(()=>{
+  window.projectorPending=[];ctx.client.rpc=(name,args)=>new Promise(resolve=>window.projectorPending.push({name,args,resolve}));
+  window.projectorFirst=refresh();
+  window.projectorSecond=refresh();
+ });
+ await expect.poll(()=>page.evaluate(()=>window.projectorPending.length)).toBe(1);
+ await page.evaluate(()=>window.projectorPending[0].resolve({data:window.fixture,error:null}));
+ await expect.poll(()=>page.evaluate(()=>window.projectorPending.length)).toBe(2);
+ await page.evaluate(()=>{
+  window.projectorPending[1].resolve({data:{...window.fixture,phase:'result',
+   answer:{text:'Меркурий'},ends_at:new Date(Date.now()+10000).toISOString()},error:null});
+ });
+ await expect(page.locator('.projection-answer-reveal')).toBeVisible();
+ await expect(page.locator('.projection-answer-text')).toHaveText('Меркурий');
+});
+
+test('Moderator ignores a double tap while its first server control is pending',async({page})=>{
+ await workspace(page);
+ await page.evaluate(s=>{
+  window.fixture={...s,room_id:'room',players:[],teams:[]};
+  state.roomCode=s.code;state.room=window.fixture;
+  document.getElementById('liveConsole').hidden=false;section('rooms');renderLive(window.fixture);
+  window.controlCalls=0;
+  const oldRpc=state.db.rpc.bind(state.db);
+  state.db.rpc=(name,args)=>{
+   if(name==='qwiz_party_control'){
+    window.controlCalls++;
+    return new Promise(resolve=>{window.finishFirstControl=()=>resolve({data:{phase:'result'},error:null});});
+   }
+   return oldRpc(name,args);
+  };
+ },state());
+ await page.evaluate(()=>{control('next');control('next');});
+ expect(await page.evaluate(()=>window.controlCalls)).toBe(1);
+ await page.evaluate(()=>window.finishFirstControl());
+ await expect.poll(()=>page.evaluate(()=>controlRequestBusy)).toBe(false);
+});
