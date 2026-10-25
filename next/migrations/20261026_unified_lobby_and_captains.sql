@@ -232,7 +232,9 @@ BEGIN
   'elsif p_action in (''settings'',''shuffle'') then' || E'\n' ||
   ' if exists(select 1 from public.qwiz_lobby_config where room_id=p_room and confirmed_at is not null)'||
   ' then raise exception ''Команды уже подтверждены'';end if;' ||
-  ' if p_action=''shuffle'' and r.team_mode<>''random'' then raise exception ''Перемешивание доступно только в случайном режиме'';end if;');
+  ' if p_action=''settings'' and exists(select 1 from public.qwiz_lobby_captains WHERE room_id=p_room)'||
+  ' then raise exception ''Нельзя менять режим и число команд после выбора первого капитана'';end if;'||E'\n'||
+ ' if p_action=''shuffle'' and r.team_mode<>''random'' then raise exception ''Перемешивание доступно только в случайном режиме'';end if;');
  changed:=replace(changed, 'elsif p_action=''refresh_content'' then',
   ' if p_action=''settings'' and exists(select 1 from public.qwiz_lobby_config where room_id=p_room)'||
   ' and (team_count<>old_count or mode<>r.team_mode) then' ||
