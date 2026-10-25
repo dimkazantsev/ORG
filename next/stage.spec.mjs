@@ -72,10 +72,24 @@ test('Question expiry reveals the answer and advances to the next server questio
  await page.clock.fastForward(5600);await expect(page.locator('.question-step')).toContainText('Вопрос 3');
  await expect(page.locator('.projection-answer-reveal')).toHaveCount(0);
 });
-test('Finale shows fifteen teams, forty people, three best and three most-missed questions',async({page})=>{
- await page.setViewportSize({width:1440,height:1000});await projector(page,state('finished'));await expect(page.locator('.habitat-team')).toHaveCount(15);await expect(page.locator('.player-leaderboard li')).toHaveCount(40);
- for(const section of [0,1])await expect(page.locator('.question-insights section').nth(section).locator('li')).toHaveCount(3);
- await page.locator('.all-question-stats summary').click();await expect(page.locator('.all-question-stats li')).toHaveCount(8);await page.screenshot({path:'visual-artifacts/finale-stage-1440.png',fullPage:true,animations:'disabled'});
+test('Finale keeps all participants counted but displays a readable top six on the projector',async({page})=>{
+ await page.setViewportSize({width:1440,height:1000});await projector(page,state('finished'));
+ const finale=page.locator('.projection-finale-compact');
+ await expect(finale).toBeVisible();
+ await expect(finale).toContainText('15 команд · 40 участников');
+ await expect(finale.locator('.finale-summary')).toContainText('8');
+ await expect(finale.locator('.stage-team-results li')).toHaveCount(6);
+ await expect(finale.locator('.stage-player-results li')).toHaveCount(6);
+ await expect(finale.locator('.stage-team-results li').first()).toContainText('Несгибаемые');
+ await expect(finale.locator('.stage-player-results li').first()).toContainText('Участник 1');
+ await expect(finale.locator('.projection-rank-more')).toHaveCount(2);
+ await expect(finale.locator('.projection-rank-more').first()).toContainText('Ещё 9');
+ await expect(finale.locator('.projection-rank-more').last()).toContainText('Ещё 34');
+ await expect(page.locator('.question-insights, .all-question-stats, .projection-answer-reveal')).toHaveCount(0);
+ const scene=await finale.boundingBox(),screen=await page.locator('#projectionMain').boundingBox();
+ expect(scene && screen).toBeTruthy();
+ expect(scene.y+scene.height).toBeLessThanOrEqual(screen.y+screen.height+4);
+ await page.screenshot({path:'visual-artifacts/finale-stage-1440.png',fullPage:true,animations:'disabled'});
 });
 test('All phases fit phones, tablets and a full HD projector without horizontal scrolling',async({page})=>{
  for(const phase of ['question','result','finished'])for(const width of [320,390,768,1920]){await page.setViewportSize({width,height:1080});await projector(page,state(phase));expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);if(width===390)await page.screenshot({path:'visual-artifacts/'+phase+'-stage-390.png',fullPage:true,animations:'disabled'})}
