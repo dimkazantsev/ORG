@@ -515,6 +515,11 @@ function syncCardModePanels(){
  const card=state.cards[state.editingCard];if(!card)return;
  const mapMode=card.settings?.arcade_mode==='russia_map';
  const select=$('cardTopic');
+ // Keep the explicit topic when the option list is reloaded. Otherwise the
+ // chosen mechanics panel disappears and valid card edits silently fail.
+ if(card.type==='round'&&!select.value&&card.topic_id&&state.topics.some(topic=>topic.id===card.topic_id)){
+  select.value=card.topic_id;
+ }
  if(mapMode){
   const geoId=topicIdByName('География России');
   if(geoId)select.value=geoId;
