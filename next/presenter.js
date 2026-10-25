@@ -250,7 +250,7 @@ function questionScene(state){
  const choices=Array.isArray(q.options)?q.options:[];
  const longChoice=choices.some(v=>String(typeof v==='object'?(v?.label||''):v).length>72);
  const publicChoices=choices.length
-  ?'<div class="projection-options projection-public-options'+(longChoice?' has-long-options':'')+'" role="list" data-count="'+choices.length+'">'+
+  ?'<div class="projection-options projection-public-options'+(longChoice?' has-long-options':'')+'" role="list" data-count="'+choices.length+'"'+(state.phase==='question'&&q.flag_memory?' data-memory-answer':'')+'>'+
    choices.map((option,i)=>'<div class="projection-option" role="listitem"><span class="letter" aria-hidden="true">'+String.fromCharCode(65+i)+'</span>'+projectionOption(option,i)+'</div>').join('')+
    '</div>'
   :'<div class="projection-question-instruction">'+
@@ -329,6 +329,14 @@ function questionScene(state){
   if(fitQueued)return;fitQueued=true;
   requestAnimationFrame(()=>requestAnimationFrame(fitProjectionScene));
  }
+ function updateProjectorClock(state){
+  const memoryChoices=$('projectionMain')?.querySelector('[data-memory-answer]');
+  const wasHidden=memoryChoices?.hidden;
+  const left=QwizStage.updateClock(state,ctx.offset);
+  // Reveal/hide memory options without changing the fixed projector header.
+  if(memoryChoices&&memoryChoices.hidden!==wasHidden)scheduleFitProjection();
+  return left;
+ }
 function applyProjectionSettings(settings){
  if(!settings)return;
  const sound=Boolean(settings.sound_enabled),volume=Number(settings.volume);
@@ -357,7 +365,7 @@ function render(state){
   }
   if(state.phase==='lobby'){QwizTeams.board($('projectionTeamBoard'),state.lobby_teams||[],state.code);scheduleFitProjection();}
   if(state.phase==='question'){QwizStage.patchTeams($('projectionMain'),state.teams);if($('teamAnswerCount'))$('teamAnswerCount').textContent=(state.teams||[]).reduce((a,t)=>a+Number(t.answered||0),0)+' ответов получено'}
-  if(!state.paused)QwizStage.updateClock(state,ctx.offset);return;
+  if(!state.paused)updateProjectorClock(state);return;
  }
  ctx.renderKey=key;const previous=ctx.lastPhase;ctx.lastPhase=state.phase;QwizStage.audio.stopMusic();
  if(state.phase!=='intermission')window.QwizArcade?.stop('screen');
@@ -382,7 +390,7 @@ function render(state){
  $('projectionMain').innerHTML=questionScene(state);
 
 
- QwizStage.updateClock(state,ctx.offset);QwizStage.hydrateIllustrations($('projectionMain'));scheduleFitProjection();
+ updateProjectorClock(state);QwizStage.hydrateIllustrations($('projectionMain'));scheduleFitProjection();
 }
 async function refresh(){if(!ctx.client||!room||ctx.checking)return;ctx.checking=true;
  try{const sentAt=Date.now();const {data,error}=await ctx.client.rpc('qwiz_party_projection',{p_code:room});if(error)throw Error(error.message);
@@ -417,7 +425,7 @@ async function init(){
  setInterval(()=>{if(!document.hidden)refresh()},3000);
  setInterval(()=>{
   const s=ctx.last;if(!s||document.hidden)return;
-  if(['question','result'].includes(s.phase)&&!s.paused){const left=QwizStage.updateClock(s,ctx.offset);if(left===0&&Date.now()-ctx.lastReleaseAttempt>750){ctx.lastReleaseAttempt=Date.now();refresh()}}
+  if(['question','result'].includes(s.phase)&&!s.paused){const left=updateProjectorClock(s);if(left===0&&Date.now()-ctx.lastReleaseAttempt>750){ctx.lastReleaseAttempt=Date.now();refresh()}}
   if((s.phase==='countdown'||(s.phase==='intermission'&&s.activity?.type==='card_intro'))&&!s.paused){
    const n=seconds(s.ends_at);if($('countdownNumber'))$('countdownNumber').textContent=n;
    if(n===0&&Date.now()-ctx.lastReleaseAttempt>750){ctx.lastReleaseAttempt=Date.now();refresh()}
