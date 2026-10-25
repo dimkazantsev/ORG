@@ -140,7 +140,7 @@ window.QwizArcade=(()=>{
  }
  function tick(tr){const v=tr.view;if(!v||tr.closed)return;
   const clock=tr.root.querySelector('[data-arcade-clock]');const sec=left(v.ends_at,tr);
-  if(clock){clock.textContent=sec+' c';clock.dataset.urgent=String(sec<=3);}
+  if(clock){clock.textContent=sec+' сек.';clock.dataset.urgent=String(sec<=3);}
   if(v.mode==='captain'){const signal=tr.root.querySelector('[data-reflex-signal]');if(signal){const prep=Math.max(0,Math.ceil((Date.parse(v.started_at)+3000-currentTime(tr))/1000));signal.textContent=prep?prep+'…':'ЖМИ!';signal.classList.toggle('go',prep===0)}}
   const button=tr.root.querySelector('[data-arcade-tap]');
   if(button&&sec===0)button.disabled=true;
