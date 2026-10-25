@@ -1405,3 +1405,16 @@ body:fullscreen .projection-shell{height:100dvh}
   grid-template-rows:clamp(70px,11dvh,112px) minmax(0,min(25dvh,260px)) minmax(0,1fr);
  }
 }
+
+/* Keep a stable visible image box while remote SVGs load; the browser
+   switches to the flag's true intrinsic ratio as soon as it is decoded. */
+#projectionMain .projection-question-only .projection-public-options .flag-choice-art{
+ width:min(100%,210px)!important;
+ height:auto!important;
+ aspect-ratio:auto 3 / 2;
+}
+#projectionMain .projection-question-only.is-result .projection-answer-single .correct-flag-art img{
+ width:min(100%,420px)!important;
+ height:auto!important;
+ aspect-ratio:auto 3 / 2;
+}
