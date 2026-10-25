@@ -71,9 +71,10 @@ test('Home QR is generated locally and can be enlarged',async({page})=>{
 });
 test('Team count is configured after room creation, not duplicated in its form',async({page})=>{
  await page.evaluate(()=>{showScreen('studio');tab('room')});
- await expect(page.locator('#roomTeamCount option')).toHaveCount(14);
- await page.selectOption('#roomTeamCount','15');
- await expect(page.locator('#roomTeamCount')).toHaveValue('15');
+ await expect(page.locator('#roomTeamCount')).toHaveCount(0);
+ await page.goto(base+'workspace.html');
+ await expect(page.locator('#teamCount')).toHaveAttribute('min','1');
+ await expect(page.locator('#teamCount')).toHaveAttribute('max','15');
 });
 test('Projection screen only renders questions and never host controls',async({page})=>{
  await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({
