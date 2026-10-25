@@ -22,7 +22,7 @@ function resumeOffer(){const code=ctx.roomCode||storage.get('room');$('resumeGam
 async function resumeGame(){
  const code=ctx.roomCode||storage.get('room');if(!code)return;
  busy($('resumeGameButton'),true);notice('joinNotice','Возвращаемся в игру…');
- try{ctx.roomCode=code;await refreshRoom(false);if(!ctx.room)throw Error('Комната недоступна. Проверьте код или присоединитесь к другой игре.');showScreen('game');renderGame();notice('joinNotice','')}
+ try{ctx.roomCode=code;const fresh=await refreshRoom(false);if(!fresh||fresh.code!==code)throw Error('Не удалось подтвердить соединение с комнатой. Подключитесь к интернету и повторите вход.');showScreen('game');renderGame();notice('joinNotice','')}
  catch(error){notice('joinNotice',error.message,'error')}
  finally{busy($('resumeGameButton'),false)}
 }
@@ -360,11 +360,11 @@ async function advance(action){const s=ctx.room;if(!s)return;busy($('host'+({sta
   await rpc('qwiz_party_control',{p_room:s.room_id,p_action:action});signal('phase');await refreshRoom();if(action==='finish')tab('results');
  }catch(e){notice('hostNotice',e.message,'error')}finally{for(const b of ['hostStart','hostReveal','hostNext','hostFinish'])busy($(b),false)}}
 async function assign(playerId,teamId){if(!ctx.room||ctx.room.phase!=='lobby')return;try{await rpc('org_next_assign',{p_room:ctx.room.room_id,p_player:playerId,p_team:teamId});signal('team');await refreshRoom()}catch(e){notice('hostNotice',e.message,'error')}}
-async function submitAnswer(choice){if(ctx.mode!=='game'||!ctx.room||ctx.room.phase!=='question'||ctx.room.paused||ctx.room.has_answer)return;const buttons=qa('[data-answer]');buttons.forEach(x=>busy(x,true));
+async function submitAnswer(choice){if(ctx.mode!=='game'||!ctx.room||ctx.room.phase!=='question'||ctx.room.paused||ctx.room.has_answer||ctx.answerPending)return;if(ctx.connectionStale||!navigator.onLine){updateConnectionHealth(false);return}ctx.answerPending=true;const buttons=qa('[data-answer]');buttons.forEach(x=>busy(x,true));
  notice('gameNotice','Отправляем ответ…');try{await (['single','boolean','flag','portrait','image'].includes(ctx.room.question?.kind||'single')?rpc('org_next_answer',{p_room:ctx.room.room_id,p_choice:choice}):rpc('qwiz_submit_answer',{p_room:ctx.room.room_id,p_payload:{index:choice}}));QwizStage.audio.play('accept');signal('answer');notice('gameNotice','Ответ сохранён.','success');await refreshRoom(false);
- }catch(e){notice('gameNotice',e.message,'error');await refreshRoom(false)}finally{buttons.forEach(x=>busy(x,false))}}
+ }catch(e){notice('gameNotice',e.message,'error');await refreshRoom(false)}finally{ctx.answerPending=false;buttons.forEach(x=>busy(x,false));lockDisconnectedAnswers()}}
 async function submitRichAnswer(){
- const s=ctx.room,q=s?.question;if(!s||!q||s.phase!=='question'||s.paused||s.has_answer||s.eligible===false)return;
+ const s=ctx.room,q=s?.question;if(!s||!q||s.phase!=='question'||s.paused||s.has_answer||s.eligible===false||ctx.answerPending)return;if(ctx.connectionStale||!navigator.onLine){updateConnectionHealth(false);return}
  const kind=q.kind||'single';let payload={};
  if(kind==='multi'){
   const indices=qa('#gameContent [data-multi]').filter(x=>x.checked).map(x=>Number(x.dataset.multi));
@@ -385,12 +385,13 @@ async function submitRichAnswer(){
   if(!textAnswer){notice('gameNotice','Введите ответ.','error');return}
   payload={text:textAnswer};
  }
+ ctx.answerPending=true;
  const button=document.querySelector('#gameContent [data-submit-rich]');if(button)busy(button,true);
  try{notice('gameNotice','Отправляем ответ…');
   await rpc('qwiz_submit_answer',{p_room:s.room_id,p_payload:payload});
   QwizStage.audio.play('accept');signal('answer');notice('gameNotice','Ответ принят сервером.','success');await refreshRoom(false);
  }catch(e){notice('gameNotice',e.message,'error');await refreshRoom(false)}
- finally{if(button)busy(button,false)}
+ finally{ctx.answerPending=false;if(button)busy(button,false);lockDisconnectedAnswers()}
 }
 function exportResults(){const s=ctx.room;if(!s)return;const rows=[['Место','Команда','Игроков','Очков'],...s.teams.slice().sort((a,b)=>b.score-a.score).map((x,i)=>[i+1,x.name,x.players,x.score])];const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='org-party-'+s.code+'.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
