@@ -1154,6 +1154,7 @@ body:fullscreen .projection-shell{height:100dvh}
 #projectionMain .projection-finale-compact .projection-finale-report>summary:focus-visible{
  outline:3px solid #8959dc;outline-offset:3px;
 }
+#projectionMain .projection-finale-compact .projection-finale-report:not([open])>.projection-finale-report-content{display:none}
 #projectionMain .projection-finale-compact .projection-finale-report-content{
  display:grid;gap:15px;overflow:auto;overscroll-behavior:contain;
  box-sizing:border-box;max-height:min(48dvh,690px);
