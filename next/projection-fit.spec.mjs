@@ -374,3 +374,43 @@ test('Flag artwork is fully visible without an illustration caption in question 
   }
  }
 });
+
+
+test('Flag choices and the correct flag stay inside their cards without clipping',async({page})=>{
+ const imageUrl='https://assets.example.test/panama.svg';
+ await page.route('https://assets.example.test/**',route=>route.fulfill({status:200,contentType:'image/svg+xml',
+  body:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600"><rect width="900" height="600" fill="#fff"/><rect x="450" width="450" height="300" fill="#ad1731"/><rect y="300" width="450" height="300" fill="#002e63"/></svg>'}));
+ for(const [width,height] of [[1280,720],[1920,1080],[768,1024]]){
+  await page.setViewportSize({width,height});
+  for(const phase of ['question','result']){
+   await page.evaluate(({phase,imageUrl})=>{
+    ctx.renderKey='';
+    render({code:'A1B2C3D4',phase,index:1,total:10,ends_at:new Date(Date.now()+25000).toISOString(),
+     question:{kind:'flag',prompt:'Выберите флаг государства Панама',options:[
+       {image_url:imageUrl},{image_url:imageUrl},{image_url:imageUrl},{image_url:imageUrl}]},
+     answer:phase==='result'?{indices:[0],text:'Панама'}:null,teams:[],
+     screen_settings:{sound_enabled:false,volume:0}});
+   },{phase,imageUrl});
+   const selector=phase==='question'?'.projection-public-options .flag-choice-art':'.projection-answer-reveal .correct-flag-art img';
+   await expect(page.locator(selector).first()).toBeVisible();
+   await page.locator(selector).first().evaluate(img=>img.decode());
+   await expect.poll(()=>page.evaluate(()=>Number(document.querySelector('.projection-question-only')?.dataset.fittedZoom))).toBeGreaterThan(0);
+   const boxes=await page.locator(selector).evaluateAll((images,phase)=>images.map(img=>{
+    const r=img.getBoundingClientRect();
+    const parent=img.closest(phase==='question'?'.projection-option':'.correct-flag-art');
+    const p=parent.getBoundingClientRect();
+    return {image:{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height},
+      parent:{left:p.left,right:p.right,top:p.top,bottom:p.bottom},fit:getComputedStyle(img).objectFit};
+   }),phase);
+   for(const b of boxes){
+    expect(b.fit).toBe('contain');
+    expect(b.image.width).toBeGreaterThan(35);
+    expect(b.image.height).toBeGreaterThan(20);
+    expect(b.image.left).toBeGreaterThanOrEqual(b.parent.left-3);
+    expect(b.image.right).toBeLessThanOrEqual(b.parent.right+3);
+    expect(b.image.top).toBeGreaterThanOrEqual(b.parent.top-3);
+    expect(b.image.bottom).toBeLessThanOrEqual(b.parent.bottom+3);
+   }
+  }
+ }
+});
