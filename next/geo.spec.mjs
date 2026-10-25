@@ -144,7 +144,7 @@ test('One region touch exposes confirm; server correct region appears highlighte
  await page.locator('#geoTapConfirm [data-region="region-3"]').click();
  await expect(button).toBeVisible();
  await expect(button).toBeEnabled();
- await expect(button).toContainText('Подтвердить: Субъект 3');
+ await expect(button).toHaveText('Подтвердить выбор');
  await button.click();
  await expect(page.locator('#geoTapConfirm .geo-answer-feedback')).toContainText('Субъект 1');
  await expect(page.locator('#geoTapConfirm [data-region="region-1"]')).toHaveClass(/geo-correct-answer/);
