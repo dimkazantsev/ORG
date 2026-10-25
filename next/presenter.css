@@ -1449,3 +1449,79 @@ body:fullscreen .projection-shell{height:100dvh}
   min-height:0;
  }
 }
+
+
+/* QWIZ-PARTY / theatrical room join screen. The QR is always flat and scan-ready. */
+#projectionMain>.lobby-cinematic{
+ position:relative;isolation:isolate;box-sizing:border-box;
+ width:100%;height:100%;min-height:0;max-height:100%;
+ display:grid;place-items:center;overflow:hidden;border-radius:clamp(18px,2.3vw,38px);
+ background:radial-gradient(ellipse at 50% 45%,#442790 0%,#26155d 35%,#130e34 76%,#0d102b 100%);
+ box-shadow:inset 0 0 0 1px #bfb3ff24,inset 0 35px 90px #ffffff08;
+}
+#projectionMain>.lobby-cinematic::before{
+ content:"";position:absolute;inset:-65%;pointer-events:none;
+ background:conic-gradient(from 0deg,transparent 0deg,#8f56ed25 38deg,transparent 80deg,
+ #35e9e625 120deg,transparent 165deg,#fa62c32b 220deg,transparent 285deg,#b495f532);
+ animation:cinema-aura-spin 31s linear infinite;
+}
+#projectionMain>.lobby-cinematic::after{
+ content:"";position:absolute;inset:auto -20% -30%;height:75%;
+ background:radial-gradient(ellipse,#b128d738,transparent 68%);filter:blur(35px);pointer-events:none;
+}
+.lobby-starfield{position:absolute;inset:0;pointer-events:none;z-index:1}
+.lobby-starfield i{position:absolute;display:block;width:5px;height:5px;border-radius:50%;background:#fef5ff;
+ box-shadow:0 0 15px 4px #bda4ff9c;animation:cinema-stars 4s ease-in-out infinite}
+.lobby-starfield i:nth-child(1){top:16%;left:13%;animation-delay:.2s}
+.lobby-starfield i:nth-child(2){top:31%;right:11%;background:#55f9fa;animation-delay:1.2s}
+.lobby-starfield i:nth-child(3){bottom:18%;left:18%;animation-delay:2s}
+.lobby-starfield i:nth-child(4){bottom:15%;right:19%;background:#ff9fe8;animation-delay:3s}
+.lobby-starfield i:nth-child(5){top:12%;left:67%;animation-delay:.8s}
+.lobby-starfield i:nth-child(6){bottom:38%;right:6%;animation-delay:2.6s}
+.lobby-3d-orbit{position:absolute;z-index:1;top:50%;left:50%;width:min(74vw,750px);
+ aspect-ratio:1;transform:translate(-50%,-50%) perspective(900px) rotateX(27deg);
+ transform-style:preserve-3d;pointer-events:none;opacity:.85}
+.lobby-3d-orbit>span:not(.orbit-core){position:absolute;inset:9%;border-radius:50%;border:2px solid #d5c1ff48;box-shadow:0 0 29px #a076f43d,inset 0 0 25px #9473f635;transform-style:preserve-3d}
+.lobby-3d-orbit .orbit-a{animation:cinema-orbit-a 15s linear infinite}
+.lobby-3d-orbit .orbit-b{inset:0!important;border-color:#57eeff46!important;animation:cinema-orbit-b 22s linear infinite reverse}
+.lobby-3d-orbit .orbit-c{inset:20%!important;border-color:#f56edb70!important;animation:cinema-orbit-c 12s linear infinite}
+.lobby-3d-orbit .orbit-core{position:absolute;top:8%;right:19%;font-size:42px;color:#eabaff;text-shadow:0 0 18px #d694ff}
+.lobby-cinema-content{position:relative;z-index:3;display:flex;flex-direction:column;
+ align-items:center;justify-content:center;min-width:0;max-width:95%;width:min(100%,850px);
+ padding:clamp(14px,2.5dvh,28px);color:#fff;text-align:center;gap:clamp(4px,.8dvh,11px)}
+.lobby-cinema-eyebrow{font-size:clamp(10px,1vw,15px);font-weight:900;letter-spacing:.19em;color:#91f6ff}
+.lobby-cinema-content h1{font-size:clamp(33px,5.5dvh,77px);font-weight:960;letter-spacing:-.045em;
+ line-height:1.02;margin:0;text-shadow:0 8px 45px #150b43}
+.lobby-cinema-lead{color:#e0d6ff!important;font-size:clamp(13px,1.8dvh,22px)!important;line-height:1.32!important;margin:0!important}
+.lobby-qr-frame{position:relative;display:grid;place-items:center;flex:none;max-width:100%;
+ margin:clamp(4px,.6dvh,10px) auto;border-radius:26px;
+ padding:clamp(11px,1.4dvh,19px);
+ background:linear-gradient(145deg,#fff,#fff);
+ box-shadow:0 18px 75px #05052591,0 0 0 7px #bb8dff3b,0 0 65px 24px #d87cfa47;
+}
+.lobby-cinema-qr{display:grid;place-items:center;width:min(32dvh,30vw,320px);height:min(32dvh,30vw,320px);
+ min-width:175px;min-height:175px;background:white}
+.lobby-cinema-qr :is(canvas,img){display:block!important;width:100%!important;height:100%!important;object-fit:contain;image-rendering:pixelated}
+.lobby-cinema-qr canvas+img{position:absolute}
+.lobby-qr-frame>i{position:absolute;width:30px;height:30px;pointer-events:none;border-color:#66efff;opacity:.95}
+.lobby-qr-frame>.corner-tl{left:-13px;top:-13px;border-left:4px solid;border-top:4px solid;border-radius:11px 0 0}
+.lobby-qr-frame>.corner-tr{right:-13px;top:-13px;border-right:4px solid;border-top:4px solid;border-radius:0 11px 0 0}
+.lobby-qr-frame>.corner-bl{left:-13px;bottom:-13px;border-left:4px solid;border-bottom:4px solid;border-radius:0 0 0 11px}
+.lobby-qr-frame>.corner-br{right:-13px;bottom:-13px;border-right:4px solid;border-bottom:4px solid;border-radius:0 0 11px}
+.lobby-cinema-code-label{margin-top:3px;font-size:clamp(10px,1vw,13px);font-weight:800;letter-spacing:.17em;color:#a5f6fb}
+.lobby-cinema-code{font-size:clamp(21px,3dvh,37px);font-weight:960;letter-spacing:.21em;color:white;font-variant-numeric:tabular-nums}
+.lobby-cinema-instructions{max-width:690px;font-size:clamp(12px,1.7dvh,20px)!important;color:#ede7ff!important;line-height:1.38!important;margin:2px 0!important}
+@keyframes cinema-aura-spin{to{transform:rotate(360deg)}}
+@keyframes cinema-orbit-a{to{transform:rotateY(360deg) rotateZ(40deg)}}
+@keyframes cinema-orbit-b{to{transform:rotateZ(360deg) rotateX(52deg)}}
+@keyframes cinema-orbit-c{to{transform:rotateX(360deg) rotateY(38deg)}}
+@keyframes cinema-stars{50%{opacity:.24;transform:scale(.5)}}
+@media(max-height:760px){
+ .lobby-cinema-content{padding:8px;gap:3px}
+ .lobby-cinema-qr{width:min(30dvh,230px);height:min(30dvh,230px)}
+ .lobby-cinema-content h1{font-size:clamp(28px,5dvh,43px)}
+ .lobby-qr-frame{padding:10px;margin:2px auto}
+}
+@media(prefers-reduced-motion:reduce){
+ #projectionMain>.lobby-cinematic::before,.lobby-3d-orbit>span,.lobby-starfield i{animation:none!important}
+}
