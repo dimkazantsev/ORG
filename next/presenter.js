@@ -416,6 +416,8 @@ function render(state){
   joinQr.hidden=true; // The lobby has one large QR; live questions stay QR-free.
  }
  $('projectionPlay').hidden=!state.code;$('projectionPlay').href=link(state.code);
+ // Public display always has a single QR during lobby, including existing rooms.
+ if(state.phase==='lobby'&&!state.team_lobby)state={...state,team_lobby:{mode:'legacy',confirmed:false,team_count:(state.lobby_teams||[]).length,captain_count:0,captains_ready:false}};
  const key=[state.code,state.phase,state.index,state.activity?.title,state.activity?.type,state.activity?.settings?.arcade_mode,state.team_lobby?.confirmed,state.team_lobby?.captains_ready,state.team_lobby?.captain_count].join(':');
  if(key===ctx.renderKey){
   if(state.phase==='intermission'&&state.activity?.type==='round_stats'&&$('projectorResultCountdown')){
@@ -438,7 +440,7 @@ function render(state){
   const n=lobby.team_count||1,c=lobby.captain_count||0;
   const hint=lobby.mode==='captain'?
    (lobby.captains_ready?'Капитаны выбраны. Сканируйте QR своего капитана на его телефоне.':'Выбираем капитанов: '+c+' из '+n+'. Нажмите «Я капитан» на своём телефоне.'):
-   'Подключайтесь! Преподаватель распределит участников по командам.';
+   (lobby.mode==='legacy'?'Сканируйте QR комнаты — команда назначается при входе.':'Подключайтесь! Преподаватель распределит участников по командам.');
   $('projectionMain').innerHTML='<section class="lobby-cinematic" aria-label="Вход в игру по одному QR-коду">'+
    '<div class="lobby-starfield" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>'+
    '<div class="lobby-3d-orbit" aria-hidden="true"><span class="orbit-a"></span><span class="orbit-b"></span><span class="orbit-c"></span><span class="orbit-core">✦</span></div>'+
