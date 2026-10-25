@@ -91,11 +91,12 @@ DECLARE r public.org_next_rooms%rowtype; a public.qwiz_room_activity%rowtype;
            AND d.room_id=r.id AND d.user_id=(SELECT auth.uid())))) LIMIT 1;
  IF board.player_id IS NOT NULL THEN
   SELECT coalesce(jsonb_agg(jsonb_build_object('index',idx-1,
-    'icon', CASE WHEN board.matched @> jsonb_build_array(idx-1) OR board.first_tile=idx-1
+    'icon', CASE WHEN board.matched @> jsonb_build_array(idx-1) OR (board.first_tile=idx-1 AND (board.second_tile IS NULL OR now_at<board.hide_until))
       OR (board.second_tile=idx-1 AND now_at<board.hide_until)
       THEN board.deck->(idx-1)->>'icon' ELSE NULL END,
     'matched',board.matched @> jsonb_build_array(idx-1),'open',
-       board.first_tile=idx-1 OR (board.second_tile=idx-1 AND now_at<board.hide_until))
+       (board.first_tile=idx-1 AND (board.second_tile IS NULL OR now_at<board.hide_until))
+        OR (board.second_tile=idx-1 AND now_at<board.hide_until))
        ORDER BY idx),'[]'::jsonb)
   INTO tiles FROM generate_series(1,12) idx;
  END IF;
@@ -220,15 +221,15 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO '' AS $rank$
      CASE WHEN mp.completed_at IS NOT NULL THEN
       greatest(100::numeric,100000::numeric-extract(epoch from (mp.completed_at-x.started_at)))
      ELSE coalesce(jsonb_array_length(mp.matched)/2,0)::numeric END
-   WHEN mode='rocket' THEN coalesce(rp.cleared,0)::numeric
+   WHEN mode='rocket' THEN CASE WHEN coalesce(rp.cleared,0)=0 THEN 0::numeric ELSE coalesce(rp.cleared,0)::numeric
      +coalesce(least(0.99::numeric,greatest(0::numeric,
-       extract(epoch from (coalesce(rp.eliminated_at,clock_timestamp())-x.started_at))::numeric/200)),0)
+       extract(epoch from (coalesce(rp.eliminated_at,clock_timestamp())-x.started_at))::numeric/200)),0) END
    WHEN mode='tug' THEN x.taps::numeric -- Real total, not an average per participant.
    ELSE round((x.taps::numeric/greatest(x.members,1))*
     (1+0.10*x.navigator),2)
    END) AS pts,
-   CASE WHEN mode='captain' THEN CASE WHEN mp.player_id IS NULL THEN 0 ELSE 1 END
-    WHEN mode='rocket' THEN CASE WHEN rp.player_id IS NULL THEN 0 ELSE 1 END
+   CASE WHEN mode='captain' THEN CASE WHEN mp.moves>0 THEN 1 ELSE 0 END
+    WHEN mode='rocket' THEN CASE WHEN rp.cleared>0 THEN 1 ELSE 0 END
     ELSE x.tapped_members END AS players_active
  FROM totals x
  LEFT JOIN public.qwiz_arcade_memory_players mp ON mp.room_id=p_room AND mp.card_position=p_position AND mp.team_id=x.team_id
@@ -253,6 +254,14 @@ BEGIN
    EXECUTE new_src;
  END IF;
 END $guards$;
+
+-- A full 12-tile memory game should not inherit the old 40-second reflex deadline.
+CREATE OR REPLACE FUNCTION public.qwiz_arcade_duration(p_settings jsonb,p_mode text)
+RETURNS integer LANGUAGE sql IMMUTABLE SET search_path TO '' AS $duration$
+ SELECT CASE WHEN p_mode='captain' THEN greatest(90,least(120,coalesce(nullif(p_settings->>'arcade_seconds','')::int,100)))
+ ELSE greatest(30,least(120,coalesce(nullif(p_settings->>'arcade_seconds','')::int,
+   CASE p_mode WHEN 'rocket' THEN 45 WHEN 'blitz' THEN 60 WHEN 'tug' THEN 45 ELSE 45 END))) END;
+$duration$;
 
 -- These functions must not be accessible via direct anonymous writes.
 REVOKE ALL ON FUNCTION public.qwiz_arcade_play(uuid,text,integer) FROM PUBLIC,anon;
