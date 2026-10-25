@@ -163,3 +163,127 @@ test('Changing to Russia geography never imports stale flag selectors and changi
  expect(await page.evaluate(()=>state.cards[1].settings.flag_modes)).toEqual(['country','picker']);
  expect(await page.evaluate(()=>state.cards[1].settings.geo_modes)).toEqual([]);
 });
+
+
+for(const width of [320,390,768,1440]){
+ test('Every mechanic selector is a readable aligned tile at viewport '+width,async({page})=>{
+  await page.setViewportSize({width,height:900});
+  await page.emulateMedia({reducedMotion:'reduce'});
+  await page.evaluate(()=>{
+   state.topics=[{id:'flags-topic',name:'Флаги мира'},{id:'geo-topic',name:'География России'}];
+   fillSelect($('cardTopic'),[['flags-topic','Флаги мира'],['geo-topic','География России']],'Без темы','flags-topic');
+   state.cards[1].topic_id='flags-topic';
+   state.cards[1].settings.flag_modes=['country'];
+   editCard(1);
+  });
+  for(const kind of ['flags','geography','russia-map']){
+   if(kind==='geography')await page.locator('#cardTopic').selectOption('geo-topic');
+   if(kind==='russia-map'){
+    await page.evaluate(()=>{
+     $('cardDialog').close();
+     state.cards[1].settings.arcade_mode='russia_map';
+     state.cards[1].topic_id='geo-topic';
+     editCard(1);
+    });
+   }
+   const selector=kind==='flags'?'#cardFlagModes>.flag-mode-item':
+    kind==='geography'?'#cardGeoQuestionModes>label.check-row':'#cardGeoModes>label';
+   const tiles=page.locator(selector);
+   await expect(tiles.first()).toBeVisible();
+   await expect(tiles).toHaveCount(kind==='flags'?12:kind==='geography'?2:9);
+   const metrics=await tiles.evaluateAll(elements=>elements.map(element=>{
+    const label=element.getBoundingClientRect(),input=element.querySelector('input');
+    const mark=input.getBoundingClientRect();
+    const labelText=element.querySelector('span');
+    const text=labelText?labelText.getBoundingClientRect():null;
+    const style=getComputedStyle(element);
+    const b=getComputedStyle(input);
+    return {display:style.display,border:parseFloat(style.borderTopWidth),
+      radius:parseFloat(style.borderTopLeftRadius),width:label.width,height:label.height,
+      checkbox:{width:mark.width,height:mark.height,left:mark.left,right:mark.right,top:mark.top,bottom:mark.bottom},
+      text:text?{left:text.left,top:text.top,bottom:text.bottom,right:text.right}:null,
+      element:{left:label.left,right:label.right,top:label.top,bottom:label.bottom},
+      inputStyle:b.width
+    };
+   }));
+   for(const item of metrics){
+    expect(item.display,kind+' tiles use flexible row').toBe('flex');
+    expect(item.border,kind+' tiles have borders').toBeGreaterThanOrEqual(1);
+    expect(item.radius,kind+' tiles have rounded corners').toBeGreaterThanOrEqual(8);
+    expect(item.height,kind+' large touch targets').toBeGreaterThanOrEqual(45);
+    expect(item.checkbox.width,kind+' checkbox width').toBeGreaterThanOrEqual(18);
+    expect(item.checkbox.width,kind+' checkbox width').toBeLessThanOrEqual(25);
+    expect(item.checkbox.height,kind+' checkbox height').toBeGreaterThanOrEqual(18);
+    expect(item.checkbox.height,kind+' checkbox height').toBeLessThanOrEqual(25);
+    expect(item.checkbox.left).toBeGreaterThanOrEqual(item.element.left-1);
+    expect(item.checkbox.right).toBeLessThanOrEqual(item.element.right+1);
+    if(item.text){
+     expect(item.text.left).toBeGreaterThanOrEqual(item.checkbox.right+6);
+     expect(item.text.right).toBeLessThanOrEqual(item.element.right+1);
+     expect(item.text.top).toBeGreaterThanOrEqual(item.element.top-2);
+     expect(item.text.bottom).toBeLessThanOrEqual(item.element.bottom+2);
+    }
+   }
+   if(kind==='geography'){
+    const info=await page.locator('#cardGeoQuestionModes>p.small-help').evaluate(el=>{
+     const r=el.getBoundingClientRect(),grid=el.parentElement.getBoundingClientRect();
+     return {left:r.left,right:r.right,top:r.top,width:r.width,gridLeft:grid.left,gridRight:grid.right,
+      lastTileBottom:el.previousElementSibling.getBoundingClientRect().bottom};
+    });
+    expect(info.left).toBeGreaterThanOrEqual(info.gridLeft+10);
+    expect(info.right).toBeLessThanOrEqual(info.gridRight-10);
+    expect(info.width).toBeGreaterThan((info.gridRight-info.gridLeft)*.88);
+    expect(info.top).toBeGreaterThanOrEqual(info.lastTileBottom+3);
+   }
+   if(kind==='russia-map'){
+    await expect(page.locator('#cardGeoModes>label.disabled input')).toBeDisabled();
+    const choice=page.locator('#cardGeoModes>label').first().locator('input');
+    await choice.uncheck();await expect(choice).not.toBeChecked();
+    await choice.check();await expect(choice).toBeChecked();
+   }
+   const overflow=await page.locator('#cardDialog').evaluate(el=>el.scrollWidth-el.clientWidth);
+   expect(overflow,kind+' scroll clipping at '+width).toBeLessThanOrEqual(2);
+  }
+ });
+}
+
+test('All builder card types keep their settings, form fields, and dialog controls inside bounds',async({page})=>{
+ await page.setViewportSize({width:390,height:840});
+ await page.evaluate(()=>{
+  state.topics=[{id:'flags-topic',name:'Флаги мира'},{id:'geo-topic',name:'География России'}];
+  fillSelect($('cardTopic'),[['flags-topic','Флаги мира'],['geo-topic','География России']],'Без темы','flags-topic');
+  state.cards=['intro','round','break','team_stats','player_stats','bonus','duel','finale'].map(type=>card(type));
+  state.cards[1].topic_id='flags-topic';
+  renderCards();
+ });
+ for(const index of [0,1,2,3,4,5,6,7]){
+  await page.evaluate(index=>editCard(index),index);
+  await expect(page.locator('#cardDialog')).toBeVisible();
+  const geometry=await page.locator('#cardDialog').evaluate(dialog=>{
+   const r=dialog.getBoundingClientRect(),form=dialog.querySelector('form').getBoundingClientRect();
+   const actions=[...dialog.querySelectorAll('.dialog-footer button')].map(el=>{
+    const b=el.getBoundingClientRect();return {left:b.left,right:b.right,top:b.top,bottom:b.bottom};
+   });
+   return {viewport:innerWidth,dialog:{left:r.left,right:r.right},form:{left:form.left,right:form.right},
+    overflow:dialog.scrollWidth-dialog.clientWidth,actions};
+  });
+  expect(geometry.dialog.left).toBeGreaterThanOrEqual(-2);
+  expect(geometry.dialog.right).toBeLessThanOrEqual(geometry.viewport+2);
+  expect(geometry.overflow).toBeLessThanOrEqual(2);
+  for(const a of geometry.actions){
+   expect(a.left).toBeGreaterThanOrEqual(geometry.dialog.left-2);
+   expect(a.right).toBeLessThanOrEqual(geometry.dialog.right+2);
+  }
+  await page.locator('#cardDialog [data-close]').first().click();
+ }
+ await page.evaluate(()=>{
+  state.cards[1].settings.arcade_mode='rocket';
+  editCard(1);
+ });
+ await expect(page.locator('#cardArcadeSettings')).toBeVisible();
+ const fields=await page.locator('#cardArcadeSettings').evaluate(el=>({
+  parentWidth:el.getBoundingClientRect().width,
+  childWidth:el.querySelector('input').getBoundingClientRect().width
+ }));
+ expect(fields.childWidth).toBeLessThanOrEqual(fields.parentWidth+1);
+});
