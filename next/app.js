@@ -396,6 +396,7 @@ async function submitRichAnswer(){
 function exportResults(){const s=ctx.room;if(!s)return;const rows=[['Место','Команда','Игроков','Очков'],...s.teams.slice().sort((a,b)=>b.score-a.score).map((x,i)=>[i+1,x.name,x.players,x.score])];const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='org-party-'+s.code+'.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 async function copyInvite(){if(!ctx.roomCode)return;const invite=joinUrl(ctx.roomCode);try{await navigator.clipboard.writeText(invite);notice('hostNotice','Ссылка скопирована.','success')}catch{notice('hostNotice','Ссылка для приглашения: '+invite)}}
+function roomPollOffset(random=Math.random){return Math.floor(Math.max(0,Math.min(0.999999,Number(random())||0))*20000)}
 function updateClocks(){if(ctx.room?.paused){lockDisconnectedAnswers();return;}
  if(ctx.room?.phase==='intermission'&&ctx.room?.activity?.type==='round_stats'){
   const left=remaining(ctx.room.ends_at);text('playerResultCountdown',left);
@@ -515,7 +516,12 @@ function attach(){q('#logoHome').addEventListener('click',home);
  window.addEventListener('offline',()=>{if(ctx.roomCode)updateConnectionHealth(false)});
  window.addEventListener('online',()=>{if(ctx.roomCode)scheduleRefresh(100)});
  addQuestion();
- setInterval(()=>{if(ctx.roomCode&&!document.hidden)refreshRoom(false)},20000);
+ // Spread otherwise synchronized room polls across a full period. With 40 phones,
+ // this avoids a burst of 40 requests every 20 seconds without polling more often.
+ setTimeout(()=>{
+  const periodicPoll=()=>{if(ctx.roomCode&&!document.hidden&&navigator.onLine&&!ctx.reconnectRetryTimer)refreshRoom(false)};
+  periodicPoll();setInterval(periodicPoll,20000);
+ },roomPollOffset());
  ctx.clock=setInterval(updateClocks,500);
  renderQrPanels();
  const incoming=new URLSearchParams(location.search).get('room');
