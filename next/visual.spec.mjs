@@ -69,7 +69,7 @@ test('Home QR is generated locally and can be enlarged',async({page})=>{
  await page.locator('#qrClose').click();
  await expect(page.locator('#qrDialog')).toBeHidden();
 });
-test('Up to 15 teams are selectable in the new game form',async({page})=>{
+test('Team count is configured after room creation, not duplicated in its form',async({page})=>{
  await page.evaluate(()=>{showScreen('studio');tab('room')});
  await expect(page.locator('#roomTeamCount option')).toHaveCount(14);
  await page.selectOption('#roomTeamCount','15');
