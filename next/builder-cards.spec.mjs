@@ -178,18 +178,21 @@ test('Launch preview distinguishes map mechanics from geography questions and ex
     {type:'round',title:'Карта России',topic_id:'geo',settings:{arcade_mode:'russia_map',geo_modes:['locate','identify','flag']}},
     {type:'round',title:'Вопросы по географии',topic_id:'geo',settings:{geo_modes:['capital'],count:5}},
     {type:'bonus',title:'Ненастроенная мини-игра',settings:{}},
+    {type:'team_stats',title:'Старый отдельный рейтинг команд',settings:{}},
     {type:'finale',title:'Финал',settings:{}}
    ]};
   };
   input.dispatchEvent(new Event('change',{bubbles:true}));
  });
  await expect(page.locator('#launchPlan')).toBeVisible();
- await expect(page.locator('#launchPlanCards .launch-plan-item')).toHaveCount(5);
+ await expect(page.locator('#launchPlanCards .launch-plan-item')).toHaveCount(6);
  await expect(page.locator('#launchPlanCards .launch-plan-item').nth(1)).toContainText('Найти субъект');
  await expect(page.locator('#launchPlanCards .launch-plan-item').nth(1)).not.toContainText('Административный центр');
  await expect(page.locator('#launchPlanCards .launch-plan-item').nth(2)).toContainText('Административный центр');
  await expect(page.locator('#launchPlanCards .launch-plan-item').nth(2)).not.toContainText('Найти субъект');
  await expect(page.locator('#launchPlanCards .launch-plan-item').nth(3)).toHaveClass(/is-unconfigured/);
+ await expect(page.locator('#launchPlanCards .launch-plan-item').nth(4)).toHaveClass(/is-unconfigured/);
+ await expect(page.locator('#launchPlanCards .launch-plan-item').nth(4)).toContainText('Устаревшая карточка');
  await expect(page.locator('#launchPlanNotice')).toContainText('есть карточки без темы или механик');
  for(const width of [320,390,768,1440]){
   await page.setViewportSize({width,height:900});
