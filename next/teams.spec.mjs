@@ -196,7 +196,7 @@ test('TV overscan keeps all QR cards, readable emblems, and screen chrome within
     overflow:document.documentElement.scrollWidth-innerWidth,
     pageScroll:document.documentElement.scrollHeight-innerHeight};
   });
-  const marginX=Math.min(width*.04,164),marginY=Math.min(height*.035,90);
+  const marginX=Math.min(width*.048,192),marginY=Math.min(height*.048,110);
   for(const item of report.bounds){
    if(item.hidden)continue;
    expect(item.left,'left TV overscan in '+item.name+' at '+width+' for '+count+' with '+report.padding).toBeGreaterThanOrEqual(marginX-2);
