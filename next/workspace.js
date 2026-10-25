@@ -30,10 +30,10 @@ const cardSvgPaths={
  team_stats:'<circle cx="9" cy="8" r="3"/><path d="M3.5 20v-2c0-3 2-5 5.5-5s5.5 2 5.5 5v2M17 5a3 3 0 0 1 0 6M17 14c2.5 0 4 2 4 4v2"/>',
  player_stats:'<circle cx="12" cy="7" r="4"/><path d="M4.5 21v-2c0-4.2 3-7 7.5-7s7.5 2.8 7.5 7v2"/>',
  bonus:'<path d="m12 2 2.6 6.4L21 11l-6.4 2.6L12 20l-2.6-6.4L3 11l6.4-2.6L12 2Z"/>',
- arcade_rocket:'<path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.7-.84.7-2.13-.1-2.91a2 2 0 0 0-2.9-.09Z"/><path d="m12 15-3-3c.9-2.6 2.6-4.9 5-6.6C16.6 3.5 19.3 2 22 2c0 2.7-1.5 5.4-3.4 8a17.6 17.6 0 0 1-6.6 5Z"/><path d="M9 12H4s.6-3 2-4c1.6-1.1 5 0 5 0M12 15v5s3-.6 4-2c1.1-1.6 0-5 0-5"/><circle cx="16.2" cy="7.8" r="1.5"/>',
+  arcade_rocket:'<path d="M4 16 2 11l6 3 1-5 3-3h4V3h4v4l2 2v3h-7v4l-3 3H7l-3-3Z"/><path d="M10 19v3m5-4v4M18 10h.01"/><path d="M20 22v-7m-2 4h4m-4-2-2-2m6 2 1-2"/>',
  arcade_blitz:'<circle cx="10.5" cy="13.5" r="7.5"/><path d="M8 2h5m-2.5 4V3m6.5 3.5 1.5-1.5"/><path d="m11.5 9-3 5h3l-1 4 4-6h-3Z"/>',
- arcade_tug:'<path d="M3 12h6m6 0h6M6 8l-4 4 4 4m12-8 4 4-4 4"/><path d="m10 10.3 2-2.3 2 2.3v3.4L12 16l-2-2.3Z"/><path d="m10 10.3 4 3.4m0-3.4-4 3.4"/>',
- arcade_captain:'<path d="m14.5 17.5 3-3L6.75 3.75a2.12 2.12 0 0 0-3 3L14.5 17.5Z"/><path d="m13 19 6-6m-3 3 4 4m-1 1 2-2"/><path d="m14.5 6.5 3-3a2.12 2.12 0 0 1 3 3l-3 3M5 14l-3 3 5 5 3-3"/>',
+  arcade_tug:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="m9.5 7.5 1-2m4 12 1.5 1.5M12 1v2M12 21v2M1 12h2m18 0h2"/><path d="M11 9v4l2 1"/>',
+  arcade_captain:'<rect x="2.8" y="3.5" width="8.5" height="8.5" rx="1.7"/><rect x="12.7" y="3.5" width="8.5" height="8.5" rx="1.7"/><rect x="2.8" y="13" width="8.5" height="8.5" rx="1.7"/><rect x="12.7" y="13" width="8.5" height="8.5" rx="1.7"/><path d="m6 8 1.1 1.4L9 7m7.3 1 1.1 1.4L19.1 7m-9 10h4"/>',
  duel:'<path d="m4 7 4-4m0 0 4 4M8 3v12M20 17l-4 4m0 0-4-4m4 4V9"/>',
  finale:'<path d="M7 4h10v7c0 7-10 7-10 0V4ZM7 7H3v3c0 3 3 5 6 5m8-8h4v3c0 3-3 5-6 5m-3 2v4m-4 0h8"/>',
  flag:'<path d="M5 21V3m0 1c5-3 8 2 15-1v11c-7 3-10-2-15 1"/>',
@@ -50,13 +50,15 @@ const copySvg='<svg class="copy-svg" viewBox="0 0 24 24" fill="none" stroke="cur
 const trashSvg='<svg class="trash-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 4h4m-7 3 1 13h8l1-13M10 11v6m4-6v6"/></svg>';
 const moveIconLeft='<svg class="move-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m7-7-7 7 7 7"/></svg>';
 const moveIconRight='<svg class="move-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>';
+const legacyArcadeTitles={'Забег с препятствиями':'Дино-забег','Командная тапалка':'Тап-баттл','Дуэль капитанов · Memory':'Мэмори капитанов','Ракетная гонка':'Дино-забег','Перетягивание очков':'Тап-баттл','Дуэль капитанов':'Мэмори капитанов'};
+const gameTitle=c=>arcadeGames[c?.settings?.arcade_mode]?.title&&legacyArcadeTitles[c.title]?arcadeGames[c.settings.arcade_mode].title:c.title;
 const titles={round:'Раунд вопросов',intro:'Начало игры',break:'Музыкальная пауза',team_stats:'Рейтинг команд',player_stats:'Статистика игроков',bonus:'Бонусная активность',duel:'Дуэль команд',finale:'Финал игры'};
 const buildDefaults={count:5,seconds:30,answer_seconds:10,order:'random',offset:0,team_cap:null,player_cap:null,sound:'fanfare',lead_seconds:5,stats_seconds:7,bonus_percent:70,bonus_lead:15};
 const arcadeGames={
- rocket:{title:'Забег с препятствиями',icon:'arcade_rocket',seconds:45,help:'От каждой команды сервер выбирает одного случайного бегуна. Прыжок одной кнопкой; с ростом дистанции препятствия появляются быстрее. Победа: +25 очков.'},
+ rocket:{title:'Дино-забег',icon:'arcade_rocket',seconds:45,help:'От каждой команды сервер выбирает одного случайного бегуна. Прыжок одной кнопкой; с ростом дистанции препятствия появляются быстрее. Победа: +25 очков.'},
  blitz:{title:'Блиц-вопрос',icon:'arcade_blitz',seconds:60,help:'7 секунд команды борются за право ответа. После захвата открывается вопрос из банка флагов. Правильный ответ: +80 очков.'},
- tug:{title:'Командная тапалка',icon:'arcade_tug',seconds:45,help:'Все участники нажимают большую 3D-кнопку. Сервер складывает число нажатий игроков в командный результат. Победа: +15 очков.'},
- captain:{title:'Дуэль капитанов · Memory',icon:'arcade_captain',seconds:100,help:'Все капитаны одновременно ищут пары среди 12 плиток. Побеждает завершивший за наименьшее время; при равенстве выигрывает меньшее число ходов. Победа: +15 очков.'}
+ tug:{title:'Тап-баттл',icon:'arcade_tug',seconds:45,help:'Все участники нажимают большую 3D-кнопку. Сервер складывает число нажатий игроков в командный результат. Победа: +15 очков.'},
+ captain:{title:'Мэмори капитанов',icon:'arcade_captain',seconds:100,help:'Все капитаны одновременно ищут пары среди 12 плиток. Побеждает завершивший за наименьшее время; при равенстве выигрывает меньшее число ходов. Победа: +15 очков.'}
 };
 const state={db:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,bankOffset:0,bankPageSize:25,bankRequest:0,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',dragFrom:null,selectedCard:null,clockOffset:0,liveKey:'',lastDeadlineRefresh:0};
 function msg(id,text='',isError=false){const el=$(id);if(!el)return;el.textContent=text;el.classList.toggle('error',!!isError)}
@@ -455,7 +457,7 @@ function updateCardSelection(){
   const active=Number(element.dataset.index)===selected;
   element.classList.toggle('is-selected',active);
   element.setAttribute('aria-current',String(active));
-  const title=state.cards[Number(element.dataset.index)]?.title||'Карточка';
+  const title=gameTitle(state.cards[Number(element.dataset.index)])||'Карточка';
   element.setAttribute('aria-label',title+(active?
    '. Выбрана как позиция вставки. Дважды нажмите для настройки.':
    '. Выбрать позицию вставки; двойное нажатие — настройки.'));
@@ -487,7 +489,7 @@ function cardDesc(c){const settings=c.settings||{};
  return 'Дополнительная активность · настройки в карточке'}
 function renderCards(){ensureFinale();if(!state.cards.includes(state.selectedCard))state.selectedCard=null;$('roundCards').innerHTML=state.cards.map((c,i)=>{
  const final=c.type==='finale',emblem=final?'<svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M15 7h18v13c0 13-18 13-18 0V7ZM15 11H7v6c0 7 8 10 12 8M33 11h8v6c0 7-8 10-12 8M24 30v10M16 41h16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':cardIconSvg(c.type,arcadeGames[c.settings?.arcade_mode]?.icon||(c.settings?.arcade_mode==='russia_map'?'map':c.icon));
- return '<article class="round-card'+(c===state.selectedCard?' is-selected':'')+'" data-index="'+i+'" data-type="'+esc(c.type)+'" data-mechanic="'+esc(c.settings?.arcade_mode||'')+'" tabindex="0" role="group" aria-current="'+(c===state.selectedCard?'true':'false')+'" aria-label="'+esc(c.title)+'. Выбрать позицию вставки; двойное нажатие — настройки" draggable="'+!final+'"><div class="round-card-heading"><span class="round-icon" aria-hidden="true">'+emblem+'</span><span class="small-help">'+(final?'ФИНАЛ ИГРЫ':'КАРТОЧКА '+(i+1).toString().padStart(2,'0'))+'</span></div><h3>'+esc(c.title)+'</h3><p class="round-sub">'+esc(cardDesc(c))+'</p>'+
+ return '<article class="round-card'+(c===state.selectedCard?' is-selected':'')+'" data-index="'+i+'" data-type="'+esc(c.type)+'" data-mechanic="'+esc(c.settings?.arcade_mode||'')+'" tabindex="0" role="group" aria-current="'+(c===state.selectedCard?'true':'false')+'" aria-label="'+esc(gameTitle(c))+'. Выбрать позицию вставки; двойное нажатие — настройки" draggable="'+!final+'"><div class="round-card-heading"><span class="round-icon" aria-hidden="true">'+emblem+'</span><span class="small-help">'+(final?'ФИНАЛ ИГРЫ':'КАРТОЧКА '+(i+1).toString().padStart(2,'0'))+'</span></div><h3>'+esc(gameTitle(c))+'</h3><p class="round-sub">'+esc(cardDesc(c))+'</p>'+
  (final?'<div class="finale-card-tags"><span>Команды</span><span>Участники</span><span>3 + 3 вопроса</span></div>':'')+'<div class="round-actions">'+(!final?'<button type="button" data-move="'+i+':-1" aria-label="Раньше" '+(i===0?'disabled':'')+'>'+moveIconLeft+'</button><button type="button" data-move="'+i+':1" aria-label="Позже" '+(i>=state.cards.length-2?'disabled':'')+'>'+moveIconRight+'</button>':'')+'<button type="button" class="round-edit" data-edit-card="'+i+'">'+(final?'Настроить финал':'Настроить')+'</button></div>'+(!final?'<div class="round-card-tools"><button type="button" class="card-copy round-copy" data-duplicate-card="'+i+'" title="Дублировать карточку" aria-label="Дублировать карточку '+esc(c.title)+'">'+copySvg+'</button><button type="button" class="card-trash round-trash" data-delete-card="'+i+'" title="Удалить карточку" aria-label="Удалить карточку '+esc(c.title)+'">'+trashSvg+'</button></div>':'')+'</article>';
  }).join('');updateCardSelection();}
 function duplicateCard(index){
