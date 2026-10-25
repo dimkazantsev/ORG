@@ -77,7 +77,7 @@ function connectRoom(code){if(!ctx.client||!code)return;if(ctx.channel&&ctx.chan
  .on('broadcast',{event:'phase'},()=>scheduleRefresh(500))
  .on('broadcast',{event:'team'},()=>scheduleRefresh(600))
  .on('broadcast',{event:'answer'},()=>{if(ctx.mode==='studio')scheduleRefresh(1300)})
- .subscribe();
+ .subscribe(status=>{if(status==='SUBSCRIBED'&&code===ctx.roomCode&&ctx.room)scheduleRefresh(300)});
 }
 function signal(event){
  ctx.channel?.send({type:'broadcast',event,payload:{changed:true}})?.catch(()=>{});
@@ -89,6 +89,7 @@ function signal(event){
 function scheduleRefresh(delay=800){if(ctx.refreshTimer)clearTimeout(ctx.refreshTimer);ctx.refreshTimer=setTimeout(()=>refreshRoom(false),delay)}
 async function refreshRoom(showError=true){
  if(!ctx.roomCode||!ctx.client)return;
+ if(!navigator.onLine){updateConnectionHealth(false);return null;}
  // Keep one request in flight. Events received during it request one fresh read,
  // rather than being lost until the next 20-second poll.
  if(ctx.refreshPromise){ctx.refreshQueued=true;return ctx.refreshPromise;}
@@ -103,11 +104,12 @@ async function refreshRoom(showError=true){
     const data=await rpc('qwiz_party_state',{p_code:code});
     // A slow response from room A must never overwrite room B after a switch.
     if(code!==ctx.roomCode){ctx.refreshQueued=Boolean(ctx.roomCode);continue;}
-    ctx.lastRefresh=Date.now();dataState(data);latest=data;
-    if(showError){notice('hostNotice','');notice('gameNotice','');}
+    ctx.lastRefresh=Date.now();dataState(data);updateConnectionHealth(true);latest=data;
+    if(showError)notice('hostNotice','');
    }catch(error){
     if(code!==ctx.roomCode){ctx.refreshQueued=Boolean(ctx.roomCode);continue;}
-    if(showError){notice('hostNotice',error.message,'error');notice('gameNotice',error.message,'error');}
+    updateConnectionHealth(false);
+    if(showError)notice('hostNotice',error.message,'error');
    }
   }while(ctx.refreshQueued&&ctx.roomCode);
   return latest;
@@ -393,7 +395,7 @@ async function submitRichAnswer(){
 function exportResults(){const s=ctx.room;if(!s)return;const rows=[['Место','Команда','Игроков','Очков'],...s.teams.slice().sort((a,b)=>b.score-a.score).map((x,i)=>[i+1,x.name,x.players,x.score])];const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='org-party-'+s.code+'.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 async function copyInvite(){if(!ctx.roomCode)return;const invite=joinUrl(ctx.roomCode);try{await navigator.clipboard.writeText(invite);notice('hostNotice','Ссылка скопирована.','success')}catch{notice('hostNotice','Ссылка для приглашения: '+invite)}}
-function updateClocks(){if(ctx.room?.paused)return;
+function updateClocks(){if(ctx.room?.paused){lockDisconnectedAnswers();return;}
  if(ctx.room?.phase==='intermission'&&ctx.room?.activity?.type==='round_stats'){
   const left=remaining(ctx.room.ends_at);text('playerResultCountdown',left);
   if(left===0&&!ctx.releaseTimer)ctx.releaseTimer=setTimeout(()=>{ctx.releaseTimer=null;if(ctx.roomCode)refreshRoom(false)},650+Math.floor(Math.random()*800));
@@ -415,6 +417,7 @@ function updateClocks(){if(ctx.room?.paused)return;
  }
  if(!['question','result'].includes(ctx.room?.phase))return;
  const seconds=QwizStage.updateClock(ctx.room,ctx.clockOffset,document,'playerTimer');text('hostTimer',seconds);
+ lockDisconnectedAnswers();
  if(seconds===0){
   for(const button of qa('#gameContent [data-answer],#gameContent [data-submit-rich],#gameContent #richSpot'))button.disabled=true;
   if(!ctx.releaseTimer)ctx.releaseTimer=setTimeout(()=>{ctx.releaseTimer=null;if(ctx.roomCode)refreshRoom(false)},700+Math.floor(Math.random()*1800));
@@ -508,7 +511,7 @@ function attach(){q('#logoHome').addEventListener('click',home);
  QwizStage.bindFullscreen($('gameFullscreen'));
  $('leaveGame').onclick=async()=>{await QwizStage.exitFullscreen();cleanupRoom();home()};
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ctx.roomCode)scheduleRefresh(200)});
- window.addEventListener('offline',()=>{if(ctx.roomCode)notice('gameNotice','Нет соединения с игрой. Ваши данные сохраняются; после восстановления связи обновим состояние.','error')});
+ window.addEventListener('offline',()=>{if(ctx.roomCode)updateConnectionHealth(false)});
  window.addEventListener('online',()=>{if(ctx.roomCode)scheduleRefresh(100)});
  addQuestion();
  setInterval(()=>{if(ctx.roomCode&&!document.hidden)refreshRoom(false)},20000);
