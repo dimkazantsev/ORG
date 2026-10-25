@@ -5,7 +5,7 @@ import {Script} from 'node:vm';
 const here=new URL('.',import.meta.url);
 const read=name=>readFileSync(new URL(name,here),'utf8');
 test('all modified application scripts parse',()=>{
- for(const file of ['arcade.js','app.js','presenter.js','russia-geo.js','workspace.js'])
+ for(const file of ['arcade.js','app.js','presenter.js','russia-geo.js','workspace.js','workspace-teams.js','teams.js','player-layout.js'])
   assert.doesNotThrow(()=>new Script(read(file),{filename:file}),file);
 });
 test('region names cannot be probed before selecting and confirming',()=>{
