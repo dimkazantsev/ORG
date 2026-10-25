@@ -452,7 +452,7 @@ function appendCard(type='round',arcadeMode=null){
 }
 function cardDesc(c){const settings=c.settings||{};
  if(settings.arcade_mode==='russia_map')return 'География России · карта · '+(settings.geo_count||15)+' случайных субъектов каждому игроку · '+(settings.geo_seconds||180)+' сек. · индивидуальный прогресс';
-  if(arcadeGames[settings.arcade_mode])return 'Командная мини-игра · '+(settings.arcade_seconds||arcadeGames[settings.arcade_mode].seconds)+' секунд · достижения и жетоны';
+  if(arcadeGames[settings.arcade_mode])return 'Командная мини-игра · '+Math.max(30,Math.min(120,Number(settings.arcade_seconds)||arcadeGames[settings.arcade_mode].seconds))+' секунд · достижения и жетоны';
  if(c.type==='round')return (c.topic_id?nameTopic(c.topic_id):'Тема не выбрана')+' · '+(Array.isArray(settings.flag_modes)&&settings.flag_modes.length?settings.flag_modes.map(titleKind).join(', '):'Все доступные механики')+' · '+(settings.count||5)+' вопр. · '+(settings.seconds||30)+' сек. · ответ '+(settings.answer_seconds||10)+' сек.';
  if(c.type==='finale')return 'Итог всей игры: результаты команд и каждого игрока · автоматически';
  return 'Дополнительная активность · настройки в карточке'}
@@ -493,7 +493,7 @@ function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{}
   if(geo){if(!c.topic_id)c.topic_id=state.topics.find(t=>t.name==='География России')?.id||null;$('cardTopic').value=c.topic_id||'';
    $('cardGeoCount').value=s.geo_count||15;$('cardGeoSeconds').value=s.geo_seconds||180;
    for(const item of all('#cardGeoModes input:not(:disabled)'))item.checked=!Array.isArray(s.geo_modes)||s.geo_modes.includes(item.value);}
- $('cardArcadeSeconds').value=s.arcade_seconds||arcade?.seconds||30;
+ $('cardArcadeSeconds').value=Math.max(30,Math.min(120,Number(s.arcade_seconds)||arcade?.seconds||45));
  $('cardArcadeHelp').textContent=arcade?.help||'';
  $('cardOrder').value=s.order||'random';$('cardOffset').value=(s.offset||0)+1;
  $('cardTeamCap').value=s.team_cap||'';$('cardPlayerCap').value=s.player_cap||'';
