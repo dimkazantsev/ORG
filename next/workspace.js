@@ -53,10 +53,10 @@ const moveIconRight='<svg class="move-svg" viewBox="0 0 24 24" fill="none" strok
 const titles={round:'Раунд вопросов',intro:'Начало игры',break:'Музыкальная пауза',team_stats:'Рейтинг команд',player_stats:'Статистика игроков',bonus:'Бонусная активность',duel:'Дуэль команд',finale:'Финал игры'};
 const buildDefaults={count:5,seconds:30,answer_seconds:10,order:'random',offset:0,team_cap:null,player_cap:null,sound:'fanfare',lead_seconds:5,stats_seconds:7,bonus_percent:70,bonus_lead:15};
 const arcadeGames={
- rocket:{title:'Ракетная гонка',icon:'arcade_rocket',seconds:45,help:'Все игроки разгоняют командную ракету. Учитывается средний вклад игрока, а не размер команды. Победа: +25 очков и награда.'},
+ rocket:{title:'Забег с препятствиями',icon:'arcade_rocket',seconds:45,help:'От каждой команды сервер выбирает одного случайного бегуна. Прыжок одной кнопкой; с ростом дистанции препятствия появляются быстрее. Победа: +25 очков.'},
  blitz:{title:'Блиц-вопрос',icon:'arcade_blitz',seconds:60,help:'7 секунд команды борются за право ответа. После захвата открывается вопрос из банка флагов. Правильный ответ: +80 очков.'},
- tug:{title:'Перетягивание очков',icon:'arcade_tug',seconds:45,help:'Команды соревнуются нажатиями. Лидеру +15 очков, последняя активная команда уступает не более 15 очков (ниже нуля не опускается).'},
- captain:{title:'Дуэль капитанов',icon:'arcade_captain',seconds:40,help:'Капитан команды ждёт 3 секунды до сигнала, затем нажимает один раз. Фальстарт расходует попытку. Участникам показываются ход дуэли и результаты. Победа: +15 очков.'}
+ tug:{title:'Командная тапалка',icon:'arcade_tug',seconds:45,help:'Все участники нажимают большую 3D-кнопку. Сервер складывает число нажатий игроков в командный результат. Победа: +15 очков.'},
+ captain:{title:'Дуэль капитанов · Memory',icon:'arcade_captain',seconds:100,help:'Все капитаны одновременно ищут пары среди 12 плиток. Побеждает завершивший за наименьшее время; при равенстве выигрывает меньшее число ходов. Победа: +15 очков.'}
 };
 const state={db:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,bankOffset:0,bankPageSize:25,bankRequest:0,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',dragFrom:null,selectedCard:null,clockOffset:0,liveKey:'',lastDeadlineRefresh:0};
 function msg(id,text='',isError=false){const el=$(id);if(!el)return;el.textContent=text;el.classList.toggle('error',!!isError)}
