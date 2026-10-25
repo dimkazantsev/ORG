@@ -682,6 +682,7 @@ test('Round editor filters flags by twelve ready mechanics',async({page})=>{
  await expect(page.locator('#bankMode option')).toHaveCount(13);
  await page.locator('[data-section="builder"]').click();
  await page.locator('#newBuild').click();
+ await page.evaluate(()=>{state.topics=[{id:'flags-topic',name:'Флаги мира'}];state.cards[1].topic_id='flags-topic';updateSelectors();renderCards();});
  await page.locator('#roundCards [data-edit-card="1"]').click();
  await expect(page.locator('#cardDialog')).toBeVisible();
  await expect(page.locator('#cardModesDetails')).toHaveAttribute('open','');
