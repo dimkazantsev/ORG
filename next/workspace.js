@@ -776,13 +776,14 @@ let controlRequestBusy=false;
 async function control(action){
  if(!state.room||controlRequestBusy)return;
  controlRequestBusy=true;
- const roomId=state.room.room_id,roomCode=state.roomCode;
+ const roomId=state.room.room_id,roomCode=state.roomCode,revision=state.room.control_revision;
  for(const id of ['liveStart','livePause','liveReveal','liveNext','liveFinish'])disable(id,true);
  try{
   if(action==='finish'&&!confirm('Завершить игру?'))return;
   const completingGeography=action==='next'&&state.room.phase==='intermission'&&state.room.activity?.settings?.arcade_mode==='russia_map';
   const completingIntro=action==='next'&&state.room.phase==='intermission'&&state.room.activity?.type==='card_intro';
-  await rpc('qwiz_party_control',{p_room:roomId,p_action:action});
+  if(!revision){await refreshLive();throw Error('Состояние комнаты обновлено. Повторите действие.');}
+  await rpc('qwiz_party_control_checked',{p_room:roomId,p_action:action,p_revision:revision});
   // A slow response for a previous room must not signal the newly selected room.
   if(roomCode===state.roomCode){
    state.channel?.send({type:'broadcast',event:'phase',payload:{room:roomCode}})?.catch(()=>{});
@@ -792,7 +793,12 @@ async function control(action){
    else if(completingIntro&&state.room?.phase==='intermission')
     msg('liveMessage','Испытание запущено. Время отсчитывается на сервере.');
   }
- }catch(e){if(roomCode===state.roomCode)msg('liveMessage',e.message,true)}
+ }catch(e){
+  if(roomCode===state.roomCode){
+   if(/Состояние игры изменилось/.test(e.message))await refreshLive();
+   msg('liveMessage',e.message,true);
+  }
+ }
  finally{
   controlRequestBusy=false;
   if(state.room){roomReadiness(state.room);renderLive(state.room)}
