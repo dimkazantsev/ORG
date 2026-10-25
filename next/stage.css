@@ -148,3 +148,14 @@ html:fullscreen{overflow-y:auto}
 
 /* Time-gated memory elements must obey their hidden state over grid/flex rules. */
 [data-memory-study][hidden],[data-memory-answer][hidden]{display:none!important}
+
+/* QWIZ-PARTY: shared safe score formatting for every participant result panel. */
+.round-results-page,.round-results-grid,.round-results-grid>section,.round-self-summary,.round-self-summary>div,
+.round-score-list,.round-score-list li,.personal-results,.player-final-metrics{min-width:0;max-width:100%;box-sizing:border-box}
+.round-score-list li{display:grid;grid-template-columns:minmax(24px,auto) minmax(0,1fr) minmax(0,auto);align-items:center;gap:clamp(7px,1.4vw,16px)}
+.round-score-list li>strong{min-width:0;overflow-wrap:anywhere}
+.round-score-list li>b,.round-self-summary strong{min-width:0;max-width:100%;overflow-wrap:anywhere;font-size:clamp(17px,3.2vw,36px);font-variant-numeric:tabular-nums;line-height:1.1}
+.round-self-summary>div{overflow:hidden}.round-self-summary strong{display:block}
+.player-final-metrics{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center}
+.player-final-metrics>span{white-space:normal;overflow-wrap:anywhere}
+@media(max-width:520px){.round-score-list li{grid-template-columns:25px minmax(0,1fr) minmax(48px,auto)}.round-score-list li>b{font-size:clamp(15px,4vw,23px)}}
