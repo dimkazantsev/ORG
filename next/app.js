@@ -195,7 +195,7 @@ async function importQuiz(){busy($('importQuiz'),true);notice('importNotice','И
  }catch(error){notice('importNotice',error.message,'error')}finally{busy($('importQuiz'),false)}}
 async function createRoom(event){event.preventDefault();busy($('createRoomButton'),true);notice('createRoomNotice','Создание комнаты…');
  try{const quiz=$('roomQuizSelect').value;if(!quiz)throw Error('Выберите набор.');
- const code=await rpc('org_next_create_room',{p_quiz:quiz,p_title:$('roomTitle').value.trim(),p_teams:Number($('roomTeamCount').value)});
+ const code=await rpc('org_next_create_room',{p_quiz:quiz,p_title:$('roomTitle').value.trim(),p_teams:1});
  ctx.roomCode=code;storage.set('host-room',code);renderQrPanels();await refreshRoom();renderRoom();notice('createRoomNotice','');
  }catch(error){notice('createRoomNotice',error.message,'error')}finally{busy($('createRoomButton'),false)}}
 function phaseText(phase){return QwizStage.phaseLabel(phase)}
@@ -294,19 +294,47 @@ function roundIntroMarkup(s){
  '<h1>'+esc(title)+'</h1><p>Подготовьтесь к новому испытанию</p>'+
  '<strong class="round-intro-count"><span id="playerCountdown">'+remaining(s.ends_at)+'</span> сек.</strong></section>';
 }
+let lobbyActionBusy=false;
+window.QwizLobbyAction=async (action,input={})=>{
+ if(lobbyActionBusy||!ctx.room?.room_id||!ctx.client)return;
+ lobbyActionBusy=true;
+ try{
+  const {error}=await ctx.client.rpc('qwiz_lobby_action',{p_room:ctx.room.room_id,p_action:action,p_input:input});
+  if(error)throw error;
+  signal('team');await refreshRoom(false);
+  notice('gameNotice',action==='claim'?'Вы капитан. Ждём остальных.':action==='rename'?'Название команды изменено.':'Новый капитан назначен.');
+ }catch(error){notice('gameNotice',error.message||'Не удалось выполнить действие','error')}
+ finally{lobbyActionBusy=false;}
+};
+function paintCaptainTimers(){
+ const lb=ctx.room?.team_lobby;if(!lb?.captain_started_at||lb.captains_ready)return;
+ const secs=Math.max(0,Math.floor((Date.now()+(ctx.clockOffset||0)-Date.parse(lb.captain_started_at))/1000));
+ for(const el of document.querySelectorAll('[data-captain-elapsed]'))el.textContent=String(Math.floor(secs/60)).padStart(2,'0')+':'+String(secs%60).padStart(2,'0');
+}
+setInterval(paintCaptainTimers,1000);
 function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;const me=s.me;const myTeam=(s.teams||[]).find(t=>t.id===me?.team_id);
- text('playerGameTitle',s.title);text('playerTeamName',myTeam?.name||'Команда пока не назначена');$('playerScoreboard').innerHTML=teamMarkup(s.teams);
+ text('playerGameTitle',s.title);text('playerTeamName',s.team_lobby?.mode==='random'&&!s.team_lobby.confirmed?'Команда появится после подтверждения':myTeam?.name||'Команда пока не назначена');$('playerScoreboard').innerHTML=(s.team_lobby?.mode==='random'&&!s.team_lobby.confirmed)?'':teamMarkup(s.teams);
  QwizTeams.playerPanel($('playerTeamPanel'),s);
  const el=$('gameContent');
  const cue=s.phase+':'+s.index;if(cue!==ctx.gameCue){ctx.gameCue=cue;if(s.phase==='result')QwizStage.audio.play('reveal');else if(s.phase==='finished')QwizStage.audio.play(s.activity?.sound||'fanfare');else if(s.phase==='question')QwizStage.audio.play('pop')}
  $('playerTeamProgress').hidden=s.phase!=='question';if(s.phase==='question')QwizStage.progress($('playerTeamProgress'),s.public_stats?.teams||[]);
  window.QwizArcade?.syncWallet(s,ctx);
- const renderKey=[s.code,s.index,s.phase,s.activity?.title,s.activity?.settings?.arcade_mode,s.has_answer,s.eligible,s.total,s.question?.kind,s.question?.prompt,s.paused,me?.team_id].join(':');
+ const renderKey=[s.code,s.index,s.phase,s.activity?.title,s.activity?.settings?.arcade_mode,s.has_answer,s.eligible,s.total,s.question?.kind,s.question?.prompt,s.paused,me?.team_id,s.team_lobby?.mode,s.team_lobby?.team_count,s.team_lobby?.confirmed,s.team_lobby?.captain_count,s.team_lobby?.captains_ready,s.team_lobby?.my_captain].join(':');
  if(ctx.gameRenderKey===renderKey)return;
  ctx.gameRenderKey=renderKey;
  if((!s.has_answer||s.phase!=='question')&&$('gameNotice').classList.contains('success'))notice('gameNotice','');
  if(s.phase!=='intermission')window.QwizArcade?.stop('player');
   if(s.phase!=='intermission'||s.activity?.settings?.arcade_mode!=='russia_map')window.QwizGeo?.stop('player');
+ if(s.phase==='lobby'&&s.team_lobby){
+  const lb=s.team_lobby;
+  let title='',desc='';
+  if(lb.mode==='random'&&!lb.confirmed){title='Создаю команды';desc='Все участники подключаются по одному QR-коду. Преподаватель распределит команды и подтвердит составы.';}
+  else if(lb.mode==='captain'&&!lb.captains_ready){title='Выбираем капитанов';desc='Назначено '+lb.captain_count+' из '+lb.team_count+'. Время с первого выбора: <strong data-captain-elapsed="'+esc(lb.captain_started_at||'')+'">00:00</strong>';}
+  else if(lb.mode==='captain'){title=lb.my_captain?'Вы капитан!':'Собираем команды';desc=lb.my_captain?'QR вашей команды появился выше. Покажите его остальным участникам.':'Сканируйте QR одного из капитанов, чтобы присоединиться к команде.';}
+  else {title='Идите к своей команде';desc='Ваша команда: '+esc(myTeam?.name||'ожидание распределения')+'. Команды показаны на общем экране.';}
+  el.innerHTML='<section class="player-team-building'+(lb.confirmed||lb.captains_ready?' is-complete':'')+'"><span class="eyebrow">QWIZ-PARTY · КОМАНДЫ</span><div class="team-building-glow" aria-hidden="true"><span>'+(lb.confirmed||lb.captains_ready?'✓':'∞')+'</span></div><h1>'+title+'</h1><p>'+desc+'</p></section>';
+  text('playerStatus',title);return;
+ }
  if(s.phase==='lobby'){el.innerHTML='<section class="game-empty game-lobby-wait" aria-label="Ожидание начала игры">'+
  '<div class="lobby-ambient" aria-hidden="true"></div>'+
  '<div class="lobby-signal" aria-hidden="true">'+

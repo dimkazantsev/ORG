@@ -23,7 +23,7 @@
   accepted.hidden=!compact||!confirmation;accepted.textContent=confirmation?'Ответ принят.':'';
   if(confirmation)confirmation.hidden=compact;
   if(!compact)close();
-  for(const {node,anchor} of blocks){const target=compact?(node.classList.contains('control-row')?document.getElementById('playerSheetControls'):body):anchor.parentNode;if(node.parentNode!==target){if(compact)target.append(node);else anchor.after(node)}}
+  for(const {node,anchor} of blocks){const keepLobbyTeam=compact&&node.id==='playerTeamPanel'&&!!content.querySelector('.player-team-building');const toSheet=compact&&!keepLobbyTeam;const target=toSheet?(node.classList.contains('control-row')?document.getElementById('playerSheetControls'):body):anchor.parentNode;if(node.parentNode!==target){if(toSheet)target.append(node);else anchor.after(node)}}
   for(let i=transient.length-1;i>=0;i--){const item=transient[i];if(!item.anchor.isConnected){item.node.remove();transient.splice(i,1)}}
   if(compact)for(const node of content.querySelectorAll('.personal-results:not(.player-final-results),.player-answer>p')){const anchor=document.createComment('Round details position');node.before(anchor);transient.push({node,anchor});document.getElementById(node.classList.contains('personal-results')?'playerResultDetails':'playerReviewContent').append(node)}
   else for(const {node,anchor} of transient)anchor.after(node);

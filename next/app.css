@@ -368,3 +368,5 @@ button.option:hover:not(:disabled){background:var(--accent-soft);border-color:va
 .game-card .option{font-size:15px}}
 
 @media(max-width:380px){.header-link span{display:none}.profile-link,.header-link{min-width:44px;min-height:44px}.header-end{gap:4px}}
+
+

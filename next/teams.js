@@ -54,11 +54,38 @@ window.QwizTeams=(()=>{
   dialog.querySelector('[data-qr-copy]').onclick=()=>copy(link,dialog.querySelector('[role="status"]'));
   dialog.onclick=e=>{if(e.target===dialog)dialog.close();};qr(dialog.querySelector('.team-qr-large'),link,256);if(!dialog.open)dialog.showModal();
  }
- function playerPanel(root,s){if(!root)return;const team=(s.teams||[]).find(t=>t.id===s.me?.team_id),key=[s.code,s.me?.id,team?.id,team?.name,team?.position,s.phase==='finished'].join(':');
+ function playerPanel(root,s){
+  if(!root)return;
+  const lobby=s.team_lobby,team=(s.teams||[]).find(t=>t.id===s.me?.team_id),mode=lobby?.mode;
+  const lockedRandom=mode==='random'&&!lobby.confirmed;
+  const key=[s.code,s.me?.id,team?.id,team?.name,s.phase,lobby?.mode,lobby?.team_count,lobby?.can_claim,lobby?.confirmed,lobby?.captain_count,lobby?.captains_ready,lobby?.my_captain,JSON.stringify(lobby?.team_members)].join(':');
   if(root.dataset.teamKey===key)return;root.dataset.teamKey=key;
-  root.innerHTML=team?'<div class="my-team-identity">'+QwizStage.icon(team,true)+'<div><span>ВАША КОМАНДА</span><strong>'+escape(team.name)+'</strong></div></div>'+(s.phase!=='finished'?'<button type="button" class="team-invite-button">Пригласить в команду <span aria-hidden="true">↗</span></button>':''):
-   '<div class="team-waiting"><strong>Преподаватель распределяет команды</strong><p>Вы уже в комнате. Ваша команда появится здесь автоматически.</p></div>';
-  const button=root.querySelector('button');if(button)button.onclick=()=>showQr({code:s.code,team,inviter:s.me.id,title:'Ваш QR-код команды'});
+  if(lockedRandom){
+    root.innerHTML='<div class="team-forming-inline"><span class="team-infinity" aria-hidden="true">∞</span><span>Создаю команды</span></div>';
+    return;
+  }
+  if(mode==='captain'&&s.phase==='lobby'&&!team){
+    root.innerHTML='<div class="team-captain-claim"><strong>'+(lobby?.can_claim?'Станьте капитаном':'Капитаны выбираются')+'</strong>'+
+     '<p>'+(lobby?.can_claim?'Нажмите «Я капитан». Когда будут выбраны все '+lobby.team_count+' капитанов, всем капитанам одновременно откроются QR-коды.':'Места капитанов заняты. Дождитесь приглашения и сканируйте QR-код одного из капитанов.')+'</p>'+
+     (lobby?.can_claim?'<button type="button" class="team-invite-button" data-captain-claim>Я капитан</button>':'')+
+     (lobby?.captain_started_at?'<span class="captain-claim-clock" data-captain-elapsed="'+escape(lobby.captain_started_at)+'"></span>':'')+'</div>';
+    const b=root.querySelector('[data-captain-claim]');if(b)b.onclick=()=>window.QwizLobbyAction?.('claim',{});
+    return;
+  }
+  if(!team){
+    root.innerHTML='<div class="team-waiting"><strong>Ожидаем распределения</strong><p>Вы уже подключены. При необходимости отсканируйте QR капитана.</p></div>';return;
+  }
+  const captain=mode==='captain'&&!!lobby.my_captain;
+  const members=(lobby?.team_members||[]).filter(m=>m.id!==s.me?.id);
+  root.innerHTML='<div class="my-team-identity">'+QwizStage.icon(team,true)+'<div><span>ВАША КОМАНДА</span><strong>'+escape(team.name)+'</strong></div></div>'+
+    (mode==='random'&&lobby.confirmed&&s.phase==='lobby'?'<p class="go-to-team">Идите к своей команде</p>':'')+
+    (captain&&!lobby.captains_ready&&s.phase==='lobby'?'<div class="team-captain-pending"><span class="team-infinity">∞</span><p>Ожидаем капитанов: '+lobby.captain_count+' / '+lobby.team_count+'</p><span data-captain-elapsed="'+escape(lobby.captain_started_at||'')+'"></span></div>':'')+
+    (captain&&lobby.captains_ready&&s.phase==='lobby'?'<div class="captain-qr-hero"><h3>Ваш QR-код команды</h3><div class="captain-qr-image" aria-label="Приглашение к капитану"></div><p>Покажите код другим игрокам. Сканирование сразу присоединяет к вашей команде.</p></div>':'')+
+    (captain?'<form class="captain-rename-form"><label>Название команды<input data-captain-name maxlength="40" minlength="3" value="'+escape(team.name)+'"></label><button type="submit" class="team-invite-button">Сохранить название</button></form>':'')+
+    (captain&&s.phase!=='lobby'&&members.length?'<form class="captain-transfer-form"><label>Передать капитанство<select data-captain-successor>'+members.map(m=>'<option value="'+escape(m.id)+'">'+escape(m.name)+'</option>').join('')+'</select></label><button type="submit" class="team-invite-button">Назначить капитана</button></form>':'');
+  if(captain&&lobby.captains_ready&&s.phase==='lobby')qr(root.querySelector('.captain-qr-image'),url(s.code,team.id,s.me.id),Math.max(240,Math.min(330,Math.floor(window.innerWidth*.83))));
+  const rename=root.querySelector('.captain-rename-form');if(rename)rename.onsubmit=e=>{e.preventDefault();window.QwizLobbyAction?.('rename',{name:rename.querySelector('input').value})};
+  const transfer=root.querySelector('.captain-transfer-form');if(transfer)transfer.onsubmit=e=>{e.preventDefault();window.QwizLobbyAction?.('transfer',{player_id:transfer.querySelector('select').value})};
  }
  function board(root,teams,code){if(!root)return;const key=code+':'+teams.map(t=>[t.id,t.name,t.position].join(':')).join('|');
   if(root.dataset.boardKey!==key){root.dataset.boardKey=key;root.innerHTML=teams.map(t=>'<button type="button" class="team-board-card" data-board-team="'+escape(t.id)+'" aria-label="Увеличить QR команды '+escape(t.name)+'">'+

@@ -25,7 +25,7 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           from pglast import parse_sql
-          for name in ('20261025_shuffle_all_presented_answers.sql','20261025_memory_runner_teamtap.sql'):
+          for name in ('20261025_shuffle_all_presented_answers.sql','20261025_memory_runner_teamtap.sql','20261026_unified_lobby_and_captains.sql'):
               path=Path('next/migrations')/name
               parse_sql(path.read_text(encoding='utf-8'))
               print('Parsed:',path)

@@ -64,7 +64,9 @@ test('The audience screen explains where to answer and links to the same room',a
 });
 test('Russian labels keep capitalization and count forms without changing assembly answer values',async({page})=>{
  await studio(page);await page.goto(base+'workspace.html');await expect(page.locator('#bankPage')).toBeVisible();
- await expect(page.locator('#launchTeams option[value="4"]')).toHaveText('4 команды');
+ await expect(page.locator('#launchTeams')).toHaveCount(0);
+ await expect(page.locator('#teamCount')).toHaveAttribute('min','1');
+ await expect(page.locator('#teamCount')).toHaveAttribute('max','15');
  expect(await page.evaluate(()=>[0,1,2,5,11,21,24].map(n=>QwizStage.countLabel(n,{one:'команда',few:'команды',many:'команд',other:'команды'})))).toEqual(['0 команд','1 команда','2 команды','5 команд','11 команд','21 команда','24 команды']);
  expect(await page.evaluate(()=>['lobby','question','result','finished','countdown','intermission','unknown'].map(QwizStage.phaseLabel))).toEqual(['Ожидание участников','Вопрос','Разбор ответа','Игра завершена','Подготовка','Перерыв','Ожидание данных']);
  expect(await page.evaluate(()=>{const q={options:['белый','синий','красный'],flag_assembly:{orientation:'horizontal',colors:{белый:'#ffffff',синий:'#0000ff',красный:'#ff0000'}}};const root=document.createElement('div');root.innerHTML=QwizStage.assemblyMarkup(q);return {text:Array.from(root.querySelectorAll('select:first-of-type option')).slice(1).map(o=>o.textContent).slice(0,3),options:q.options}})).toEqual({text:['Белый','Синий','Красный'],options:['белый','синий','красный']});

@@ -9,13 +9,13 @@
 <meta name="description" content="Командная викторина: вопросы, комнаты, игроки и результаты.">
 <link rel="preload" href="./assets/manrope-variable.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="./theme.css?v=lavender-2">
-<link rel="stylesheet" href="./app.css?v=org-final-20261024-7">
+<link rel="stylesheet" href="./app.css?v=unified-lobby-20261026"><link rel="stylesheet" href="./lobby.css?v=unified-lobby-20261026">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script defer src="./vendor/qrcode.min.js"></script>
 <link rel="stylesheet" href="./stage.css?v=responsive-results-20261025"><script defer src="./stage.js?v=flag-caption-20261025-27"></script>
-<script defer src="./app.js?v=plurals-and-results-20261025"></script>
+<script defer src="./app.js?v=unified-lobby-20261026-3"></script>
 <link rel="stylesheet" href="./motion.css?v=2">
-<link rel="stylesheet" href="./teams.css?v=team-15-fit-20261025-19"><script defer src="./avatar-art.js?v=avatar-3d-20261024-16"></script><script defer src="./teams.js?v=team-plurals-20261025-1"></script>
+<link rel="stylesheet" href="./teams.css?v=unified-lobby-20261026-3"><script defer src="./avatar-art.js?v=avatar-3d-20261024-16"></script><script defer src="./teams.js?v=captain-team-20261026-3"></script>
 <link rel="stylesheet" href="./arcade.css?v=responsive-runner-stage-20261025-2"><script defer src="./arcade.js?v=indie-names-icons-20261025-1"></script>
 <link rel="stylesheet" href="./player-layout.css?v=arcade-portrait-20261025-57"><script defer src="./player-layout.js?v=round-sequence-20261025-5"></script>
 <link rel="stylesheet" href="./russia-geo.css?v=geo-responsive-result-20261025-1"><script defer src="./russia-geo.js?v=hide-region-names-20261025"></script>
@@ -120,9 +120,9 @@
   </section>
   <section id="roomTab" hidden>
    <div id="createRoomPanel" class="panel">
-    <h2>Новая игра</h2><p>Выберите вопросы, сформируйте до 15 команд и откройте вход участникам.</p>
+    <h2>Новая игра</h2><p>Выберите вопросы и создайте комнату. Число и способ формирования команд задаются после создания.</p>
     <form class="stack" id="createRoomForm"><label>Набор вопросов<select id="roomQuizSelect" required><option value="">Выберите набор</option></select></label>
-     <div class="grid2"><label>Название игры<input id="roomTitle" value="Командная викторина" maxlength="140" required></label><label>Команды<select id="roomTeamCount"><option>2</option><option>3</option><option selected>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option></select></label></div>
+     <div class="grid2"><label>Название игры<input id="roomTitle" value="Командная викторина" maxlength="140" required></label></div>
      <button class="btn btn-dark" type="submit" id="createRoomButton">Создать комнату →</button>
     </form><p id="createRoomNotice" class="notice" role="status" aria-live="polite"></p>
    </div>

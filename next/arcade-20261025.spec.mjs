@@ -5,7 +5,7 @@ import {Script} from 'node:vm';
 const here=new URL('.',import.meta.url);
 const read=name=>readFileSync(new URL(name,here),'utf8');
 test('all modified application scripts parse',()=>{
- for(const file of ['arcade.js','app.js','presenter.js','russia-geo.js','workspace.js'])
+ for(const file of ['arcade.js','app.js','presenter.js','russia-geo.js','workspace.js','workspace-teams.js','teams.js','player-layout.js'])
   assert.doesNotThrow(()=>new Script(read(file),{filename:file}),file);
 });
 test('region names cannot be probed before selecting and confirming',()=>{
@@ -61,4 +61,14 @@ test('screens use constrained result panels and correct Russian count labels',()
  assert.match(screen,/projection-round-leaders li>b/);
  assert.match(app,/QwizStage\.countLabel\(Number\(s\.total/);
  assert.match(presenter,/QwizStage\.countLabel\(players\.length/);
+});
+
+
+test('appointed captains drive Memory, stats and live captain transfers',()=>{
+ const migration=read('migrations/20261026_unified_lobby_and_captains.sql');
+ assert.match(migration,/qwiz_lobby_captains c WHERE c\.room_id=r\.id AND c\.team_id=t\.id/);
+ assert.match(migration,/p\.proname='qwiz_arcade_extras'/);
+ assert.match(migration,/p\.proname='qwiz_arcade_state'/);
+ assert.match(migration,/UPDATE public\.qwiz_arcade_memory_players m SET player_id=target/);
+ assert.match(migration,/where c\.room_id=r\.id and c\.team_id=me\.team_id/i);
 });

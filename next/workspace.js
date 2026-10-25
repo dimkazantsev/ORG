@@ -798,7 +798,7 @@ async function previewLaunchBuild(){
 let launchRequestBusy=false;
 async function launch(){if(launchRequestBusy)return;launchRequestBusy=true;disable('launchButton',true);msg('launchMessage','');
  try{if(!$('launchBuild').value)throw Error('Выберите сборку.');
- const created=await rpc('qwiz_prepare_room',{p_build:$('launchBuild').value,p_title:$('launchTitle').value.trim()||null,p_teams:Number($('launchTeams').value)});
+ const created=await rpc('qwiz_prepare_room',{p_build:$('launchBuild').value,p_title:$('launchTitle').value.trim()||null,p_teams:1});
  msg('launchMessage','Комната '+created.code+(created.reused?' уже подготовлена — открываем существующую, без дубликата.':' создана.')+' Вопросов: '+created.total_questions+'. Пригласите участников и затем начните игру.');
  await loadRooms();await selectRoom(created.code);if(audienceWindow&&!audienceWindow.closed){const url=new URL('./presenter.html',location.href);url.searchParams.set('room',created.code);audienceWindow.location.href=url.toString()}}
  catch(e){msg('launchMessage',e.message,true)}finally{launchRequestBusy=false;disable('launchButton',false)}}
@@ -840,8 +840,13 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
   s.question?s.question.prompt+' · '+(s.index+1)+' / '+s.total:
   s.phase==='finished'?'Игра завершена. Итоги на экране аудитории.':'Ожидание начала игры.';
  const boosts=new Map((s.public_stats?.teams||[]).map(t=>[t.id,t.boost]));
- $('liveRanking').innerHTML=(s.teams||[]).slice().sort((a,b)=>b.score-a.score).map((t,i)=>
-  '<div class="live-line"><span>'+ (i+1)+'. '+esc(t.name)+' '+(boosts.get(t.id)?'<b class="team-boost-chip" title="Усиление этого раунда">✦ '+esc(boosts.get(t.id).title)+'</b>':'')+'</span><strong>'+esc(t.score)+'</strong></div>').join('');
+ $('liveRanking').innerHTML=(s.teams||[]).slice().sort((a,b)=>b.score-a.score).map((t,i)=>{
+  const effects=(s.team_effects||s.team_lobby?.effects_history||[]).filter(x=>x.team_id===t.id);
+  return '<div class="live-line"><span>'+(i+1)+'. '+esc(t.name)+
+   (boosts.get(t.id)?'<b class="team-boost-chip" title="Активный бонус текущего раунда">✦ '+esc(boosts.get(t.id).title)+'</b>':'')+
+   (effects.length?'<small class="team-effects-history">'+effects.map(x=>esc(x.choice)+' ('+(Number(x.points_awarded)>=0?'+':'')+Number(x.points_awarded)+')').join(' · ')+'</small>':'')+
+   '</span><strong>'+esc(t.score)+'</strong></div>';
+ }).join('');
  const stats=s.public_stats||{};const latest=(stats.question_stats||[]).at(-1);const completed=Math.max(0,s.index+1);
  $('liveRoundStats').textContent='Вопрос '+completed+' / '+s.total+' · Ответов '+(s.answers_count||0)+(latest?' · Верных '+latest.correct+'/'+latest.answered:'')+(s.paused?' · Игра на паузе':'');
  $('liveRoster').innerHTML=(s.players||[]).map(p=>'<div class="live-line"><span>'+esc(p.name)+'</span><small>'+
@@ -1161,8 +1166,7 @@ async function init(){
   option.disabled=!ready;select.add(option);
  }
  select.value='country';
- for(let i=1;i<=15;i++)$('launchTeams').add(createOption(String(i),QwizStage.countLabel(i,{one:'команда',few:'команды',many:'команд',other:'команды'})));
- $('launchTeams').value='4';
+
  if(!window.supabase?.createClient){connection('error','Не удалось подключиться');workspaceReady();return}
  state.db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
  try{const {data:{session}}=await state.db.auth.getSession();if(!session)throw Error('Войдите как преподаватель на главной.');
@@ -1177,7 +1181,7 @@ async function init(){
    else if(['bank','builder','rooms','insights'].includes(hash))section(hash);
    restoringView=false;savePosition();
   }
-  state.roomTimer=setInterval(()=>{if(state.roomCode&&!document.hidden)refreshLive()},8000);
+  state.roomTimer=setInterval(()=>{if(state.roomCode&&!document.hidden)refreshLive()},3000);
   setInterval(()=>{if(!state.room||document.hidden)return;const s=state.room;if(['question','result'].includes(s.phase)&&!s.paused){const left=QwizStage.updateClock(s,state.clockOffset,document,'liveTimer');if(left===0&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}}else if(s.phase==='countdown'&&!s.paused&&Date.parse(s.ends_at)<=Date.now()+state.clockOffset&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}},250);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.roomCode)refreshLive()});
   window.addEventListener('online',()=>{if(state.roomCode)refreshLive()});

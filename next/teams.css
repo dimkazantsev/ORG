@@ -337,3 +337,38 @@ html.portrait-atlas-verified .animal-portrait.has-avatar-photo.avatar-photo-fail
   padding:clamp(4px,.65dvh,10px);
  }
 }
+
+
+/* Unified room entry: QR codes belong to projector after random confirmation
+   and to captain phones after captain selection, never to host team cards. */
+.team-forming-inline,.team-captain-claim,.team-captain-pending{
+ display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:12px;
+ width:100%;padding:15px;text-align:center;color:#58349d;font-weight:850}
+.team-infinity{display:inline-flex;align-items:center;justify-content:center;
+ width:70px;height:54px;color:#8d45e9;font-size:78px;line-height:1;
+ text-shadow:0 0 18px #cd87ff91,0 0 34px #6adffc6d;
+ animation:team-infinity-wave 2.5s ease-in-out infinite}
+.team-captain-claim{flex-direction:column;gap:10px}
+.team-captain-claim strong{font-size:20px}.team-captain-claim p{max-width:450px;font-size:13px;color:#786c8b;font-weight:550}
+.captain-claim-clock,.team-captain-pending [data-captain-elapsed]{
+ font-size:21px;font-variant-numeric:tabular-nums;font-weight:900;color:#6725be}
+.captain-qr-hero{display:grid;justify-items:center;gap:10px;width:100%;padding:14px 0;
+ background:radial-gradient(ellipse at 50% 38%,#e8d6ff,#fff 78%);border-radius:23px}
+.captain-qr-hero h3{font-size:clamp(19px,4vw,28px);font-weight:850;color:#482489}
+.captain-qr-hero p{text-align:center;font-size:13px;max-width:390px;color:#685d7a}
+.captain-qr-image{width:min(83vw,330px);aspect-ratio:1;max-width:100%;padding:clamp(10px,3vw,16px);
+ display:grid;place-items:center;background:white;border:1px solid #d7c6f1;border-radius:20px;
+ box-shadow:0 11px 40px #673ac044,0 0 0 5px #ad79f32b}
+.captain-qr-image :is(img,canvas){display:block;width:100%!important;height:100%!important;image-rendering:pixelated}
+.captain-qr-image canvas+img{position:absolute}
+.captain-rename-form,.captain-transfer-form{display:flex;align-items:end;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:8px}
+.captain-rename-form label,.captain-transfer-form label{display:grid;gap:6px;font-size:12px;font-weight:730}
+.captain-rename-form :is(input),.captain-transfer-form select{
+ border:1px solid #c7b0ef;padding:12px;border-radius:11px;max-width:100%;background:white;min-height:45px}
+.go-to-team{font-size:clamp(17px,4.5vw,28px);font-weight:950;color:#6d2fc0;text-align:center}
+.team-captain-tag{padding:7px 10px;background:#efe5ff;border-radius:9px;color:#6d37bd;font-size:12px;font-weight:780;margin:4px 0 12px}
+.team-effects-history{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0;color:#684d8c}
+.team-effects-history>strong{width:100%;font-size:11px}.team-effects-history span{font-size:11px;padding:4px 7px;border-radius:7px;background:#e8f7ef;color:#26724c}
+.team-effects-history span.is-penalty{background:#fff0f1;color:#ad3851}
+@keyframes team-infinity-wave{50%{transform:rotate(5deg) scale(1.12);filter:brightness(1.2)}}
+@media(prefers-reduced-motion:reduce){.team-infinity{animation:none!important}}

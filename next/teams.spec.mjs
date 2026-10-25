@@ -19,7 +19,23 @@ async function mock(page,room,{host=true,registered=false}={}){
  if(name==='qwiz_host_rooms')return {data:[{code:s.code,title:s.title,phase:s.phase,players:s.players.length,teams:s.teams.length}]};
  if(name==='qwiz_prepare_room')return {data:{code:s.code,room_id:s.room_id,total_questions:s.total,issues:s.setup_issues}};
  if(name==='qwiz_party_state')return {data:s};
- if(name==='qwiz_party_projection')return {data:{...s,players:[],lobby_teams:s.teams.map(t=>({...t,members:s.players.filter(p=>p.team_id===t.id).length}))}};
+ if(name==='qwiz_party_projection')return {data:{...s,team_lobby:s.team_lobby||{mode:'random',confirmed:true,team_count:s.teams.length,captain_count:0,captains_ready:false},players:[],lobby_teams:s.teams.map(t=>({...t,members:s.players.filter(p=>p.team_id===t.id).length}))}};
+ if(name==='qwiz_lobby_action'){
+  if(args.p_action==='confirm'&&s.team_lobby?.mode==='random'){
+   s.team_lobby.confirmed=true;
+   s.players.forEach((p,i)=>p.team_id=s.teams[i%s.teams.length].id);
+   s.unassigned_count=0;
+   s.teams.forEach(t=>t.players=s.players.filter(p=>p.team_id===t.id).length);
+  }
+  if(args.p_action==='claim'&&s.team_lobby?.mode==='captain'){
+   s.team_lobby.captain_count++;s.team_lobby.my_captain=true;
+   s.team_lobby.captain_started_at=new Date().toISOString();
+   s.me.team_id=s.teams[0].id;
+   s.team_lobby.captains_ready=s.team_lobby.captain_count===s.team_lobby.team_count;
+  }
+  if(args.p_action==='rename')s.teams[0].name=args.p_input.name;
+  return {data:{ok:true}};
+ }
  if(name==='qwiz_team_admin'){
   if(window.failMove&&args.p_action==='move')return {error:{message:'Перенос не сохранён. Повторите попытку.'}};
   if(args.p_action==='move'){const p=s.players.find(p=>p.id===args.p_input.player_id);p.team_id=args.p_input.team_id;}
@@ -67,10 +83,11 @@ test('Manual mode exposes the pending list and lets teacher assign a newcomer',a
 test('Failed move preserves the roster and displays a retry message',async({page})=>{
  await host(page);await page.evaluate(()=>window.failMove=true);await page.locator('[data-team-player="'+uid(101)+'"]').selectOption(uid(2));await expect(page.locator('#teamMessage')).toContainText('не сохранён');await expect(page.locator('[data-drop-team="'+uid(1)+'"] [data-player-id="'+uid(101)+'"]')).toBeVisible();
 });
-test('Team QR opens an accessible dialog with the exact team link',async({page})=>{
- await host(page);await page.locator('[data-team-qr="'+uid(4)+'"]').click();await expect(page.locator('#teamQrDialog')).toBeVisible();
- const value=await page.locator('.team-invite-url').inputValue(),link=new URL(value);expect(link.searchParams.get('room')).toBe('AABBCCDD');expect(link.searchParams.get('team')).toBe(uid(4));expect(link.searchParams.has('via')).toBe(false);await expect(page.locator('.team-qr-large canvas')).toHaveCount(1);
- await page.keyboard.press('Escape');await expect(page.locator('#teamQrDialog')).toBeHidden();
+test('Moderator roster contains no team QR controls',async({page})=>{
+ await host(page);await expect(page.locator('#teamGrid .team-card')).toHaveCount(5);
+ await expect(page.locator('#teamGrid .team-qr-button')).toHaveCount(0);
+ await expect(page.locator('#showTeamBoard')).toHaveCount(0);
+ await expect(page.locator('#copyRoomUrl')).toBeVisible();
 });
 test('Classroom board renders 15 habitat icons and locally generated QR codes',async({page})=>{
  const s=fixture(15,30);await mock(page,s,{host:false});await page.setViewportSize({width:1440,height:900});await page.goto(base+'presenter.html?room=AABBCCDD');
@@ -134,22 +151,25 @@ test('Adaptive classroom layout shows every QR at 1, 3, 8 and 16 teams without s
  }
 });
 test('Shared classroom QR enlarges without consuming a team slot',async({page})=>{
- await mock(page,fixture(15,30),{host:false});await page.setViewportSize({width:1440,height:900});await page.goto(base+'presenter.html?room=AABBCCDD');
- await expect(page.locator('.team-board-card')).toHaveCount(15);
+ const state=fixture(15,30);state.team_lobby={mode:'legacy',confirmed:false,team_count:15,captain_count:0,captains_ready:false};
+ await mock(page,state,{host:false});await page.setViewportSize({width:1440,height:900});await page.goto(base+'presenter.html?room=AABBCCDD');
+ await expect(page.locator('.team-board-card')).toHaveCount(0);
+ await expect(page.locator('.lobby-cinema-qr')).toBeVisible();
  await page.locator('#projectionQr').click();await expect(page.locator('#projectionQrDialog')).toBeVisible();
  await expect(page.locator('#projectionQrZoom canvas')).toHaveCount(1);
  await page.locator('#projectionQrClose').click();await expect(page.locator('#projectionQrDialog')).toBeHidden();
 });
 test('Classroom membership refresh keeps QR elements stable',async({page})=>{
- await mock(page,fixture(),{host:false});await page.goto(base+'presenter.html?room=AABBCCDD');await expect(page.locator('.team-board-card')).toHaveCount(5);
+ const state=fixture();state.team_lobby={mode:'random',confirmed:true,team_count:5,captain_count:0,captains_ready:false};
+ await mock(page,state,{host:false});await page.goto(base+'presenter.html?room=AABBCCDD');await expect(page.locator('.team-board-card')).toHaveCount(5);
  await page.evaluate(()=>{window.firstQr=document.querySelector('.team-board-qr canvas');window.fixture.lobby_teams=window.fixture.teams.map((t,i)=>({...t,members:i===0?7:6}));render(window.fixture);});
  await expect(page.locator('.board-count').first()).toHaveText('7 участников');expect(await page.evaluate(()=>window.firstQr===document.querySelector('.team-board-qr canvas'))).toBe(true);
 });
-test('Team invitation joins the exact team and gives the newcomer a personal QR',async({page})=>{
+test('Captain QR link joins the intended team, ordinary members have no own QR',async({page})=>{
  await mock(page,fixture(5,0),{host:false});await page.goto(base+'?room=AABBCCDD&team='+uid(3)+'&via='+uid(111));await expect(page.locator('#teamInvitationNotice')).toBeVisible();
  await page.locator('#joinName').fill('Тестовый Участник');await page.locator('#joinButton').click();await expect(page.locator('#gameView')).toBeVisible();
  const request=await page.evaluate(()=>window.actions.find(([n])=>n==='qwiz_join_team'));expect(request[1].p_team).toBe(uid(3));expect(request[1].p_inviter).toBe(uid(111));
- await page.locator('#playerTeamPanel button').click();const link=new URL(await page.locator('.team-invite-url').inputValue());expect(link.searchParams.get('team')).toBe(uid(3));expect(link.searchParams.get('via')).toBe(uid(701));
+ await expect(page.locator('#playerTeamPanel .captain-qr-image')).toHaveCount(0);
 });
 test('Saved student profile autojoins a QR link without losing team intent',async({page})=>{
  await mock(page,fixture(5,0),{host:false,registered:true});await page.goto(base+'?room=AABBCCDD&team='+uid(2));await expect(page.locator('#gameView')).toBeVisible();
@@ -166,7 +186,7 @@ test('Profile navigation carries the selected room and team',async({page})=>{
 });
 test('Manual waiting state is visible and never offers a wrong-team invitation',async({page})=>{
  const s=fixture(5,0);s.me={id:uid(701),team_id:null};s.host=false;s.team_mode='manual';await mock(page,s,{host:false});await page.goto(base);await page.evaluate(()=>{ctx.roomCode='AABBCCDD';ctx.room=window.fixture;showScreen('game');renderGame();});
- await expect(page.locator('#playerTeamPanel')).toContainText('Преподаватель распределяет команды');await expect(page.locator('#playerTeamPanel button')).toHaveCount(0);
+ await expect(page.locator('#playerTeamPanel')).toContainText('Ожидаем распределения');await expect(page.locator('#playerTeamPanel button')).toHaveCount(0);
 });
 
 
@@ -217,4 +237,85 @@ test('TV overscan keeps all QR cards, readable emblems, and screen chrome within
   expect(report.overflow,'no horizontal scrolling on TV').toBeLessThanOrEqual(2);
   expect(report.pageScroll,'no hidden vertical QR rows').toBeLessThanOrEqual(2);
  }
+});
+
+
+test('New random room requires moderator confirmation before public team QR',async({page})=>{
+ const s=fixture(3,9);s.total=10;s.setup_issues=[];s.players.forEach(p=>p.team_id=null);s.unassigned_count=9;
+ s.team_lobby={mode:'random',confirmed:false,team_count:3,captain_count:0,captains_ready:false,effects_history:[],captains:[]};
+ await host(page,s);
+ await expect(page.locator('#confirmTeams')).toBeVisible();
+ await expect(page.locator('#liveStart')).toBeDisabled();
+ await page.locator('#confirmTeams').click();
+ await expect(page.locator('#liveStart')).toBeEnabled();
+ expect(await page.evaluate(()=>window.actions.some(([n,a])=>n==='qwiz_lobby_action'&&a.p_action==='confirm'))).toBe(true);
+ s.team_lobby.confirmed=true;
+ s.players.forEach((p,i)=>p.team_id=s.teams[i%s.teams.length].id);
+ await mock(page,s,{host:false});await page.goto(base+'presenter.html?room=AABBCCDD');
+ await expect(page.locator('.team-board-card')).toHaveCount(3);
+ await expect(page.locator('#projectionMain')).toContainText('Идите к своей команде');
+});
+test('Cinematic projector lobby has exactly one large room QR, no team QR',async({page})=>{
+ const s=fixture(5,12);s.team_lobby={mode:'random',confirmed:false,team_count:5,captain_count:0,captains_ready:false};
+ await mock(page,s,{host:false});await page.setViewportSize({width:1280,height:720});
+ await page.goto(base+'presenter.html?room=AABBCCDD');
+ await expect(page.locator('.lobby-cinematic')).toBeVisible();
+ await expect(page.locator('.lobby-cinema-qr img')).toHaveCount(1);
+ await expect(page.locator('.team-board-card')).toHaveCount(0);
+ await expect(page.locator('.lobby-cinema-code')).toHaveText('AABBCCDD');
+ const b=await page.locator('.lobby-qr-frame').boundingBox();
+ expect(b.width).toBeGreaterThan(170);
+ expect(b.x).toBeGreaterThan(40);
+ expect(b.x+b.width).toBeLessThan(1240);
+});
+test('Captain signup and QR are directly visible on mobile, not hidden in statistics',async({page})=>{
+ const s=fixture(2,2);s.host=false;s.me={id:uid(701),team_id:null};s.team_mode='captain';
+ s.team_lobby={mode:'captain',confirmed:false,team_count:2,captain_count:0,captains_ready:false,can_claim:true,my_captain:false,team_members:[]};
+ await mock(page,s,{host:false});await page.setViewportSize({width:390,height:844});
+ await page.goto(base);
+ await page.evaluate(()=>{ctx.roomCode='AABBCCDD';ctx.room=window.fixture;showScreen('game');renderGame()});
+ await expect(page.locator('#playerTeamPanel [data-captain-claim]')).toBeVisible();
+ await page.locator('#playerTeamPanel [data-captain-claim]').click();
+ await expect.poll(()=>page.evaluate(()=>window.actions.some(([n,a])=>n==='qwiz_lobby_action'&&a.p_action==='claim'))).toBe(true);
+ await page.evaluate(()=>{window.fixture.team_lobby.captains_ready=true;window.fixture.team_lobby.captain_count=2;dataState(window.fixture)});
+ await expect(page.locator('#playerTeamPanel .captain-qr-image img')).toHaveCount(1);
+ const rect=await page.locator('#playerTeamPanel .captain-qr-image').boundingBox();
+ expect(rect.width).toBeGreaterThan(230);
+ await page.evaluate(()=>{
+   window.fixture.phase='countdown';
+   QwizTeams.playerPanel(document.getElementById('playerTeamPanel'),window.fixture);
+ });
+ await expect(page.locator('#playerTeamPanel .captain-qr-hero')).toHaveCount(0);
+});
+
+test('Legacy audience also uses one central room QR, never team links before play',async({page})=>{
+ const s=fixture(3,6);await mock(page,s,{host:false});
+ await page.goto(base+'presenter.html?room=AABBCCDD');
+ await page.evaluate(()=>{
+  const state={...window.fixture,team_lobby:null,
+   lobby_teams:window.fixture.teams.map(t=>({...t,members:2}))};
+  render(state);
+ });
+ await expect(page.locator('.lobby-cinematic')).toBeVisible();
+ await expect(page.locator('.lobby-cinema-qr img')).toHaveCount(1);
+ await expect(page.locator('.team-board-card')).toHaveCount(0);
+});
+
+
+test('Switching lobby from random to captain updates the phone and projector without a page reload',async({page})=>{
+ const s=fixture(2,2);s.host=false;s.me={id:uid(701),team_id:null};s.team_mode='random';
+ s.team_lobby={mode:'random',team_count:2,confirmed:false,captain_count:0,captains_ready:false,can_claim:false,my_captain:false};
+ await mock(page,s,{host:false});await page.setViewportSize({width:390,height:844});
+ await page.goto(base);
+ await page.evaluate(()=>{ctx.roomCode='AABBCCDD';ctx.room=window.fixture;showScreen('game');renderGame()});
+ await expect(page.locator('#gameContent')).toContainText('Создаю команды');
+ await page.evaluate(()=>{window.fixture.team_mode='captain';window.fixture.team_lobby.mode='captain';window.fixture.team_lobby.can_claim=true;dataState(window.fixture)});
+ await expect(page.locator('#gameContent')).toContainText('Выбираем капитанов');
+ await expect(page.locator('#playerTeamPanel [data-captain-claim]')).toBeVisible();
+ s.team_mode='captain';s.team_lobby.mode='captain';s.team_lobby.can_claim=true;
+ await page.setViewportSize({width:1280,height:720});
+ await mock(page,s,{host:false});await page.goto(base+'presenter.html?room=AABBCCDD');
+ await expect(page.locator('.lobby-cinema-instructions')).toContainText('Выбираем капитанов');
+ await page.evaluate(()=>{window.fixture.team_mode='random';window.fixture.team_lobby.mode='random';render(window.fixture)});
+ await expect(page.locator('.lobby-cinema-instructions')).toContainText('Преподаватель распределит');
 });

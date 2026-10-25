@@ -1,0 +1,23 @@
+/* Waiting screen uses a glowing infinity, without revealing random team allocations. */
+.player-team-building{box-sizing:border-box;position:relative;isolation:isolate;
+ display:flex;flex-direction:column;justify-content:center;align-items:center;
+ min-height:clamp(360px,52dvh,600px);width:100%;padding:clamp(16px,3vw,36px);
+ text-align:center;overflow:hidden;border-radius:25px;
+ background:radial-gradient(ellipse at 50% 45%,#e5c9ff,#f8f1ff 65%,#fff 100%);
+}
+.player-team-building:before{content:"";position:absolute;inset:-60%;
+ background:conic-gradient(transparent,#a271e650,transparent,#69eae63b,transparent);
+ z-index:-1;animation:building-halo 22s linear infinite}
+.player-team-building .eyebrow{letter-spacing:.12em;color:#7445be;font-weight:850}
+.player-team-building h1{font-size:clamp(28px,6vw,49px);color:#3d2869;margin:10px 0}
+.player-team-building p{font-size:clamp(14px,3vw,18px);color:#564775;max-width:520px}
+.player-team-building .team-building-glow{display:grid;place-items:center;width:clamp(156px,37vw,230px);
+ aspect-ratio:1;margin:12px auto;color:#8b43e9;filter:drop-shadow(0 20px 20px #8e45ed35)}
+.player-team-building .team-building-glow span{font-size:clamp(155px,32vw,238px);line-height:1;
+ text-shadow:0 0 15px #dca8ff,0 0 35px #9a71ee80,0 0 60px #64dad884;
+ animation:building-infinity 2.8s cubic-bezier(.4,0,.2,1) infinite}
+.player-team-building.is-complete .team-building-glow span{font-size:110px;animation:none;color:#31b787}
+.player-team-building strong[data-captain-elapsed]{font-size:clamp(24px,6vw,42px);font-variant-numeric:tabular-nums}
+@keyframes building-infinity{50%{transform:rotateY(23deg) rotate(-3deg) scale(1.11)}}
+@keyframes building-halo{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.player-team-building:before,.player-team-building .team-building-glow span{animation:none!important}}
