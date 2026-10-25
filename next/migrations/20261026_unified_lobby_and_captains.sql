@@ -181,6 +181,20 @@ BEGIN
  JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='qwiz_team_admin' LIMIT 1;
  IF position('mode not in (''random'',''manual'')' IN src)=0 THEN RAISE EXCEPTION 'Team settings ABI changed';END IF;
  changed:=replace(src,'mode not in (''random'',''manual'')','mode not in (''random'',''manual'',''captain'')');
+ changed:=replace(changed,
+  'if player.id is null then raise exception ''Участник не найден'';end if;',
+  'if player.id is null then raise exception ''Участник не найден'';end if;'||E'\n'||
+  ' if EXISTS(SELECT 1 FROM public.qwiz_lobby_config c WHERE c.room_id=p_room AND c.confirmed_at IS NOT NULL)'||
+  ' then raise exception ''Подтверждённые команды зафиксированы'';end if;'||E'\n'||
+  ' if EXISTS(SELECT 1 FROM public.qwiz_lobby_captains c WHERE c.room_id=p_room AND c.player_id=v_player)'||
+  ' then raise exception ''Сначала передайте капитанство другому члену команды'';end if;');
+ changed:=replace(changed,
+  'if p_action=''shuffle'' and r.team_mode<>''random'' then',
+  'if p_action=''settings'' and EXISTS(SELECT 1 FROM public.qwiz_lobby_captains c WHERE c.room_id=p_room)'||
+  ' and (team_count<>old_count OR mode<>r.team_mode)'||
+  ' then raise exception ''Набор капитанов уже начат; изменять метод нельзя'';end if;'||E'\n'||
+  ' if p_action=''shuffle'' and r.team_mode<>''random'' then');
+
  changed:=replace(changed,'if p_action=''shuffle'' or (mode=''random'' and (team_count<>old_count or r.team_mode<>''random'')) then',
   'if p_action=''shuffle'' or (mode=''random'' and (team_count<>old_count or r.team_mode<>''random'') AND NOT EXISTS('||
    'SELECT 1 FROM public.qwiz_lobby_config WHERE room_id=p_room)) then');
