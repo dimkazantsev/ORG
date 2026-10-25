@@ -234,10 +234,10 @@ test('Final audience screen shows readable leaders instead of shrinking all 40 p
   await page.waitForTimeout(250);
   const limit=width<=800?3:height<900?4:6;
   await expect(page.locator('.projection-finale-compact')).toBeVisible();
-  await expect(page.locator('.projection-finale-compact .stage-team-results li')).toHaveCount(limit);
-  await expect(page.locator('.projection-finale-compact .stage-player-results li')).toHaveCount(limit);
-  await expect(page.locator('.projection-finale-compact .stage-team-results li').first()).toContainText('Команда 1');
-  await expect(page.locator('.projection-finale-compact .stage-player-results li').first()).toContainText('Игрок 1');
+  await expect(page.locator('.projection-finale-compact .projection-round-columns .stage-team-results li')).toHaveCount(limit);
+  await expect(page.locator('.projection-finale-compact .projection-round-columns .stage-player-results li')).toHaveCount(limit);
+  await expect(page.locator('.projection-finale-compact .projection-round-columns .stage-team-results li').first()).toContainText('Команда 1');
+  await expect(page.locator('.projection-finale-compact .projection-round-columns .stage-player-results li').first()).toContainText('Игрок 1');
   await expect(page.locator('.projection-finale-compact .finale-summary')).toContainText('50%');
   await expect(page.locator('.projection-finale-compact .projection-rank-more')).toHaveCount(2);
   const box=await page.evaluate(()=>{
