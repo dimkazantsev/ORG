@@ -27,6 +27,8 @@ function renderTeamManager(s){
  const editing=$('teamSettings').contains(document.activeElement);
  if(!editing){$('teamCount').value=s.teams?.length||1;$('teamMode').value=s.team_mode||'random';}
  for(const id of ['teamCount','teamMode','applyTeamSettings'])$(id).disabled=!editable||teamUI.busy;
+ const manualOption=$('teamMode').querySelector('option[value="manual"]');
+ if(manualOption){manualOption.hidden=!!lobby&&s.team_mode!=='manual';manualOption.disabled=!!lobby&&s.team_mode!=='manual';}
  $('shuffleTeams').hidden=s.team_mode!=='random'||!!lobby?.confirmed;
  $('shuffleTeams').disabled=!editable||teamUI.busy;
  $('confirmTeams').hidden=!lobby||s.team_mode!=='random'||!!lobby.confirmed||s.phase!=='lobby';
