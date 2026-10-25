@@ -14,6 +14,11 @@ CREATE TABLE IF NOT EXISTS public.qwiz_lobby_captains(
  PRIMARY KEY(room_id,team_id),
  UNIQUE(room_id,player_id)
 );
+-- Allow new captain mode without changing semantics of legacy manual/random.
+ALTER TABLE public.org_next_rooms DROP CONSTRAINT IF EXISTS org_next_rooms_team_mode_check;
+ALTER TABLE public.org_next_rooms ADD CONSTRAINT org_next_rooms_team_mode_check
+ CHECK (team_mode IN ('random','manual','captain'));
+
 ALTER TABLE public.qwiz_lobby_config ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.qwiz_lobby_captains ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.qwiz_lobby_config,public.qwiz_lobby_captains FROM PUBLIC,anon,authenticated;
