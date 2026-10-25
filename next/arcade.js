@@ -29,19 +29,32 @@ window.QwizArcade=(()=>{
  // Avoid ambiguous operator precedence: timestamps are always milliseconds.
  const left=(end,tr)=>Math.max(0,Math.ceil(((Date.parse(end)||0)-currentTime(tr))/1000));
  function art(mode){
-  if(mode==='rocket')return '<svg class="arcade-rocket-art" viewBox="0 0 440 150" role="img" aria-label="Ракета летит к финишу"><path d="M10 112H430" stroke="#d6ccec" stroke-width="4" stroke-dasharray="7 9"/><circle cx="390" cy="42" r="25" fill="#eee5ff"/><circle cx="390" cy="42" r="10" fill="#d8c7f5"/><g transform="translate(110,15) rotate(-12 100 60)"><path class="arcade-flame" d="M55 69 4 60l49-21Z" fill="#ffbc71"/><path d="m53 40 51-22c48-15 67-12 103-7-4 38-24 62-63 76L72 85Z" fill="#8667d5"/><path d="M99 24 75 2l-17 5 13 33m48 44-4 35-19 6-19-45" fill="#bba9ed"/><circle cx="149" cy="43" r="17" fill="#faf6ff"/><circle cx="149" cy="43" r="9" fill="#b9e3ff"/></g></svg>';
-  if(mode==='tug')return '<div class="arcade-rope" data-rope style="--arcade-progress:50%" role="img" aria-label="Общий канат, отметка показывает преимущество"></div>';
-  if(mode==='captain')return '<div class="arcade-king arcade-duel-trophy" aria-hidden="true"><svg viewBox="0 0 180 150" width="190" height="155" fill="none">'+
-   '<defs><linearGradient id="qwizDuelGold" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#fff2c7"/><stop offset=".45" stop-color="#edb95f"/><stop offset="1" stop-color="#ad7026"/></linearGradient>'+
-   '<linearGradient id="qwizDuelViolet" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#c8adff"/><stop offset="1" stop-color="#6740b5"/></linearGradient></defs>'+
-   '<ellipse cx="90" cy="140" rx="61" ry="8" fill="#64429a" opacity=".13"/>'+
-   '<path d="M57 108h66v13H57z" fill="url(#qwizDuelViolet)"/><path d="M70 120h40v12H70z" fill="#7651b9"/>'+
-   '<path d="M43 24h94l-9 67c-4 27-22 32-38 32s-34-5-38-32L43 24Z" fill="url(#qwizDuelGold)" stroke="#b67d2d" stroke-width="3"/>'+
-   '<path d="M49 34H28c-4 35 10 59 32 59M131 34h21c4 35-10 59-32 59" stroke="#c49441" stroke-width="10" stroke-linecap="round"/>'+
-   '<path d="m90 40 8.5 18 19.5 3-14 13.5 3.5 19.5L90 84.5l-17.5 9.5 3.5-19.5L62 61l19.5-3Z" fill="#fff4d7"/>'+
-   '<path d="M53 36h69" stroke="#fff" stroke-opacity=".45" stroke-width="4"/></svg></div>'+
-   '<div class="arcade-captain-ready" data-reflex-signal>ГОТОВЬТЕСЬ</div>';
-  return '<div class="arcade-king" aria-hidden="true"><svg viewBox="0 0 120 120" width="114" height="114" fill="none" stroke="#8165d3" stroke-width="6" stroke-linejoin="round"><path d="M61 10 25 69h31l-6 41 45-67H62l-1-33Z"/></svg></div>';
+  // A real CSS-3D stage (multiple independently transformed depth planes),
+  // rather than a flat emoji or an image with a perspective filter.
+  const ground='<span class="arcade-3d-horizon" aria-hidden="true"></span><span class="arcade-3d-shadow" aria-hidden="true"></span>';
+  if(mode==='rocket')return '<div class="arcade-3d-world arcade-world-rocket" role="img" aria-label="Трёхмерная ракета летит над космическим полем">'+ground+
+   '<div class="arcade-3d-object arcade-model-rocket" data-rocket-model>'+
+    '<span class="arcade-rocket-plume"></span><span class="arcade-rocket-fin fin-left"></span>'+
+    '<span class="arcade-rocket-fin fin-right"></span><span class="arcade-rocket-hull">'+
+    '<span class="arcade-rocket-window"></span><span class="arcade-rocket-highlight"></span></span>'+
+    '<span class="arcade-rocket-nose"></span><span class="arcade-rocket-wing"></span>'+
+   '</div><span class="arcade-3d-goal" aria-hidden="true">✦</span></div>';
+  if(mode==='tug')return '<div class="arcade-3d-world arcade-world-tug" role="img" aria-label="Трёхмерное перетягивание каната командами">'+ground+
+   '<div class="arcade-3d-object arcade-model-tug" data-rope>'+
+    '<span class="arcade-tug-team team-left"></span><span class="arcade-tug-cable"></span>'+
+    '<span class="arcade-tug-marker"></span><span class="arcade-tug-team team-right"></span>'+
+   '</div></div>';
+  if(mode==='captain')return '<div class="arcade-3d-world arcade-world-captain" role="img" aria-label="Трёхмерный кубок дуэли капитанов">'+ground+
+   '<div class="arcade-3d-object arcade-model-captain">'+
+    '<span class="arcade-trophy-handle handle-left"></span><span class="arcade-trophy-handle handle-right"></span>'+
+    '<span class="arcade-trophy-cup">★</span><span class="arcade-trophy-stem"></span>'+
+    '<span class="arcade-trophy-base"></span>'+
+   '</div><span class="arcade-captain-ready" data-reflex-signal>ГОТОВЬТЕСЬ</span></div>';
+  return '<div class="arcade-3d-world arcade-world-blitz" role="img" aria-label="Трёхмерный энергетический кристалл для блиц-вопроса">'+ground+
+   '<div class="arcade-3d-object arcade-model-blitz">'+
+    '<span class="arcade-blitz-facet facet-left"></span><span class="arcade-blitz-facet facet-back"></span>'+
+    '<span class="arcade-blitz-facet facet-right"></span><span class="arcade-blitz-bolt">ϟ</span>'+
+   '</div><span class="arcade-blitz-ring ring-a"></span><span class="arcade-blitz-ring ring-b"></span></div>';
  }
  function rankMarkup(v){const teams=v?.teams||[],max=Math.max(1,...teams.map(t=>Number(t.points)||0));
   return teams.map((t,i)=>'<div class="arcade-rank"><span class="arcade-rank-name" title="'+escape(t.name)+'">'+escape(t.name)+'</span><div class="arcade-rank-track"><div class="arcade-rank-fill" style="--arcade-value:'+Math.max(0,100*(Number(t.points)||0)/max).toFixed(2)+'%;--arcade-team-color:'+COLORS[i%COLORS.length]+'"></div></div><span class="arcade-rank-score">'+(v.mode==='captain'?(t.points>0?(10000-Number(t.points)).toFixed(0)+' мс':'—'):Number(t.points||0).toFixed(1))+'</span></div>').join('');
@@ -60,7 +73,7 @@ window.QwizArcade=(()=>{
   }catch(e){showMessage(tr,e.message||'Состояние игры недоступно',true)}finally{tr.fetching=false}
  }
  function showMessage(tr,msg,bad=false){const el=tr.root?.querySelector('[data-arcade-alert]');if(el){el.textContent=msg;el.dataset.error=String(!!bad)}}
- function sceneProgress(tr,v){if(v.mode==='rocket'){const lead=Math.max(0,...(v.teams||[]).map(t=>Number(t.points)||0));const rocket=tr.root.querySelector('.arcade-rocket-art');if(rocket){const progress=Math.min(100,lead*7);rocket.style.setProperty('--arcade-progress',progress+'%');rocket.style.transform='translateX('+Math.round(progress*1.45)+'px)';}}
+ function sceneProgress(tr,v){if(v.mode==='rocket'){const lead=Math.max(0,...(v.teams||[]).map(t=>Number(t.points)||0));const rocket=tr.root.querySelector('[data-rocket-model]');if(rocket){const progress=Math.min(100,lead*7);rocket.style.setProperty('--arcade-progress',progress+'%');}}
   if(v.mode==='tug'){const teams=v.teams||[],first=Number(teams[0]?.points)||0,last=Number(teams.at(-1)?.points)||0,mark=first+last>0?50+40*(first-last)/(first+last):50;const rope=tr.root.querySelector('[data-rope]');if(rope)rope.style.setProperty('--arcade-progress',Math.max(10,Math.min(90,mark))+'%');}
  }
  function promptMarkup(q,allow,shown){if(!q)return '';const images=(q.options||[]).map((o,i)=>{const img=o&&typeof o==='object'&&/^https:\/\/\S+$/.test(o.image_url||'')?'<img class="arcade-choice-image" src="'+escape(o.image_url)+'" alt="Вариант '+(i+1)+'">':'<span>'+escape(typeof o==='string'?o:o?.label||'Флаг')+'</span>';
