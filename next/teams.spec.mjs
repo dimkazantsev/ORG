@@ -151,7 +151,8 @@ test('Adaptive classroom layout shows every QR at 1, 3, 8 and 16 teams without s
  }
 });
 test('Shared classroom QR enlarges without consuming a team slot',async({page})=>{
- await mock(page,fixture(15,30),{host:false});await page.setViewportSize({width:1440,height:900});await page.goto(base+'presenter.html?room=AABBCCDD');
+ const state=fixture(15,30);state.team_lobby={mode:'legacy',confirmed:false,team_count:15,captain_count:0,captains_ready:false};
+ await mock(page,state,{host:false});await page.setViewportSize({width:1440,height:900});await page.goto(base+'presenter.html?room=AABBCCDD');
  await expect(page.locator('.team-board-card')).toHaveCount(0);
  await expect(page.locator('.lobby-cinema-qr')).toBeVisible();
  await page.locator('#projectionQr').click();await expect(page.locator('#projectionQrDialog')).toBeVisible();
