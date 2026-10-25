@@ -61,7 +61,7 @@ BEGIN
  IF old_source IS NULL THEN RAISE EXCEPTION 'Missing qwiz_compile_build';END IF;
  needle:='v_opts:=v_question.options;v_sol:=v_question.solution;v_match_choices:=''[]''::jsonb;';
  replacement:=needle||
-   E'\n       if v_question.kind in (''single'',''boolean'',''flag'',''portrait'',''image'',''audio'',''video'',''map'',''multi'') then'||
+   E'\n       if v_question.kind not in (''order'',''sequence'',''match'',''hotspot'') then'||
    E'\n         select x->''options'',x->''solution'' into v_opts,v_sol from'||
    E'\n           public.qwiz_shuffle_question_options(v_opts,v_sol) x;'||
    E'\n       end if;';
