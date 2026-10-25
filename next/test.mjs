@@ -1097,7 +1097,7 @@ test('Room preparation reuses a safe empty lobby and never enables unselected ma
  assert.match(sql,/Reuse the current unoccupied lobby regardless of build timestamp/);
  assert.match(sql,/UPDATE public\.org_next_quizzes quiz/);
  assert.match(sql,/UPDATE public\.qwiz_room_builds snapshot/);
- assert.match(sql,/only an\n   -- empty lobby/);
+ assert.match(sql,/Refresh only an/);
  assert.match(sql,/Reject stale compiled room timelines/);
  assert.match(sql,/v_stored_timeline is distinct from v_current->''timeline''/);
  assert.match(sql,/EXECUTE body/);
