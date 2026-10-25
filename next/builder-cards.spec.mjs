@@ -111,3 +111,55 @@ test('QWIZ favicon loads on editor without external assets',async({page})=>{
  expect(response.ok()).toBe(true);
  expect(await response.text()).toContain('qwiz-violet');
 });
+
+
+test('Ordinary Russia geography only offers question-bank modes and requires an explicit choice',async({page})=>{
+ await page.evaluate(()=>{
+  state.topics=[{id:'geo-topic',name:'География России'},{id:'flags-topic',name:'Флаги мира'}];
+  state.cards[1].topic_id='geo-topic';
+  state.cards[1].settings={...state.cards[1].settings,flag_modes:['fragments','errors'],geo_modes:[]};
+  fillSelect($('cardTopic'),[['geo-topic','География России'],['flags-topic','Флаги мира']],'Без темы','geo-topic');
+  editCard(1);
+ });
+ await expect(page.locator('#cardGeoQuestionModes')).toBeVisible();
+ await expect(page.locator('#cardGeoQuestionModes input')).toHaveCount(2);
+ await expect(page.locator('#cardFlagModes')).toBeHidden();
+ await expect(page.locator('#cardGeoQuestionModes [value="capital"]')).not.toBeChecked();
+ await expect(page.locator('#cardGeoQuestionModes [value="district"]')).not.toBeChecked();
+ await page.locator('#cardForm button[type="submit"]').click();
+ await expect(page.locator('#cardDialog')).toBeVisible();
+ await expect(page.locator('#cardGeoQuestionModes [value="capital"]')).toHaveJSProperty('validationMessage','Выберите административный центр и/или федеральный округ');
+ await page.locator('#cardGeoQuestionModes [value="capital"]').check();
+ await page.locator('#cardForm button[type="submit"]').click();
+ await expect(page.locator('#cardDialog')).not.toBeVisible();
+ const s=await page.evaluate(()=>state.cards[1].settings);
+ expect(s.geo_modes).toEqual(['capital']);
+ expect(s.flag_modes).toEqual([]);
+ expect(await page.locator('#roundCards .round-card').nth(1).textContent()).toContain('Административный центр');
+});
+
+test('Changing to Russia geography never imports stale flag selectors and changing back preserves explicit flags',async({page})=>{
+ await page.evaluate(()=>{
+  state.topics=[{id:'geo-topic',name:'География России'},{id:'flags-topic',name:'Флаги мира'}];
+  state.cards[1].topic_id='flags-topic';
+  state.cards[1].settings.flag_modes=['country','picker'];
+  editCard(1);
+  fillSelect($('cardTopic'),[['geo-topic','География России'],['flags-topic','Флаги мира']],'Без темы','flags-topic');
+ });
+ await expect(page.locator('#cardFlagModes')).toBeVisible();
+ await page.locator('#cardTopic').selectOption('geo-topic');
+ await expect(page.locator('#cardFlagModes')).toBeHidden();
+ await expect(page.locator('#cardGeoQuestionModes')).toBeVisible();
+ await page.locator('#cardGeoQuestionModes [value="district"]').check();
+ await page.locator('#cardForm button[type="submit"]').click();
+ expect(await page.evaluate(()=>state.cards[1].settings.geo_modes)).toEqual(['district']);
+ await page.evaluate(()=>{editCard(1);fillSelect($('cardTopic'),[['geo-topic','География России'],['flags-topic','Флаги мира']],'Без темы','geo-topic');});
+ await page.locator('#cardTopic').selectOption('flags-topic');
+ await expect(page.locator('#cardFlagModes')).toBeVisible();
+ await expect(page.locator('#cardGeoQuestionModes')).toBeHidden();
+ await page.locator('#cardFlagModes [data-card-mode="country"]').check();
+ await page.locator('#cardFlagModes [data-card-mode="picker"]').check();
+ await page.locator('#cardForm button[type="submit"]').click();
+ expect(await page.evaluate(()=>state.cards[1].settings.flag_modes)).toEqual(['country','picker']);
+ expect(await page.evaluate(()=>state.cards[1].settings.geo_modes)).toEqual([]);
+});
