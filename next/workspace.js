@@ -610,6 +610,66 @@ async function loadRooms(){try{const list=await rpc('qwiz_host_rooms');state.hos
  '<article class="room-row"><div><div class="question-meta"><span class="chip">'+esc(QwizStage.phaseLabel(r.phase))+'</span><span class="chip lilac">'+esc(r.code)+'</span></div><h3>'+esc(QwizStage.capitalize(r.title))+'</h3><p>'+esc(QwizStage.countLabel(r.players,{one:'участник',few:'участника',many:'участников',other:'участника'}))+' · '+esc(QwizStage.countLabel(r.teams,{one:'команда',few:'команды',many:'команд',other:'команды'}))+'</p></div><div class="room-row-actions"><button class="primary-button" data-room="'+esc(r.code)+'">Управлять →</button><button type="button" class="card-trash" data-delete-room="'+esc(r.id)+'" title="Удалить комнату" aria-label="Удалить комнату '+esc(r.title)+'">'+trashSvg+'</button></div></article>').join(''):
  '<div class="empty">Создайте комнату из сохранённой сборки.</div>';
  }catch(e){msg('launchMessage',e.message,true)}}
+// Preview the *entire* saved build, not just the currently edited card.
+// In particular, map modes and normal Geography of Russia question modes
+// are independent cards, so show them distinctly before creating a room.
+const launchModeNames={
+ country:'Страна по флагу',picker:'Выбор флага',colors:'Цвета',symbols:'Символы',
+ fragments:'Фрагменты',errors:'Поиск ошибок',similar:'Похожие флаги',
+ assemble:'Сборка флага',multiple:'Несколько ответов',memory:'Запоминание',
+ geo:'География флага',history:'История флага',
+ capital:'Административный центр',district:'Федеральный округ',
+ locate:'Найти субъект',identify:'Угадать название',flag:'Узнать по флагу',
+ silhouette:'Угадать по силуэту',neighbour:'Соседние субъекты',
+ detective:'Географический детектив'
+};
+function describeLaunchCard(c){
+ const settings=c.settings||{},mode=settings.arcade_mode||'';
+ const title=c.title||titles[c.type]||'Карточка';
+ if(c.type==='finale')return {title,description:'Финал всей игры и общая статистика'};
+ if(mode==='russia_map'){
+  const selected=Array.isArray(settings.geo_modes)?settings.geo_modes:[];
+  return {title,description:'Карта России · '+(selected.length?selected.map(x=>launchModeNames[x]||x).join(', '):'механики не выбраны'),invalid:!selected.length};
+ }
+ if(arcadeGames[mode])return {title,description:'Командная мини-игра · '+arcadeGames[mode].title};
+ if(c.type==='round'){
+  const topic=state.topics.find(x=>x.id===c.topic_id)?.name||'Тема не выбрана';
+  const selected=topic==='География России'?(settings.geo_modes||[]):(settings.flag_modes||[]);
+  const needsModes=topic==='География России'||topic==='Флаги мира';
+  const invalid=!c.topic_id||(needsModes&&(!Array.isArray(selected)||!selected.length));
+  const modeText=needsModes?
+    (Array.isArray(selected)&&selected.length?selected.map(x=>launchModeNames[x]||x).join(', '):'механики не выбраны'):
+    'Вопросы выбранной темы';
+  return {title,description:'Раунд вопросов · '+topic+' · '+modeText+' · до '+(settings.count||5)+' вопросов',invalid};
+ }
+ return {title,description:({'intro':'Вступительная заставка','break':'Пауза',
+  'duel':'Дополнительная игра','bonus':'Бонусная карточка'}[c.type]||'Дополнительная карточка')};
+}
+let launchPlanRequest=0;
+async function previewLaunchBuild(){
+ const id=$('launchBuild').value,serial=++launchPlanRequest;
+ const container=$('launchPlan'),list=$('launchPlanCards');
+ if(!id){container.hidden=true;list.replaceChildren();return;}
+ container.hidden=false;
+ list.innerHTML='<li class="small-help">Проверяем карточки сборки…</li>';
+ $('launchPlanNotice').textContent='';
+ try{
+  const snapshot=await studio('build_get',{id});
+  if(serial!==launchPlanRequest||$('launchBuild').value!==id)return;
+  const cards=(snapshot.cards||[]).filter(c=>!['team_stats','player_stats'].includes(c.type)&&!(c.type==='bonus'&&!c.settings?.arcade_mode));
+  const plan=cards.map(describeLaunchCard);
+  list.innerHTML=plan.map((row,i)=>'<li class="launch-plan-item'+(row.invalid?' is-unconfigured':'')+'">'+
+   '<span class="launch-plan-number">'+(i+1)+'</span><span class="launch-plan-detail"><strong>'+
+   esc(row.title)+'</strong><span>'+esc(row.description)+'</span></span></li>').join('');
+  $('launchPlanNotice').textContent=plan.some(x=>x.invalid)?
+   'Внимание: есть карточки без темы или механик. Настройте их перед запуском.':
+   'Будут запущены все перечисленные карточки по порядку. Для изменения состава откройте настройки сборки.';
+ }catch(error){
+  if(serial!==launchPlanRequest)return;
+  list.innerHTML='<li class="small-help">Не удалось получить список карточек.</li>';
+  $('launchPlanNotice').textContent=error.message;
+ }
+}
 let launchRequestBusy=false;
 async function launch(){if(launchRequestBusy)return;launchRequestBusy=true;disable('launchButton',true);msg('launchMessage','');
  try{if(!$('launchBuild').value)throw Error('Выберите сборку.');
@@ -784,7 +844,7 @@ async function repeatFinishedRoom(){
    const url=new URL('./presenter.html',location.href);
    url.searchParams.set('room',created.code);audienceWindow.location.href=url.toString();
   }
-  msg('liveMessage','Новая игра '+created.code+' подготовлена. Подключите участников по новому QR-коду и нажмите «Начать».');
+  msg('liveMessage',(created.reused?'Пустая комната ': 'Новая игра ')+created.code+(created.reused?' уже была подготовлена; повторная копия не создана.':' подготовлена.')+' Подключите участников по QR-коду и нажмите «Начать».');
  }catch(error){msg('liveMessage','Не удалось повторить игру: '+error.message,true)}
  finally{repeatRoomBusy=false;if(state.room)renderLive(state.room)}
 }
@@ -945,6 +1005,8 @@ function wire(){
  $('savedBuilds').onclick=e=>{const d=e.target.closest('[data-delete-build]');if(d){deleteBuild(d.dataset.deleteBuild);return}
   const b=e.target.closest('[data-load-build]');if(b)loadBuild(b.dataset.loadBuild)};
  $('launchButton').onclick=launch;$('reloadRooms').onclick=loadRooms;
+ $('launchBuild').addEventListener('change',()=>void previewLaunchBuild());
+ $('launchPlanEdit').onclick=()=>{if($('launchBuild').value)void loadBuild($('launchBuild').value)};
  // Team setup handlers are owned by workspace-teams.js; no duplicate listeners here.
  $('hostRoomList').onclick=e=>{const d=e.target.closest('[data-delete-room]');if(d){deleteRoom(d.dataset.deleteRoom);return}
   const b=e.target.closest('[data-room]');if(b)selectRoom(b.dataset.room)};
