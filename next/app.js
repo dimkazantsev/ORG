@@ -257,7 +257,7 @@ function personalResults(s,final=false){
  const metrics=s.public_stats||{};
  const teams=metrics.teams||s.teams||[],players=metrics.players||[];
  const stats=metrics.question_stats||[];
- const intro=final?'<div class="player-final-metrics"><span>Команд: '+teams.length+'</span><span>Участников: '+(teams.reduce((n,t)=>n+Number(t.members??t.players??0),0))+'</span><span>Вопросов: '+Number(s.total||stats.length||0)+'</span></div>':'';
+ const intro=final?'<div class="player-final-metrics"><span>'+QwizStage.countLabel(teams.length,{one:'команда',few:'команды',many:'команд'})+'</span><span>'+QwizStage.countLabel(teams.reduce((n,t)=>n+Number(t.members??t.players??0),0),{one:'участник',few:'участника',many:'участников'})+'</span><span>'+QwizStage.countLabel(Number(s.total||stats.length||0),{one:'вопрос',few:'вопроса',many:'вопросов'})+'</span></div>':'';
  return '<section class="personal-results'+(final?' player-final-results':'')+'">'+intro+
  '<h2>'+(final?'Рейтинг команд':'Скорость команд')+'</h2>'+
  (teams.length?QwizStage.teams(teams,{full:true,ranked:true}):'<p>Пока нет команд</p>')+
