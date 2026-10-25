@@ -2,10 +2,10 @@
 /* QWIZ-PARTY: synchronised team arcade. Client shows state; Postgres owns scores, boosts and achievements. */
 window.QwizArcade=(()=>{
  const META={
-  rocket:{title:'Ракетная гонка',desc:'Быстрее разгоните ракету. Сравнивается средний вклад игроков; победитель выбирает усиление следующего раунда.',cta:'ЗАРЯДИТЬ РАКЕТУ'},
+  rocket:{title:'Забег с препятствиями',desc:'Случайно выбранный игрок каждой команды прыгает через препятствия. Одно нажатие — один прыжок. Скорость растёт. Побеждает наибольшая дистанция.',cta:'ПРЫЖОК!'},
   blitz:{title:'Блиц-вопрос',desc:'Захватите право ответить первыми. Команда-победитель получит право проголосовать за усиление следующего раунда.',cta:'ЗАХВАТИТЬ ВОПРОС'},
-  tug:{title:'Перетягивание очков',desc:'Перетяните канат и получите преимущество. Победители также голосуют за усиление следующего раунда.',cta:'ТЯНУТЬ!'},
-  captain:{title:'Дуэль капитанов',desc:'Капитан каждой команды ждёт сигнал 3 секунды. Затем один точный удар на скорость реакции. Фальстарт отнимает попытку. Победитель получает командный бонус.',cta:'МОЙ УДАР!'}
+  tug:{title:'Командная тапалка',desc:'Все участники нажимают кнопку одновременно. Считаются реальные суммарные нажатия всей команды, а не среднее значение на человека.',cta:'ТАП!'},
+  captain:{title:'Дуэль капитанов · Memory',desc:'Все капитаны играют одновременно. Открывайте по две плитки и собирайте пары. Быстрейший проходит первым; при ничьей побеждает тот, у кого меньше ходов.',cta:'ОТКРЫТЬ ПЛИТКУ'}
  };
  const COLORS=['#9470e2','#b58add','#e6a95d','#76ad83','#ea7f9b','#a78be5','#bb86c8'];
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -32,24 +32,9 @@ window.QwizArcade=(()=>{
   // A real CSS-3D stage (multiple independently transformed depth planes),
   // rather than a flat emoji or an image with a perspective filter.
   const ground='<span class="arcade-3d-horizon" aria-hidden="true"></span><span class="arcade-3d-shadow" aria-hidden="true"></span>';
-  if(mode==='rocket')return '<div class="arcade-3d-world arcade-world-rocket" role="img" aria-label="Трёхмерная ракета летит над космическим полем">'+ground+
-   '<div class="arcade-3d-object arcade-model-rocket" data-rocket-model>'+
-    '<span class="arcade-rocket-plume"></span><span class="arcade-rocket-fin fin-left"></span>'+
-    '<span class="arcade-rocket-fin fin-right"></span><span class="arcade-rocket-hull">'+
-    '<span class="arcade-rocket-window"></span><span class="arcade-rocket-highlight"></span></span>'+
-    '<span class="arcade-rocket-nose"></span><span class="arcade-rocket-wing"></span>'+
-   '</div><span class="arcade-3d-goal" aria-hidden="true">✦</span></div>';
-  if(mode==='tug')return '<div class="arcade-3d-world arcade-world-tug" role="img" aria-label="Трёхмерное перетягивание каната командами">'+ground+
-   '<div class="arcade-3d-object arcade-model-tug" data-rope>'+
-    '<span class="arcade-tug-team team-left"></span><span class="arcade-tug-cable"></span>'+
-    '<span class="arcade-tug-marker"></span><span class="arcade-tug-team team-right"></span>'+
-   '</div></div>';
-  if(mode==='captain')return '<div class="arcade-3d-world arcade-world-captain" role="img" aria-label="Трёхмерный кубок дуэли капитанов">'+ground+
-   '<div class="arcade-3d-object arcade-model-captain">'+
-    '<span class="arcade-trophy-handle handle-left"></span><span class="arcade-trophy-handle handle-right"></span>'+
-    '<span class="arcade-trophy-cup">★</span><span class="arcade-trophy-stem"></span>'+
-    '<span class="arcade-trophy-base"></span>'+
-   '</div><span class="arcade-captain-ready" data-reflex-signal>ГОТОВЬТЕСЬ</span></div>';
+  if(mode==='rocket')return '<div class="arcade-runner-world" role="img" aria-label="Бегун и движущееся препятствие"><div class="arcade-runner-sky"><i></i><i></i><i></i></div><div class="arcade-runner-character" data-runner-character><span class="runner-head"></span><span class="runner-eye"></span><span class="runner-body"></span><span class="runner-tail"></span><span class="runner-foot left"></span><span class="runner-foot right"></span></div><div class="arcade-runner-obstacle" data-runner-obstacle><span></span><i></i><b></b></div><div class="arcade-runner-floor"></div></div>';
+  if(mode==='tug')return '<div class="arcade-tap-stage" aria-hidden="true"><div class="arcade-tap-glow"></div><span class="arcade-tap-sparks">✧　✦　✧</span></div>';
+  if(mode==='captain')return '<div class="arcade-memory-hero" aria-hidden="true"><span class="arcade-memory-star">✦</span><strong>MEMORY</strong><span>Найди все пары</span></div>';
   return '<div class="arcade-3d-world arcade-world-blitz" role="img" aria-label="Трёхмерный энергетический кристалл для блиц-вопроса">'+ground+
    '<div class="arcade-3d-object arcade-model-blitz">'+
     '<span class="arcade-blitz-facet facet-left"></span><span class="arcade-blitz-facet facet-back"></span>'+
@@ -62,8 +47,8 @@ window.QwizArcade=(()=>{
  function rootMarkup(mode,kind='player'){const m=META[mode];return '<div class="arcade-shell arcade-'+kind+'" data-arcade-root="'+mode+'">'+
   '<div class="arcade-head"><div><span class="arcade-kicker">QWIZ-PARTY · КОМАНДНОЕ ИСПЫТАНИЕ</span><h2>'+escape(m.title)+'</h2></div><span class="arcade-countdown" data-arcade-clock>—</span></div>'+
   '<p class="arcade-lead">'+escape(m.desc)+'</p><div class="arcade-scene">'+art(mode)+'</div>'+
-  '<div data-arcade-question hidden></div><div class="arcade-ranks" data-arcade-ranks></div>'+
-  (kind==='player'?'<button type="button" class="arcade-tap-btn" data-arcade-tap disabled>'+escape(m.cta)+'</button><span class="arcade-tap-caption" data-arcade-personal>Подключаем игровое время…</span>':'')+
+  '<div data-arcade-question hidden></div>'+(mode==='captain'&&kind==='player'?'<div class="arcade-memory-info" data-memory-info></div><div class="arcade-memory-board" data-arcade-memory role="group" aria-label="Поле Memory"></div>':'')+'<div class="arcade-ranks" data-arcade-ranks></div>'+
+  (kind==='player'?'<button type="button" class="arcade-tap-btn" data-arcade-tap '+(mode==='captain'?'hidden ':'')+'disabled>'+escape(m.cta)+'</button><span class="arcade-tap-caption" data-arcade-personal>Подключаем игровое время…</span>':'')+
   '<div class="arcade-alert" role="status" aria-live="polite" data-arcade-alert>Подключаем результаты…</div><div class="arcade-badges" data-arcade-badges></div><section class="arcade-vote" data-arcade-vote hidden></section></div>';
  }
  function stop(kind){const tr=ui[kind];if(!tr)return;if(tr.interval)clearInterval(tr.interval);if(tr.clock)clearInterval(tr.clock);if(tr.flushTimer)clearTimeout(tr.flushTimer);if(tr.onClick)tr.root?.removeEventListener('click',tr.onClick);tr.closed=true;ui[kind]=null;}
