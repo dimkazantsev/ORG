@@ -1418,3 +1418,15 @@ body:fullscreen .projection-shell{height:100dvh}
  height:auto!important;
  aspect-ratio:auto 3 / 2;
 }
+
+/* QWIZ-PARTY: consistent projected result bounds at 720p–4K and narrow screens. */
+.projection-round-results,.projection-round-columns,.projection-round-columns>section,.projection-round-leaders,
+.projection-round-leaders li,.projection-ranking,.projection-ranking li,.finale-summary,.finale-summary>div{min-width:0;max-width:100%;box-sizing:border-box}
+.projection-round-columns>section{overflow:hidden}
+.projection-round-leaders li,.projection-ranking li{display:grid;grid-template-columns:minmax(24px,auto) minmax(0,1fr) minmax(0,auto);align-items:center;gap:clamp(8px,1.3vw,18px)}
+.projection-round-leaders li>strong,.projection-ranking li>strong{min-width:0;overflow-wrap:anywhere}
+.projection-round-leaders li>b,.projection-ranking li>b{min-width:0;max-width:100%;font-size:clamp(16px,2.3vw,38px);font-variant-numeric:tabular-nums;overflow-wrap:anywhere;text-align:right}
+.finale-summary>div{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:center;gap:6px 12px;overflow:hidden}
+.finale-summary>div>strong{min-width:0;font-size:clamp(24px,4vw,64px);line-height:1.15;overflow-wrap:anywhere}
+.finale-summary>div>span{line-height:1.35;overflow-wrap:anywhere}
+@media(max-width:700px){.projection-round-leaders li>b,.projection-ranking li>b{font-size:clamp(15px,3.5vw,25px)}}
