@@ -278,7 +278,7 @@ function questionScene(state){
   banner.style.marginBottom='0';banner.dataset.fittedZoom='1.000';
   const count=board.querySelectorAll('.team-board-card').length;
   if(!count||window.innerWidth<=760||window.innerHeight<=540){
-   for(const name of ['--team-columns','--team-rows','--team-gap','--team-qr-size'])
+   for(const name of ['--team-columns','--team-rows','--team-gap','--team-qr-size','--team-icon-size','--team-title-size'])
     board.style.removeProperty(name);
    return;
   }
@@ -294,9 +294,15 @@ function questionScene(state){
   const rows=Math.ceil(count/columns);
   const cellWidth=(width-gap*(columns-1))/columns;
   const cellHeight=(height-gap*(rows-1))/rows;
-  // Reserve room for the habitat icon/name, participants and quiet zone.
-  // CSS scales the existing QR rendering without rebuilding its join URL.
-  const qrSize=Math.max(38,Math.floor(Math.min(168,cellWidth-22,cellHeight-64)));
+  // Real height budgets for the visible icon, name, counter and QR quiet zone.
+  // Never make the QR too large for a dense 16-team roster.
+  const iconSize=Math.max(32,Math.floor(Math.min(76,cellWidth*.32,cellHeight*.23)));
+  const titleSize=Math.max(11,Math.min(23,Math.floor(cellWidth*.065)));
+  const headingHeight=Math.max(iconSize,titleSize*2.28);
+  const reserved=Math.ceil(headingHeight+titleSize*.45+38);
+  const qrSize=Math.max(38,Math.floor(Math.min(214,cellWidth-22,cellHeight-reserved)));
+  board.style.setProperty('--team-icon-size',iconSize+'px');
+  board.style.setProperty('--team-title-size',titleSize+'px');
   board.style.setProperty('--team-columns',String(columns));
   board.style.setProperty('--team-rows',String(rows));
   board.style.setProperty('--team-gap',gap+'px');

@@ -168,3 +168,53 @@ test('Manual waiting state is visible and never offers a wrong-team invitation',
  const s=fixture(5,0);s.me={id:uid(701),team_id:null};s.host=false;s.team_mode='manual';await mock(page,s,{host:false});await page.goto(base);await page.evaluate(()=>{ctx.roomCode='AABBCCDD';ctx.room=window.fixture;showScreen('game');renderGame();});
  await expect(page.locator('#playerTeamPanel')).toContainText('Преподаватель распределяет команды');await expect(page.locator('#playerTeamPanel button')).toHaveCount(0);
 });
+
+
+test('TV overscan keeps all QR cards, readable emblems, and screen chrome within safe margins',async({page})=>{
+ for(const {count,width,height,minIcon} of [
+  {count:2,width:1280,height:720,minIcon:54},
+  {count:3,width:1920,height:1080,minIcon:66},
+  {count:8,width:1280,height:720,minIcon:40},
+  {count:16,width:1280,height:720,minIcon:32},
+  {count:16,width:3840,height:2160,minIcon:40}
+ ]){
+  await page.setViewportSize({width,height});
+  await mock(page,fixture(count,count*2),{host:false});
+  await page.goto(base+'presenter.html?room=AABBCCDD');
+  await expect(page.locator('.team-board-card')).toHaveCount(count);
+  await expect.poll(()=>page.locator('#projectionTeamBoard').getAttribute('data-columns')).not.toBeNull();
+  const report=await page.evaluate(()=>{
+   const box=el=>{const r=el.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height}};
+   const root=document.getElementById('projectionShell');
+   const cards=[...document.querySelectorAll('.team-board-card')];
+   return {safe:box(root),padding:getComputedStyle(root).padding,
+    bounds:[...document.querySelectorAll('.projection-header,.projection-footer,#projectionMain .projection-lobby,#projectionMain .projection-team-entry')].map(el=>({name:el.className,hidden:getComputedStyle(el).display==='none',...box(el)})),
+    entries:cards.map(el=>({card:box(el),icon:box(el.querySelector('.habitat-icon')),
+     title:box(el.querySelector('.team-board-heading strong')),
+     qr:box([...el.querySelectorAll('.team-board-qr img,.team-board-qr canvas')].find(node=>{const style=getComputedStyle(node);return style.display!=='none'&&style.visibility!=='hidden'&&node.getBoundingClientRect().width>0})||el.querySelector('.team-board-qr')),
+     count:box(el.querySelector('.board-count'))})),
+    overflow:document.documentElement.scrollWidth-innerWidth,
+    pageScroll:document.documentElement.scrollHeight-innerHeight};
+  });
+  const marginX=Math.min(width*.048,192),marginY=Math.min(height*.048,110);
+  for(const item of report.bounds){
+   if(item.hidden)continue;
+   expect(item.left,'left TV overscan in '+item.name+' at '+width+' for '+count+' with '+report.padding).toBeGreaterThanOrEqual(marginX-2);
+   expect(item.right,'right TV overscan at '+width+' for '+count).toBeLessThanOrEqual(width-marginX+2);
+   expect(item.top,'top TV overscan at '+height+' for '+count).toBeGreaterThanOrEqual(marginY-2);
+   expect(item.bottom,'bottom TV overscan at '+height+' for '+count).toBeLessThanOrEqual(height-marginY+2);
+  }
+  for(const item of report.entries){
+   expect(item.icon.width,'emblem visibility at '+width+' for '+count).toBeGreaterThanOrEqual(minIcon-2);
+   expect(item.qr.width,'QR must be genuinely visible at '+width+' for '+count).toBeGreaterThan(30);
+   for(const part of [item.icon,item.title,item.qr,item.count]){
+    expect(part.left,'content left at '+width+' for '+count).toBeGreaterThanOrEqual(item.card.left-2);
+    expect(part.right,'content right at '+width+' for '+count).toBeLessThanOrEqual(item.card.right+2);
+    expect(part.top,'content top at '+width+' for '+count).toBeGreaterThanOrEqual(item.card.top-2);
+    expect(part.bottom,'content bottom at '+width+' for '+count).toBeLessThanOrEqual(item.card.bottom+2);
+   }
+  }
+  expect(report.overflow,'no horizontal scrolling on TV').toBeLessThanOrEqual(2);
+  expect(report.pageScroll,'no hidden vertical QR rows').toBeLessThanOrEqual(2);
+ }
+});
