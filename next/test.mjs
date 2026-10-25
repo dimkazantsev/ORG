@@ -32,6 +32,23 @@ test('Backend state avoids roster queries whose JSON keys are always overridden'
  assert.match(migration,/PERF-STATE-ROSTER-READS-20261025/);
  assert.doesNotMatch(migration,/DROP (TABLE|FUNCTION)|DELETE FROM public\.org_next_players/i);
 });
+test('Only explicitly selected mechanics compile and empty rooms cannot auto-play',()=>{
+ const migration=readFileSync(new URL('./migrations/20261025_strict_selected_mechanics_and_no_empty_replays.sql',import.meta.url),'utf8');
+ const studio=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const layout=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ assert.match(migration,/qwiz_compile_build\(uuid,text,boolean\)/);
+ assert.match(migration,/v_geo_round boolean:=false/);
+ assert.match(migration,/solution->>''geo_mode''/);
+ assert.match(migration,/qwiz_compile_build\(p_build,p_title,false\)/);
+ assert.match(migration,/Для начала игры нужен хотя бы один подключённый участник/);
+ assert.match(migration,/previous_build/);
+ assert.match(migration,/NOT EXISTS\(SELECT 1 FROM public\.org_next_answers/);
+ assert.match(studio,/cardGeoQuestionModes/);
+ assert.match(studio,/geo_modes:ordinaryGeo\?geoSelected/);
+ assert.match(studio,/if\(launchRequestBusy\)return/);
+ assert.match(layout,/data-geo-question-mode value="capital"/);
+ assert.match(layout,/data-geo-question-mode value="district"/);
+});
 test('Paused rooms preserve frozen memory and reject both answer RPCs',()=>{
  const migration=readFileSync(new URL('./migrations/20261025_pause_resume_memory_and_answer_guard.sql',import.meta.url),'utf8');
  const client=readFileSync(new URL('./app.js',import.meta.url),'utf8');
