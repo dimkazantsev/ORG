@@ -1083,3 +1083,22 @@ test('Geography mobile taps confirm immediately and correct region is enlarged',
   assert.match(page,/arcade\.js\?v=firsttap-timerguard-20261025-27/);
  }
 });
+
+
+test('Room preparation reuses a safe empty lobby and never enables unselected map modes',()=>{
+ const sql=readFileSync(new URL('./migrations/20261025_mechanics_and_reused_lobby_fail_closed.sql',import.meta.url),'utf8');
+ assert.match(sql,/Map modes must be selected explicitly/);
+ assert.match(sql,/raise exception ''Для карты России выберите механики/);
+ assert.match(sql,/jsonb_array_elements\(run\.tasks\)/);
+ assert.match(sql,/modes \? \(old_task->>''mode''\)/);
+ assert.match(sql,/Некорректная механика карты России/);
+ assert.match(sql,/cardinality\(candidate\.neighbors\)>0/);
+ assert.match(sql,/candidate\.flag is not null/);
+ assert.match(sql,/Reuse the current unoccupied lobby regardless of build timestamp/);
+ assert.match(sql,/UPDATE public\.org_next_quizzes quiz/);
+ assert.match(sql,/UPDATE public\.qwiz_room_builds snapshot/);
+ assert.match(sql,/AND NOT EXISTS\(SELECT 1 FROM public\.org_next_players/);
+ assert.match(sql,/Reject stale compiled room timelines/);
+ assert.match(sql,/v_stored_timeline is distinct from v_current->''timeline''/);
+ assert.match(sql,/EXECUTE body/);
+});
