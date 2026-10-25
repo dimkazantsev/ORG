@@ -22,6 +22,16 @@ test('The public home opens the current quiz and preserves QR room invitations',
  );
  assert.equal(destination('https://dimkazantsev.github.io/ORG/?legacy=1'),null);
 });
+test('Backend state avoids roster queries whose JSON keys are always overridden',()=>{
+ const migration=readFileSync(new URL('./migrations/20261025_skip_overridden_roster_reads.sql',import.meta.url),'utf8');
+ assert.match(migration,/public\.org_next_state\(text\)/);
+ assert.match(migration,/public\.qwiz_team_state\(uuid,boolean,uuid\)/);
+ assert.match(migration,/State\/team contract changed/);
+ assert.match(migration,/into v_teams from public\.org_next_teams/);
+ assert.match(migration,/into v_players from public\.org_next_players/);
+ assert.match(migration,/PERF-STATE-ROSTER-READS-20261025/);
+ assert.doesNotMatch(migration,/DROP (TABLE|FUNCTION)|DELETE FROM public\.org_next_players/i);
+});
 test('Paused rooms preserve frozen memory and reject both answer RPCs',()=>{
  const migration=readFileSync(new URL('./migrations/20261025_pause_resume_memory_and_answer_guard.sql',import.meta.url),'utf8');
  const client=readFileSync(new URL('./app.js',import.meta.url),'utf8');
