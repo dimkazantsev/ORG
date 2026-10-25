@@ -62,3 +62,13 @@ test('screens use constrained result panels and correct Russian count labels',()
  assert.match(app,/QwizStage\.countLabel\(Number\(s\.total/);
  assert.match(presenter,/QwizStage\.countLabel\(players\.length/);
 });
+
+
+test('appointed captains drive Memory, stats and live captain transfers',()=>{
+ const migration=read('migrations/20261026_unified_lobby_and_captains.sql');
+ assert.match(migration,/qwiz_lobby_captains c WHERE c\.room_id=r\.id AND c\.team_id=t\.id/);
+ assert.match(migration,/p\.proname='qwiz_arcade_extras'/);
+ assert.match(migration,/p\.proname='qwiz_arcade_state'/);
+ assert.match(migration,/UPDATE public\.qwiz_arcade_memory_players m SET player_id=target/);
+ assert.match(migration,/qwiz_lobby_captains c WHERE c\.room_id=r\.id AND c\.team_id=me\.team_id/);
+});
