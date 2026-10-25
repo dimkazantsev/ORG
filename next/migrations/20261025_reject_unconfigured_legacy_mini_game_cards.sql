@@ -16,8 +16,8 @@ BEGIN
      CONTINUE;
    END IF;
    IF v_card.settings->>'arcade_mode'='russia_map' THEN
-     IF jsonb_typeof(v_card.settings->'geo_modes') IS DISTINCT FROM 'array'
-       OR jsonb_array_length(v_card.settings->'geo_modes')=0 THEN
+     IF NOT (CASE WHEN jsonb_typeof(v_card.settings->'geo_modes')='array'
+      THEN jsonb_array_length(v_card.settings->'geo_modes')>0 ELSE false END) THEN
        v_missing:=v_missing||jsonb_build_array(jsonb_build_object(
          'title',v_card.title,'reason','Выберите хотя бы одну механику карты России'));
        CONTINUE;
