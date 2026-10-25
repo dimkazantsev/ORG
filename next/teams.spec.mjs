@@ -67,10 +67,11 @@ test('Manual mode exposes the pending list and lets teacher assign a newcomer',a
 test('Failed move preserves the roster and displays a retry message',async({page})=>{
  await host(page);await page.evaluate(()=>window.failMove=true);await page.locator('[data-team-player="'+uid(101)+'"]').selectOption(uid(2));await expect(page.locator('#teamMessage')).toContainText('не сохранён');await expect(page.locator('[data-drop-team="'+uid(1)+'"] [data-player-id="'+uid(101)+'"]')).toBeVisible();
 });
-test('Team QR opens an accessible dialog with the exact team link',async({page})=>{
- await host(page);await page.locator('[data-team-qr="'+uid(4)+'"]').click();await expect(page.locator('#teamQrDialog')).toBeVisible();
- const value=await page.locator('.team-invite-url').inputValue(),link=new URL(value);expect(link.searchParams.get('room')).toBe('AABBCCDD');expect(link.searchParams.get('team')).toBe(uid(4));expect(link.searchParams.has('via')).toBe(false);await expect(page.locator('.team-qr-large canvas')).toHaveCount(1);
- await page.keyboard.press('Escape');await expect(page.locator('#teamQrDialog')).toBeHidden();
+test('Moderator roster contains no team QR controls',async({page})=>{
+ await host(page);await expect(page.locator('#teamGrid .team-card')).toHaveCount(5);
+ await expect(page.locator('#teamGrid .team-qr-button')).toHaveCount(0);
+ await expect(page.locator('#showTeamBoard')).toHaveCount(0);
+ await expect(page.locator('#copyRoomUrl')).toBeVisible();
 });
 test('Classroom board renders 15 habitat icons and locally generated QR codes',async({page})=>{
  const s=fixture(15,30);await mock(page,s,{host:false});await page.setViewportSize({width:1440,height:900});await page.goto(base+'presenter.html?room=AABBCCDD');
@@ -145,11 +146,11 @@ test('Classroom membership refresh keeps QR elements stable',async({page})=>{
  await page.evaluate(()=>{window.firstQr=document.querySelector('.team-board-qr canvas');window.fixture.lobby_teams=window.fixture.teams.map((t,i)=>({...t,members:i===0?7:6}));render(window.fixture);});
  await expect(page.locator('.board-count').first()).toHaveText('7 участников');expect(await page.evaluate(()=>window.firstQr===document.querySelector('.team-board-qr canvas'))).toBe(true);
 });
-test('Team invitation joins the exact team and gives the newcomer a personal QR',async({page})=>{
+test('Captain QR link joins the intended team, ordinary members have no own QR',async({page})=>{
  await mock(page,fixture(5,0),{host:false});await page.goto(base+'?room=AABBCCDD&team='+uid(3)+'&via='+uid(111));await expect(page.locator('#teamInvitationNotice')).toBeVisible();
  await page.locator('#joinName').fill('Тестовый Участник');await page.locator('#joinButton').click();await expect(page.locator('#gameView')).toBeVisible();
  const request=await page.evaluate(()=>window.actions.find(([n])=>n==='qwiz_join_team'));expect(request[1].p_team).toBe(uid(3));expect(request[1].p_inviter).toBe(uid(111));
- await page.locator('#playerTeamPanel button').click();const link=new URL(await page.locator('.team-invite-url').inputValue());expect(link.searchParams.get('team')).toBe(uid(3));expect(link.searchParams.get('via')).toBe(uid(701));
+ await expect(page.locator('#playerTeamPanel .captain-qr-image')).toHaveCount(0);
 });
 test('Saved student profile autojoins a QR link without losing team intent',async({page})=>{
  await mock(page,fixture(5,0),{host:false,registered:true});await page.goto(base+'?room=AABBCCDD&team='+uid(2));await expect(page.locator('#gameView')).toBeVisible();
@@ -166,7 +167,7 @@ test('Profile navigation carries the selected room and team',async({page})=>{
 });
 test('Manual waiting state is visible and never offers a wrong-team invitation',async({page})=>{
  const s=fixture(5,0);s.me={id:uid(701),team_id:null};s.host=false;s.team_mode='manual';await mock(page,s,{host:false});await page.goto(base);await page.evaluate(()=>{ctx.roomCode='AABBCCDD';ctx.room=window.fixture;showScreen('game');renderGame();});
- await expect(page.locator('#playerTeamPanel')).toContainText('Преподаватель распределяет команды');await expect(page.locator('#playerTeamPanel button')).toHaveCount(0);
+ await expect(page.locator('#playerTeamPanel')).toContainText('Ожидаем распределения');await expect(page.locator('#playerTeamPanel button')).toHaveCount(0);
 });
 
 
