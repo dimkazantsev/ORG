@@ -72,3 +72,19 @@ test('appointed captains drive Memory, stats and live captain transfers',()=>{
  assert.match(migration,/UPDATE public\.qwiz_arcade_memory_players m SET player_id=target/);
  assert.match(migration,/where c\.room_id=r\.id and c\.team_id=me\.team_id/i);
 });
+
+test('regression: arcade initialization cannot shadow room record with an update alias',()=>{
+ const migration=read('migrations/20261026_arcade_room_alias_fix.sql');
+ assert.match(migration,/update public\.qwiz_arcade_runs ar set option_order/);
+ assert.match(migration,/where ar\.room_id=p_room and ar\.card_position=a\.card_position/);
+ assert.match(migration,/Unexpected qwiz_arcade_ensure source/);
+});
+test('regression: a mobile round score cannot wrap 700 into vertical digits',()=>{
+ const css=read('player-layout.css');
+ const from=css.indexOf('/* Personal round metrics: never split');
+ const block=css.slice(from,css.indexOf('/* Compact landscape:',from));
+ assert.ok(from>0,'score block exists');
+ assert.match(block,/\.round-self-summary>div\s*\{\s*display:flex;flex-direction:column/);
+ assert.match(block,/\.round-self-summary strong\s*\{[^}]*white-space:nowrap/);
+ assert.match(read('index.html'),/player-layout\.css\?v=score-layout-20261026-1/);
+});
