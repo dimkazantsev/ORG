@@ -1181,7 +1181,7 @@ async function init(){
    else if(['bank','builder','rooms','insights'].includes(hash))section(hash);
    restoringView=false;savePosition();
   }
-  state.roomTimer=setInterval(()=>{if(state.roomCode&&!document.hidden)refreshLive()},8000);
+  state.roomTimer=setInterval(()=>{if(state.roomCode&&!document.hidden)refreshLive()},3000);
   setInterval(()=>{if(!state.room||document.hidden)return;const s=state.room;if(['question','result'].includes(s.phase)&&!s.paused){const left=QwizStage.updateClock(s,state.clockOffset,document,'liveTimer');if(left===0&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}}else if(s.phase==='countdown'&&!s.paused&&Date.parse(s.ends_at)<=Date.now()+state.clockOffset&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}},250);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.roomCode)refreshLive()});
   window.addEventListener('online',()=>{if(state.roomCode)refreshLive()});
