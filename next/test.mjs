@@ -22,6 +22,20 @@ test('The public home opens the current quiz and preserves QR room invitations',
  );
  assert.equal(destination('https://dimkazantsev.github.io/ORG/?legacy=1'),null);
 });
+test('Paused rooms preserve frozen memory and reject both answer RPCs',()=>{
+ const migration=readFileSync(new URL('./migrations/20261025_pause_resume_memory_and_answer_guard.sql',import.meta.url),'utf8');
+ const client=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ assert.match(migration,/org_next_answer\(uuid,integer\)/);
+ assert.match(migration,/qwiz_submit_answer\(uuid,jsonb\)/);
+ assert.match(migration,/v_room\.ends_at IS NULL OR v_room\.ends_at<=now\(\) OR public\.qwiz_party_paused\(p_room\)/);
+ assert.match(migration,/qwiz_party_projection\(text\)/);
+ assert.match(migration,/qwiz_party_state\(text\)/);
+ assert.match(migration,/qwiz_flag_memory_view\(/);
+ assert.match(migration,/coalesce\(\(s->>'host'\)::boolean,false\)=false/);
+ assert.match(client,/s\.question\?\.prompt,s\.paused,me\?\.team_id/);
+ assert.match(client,/\|\|!!s\.paused/);
+ assert.match(client,/s\.phase!=='question'\|\|s\.paused\|\|s\.has_answer/);
+});
 test('Moderator can finish rooms without a PL/pgSQL activity alias conflict',()=>{
  const migration=readFileSync(new URL('./migrations/20261024_qwiz_party_control_alias_fix.sql',import.meta.url),'utf8');
  const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
