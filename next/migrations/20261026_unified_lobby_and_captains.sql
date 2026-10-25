@@ -113,6 +113,7 @@ BEGIN
   UPDATE public.qwiz_lobby_captains SET player_id=target WHERE room_id=p_room AND team_id=team;
  ELSIF p_action='confirm' THEN
   IF NOT is_host OR r.phase<>'lobby' OR r.team_mode<>'random' THEN RAISE EXCEPTION 'Подтверждает преподаватель в случайном режиме';END IF;
+  IF NOT EXISTS(SELECT 1 FROM public.org_next_players WHERE room_id=p_room) THEN RAISE EXCEPTION 'Сначала дождитесь участников';END IF;
   -- A fresh seeded permutation yields team sizes differing by at most one.
   -- Existing manual placements survive if everyone is already assigned.
   -- Preserve teacher drag-and-drop decisions. Allocate only pending members,
@@ -181,6 +182,18 @@ BEGIN
  JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='qwiz_team_admin' LIMIT 1;
  IF position('mode not in (''random'',''manual'')' IN src)=0 THEN RAISE EXCEPTION 'Team settings ABI changed';END IF;
  changed:=replace(src,'mode not in (''random'',''manual'')','mode not in (''random'',''manual'',''captain'')');
+ changed:=replace(changed,'if team_count not between 1 and 15 or mode not in (''random'',''manual'',''captain'') then',
+   'if exists(select 1 from public.qwiz_lobby_config WHERE room_id=p_room) and mode=''manual'' then'||
+   ' raise exception ''Выберите случайный или капитанский способ'';end if;'||E'\n'||
+   ' if team_count not between 1 and 15 or mode not in (''random'',''manual'',''captain'') then');
+ changed:=replace(changed,
+   'update public.org_next_players p set team_id=target_team where p.id=v_player;',
+   'if exists(select 1 from public.qwiz_lobby_config cfg WHERE cfg.room_id=p_room AND cfg.confirmed_at IS NOT NULL)'||
+   ' then raise exception ''Составы подтверждены и закреплены'';end if;'||E'\n'||
+   ' if exists(select 1 from public.qwiz_lobby_captains c where c.room_id=p_room AND c.player_id=v_player)'||
+   ' then raise exception ''Для передачи капитанства используйте специальную кнопку'';end if;'||E'\n'||
+   ' update public.org_next_players p set team_id=target_team where p.id=v_player;');
+
  changed:=replace(changed,
   'if player.id is null then raise exception ''Участник не найден'';end if;',
   'if player.id is null then raise exception ''Участник не найден'';end if;'||E'\n'||
@@ -236,7 +249,7 @@ BEGIN
   ' OR r.team_mode=''captain'' AND ((SELECT count(*) from public.qwiz_lobby_captains where room_id=p_room)<>'||
   '(SELECT count(*) from public.org_next_teams where room_id=p_room))'||
   ' OR r.team_mode=''captain'' AND EXISTS(select 1 from public.org_next_players WHERE room_id=p_room and team_id is null)'||
-  ' OR r.team_mode=''manual'') then raise exception ''Сначала завершите формирование команд'';end if;');
+  ' OR r.team_mode=''manual'' OR NOT EXISTS(select 1 from public.org_next_players WHERE room_id=p_room)) then raise exception ''Сначала завершите формирование команд'';end if;');
  EXECUTE changed;
 END $patch$;
 REVOKE ALL ON FUNCTION public.qwiz_lobby_action(uuid,text,jsonb),public.qwiz_lobby_view(uuid,boolean) FROM PUBLIC,anon,authenticated;
