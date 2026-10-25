@@ -1350,3 +1350,20 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 /* Theme-specific mechanics: generic subjects do not expose flag choices. */
 #cardModesDetails .card-topic-note{margin:0 14px 15px;padding:12px 14px;line-height:1.55;background:#f5f1fc;border:1px solid #e2d5f5;border-radius:11px;color:#67567b;font-size:12px;overflow-wrap:anywhere}
 #cardDialog #cardTopic:disabled{opacity:1;color:#503b77;background:#f5f0ff}
+
+
+/* Previously played sessions are history, not duplicate active rooms.
+   Keep completed records accessible without mixing them into the launch flow. */
+#hostRoomList .active-rooms,#hostRoomList .rooms-history-list{display:grid;gap:10px}
+#hostRoomList .rooms-empty-active{padding:20px;border:1px dashed #d8ccef;border-radius:16px;background:#faf8ff;color:var(--subtle)}
+#hostRoomList .rooms-history{margin-top:16px;border:1px solid #ded6ed;border-radius:16px;background:#f9f7ff;overflow:hidden}
+#hostRoomList .rooms-history>summary{display:flex;align-items:center;gap:10px;min-height:56px;padding:14px 18px;cursor:pointer;color:var(--ink);font-weight:760;font-size:13px;list-style:none}
+#hostRoomList .rooms-history>summary::-webkit-details-marker{display:none}
+#hostRoomList .rooms-history>summary::before{content:'▸';color:var(--accent);font-size:18px;transition:transform .16s ease}
+#hostRoomList .rooms-history[open]>summary::before{transform:rotate(90deg)}
+#hostRoomList .rooms-history-count{display:inline-grid;place-items:center;min-width:28px;height:25px;border-radius:9px;background:#eaddff;color:#6540aa;font-size:12px}
+#hostRoomList .rooms-history-hint{margin-left:auto;color:var(--subtle);font-weight:500;font-size:11px}
+#hostRoomList .rooms-history-list{padding:0 12px 12px}
+#hostRoomList .rooms-history-list .room-row{box-shadow:none}
+@media(max-width:560px){#hostRoomList .rooms-history>summary{flex-wrap:wrap;padding:13px}#hostRoomList .rooms-history-hint{width:100%;margin-left:28px}}
+@media(prefers-reduced-motion:reduce){#hostRoomList .rooms-history>summary::before{transition:none}}
