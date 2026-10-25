@@ -45,7 +45,7 @@ test('New geography and arcade cards insert after current card, retaining their 
  await expect(cards.nth(1).locator('h3')).toContainText('География России');
  await expect(cards.nth(1)).toHaveAttribute('aria-current','true');
  await page.locator('#arcadePalette [data-arcade="captain"]').click();
- await expect(cards.nth(2).locator('h3')).toHaveText('Дуэль капитанов');
+ await expect(cards.nth(2).locator('h3')).toHaveText('Мэмори капитанов');
  await expect(cards.nth(2)).toHaveAttribute('aria-current','true');
  await expect(cards.last().locator('h3')).toHaveText('Финал игры');
 });

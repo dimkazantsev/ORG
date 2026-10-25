@@ -63,7 +63,7 @@
     const g=geometry.find(z=>z.id===active);
     return g?'<svg class="geo-map-svg geo-silhouette" viewBox="'+g.box.join(' ')+'" role="img" aria-label="Контур неизвестного субъекта"><path d="'+g.path+'"/></svg>':'';
   }
-  const paths=geometry.map(g=>'<path class="geo-region '+(g.id===active?'geo-focus':'')+'" data-region="'+esc(g.id)+'" d="'+g.path+'" aria-label="'+esc(g.name)+'" '+(interactive?'role="button" tabindex="0"':'')+'/>').join('');
+  const paths=geometry.map(g=>'<path class="geo-region '+(g.id===active?'geo-focus':'')+'" data-region="'+esc(g.id)+'" d="'+g.path+'" aria-label="'+(interactive?'Выбрать субъект на карте':'Субъект на карте')+'" '+(interactive?'role="button" tabindex="0"':'')+'/>').join('');
   // Avoid overlapping transparent hit targets that select neighboring regions.
   return '<div class="geo-map-frame"><svg class="geo-map-svg" viewBox="0 0 1120 480" preserveAspectRatio="xMidYMid meet" role="group" aria-label="Интерактивная карта субъектов России"><g>'+paths+'</g></svg>'+
     '</div>';
@@ -127,7 +127,7 @@
    '<h2>'+esc(prompt(q))+'</h2>'+hint+img+
    (showMap?(t.mapError?'<div class="geo-map-loading">Не удалось загрузить карту. <button type="button" data-geo-map-retry>Повторить загрузку</button></div>':(geometry&&qmode==='silhouette'?mapMarkup(q.region,false,true):mapMarkup(qmode==='identify'?q.region:null,interactive&&!feedbackActive))):'')+
    (showMap&&qmode!=='silhouette'?'<div class="geo-map-toolbar" aria-label="Масштаб карты"><button type="button" data-geo-zoom="in" aria-label="Увеличить">＋</button><button type="button" data-geo-zoom="out" aria-label="Уменьшить">−</button><button type="button" data-geo-zoom="reset">Вся карта</button></div>':'')+
-   (interactive?'<p class="geo-tip">Один раз нажмите на субъект, проверьте выделение и нажмите «Подтвердить выбор». Карту можно перемещать пальцем и двумя пальцами изменять масштаб.</p>'+
+   (interactive?'<p class="geo-tip">Найдите субъект по контуру. Названия скрыты до ответа: выделите регион и нажмите «Подтвердить выбор». Карту можно перемещать пальцем и двумя пальцами изменять масштаб.</p>'+
     '<button type="button" class="geo-confirm" data-geo-confirm '+(!t.selectedRegion||feedbackActive?'hidden disabled':'')+'>Подтвердить</button>':options(q,t,feedbackActive)))+
    '<p class="geo-message" role="status" aria-live="polite">'+esc(t.message||'')+'</p>'+
    '<div class="geo-footer"><span>Осталось '+v.remaining+' сек.</span><small>Результат каждого игрока индивидуален</small></div></section>';
@@ -222,7 +222,7 @@
   t.selectedRegion=selected;
   t.root.querySelectorAll('.geo-region').forEach(p=>p.classList.toggle('geo-selected',p.dataset.region===selected));
   const button=t.root.querySelector('[data-geo-confirm]');
-  if(button){button.disabled=false;button.hidden=false;button.textContent='Подтвердить: '+(node.getAttribute('aria-label')||'регион');button.setAttribute('aria-label','Подтвердить выбранный регион');}
+  if(button){button.disabled=false;button.hidden=false;button.textContent='Подтвердить выбор';button.setAttribute('aria-label','Подтвердить выбранный регион');}
   t.message='Регион выбран. Нажмите «Подтвердить».';
   const label=t.root.querySelector('.geo-message');if(label)label.textContent=t.message;
   if(button&&!t.confirmRevealed){

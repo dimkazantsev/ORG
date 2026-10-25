@@ -35,6 +35,7 @@ jobs:
         run: |
           mkdir -p visual-artifacts
           python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/qwiz-round-flow-http.log 2>&1 &
-          node --test next/test.mjs
+          node --test next/test.mjs next/arcade-20261025.spec.mjs
           npx playwright test next/geo.spec.mjs next/projection-fit.spec.mjs --reporter=list --workers=2
+          npx playwright test next/arcade-visual.spec.mjs --reporter=list --workers=1
           npx playwright test next/player-layout.spec.mjs --grep "Phone displays synchronized card introductions|Finished arcade boost ballot" --reporter=list --workers=1

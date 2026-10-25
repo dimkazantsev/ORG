@@ -55,11 +55,11 @@ test('Panel closes by its button, background tap and downward swipe',async({page
  await page.setViewportSize({width:390,height:700});await setup(page);await question(page,{prompt:'Выберите страну',options:['Франция','Италия','Канада','Греция']});
  for(const mode of ['button','backdrop','swipe']){await page.locator('#playerMore').click();if(mode==='button')await page.locator('#playerDetailsClose').click();else if(mode==='backdrop')await page.mouse.click(4,4);else await page.locator('.player-sheet-head').evaluate(el=>{el.dispatchEvent(new TouchEvent('touchstart',{touches:[new Touch({identifier:1,target:el,clientY:100})]}));el.dispatchEvent(new TouchEvent('touchend',{changedTouches:[new Touch({identifier:1,target:el,clientY:190})]}))});await expect(page.locator('#playerDetails')).not.toBeVisible()}
 });
-test('Arcade controls stay on screen while fifteen live ranks remain in the panel',async({page})=>{
+test('Team tapping controls stay on screen while fifteen live ranks remain in the panel',async({page})=>{
  await page.setViewportSize({width:320,height:480});await setup(page);await question(page,{});
- await page.evaluate(()=>{window.arcadeFixture={mode:'rocket',running:true,server_now:new Date().toISOString(),ends_at:new Date(Date.now()+30000).toISOString(),teams:Array.from({length:15},(_,i)=>({id:'t'+i,name:'Команда '+(i+1),points:i,place:i+1})),mine:{team_id:'t0',credits:0},awards:[]};ctx.room.phase='intermission';ctx.room.activity={title:'Ракетная гонка',settings:{arcade_mode:'rocket'}};ctx.gameRenderKey='';renderGame()});
+ await page.evaluate(()=>{window.arcadeFixture={mode:'tug',running:true,server_now:new Date().toISOString(),ends_at:new Date(Date.now()+30000).toISOString(),teams:Array.from({length:15},(_,i)=>({id:'t'+i,name:'Команда '+(i+1),points:i,taps:i,place:i+1})),mine:{team_id:'t0',credits:0},awards:[]};ctx.room.phase='intermission';ctx.room.activity={title:'Командная тапалка',settings:{arcade_mode:'tug'}};ctx.gameRenderKey='';renderGame()});
  await expect(page.locator('[data-arcade-tap]')).toBeInViewport();await page.locator('#playerMore').click();await expect(page.locator('#playerArcadeDetails .arcade-rank')).toHaveCount(15);
- await page.evaluate(()=>{window.arcadeFixture.teams[0].points=250});await expect(page.locator('#playerArcadeDetails .arcade-rank-score').first()).toHaveText('250.0');await page.locator('#playerDetailsClose').click();await page.locator('[data-arcade-tap]').click();
+ await page.evaluate(()=>{window.arcadeFixture.teams[0].taps=250});await expect(page.locator('#playerArcadeDetails .arcade-rank-score').first()).toHaveText('250 тапов');await page.locator('#playerDetailsClose').click();await page.locator('[data-arcade-tap]').click();
  await expect.poll(()=>page.evaluate(()=>window.sent.some(x=>x.name==='qwiz_arcade_action'&&x.args.p_action==='tap'))).toBe(true);expect(await page.evaluate(()=>scrollY)).toBe(0);
 });
 test('Rotation and desktop restore preserve controls and result details',async({page})=>{
@@ -145,8 +145,8 @@ test('Phone displays synchronized card introductions, round rankings and full fi
   await expect(page.locator('#playerMore .player-more-label')).toHaveText('Статистика');
   await page.evaluate(()=>{
    const r=window.roundFixture;r.activity={type:'round_stats',title:'Итоги раунда'};
-   r.round_results={teams:r.teams.map(t=>({...t,score:100+t.rank})),
-     players:r.public_stats.players.map(p=>({...p,score:p.score-30}))};
+   r.round_results={teams:r.teams.map(t=>({...t,score:9999999999+t.rank})),
+     players:r.public_stats.players.map(p=>({...p,score:5555555555-p.score}))};
    ctx.gameRenderKey='';renderGame();
   });
   await expect(page.locator('.round-results-grid .round-score-list')).toHaveCount(2);
@@ -254,7 +254,7 @@ test('3D arcade world gets a playable portrait-height viewport, without hiding t
   ctx.room.phase='intermission';ctx.room.activity={title:'Ракетная гонка',
    settings:{arcade_mode:'rocket'}};ctx.gameRenderKey='';renderGame();
  });
- const scene=page.locator('.arcade-player .arcade-scene:has(.arcade-3d-world)');
+ const scene=page.locator('.arcade-player .arcade-scene:has(.arcade-runner-world)');
  await expect(scene).toBeVisible();
  await expect.poll(()=>scene.evaluate(el=>el.getBoundingClientRect().height)).toBeGreaterThanOrEqual(118);
  await expect(page.locator('[data-arcade-tap]')).toBeInViewport();

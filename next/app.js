@@ -173,7 +173,7 @@ function home(){showScreen('home');renderQrPanels();resumeOffer()}
 async function loadCatalog(){try{
  ctx.quizzes=await rpc('org_next_catalog');renderCatalog();await loadLegacy();
 }catch(e){notice('quizNotice',e.message,'error');$('quizList').innerHTML='<p class="placeholder">Не удалось загрузить наборы.</p>'}}
-function renderCatalog(){text('quizCount',ctx.quizzes.length+' наборов');$('quizList').innerHTML=ctx.quizzes.length?ctx.quizzes.map(quiz=>'<div class="list-row"><div><strong>'+esc(quiz.title)+'</strong><small>'+esc(quiz.count)+' вопросов</small></div><button class="btn btn-small" data-pick-quiz="'+esc(quiz.id)+'">Провести →</button></div>').join(''):'<p class="placeholder">Пока нет наборов. Создайте первый или импортируйте старый.</p>';
+function renderCatalog(){text('quizCount',QwizStage.countLabel(ctx.quizzes.length,{one:'набор',few:'набора',many:'наборов'}));$('quizList').innerHTML=ctx.quizzes.length?ctx.quizzes.map(quiz=>'<div class="list-row"><div><strong>'+esc(quiz.title)+'</strong><small>'+QwizStage.countLabel(quiz.count,{one:'вопрос',few:'вопроса',many:'вопросов'})+'</small></div><button class="btn btn-small" data-pick-quiz="'+esc(quiz.id)+'">Провести →</button></div>').join(''):'<p class="placeholder">Пока нет наборов. Создайте первый или импортируйте старый.</p>';
  $('roomQuizSelect').innerHTML='<option value="">Выберите набор</option>'+ctx.quizzes.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.title)+' · '+esc(x.count)+' вопр.</option>').join('');
 }
 async function loadLegacy(){try{const {data,error}=await ctx.client.from('org_quiz_sets').select('id,title').is('archived_at',null).order('created_at',{ascending:false}).limit(100);if(error)throw Error(error.message);
@@ -191,7 +191,7 @@ async function saveQuiz(event){event.preventDefault();busy($('saveQuizButton'),t
  }catch(error){notice('quizNotice',error.message,'error')}finally{busy($('saveQuizButton'),false)}}
 async function importQuiz(){busy($('importQuiz'),true);notice('importNotice','Импорт…');
  try{const id=$('legacyQuizSelect').value;if(!id)throw Error('Выберите набор.');
- const data=await rpc('org_next_import_legacy',{p_quiz:id});await loadCatalog();notice('importNotice','Импортировано '+data.imported+' вопросов. Исходный набор сохранён.','success');
+ const data=await rpc('org_next_import_legacy',{p_quiz:id});await loadCatalog();notice('importNotice','Импортировано '+QwizStage.countLabel(data.imported,{one:'вопрос',few:'вопроса',many:'вопросов'})+'. Исходный набор сохранён.','success');
  }catch(error){notice('importNotice',error.message,'error')}finally{busy($('importQuiz'),false)}}
 async function createRoom(event){event.preventDefault();busy($('createRoomButton'),true);notice('createRoomNotice','Создание комнаты…');
  try{const quiz=$('roomQuizSelect').value;if(!quiz)throw Error('Выберите набор.');
@@ -257,7 +257,7 @@ function personalResults(s,final=false){
  const metrics=s.public_stats||{};
  const teams=metrics.teams||s.teams||[],players=metrics.players||[];
  const stats=metrics.question_stats||[];
- const intro=final?'<div class="player-final-metrics"><span>Команд: '+teams.length+'</span><span>Участников: '+(teams.reduce((n,t)=>n+Number(t.members??t.players??0),0))+'</span><span>Вопросов: '+Number(s.total||stats.length||0)+'</span></div>':'';
+ const intro=final?'<div class="player-final-metrics"><span>'+QwizStage.countLabel(teams.length,{one:'команда',few:'команды',many:'команд'})+'</span><span>'+QwizStage.countLabel(teams.reduce((n,t)=>n+Number(t.members??t.players??0),0),{one:'участник',few:'участника',many:'участников'})+'</span><span>'+QwizStage.countLabel(Number(s.total||stats.length||0),{one:'вопрос',few:'вопроса',many:'вопросов'})+'</span></div>':'';
  return '<section class="personal-results'+(final?' player-final-results':'')+'">'+intro+
  '<h2>'+(final?'Рейтинг команд':'Скорость команд')+'</h2>'+
  (teams.length?QwizStage.teams(teams,{full:true,ranked:true}):'<p>Пока нет команд</p>')+

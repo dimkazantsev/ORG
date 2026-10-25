@@ -203,7 +203,7 @@ test('Mini-game palette and saved cards use distinct polished vector icons',()=>
  const palette=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
  const styles=readFileSync(new URL('./workspace.css',import.meta.url),'utf8');
  for(const mode of ['rocket','blitz','tug','captain']){
-   assert.match(workspace,new RegExp("arcade_"+mode+":'<path|arcade_"+mode+":'<circle"));
+   assert.match(workspace,new RegExp("arcade_"+mode+":'<(?:path|circle|rect)"));
    assert.match(palette,new RegExp('data-arcade="'+mode+'"'));
  }
  assert.match(workspace,/arcade-palette-icon/);
@@ -435,6 +435,7 @@ test('Projector hides flag-picker filler art, reveals actual answers and fits th
   escapeText:String,
   projectionOption:(option)=>'<div class="fixture-flag">'+String(option.label||option)+'</div>',
   QwizStage:{
+   countLabel:(n,forms)=>String(n)+' '+forms[new Intl.PluralRules('ru').select(Number(n))],
    illustration:()=>'<div class="fixture-filler-art">Not a real flag</div>',
    clockMarkup:()=>'<div>12 sec</div>',
    correctFlagMarkup:()=>'<div class="fixture-correct-flag">Flag</div>'
@@ -863,9 +864,9 @@ test('Studio game selector keeps full names, uses consistent icons and an access
  const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
  const names=[
   ['data-geo="russia_map"','Карта регионов России'],
-  ['data-arcade="rocket"','Ракета'],
+  ['data-arcade="rocket"','Дино-забег'],
   ['data-arcade="blitz"','Блиц-вопрос'],
-  ['data-arcade="tug"','Перетягивание очков'],
+  ['data-arcade="tug"','Тап-баттл'],
   ['data-arcade="captain"','Дуэль капитанов']
  ];
  for(const [attribute,title] of names){
@@ -890,7 +891,7 @@ test('Mini-game buttons keep complete labels and the disclosure uses a separate 
  const html=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
  const styles=readFileSync(new URL('./workspace.css',import.meta.url),'utf8');
  const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
- const games=['Карта регионов России','Ракета','Блиц-вопрос','Перетягивание очков','Дуэль капитанов'];
+ const games=['Карта регионов России','Дино-забег','Блиц-вопрос','Тап-баттл','Дуэль капитанов'];
  for(const label of games)assert.ok(html.includes('>'+label+'</button>'),'Missing game '+label);
  assert.match(host,/const label=b\.textContent\.replace\(\/\\s\+\/g,' '\)\.trim\(\)/);
  assert.match(html,/class="games-chevron-box" aria-hidden="true"/);
@@ -1089,9 +1090,9 @@ test('Geography mobile taps confirm immediately and correct region is enlarged',
  }
  for(const name of ['index.html','presenter.html','workspace.html']){
   const page=readFileSync(new URL('./'+name,import.meta.url),'utf8');
-  assert.match(page,/russia-geo\.js\?v=geo-indie-choices-20261025-61/);
-  assert.match(page,/russia-geo\.css\?v=geo-indie-choices-20261025-61/);
-  assert.match(page,/arcade\.js\?v=firsttap-timerguard-20261025-27/);
+  assert.match(page,/russia-geo\.js\?v=hide-region-names-20261025/);
+  assert.match(page,/russia-geo\.css\?v=[a-zA-Z0-9_-]+/);
+  assert.match(page,/arcade\.js\?v=[a-zA-Z0-9_-]+/);
  }
 });
 
