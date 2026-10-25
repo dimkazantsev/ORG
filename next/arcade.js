@@ -211,7 +211,7 @@ window.QwizArcade=(()=>{
  async function gameAction(tr,action,tile=null){
   if(tr.closed||tr.gameBusy||!tr.roomId)return;tr.gameBusy=true;
   try{const {data,error}=await tr.client.rpc('qwiz_arcade_play',{p_room:tr.roomId,p_action:action,p_tile:tile});if(error)throw error;
-   if(data?.early)showMessage(tr,'Прыжок слишком ранний. Попытка завершена.',true);
+   if(data?.early){tr.lastJumpTarget=null;showMessage(tr,'Рано! Прыгните ближе к препятствию.');}
    else if(data?.eliminated)showMessage(tr,'Столкновение. Попытка завершена.',true);
    else if(data?.completed)showMessage(tr,'Memory пройдена. Результат зафиксирован.');
    await fetchState(tr);
