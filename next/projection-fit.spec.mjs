@@ -254,3 +254,41 @@ test('Final audience screen shows readable leaders instead of shrinking all 40 p
   expect(box.zoom).toBeGreaterThan(0);
  }
 });
+
+
+test('Question, long variants and answer reveal keep the exact same fixed clock and title anchors',async({page})=>{
+ const flag='https://dimkazantsev.github.io/ORG/next/assets/flags-world/dj.svg';
+ for(const [width,height] of [[1280,720],[1920,1080],[768,1024]]){
+  await page.setViewportSize({width,height});
+  const layouts=[];
+  for(const variant of [
+   {phase:'question',prompt:'Какой стране принадлежит изображённый флаг?',options:['Джибути','Эритрея','Сомали','Кения'],media_url:flag},
+   {phase:'result',prompt:'Какой стране принадлежит изображённый флаг?',options:['Джибути','Эритрея','Сомали','Кения'],media_url:flag,answer:{indices:[0],text:'Джибути',explanation:'Это государственный флаг страны «Джибути».'}},
+   {phase:'question',prompt:'Какому из государств соответствует символ, изображённый на этой иллюстрации?',options:Array.from({length:8},(_,i)=>'Вариант ответа '+(i+1)+': достаточно продолжительное название государства, которое занимает несколько строк')},
+   {phase:'result',prompt:'Какому из государств соответствует символ, изображённый на этой иллюстрации?',options:Array.from({length:8},(_,i)=>'Название '+i),answer:{indices:[2],text:'Достаточно длинное название государства',explanation:'Развёрнутое объяснение государственной символики, особенности истории и причины правильного ответа.'}}
+  ]){
+   await page.evaluate(v=>{
+    ctx.renderKey='';
+    render({code:'A1B2C3D4',phase:v.phase,index:2,total:15,
+      question:{kind:v.media_url?'flag':'single',prompt:v.prompt,options:v.options,media_url:v.media_url},
+      answer:v.answer,ends_at:new Date(Date.now()+17000).toISOString(),
+      teams:[],players:[],screen_settings:{sound_enabled:false,volume:0}});
+   },variant);
+   await page.waitForTimeout(280);
+   const pos=await page.evaluate(()=>{
+    const main=document.querySelector('#projectionMain').getBoundingClientRect();
+    const clock=document.querySelector('.projection-question-only .stage-clock').getBoundingClientRect();
+    const header=document.querySelector('.projection-question-only .projection-topline').getBoundingClientRect();
+    const title=document.querySelector('.projection-question-only h1').getBoundingClientRect();
+    return {mainTop:main.top,clockTop:clock.top,clockRight:clock.right,headerTop:header.top,titleTop:title.top};
+   });
+   layouts.push(pos);
+  }
+  for(const p of layouts.slice(1)){
+   expect(Math.abs(p.clockTop-layouts[0].clockTop),'clock top '+width).toBeLessThanOrEqual(2);
+   expect(Math.abs(p.clockRight-layouts[0].clockRight),'clock right '+width).toBeLessThanOrEqual(2);
+   expect(Math.abs(p.headerTop-layouts[0].headerTop),'round header top '+width).toBeLessThanOrEqual(2);
+   expect(Math.abs(p.titleTop-layouts[0].titleTop),'prompt top '+width).toBeLessThanOrEqual(3);
+  }
+ }
+});
