@@ -1430,3 +1430,22 @@ body:fullscreen .projection-shell{height:100dvh}
 .finale-summary>div>strong{min-width:0;font-size:clamp(24px,4vw,64px);line-height:1.15;overflow-wrap:anywhere}
 .finale-summary>div>span{line-height:1.35;overflow-wrap:anywhere}
 @media(max-width:700px){.projection-round-leaders li>b,.projection-ranking li>b{font-size:clamp(15px,3.5vw,25px)}}
+
+/* TV overscan safety: protect the WHOLE public projector (including header,
+   questions, results, and QR lobby). Some consumer TVs crop 3–5% of the signal.
+   Studio's embedded preview retains its own compact paddings. */
+@media (min-width:761px){
+ body:not(.projection-embedded) #projectionShell{
+  --tv-safe-x:clamp(36px,4.25vw,164px);
+  --tv-safe-y:clamp(24px,3.75dvh,90px);
+  box-sizing:border-box;
+  padding-top:max(var(--tv-safe-y),env(safe-area-inset-top,0px));
+  padding-bottom:max(var(--tv-safe-y),env(safe-area-inset-bottom,0px));
+  padding-left:max(var(--tv-safe-x),env(safe-area-inset-left,0px));
+  padding-right:max(var(--tv-safe-x),env(safe-area-inset-right,0px));
+ }
+ body:not(.projection-embedded) #projectionShell #projectionMain{
+  min-width:0;
+  min-height:0;
+ }
+}
