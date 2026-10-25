@@ -167,6 +167,7 @@ test('Changing to Russia geography never imports stale flag selectors and changi
 
 test('Launch preview distinguishes map mechanics from geography questions and exposes legacy bonus cards',async({page})=>{
  await page.evaluate(()=>{
+  section('rooms');
   state.topics=[{id:'geo',name:'География России'},{id:'flags',name:'Флаги мира'}];
   const input=$('launchBuild');
   input.add(new Option('ОРГ','build-one'));input.value='build-one';
