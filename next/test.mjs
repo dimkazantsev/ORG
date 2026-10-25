@@ -76,7 +76,7 @@ test('Replay of a finished game reuses an empty lobby without corrupting real se
  assert.match(migration,/NOT EXISTS\(SELECT 1 FROM public\.org_next_players/);
  assert.match(migration,/NOT EXISTS\(SELECT 1 FROM public\.org_next_answers/);
  assert.match(migration,/'reused',true/);
- assert.match(migration,/'reused',false/);
+ assert.match(migration,/'reused'',false/);
  assert.doesNotMatch(migration,/DELETE FROM public\.org_next_rooms|DROP TABLE/i);
  assert.match(host,/created\.reused\?/);
 });
