@@ -84,7 +84,7 @@ window.QwizStage=(()=>{
   const url=typeof source==='string'&&/^https:\/\//i.test(source)?source:'';
   const drawing='<svg class="question-art quiz-drawing" viewBox="0 0 640 260" aria-hidden="true"><path d="M95 214c-23-39 10-71 30-99s-2-66 40-78 64 9 97-3 92-8 123 15 73-1 105 19 31 62 49 82-2 62-34 69-375 17-410-5Z" fill="#e8ddfc"/><ellipse cx="320" cy="220" rx="128" ry="12" fill="#d5c4f4"/><path d="m232 65 170-13 17 150-169 13-18-150Z" fill="#fff"/><path d="m232 65 18 150 77-24 75 11 17-150-88 24-99-11Z" fill="none" stroke="#7646cd" stroke-width="5" stroke-linejoin="round"/><path d="m327 191 4-115M267 100l39 7m-35 16 31 6m-28 16 30 5m49-49 36-9m-36 31 39-9m-39 32 42-9" stroke="#b49adf" stroke-width="5" stroke-linecap="round"/><path d="m171 152 5-18 5 18 18 5-18 5-5 18-5-18-18-5 18-5Zm288-87 3-13 4 13 13 4-13 3-4 13-3-13-13-3 13-4Z" fill="#a27adf"/><circle cx="443" cy="185" r="11" fill="#f2bb62"/><circle cx="206" cy="53" r="7" fill="#9165d5"/></svg>';
   const spot=answer?.hotspot,marker=spot?'<span class="answer-hotspot" data-x="'+Math.max(0,Math.min(100,Number(spot.x)))+'" data-y="'+Math.max(0,Math.min(100,Number(spot.y)))+'" data-radius="'+Math.max(0,Math.min(50,Number(spot.radius)))+'" aria-label="Правильная область"></span>':'';
-  return '<figure class="question-frame'+(url?' flag-media-frame':'')+'">'+(url?'':'<div class="frame-orbit" aria-hidden="true"><i></i><i></i></div>')+'<div class="question-picture">'+(content||(url?'<img class="question-art" src="'+esc(url)+'" alt="Иллюстрация к вопросу">':drawing))+marker+'</div><figcaption>'+(url?'Иллюстрация к вопросу':'Время открытий')+'</figcaption></figure>';
+  return '<figure class="question-frame'+(url?' flag-media-frame':'')+'">'+(url?'':'<div class="frame-orbit" aria-hidden="true"><i></i><i></i></div>')+'<div class="question-picture">'+(content||(url?'<img class="question-art" src="'+esc(url)+'" alt="Изображение задания">':drawing))+marker+'</div>'+(url?'':'<figcaption>Время открытий</figcaption>')+'</figure>';
  }
  function hydrateIllustrations(root=document){
   hydrateFlagVisuals(root);
@@ -92,7 +92,7 @@ window.QwizStage=(()=>{
    const picture=img.closest('.question-picture'),marker=picture.querySelector('.answer-hotspot');
    const fit=()=>{if(!marker||!img.naturalWidth)return;const box={width:picture.clientWidth,height:picture.clientHeight},scale=Math.min(box.width/img.naturalWidth,box.height/img.naturalHeight),w=img.naturalWidth*scale,h=img.naturalHeight*scale;
     Object.assign(marker.style,{left:(box.width-w)/2+w*Number(marker.dataset.x)/100+'px',top:(box.height-h)/2+h*Number(marker.dataset.y)/100+'px',width:w*Number(marker.dataset.radius)/50+'px',height:h*Number(marker.dataset.radius)/50+'px'})};
-   img.onload=fit;img.onerror=()=>{const fallback=document.createElement('div');fallback.innerHTML=illustration({});picture.replaceChildren(fallback.querySelector('svg'));picture.closest('figure').querySelector('figcaption').textContent='Иллюстрация недоступна'};
+   img.onload=fit;img.onerror=()=>{const fallback=document.createElement('div');fallback.innerHTML=illustration({});picture.replaceChildren(fallback.querySelector('svg'));(()=>{const caption=picture.closest('figure')?.querySelector('figcaption');if(caption)caption.textContent='Изображение недоступно';})()};
    if(img.complete){if(img.naturalWidth)fit();else img.onerror()}
    if(marker){const observer=new ResizeObserver(()=>{if(picture.isConnected)fit();else observer.disconnect()});observer.observe(picture)}
   }
