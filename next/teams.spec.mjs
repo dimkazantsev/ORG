@@ -276,6 +276,11 @@ test('Captain signup and QR are directly visible on mobile, not hidden in statis
  await expect(page.locator('#playerTeamPanel .captain-qr-image img')).toHaveCount(1);
  const rect=await page.locator('#playerTeamPanel .captain-qr-image').boundingBox();
  expect(rect.width).toBeGreaterThan(230);
+ await page.evaluate(()=>{
+   window.fixture.phase='countdown';
+   QwizTeams.playerPanel(document.getElementById('playerTeamPanel'),window.fixture);
+ });
+ await expect(page.locator('#playerTeamPanel .captain-qr-hero')).toHaveCount(0);
 });
 
 test('Legacy audience also uses one central room QR, never team links before play',async({page})=>{
