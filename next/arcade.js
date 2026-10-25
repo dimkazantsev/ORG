@@ -49,9 +49,9 @@ window.QwizArcade=(()=>{
  }
  function rootMarkup(mode,kind='player'){const m=META[mode];return '<div class="arcade-shell arcade-'+kind+'" data-arcade-root="'+mode+'">'+
   '<div class="arcade-head"><div><span class="arcade-kicker">QWIZ-PARTY · КОМАНДНОЕ ИСПЫТАНИЕ</span><h2>'+escape(m.title)+'</h2></div><span class="arcade-countdown" data-arcade-clock>—</span></div>'+
-  '<p class="arcade-lead">'+escape(m.desc)+'</p><div class="arcade-scene">'+art(mode)+(kind==='player'&&mode==='tug'?'<button type="button" class="arcade-tap-btn arcade-tap-center" data-arcade-tap disabled>'+escape(m.cta)+'</button>':'')+'</div>'+
+  '<p class="arcade-lead">'+escape(m.desc)+'</p><div class="arcade-scene">'+art(mode)+(kind==='player'&&['tug','rocket'].includes(mode)?'<button type="button" class="arcade-tap-btn '+(mode==='tug'?'arcade-tap-center':'arcade-runner-jump-btn')+'" data-arcade-tap disabled>'+escape(m.cta)+'</button>':'')+'</div>'+
   '<div data-arcade-question hidden></div>'+(mode==='captain'&&kind==='player'?'<div class="arcade-memory-info" data-memory-info></div><div class="arcade-memory-board" data-arcade-memory role="group" aria-label="Поле Memory"></div>':'')+'<div class="arcade-ranks" data-arcade-ranks></div>'+
-  (kind==='player'?(mode==='tug'?'':'<button type="button" class="arcade-tap-btn" data-arcade-tap '+(mode==='captain'?'hidden ':'')+'disabled>'+escape(m.cta)+'</button>')+'<span class="arcade-tap-caption" data-arcade-personal>Подключаем игровое время…</span>':'')+
+  (kind==='player'?(['tug','rocket'].includes(mode)?'':'<button type="button" class="arcade-tap-btn" data-arcade-tap '+(mode==='captain'?'hidden ':'')+'disabled>'+escape(m.cta)+'</button>')+'<span class="arcade-tap-caption" data-arcade-personal>Подключаем игровое время…</span>':'')+
   '<div class="arcade-alert" role="status" aria-live="polite" data-arcade-alert>Подключаем результаты…</div><div class="arcade-badges" data-arcade-badges></div><section class="arcade-vote" data-arcade-vote hidden></section></div>';
  }
  function stop(kind){const tr=ui[kind];if(!tr)return;if(tr.interval)clearInterval(tr.interval);if(tr.clock)clearInterval(tr.clock);if(tr.flushTimer)clearTimeout(tr.flushTimer);if(tr.onClick)tr.root?.removeEventListener('click',tr.onClick);tr.closed=true;ui[kind]=null;}
@@ -67,9 +67,6 @@ window.QwizArcade=(()=>{
   }catch(e){showMessage(tr,e.message||'Состояние игры недоступно',true)}finally{tr.fetching=false}
  }
  function showMessage(tr,msg,bad=false){const el=tr.root?.querySelector('[data-arcade-alert]');if(el){el.textContent=msg;el.dataset.error=String(!!bad)}}
- function sceneProgress(tr,v){if(v.mode==='rocket'){const lead=Math.max(0,...(v.teams||[]).map(t=>Number(t.points)||0));const rocket=tr.root.querySelector('[data-rocket-model]');if(rocket){const progress=Math.min(100,lead*7);rocket.style.setProperty('--arcade-progress',progress+'%');rocket.style.setProperty('--arcade-travel',Math.round(progress*1.9)+'px');}}
-  if(v.mode==='tug'){const teams=v.teams||[],first=Number(teams[0]?.points)||0,last=Number(teams.at(-1)?.points)||0,mark=first+last>0?50+40*(first-last)/(first+last):50;const rope=tr.root.querySelector('[data-rope]');if(rope)rope.style.setProperty('--arcade-progress',Math.max(10,Math.min(90,mark))+'%');}
- }
  function promptMarkup(q,allow,shown){if(!q)return '';const images=(q.options||[]).map((o,i)=>{const img=o&&typeof o==='object'&&/^https:\/\/\S+$/.test(o.image_url||'')?'<img class="arcade-choice-image" src="'+escape(o.image_url)+'" alt="Вариант '+(i+1)+'">':'<span>'+escape(typeof o==='string'?o:o?.label||'Флаг')+'</span>';
    return '<button type="button" data-arcade-answer="'+i+'" '+(!allow?'disabled':'')+'><span class="arcade-choice-letter">'+String.fromCharCode(65+i)+'</span>'+img+'</button>'}).join('');
   const figure=/^https:\/\/\S+$/.test(q.media_url||'')?'<img class="arcade-choice-image" style="max-height:140px;max-width:100%" src="'+escape(q.media_url)+'" alt="Флаг для блиц-вопроса">':'';
