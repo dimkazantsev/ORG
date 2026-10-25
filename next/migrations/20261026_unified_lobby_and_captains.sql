@@ -115,14 +115,13 @@ BEGIN
   IF NOT is_host OR r.phase<>'lobby' OR r.team_mode<>'random' THEN RAISE EXCEPTION 'Подтверждает преподаватель в случайном режиме';END IF;
   -- A fresh seeded permutation yields team sizes differing by at most one.
   -- Existing manual placements survive if everyone is already assigned.
-  IF EXISTS(SELECT 1 FROM public.org_next_players WHERE room_id=p_room AND team_id IS NULL) THEN
-   WITH people AS (SELECT id,row_number() OVER(ORDER BY random())-1 AS k
-      FROM public.org_next_players WHERE room_id=p_room),
-    targets AS (SELECT id,row_number() OVER(ORDER BY random())-1 AS k
-      FROM public.org_next_teams WHERE room_id=p_room)
-   UPDATE public.org_next_players p SET team_id=t.id FROM people pp JOIN targets t
-    ON t.k=mod(pp.k,(SELECT count(*) FROM public.org_next_teams WHERE room_id=p_room)) WHERE p.id=pp.id;
-  END IF;
+  -- Preserve teacher drag-and-drop decisions. Allocate only pending members,
+  -- always to a smallest team, choosing randomly between equally small teams.
+  FOR assigned IN SELECT id FROM public.org_next_players WHERE room_id=p_room AND team_id IS NULL ORDER BY random() LOOP
+   SELECT t.id INTO team FROM public.org_next_teams t WHERE t.room_id=p_room
+    ORDER BY (SELECT count(*) FROM public.org_next_players p WHERE p.team_id=t.id),random() LIMIT 1;
+   UPDATE public.org_next_players SET team_id=team WHERE id=assigned;
+  END LOOP;
   UPDATE public.qwiz_lobby_config SET confirmed_at=clock_timestamp() WHERE room_id=p_room;
  ELSE RAISE EXCEPTION 'Неизвестная операция';END IF;
  RETURN public.qwiz_lobby_view(p_room);
@@ -133,6 +132,14 @@ END $lobby_action$;
 DO $patch$
 DECLARE src text;changed text;
 BEGIN
+ SELECT pg_get_functiondef(p.oid) INTO src FROM pg_proc p
+ JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='org_next_create_room' LIMIT 1;
+ IF position('return v_code;' IN src)=0 THEN RAISE EXCEPTION 'Room creator ABI changed';END IF;
+ changed:=replace(src,'return v_code;',
+  'INSERT INTO public.qwiz_lobby_config(room_id) VALUES(v_id) ON CONFLICT(room_id) DO NOTHING;'||
+  E'\n return v_code;');
+ EXECUTE changed;
+
  SELECT pg_get_functiondef(p.oid) INTO src FROM pg_proc p
  JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname='qwiz_prepare_room' LIMIT 1;
  IF position('IF p_teams IS NULL' IN src)=0 OR position('RETURN jsonb_build_object(''code'',room_code' IN src)=0 THEN RAISE EXCEPTION 'Prepare-room ABI changed';END IF;
