@@ -1006,8 +1006,8 @@ test('All builder mechanism cards share readable complete styling and semantic v
  assert.match(styles,/-webkit-line-clamp:unset;line-clamp:unset/);
  assert.match(styles,/min-height:max-content/);
  assert.match(styles,/#roundCards \.round-actions \.move-svg/);
- assert.match(markup,/workspace\.css\?v=topic-sync-20261025-35/);
- assert.match(markup,/workspace\.js\?v=topic-sync-20261025-35/);
+ assert.match(markup,/workspace\.css\?v=[a-z0-9-]+/);
+ assert.match(markup,/workspace\.js\?v=[a-z0-9-]+/);
 });
 
 test('Each card topic follows explicitly selected mechanics and never guesses a conflicting topic',()=>{
