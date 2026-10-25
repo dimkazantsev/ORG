@@ -47,8 +47,39 @@ function signal(event){
  }
 }
 function scheduleRefresh(delay=800){if(ctx.refreshTimer)clearTimeout(ctx.refreshTimer);ctx.refreshTimer=setTimeout(()=>refreshRoom(false),delay)}
-async function refreshRoom(showError=true){if(!ctx.roomCode||ctx.refreshing||!ctx.client)return;
- ctx.refreshing=true;try{const data=await rpc('qwiz_party_state',{p_code:ctx.roomCode});ctx.lastRefresh=Date.now();dataState(data);if(showError){notice('hostNotice','');notice('gameNotice','')}}catch(error){if(showError){notice('hostNotice',error.message,'error');notice('gameNotice',error.message,'error')}}finally{ctx.refreshing=false}}
+async function refreshRoom(showError=true){
+ if(!ctx.roomCode||!ctx.client)return;
+ // Keep one request in flight. Events received during it request one fresh read,
+ // rather than being lost until the next 20-second poll.
+ if(ctx.refreshPromise){ctx.refreshQueued=true;return ctx.refreshPromise;}
+ ctx.refreshing=true;
+ const task=(async()=>{
+  let latest=null;
+  do{
+   ctx.refreshQueued=false;
+   const code=ctx.roomCode;
+   if(!code)break;
+   try{
+    const data=await rpc('qwiz_party_state',{p_code:code});
+    // A slow response from room A must never overwrite room B after a switch.
+    if(code!==ctx.roomCode){ctx.refreshQueued=Boolean(ctx.roomCode);continue;}
+    ctx.lastRefresh=Date.now();dataState(data);latest=data;
+    if(showError){notice('hostNotice','');notice('gameNotice','');}
+   }catch(error){
+    if(code!==ctx.roomCode){ctx.refreshQueued=Boolean(ctx.roomCode);continue;}
+    if(showError){notice('hostNotice',error.message,'error');notice('gameNotice',error.message,'error');}
+   }
+  }while(ctx.refreshQueued&&ctx.roomCode);
+  return latest;
+ })();
+ ctx.refreshPromise=task;
+ try{return await task}
+ finally{
+  ctx.refreshPromise=null;ctx.refreshing=false;
+  // Handle an event arriving at the very end of the promise lifecycle too.
+  if(ctx.refreshQueued&&ctx.roomCode)queueMicrotask(()=>refreshRoom(false));
+ }
+}
 async function joinRoom(event){event.preventDefault();const button=$('joinButton');busy(button,true);notice('joinNotice','Подключение…');
  try{await ensureAuth();const code=$('joinCode').value.trim().toUpperCase();const name=$('joinName').value.trim();const group=$('joinGroup').value.trim();
   if(!/^[A-F0-9]{8}$/.test(code))throw Error('Код комнаты должен содержать восемь символов.');
@@ -437,6 +468,8 @@ function attach(){q('#logoHome').addEventListener('click',home);
  QwizStage.bindFullscreen($('gameFullscreen'));
  $('leaveGame').onclick=async()=>{await QwizStage.exitFullscreen();cleanupRoom();home()};
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ctx.roomCode)scheduleRefresh(200)});
+ window.addEventListener('offline',()=>{if(ctx.roomCode)notice('gameNotice','Нет соединения с игрой. Ваши данные сохраняются; после восстановления связи обновим состояние.','error')});
+ window.addEventListener('online',()=>{if(ctx.roomCode)scheduleRefresh(100)});
  addQuestion();
  setInterval(()=>{if(ctx.roomCode&&!document.hidden)refreshRoom(false)},20000);
  ctx.clock=setInterval(updateClocks,500);
