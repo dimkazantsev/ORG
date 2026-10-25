@@ -51,7 +51,7 @@ window.QwizArcade=(()=>{
   '<div class="arcade-head"><div><span class="arcade-kicker">QWIZ-PARTY · КОМАНДНОЕ ИСПЫТАНИЕ</span><h2>'+escape(m.title)+'</h2></div><span class="arcade-countdown" data-arcade-clock>—</span></div>'+
   '<p class="arcade-lead">'+escape(m.desc)+'</p><div class="arcade-scene">'+art(mode)+(kind==='player'&&['tug','rocket'].includes(mode)?'<button type="button" class="arcade-tap-btn '+(mode==='tug'?'arcade-tap-center':'arcade-runner-jump-btn')+'" data-arcade-tap disabled>'+escape(m.cta)+'</button>':'')+'</div>'+
   '<div data-arcade-question hidden></div>'+(mode==='captain'&&kind==='player'?'<div class="arcade-memory-info" data-memory-info></div><div class="arcade-memory-board" data-arcade-memory role="group" aria-label="Поле Memory"></div>':'')+'<div class="arcade-ranks" data-arcade-ranks></div>'+
-  (kind==='player'?(['tug','rocket'].includes(mode)?'':'<button type="button" class="arcade-tap-btn" data-arcade-tap '+(mode==='captain'?'hidden ':'')+'disabled>'+escape(m.cta)+'</button>')+'<span class="arcade-tap-caption" data-arcade-personal>Подключаем игровое время…</span>':'')+
+  (kind==='player'?(['tug','rocket'].includes(mode)?'':'<button type="button" class="arcade-tap-btn" data-arcade-tap '+(mode==='captain'?'hidden ':'')+'disabled>'+escape(m.cta)+'</button>')+'<span class="arcade-tap-caption" data-arcade-personal>Синхронизация с игровым сервером…</span>':'')+
   '<div class="arcade-alert" role="status" aria-live="polite" data-arcade-alert>Подключаем результаты…</div><div class="arcade-badges" data-arcade-badges></div><section class="arcade-vote" data-arcade-vote hidden></section></div>';
  }
  function stop(kind){const tr=ui[kind];if(!tr)return;if(tr.interval)clearInterval(tr.interval);if(tr.clock)clearInterval(tr.clock);if(tr.flushTimer)clearTimeout(tr.flushTimer);if(tr.onClick)tr.root?.removeEventListener('click',tr.onClick);tr.closed=true;ui[kind]=null;}
@@ -65,7 +65,7 @@ window.QwizArcade=(()=>{
      if(tr.flushTimer){clearTimeout(tr.flushTimer);tr.flushTimer=null;}
    }
    tr.view=data;tr.offset=Date.parse(data.server_now)-Date.now();paint(tr);if(tr.kind==='player')paintWallet(data);
-  }catch(e){showMessage(tr,e.message||'Состояние игры недоступно',true)}finally{tr.fetching=false}
+  }catch(e){const status=tr.root?.querySelector('[data-arcade-personal]');if(status)status.textContent='Связь с серверным таймером прервана. Повторяем подключение…';showMessage(tr,e.message||'Состояние игры недоступно',true)}finally{tr.fetching=false}
  }
  function showMessage(tr,msg,bad=false){const el=tr.root?.querySelector('[data-arcade-alert]');if(el){el.textContent=msg;el.dataset.error=String(!!bad)}}
  function promptMarkup(q,allow,shown){if(!q)return '';const images=(q.options||[]).map((o,i)=>{const img=o&&typeof o==='object'&&/^https:\/\/\S+$/.test(o.image_url||'')?'<img class="arcade-choice-image" src="'+escape(o.image_url)+'" alt="Вариант '+(i+1)+'">':'<span>'+escape(typeof o==='string'?o:o?.label||'Флаг')+'</span>';
