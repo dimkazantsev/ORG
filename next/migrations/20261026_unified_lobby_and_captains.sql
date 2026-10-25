@@ -44,7 +44,9 @@ BEGIN
   'captains_ready',r.team_mode='captain' AND n>0 AND n=claimed,
   'my_captain',pid IS NOT NULL AND EXISTS(SELECT 1 FROM public.qwiz_lobby_captains c WHERE c.room_id=p_room AND c.player_id=pid),
   'captain_team',(SELECT c.team_id FROM public.qwiz_lobby_captains c WHERE c.room_id=p_room AND c.player_id=pid),
-  'can_claim',r.phase='lobby' AND r.team_mode='captain' AND pid IS NOT NULL AND team IS NULL AND claimed<n,
+  'can_claim',r.phase='lobby' AND r.team_mode='captain' AND pid IS NOT NULL AND team IS NULL AND claimed<n AND
+   (SELECT count(*) FROM public.org_next_players firsts WHERE firsts.room_id=p_room AND
+    (firsts.joined_at,firsts.id)<=(SELECT p.joined_at,p.id FROM public.org_next_players p WHERE p.id=pid))<=n,
   'team_members',CASE WHEN pid IS NOT NULL AND EXISTS(SELECT 1 FROM public.qwiz_lobby_captains c WHERE c.room_id=p_room AND c.player_id=pid)
    THEN (SELECT coalesce(jsonb_agg(jsonb_build_object('id',p.id,'name',p.name) ORDER BY p.joined_at),'[]'::jsonb)
     FROM public.org_next_players p WHERE p.room_id=p_room AND p.team_id=team) ELSE '[]'::jsonb END,
@@ -82,6 +84,10 @@ BEGIN
    RETURN public.qwiz_lobby_view(p_room);
   END IF;
   IF EXISTS(SELECT 1 FROM public.org_next_players p WHERE p.id=pid AND p.team_id IS NOT NULL) THEN RAISE EXCEPTION 'Вы уже в команде';END IF;
+  IF (SELECT count(*) FROM public.org_next_players firsts WHERE firsts.room_id=p_room AND
+   (firsts.joined_at,firsts.id)<=(SELECT p.joined_at,p.id FROM public.org_next_players p WHERE p.id=pid))>
+   (SELECT count(*) FROM public.org_next_teams WHERE room_id=p_room) THEN
+   RAISE EXCEPTION 'Капитанами становятся первые участники, вошедшие в комнату';END IF;
   SELECT t.id INTO team FROM public.org_next_teams t WHERE t.room_id=p_room AND NOT EXISTS
    (SELECT 1 FROM public.qwiz_lobby_captains c WHERE c.room_id=p_room AND c.team_id=t.id)
    ORDER BY t.position LIMIT 1;
