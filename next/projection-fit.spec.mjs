@@ -331,3 +331,86 @@ test('All four competitive mini-games have real layered CSS-3D stages; map is un
  }
  await page.evaluate(()=>QwizArcade.stop('screen'));
 });
+
+
+test('Flag artwork is fully visible without an illustration caption in question and reveal',async({page})=>{
+ const imageUrl='https://assets.example.test/flag-pa.svg';
+ await page.route(imageUrl,route=>route.fulfill({status:200,contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600"><rect width="900" height="600" fill="#fff"/><rect width="450" height="300" x="450" fill="#b21e35"/><rect width="450" height="300" y="300" fill="#06366b"/><polygon points="225,60 255,162 155,102 295,102 195,162" fill="#06366b"/><polygon points="675,360 705,462 605,402 745,402 645,462" fill="#b21e35"/></svg>'}));
+ for(const [width,height] of [[1280,720],[1562,880],[1920,1080],[768,1024]]){
+  await page.setViewportSize({width,height});
+  for(const phase of ['question','result']){
+   await page.evaluate(({phase,imageUrl})=>{
+    ctx.renderKey='';
+    render({code:'A1B2C3D4',phase,index:2,total:15,ends_at:new Date(Date.now()+18000).toISOString(),
+     question:{kind:'flag',prompt:'Какой стране принадлежит изображённый флаг?',media_url:imageUrl,
+       options:['Джибути','Панама','Сомали','Кения']},
+     answer:phase==='result'?{text:'Панама',indices:[1],explanation:'Это флаг Панамы.'}:null,
+     teams:[],players:[],screen_settings:{sound_enabled:false,volume:0}});
+   },{phase,imageUrl});
+   const img=page.locator('.projection-question-flow .question-frame .question-picture img');
+   await expect(img).toBeVisible();
+   await img.evaluate(e=>e.decode());
+   await expect.poll(()=>page.evaluate(()=>Number(document.querySelector('.projection-question-only')?.dataset.fittedZoom))).toBeGreaterThan(0);
+   await expect(page.getByText('Иллюстрация к вопросу')).toHaveCount(0);
+   const geometry=await page.evaluate(()=>{
+    const image=document.querySelector('.projection-question-flow .question-frame .question-picture img');
+    const picture=image.closest('.question-picture');
+    const frame=image.closest('.question-frame');
+    const viewport=document.querySelector('.projection-question-viewport');
+    const rect=e=>{const b=e.getBoundingClientRect();return {left:b.left,right:b.right,top:b.top,bottom:b.bottom,width:b.width,height:b.height}};
+    return {image:rect(image),picture:rect(picture),frame:rect(frame),viewport:rect(viewport),
+      fit:getComputedStyle(image).objectFit,overflow:getComputedStyle(picture).overflow};
+   });
+   expect(geometry.fit).toBe('contain');
+   expect(geometry.image.width).toBeGreaterThan(90);
+   expect(geometry.image.height).toBeGreaterThan(50);
+   for(const bounds of [geometry.picture,geometry.frame,geometry.viewport]){
+    expect(geometry.image.top,phase+' image top '+width).toBeGreaterThanOrEqual(bounds.top-3);
+    expect(geometry.image.bottom,phase+' image bottom '+width).toBeLessThanOrEqual(bounds.bottom+3);
+    expect(geometry.image.left,phase+' image left '+width).toBeGreaterThanOrEqual(bounds.left-3);
+    expect(geometry.image.right,phase+' image right '+width).toBeLessThanOrEqual(bounds.right+3);
+   }
+   expect(geometry.overflow).not.toBe('hidden');
+  }
+ }
+});
+
+
+test('Flag choices and the correct flag stay inside their cards without clipping',async({page})=>{
+ const imageUrl='https://assets.example.test/flag-pa.svg';
+ await page.route('https://assets.example.test/**',route=>route.fulfill({status:200,contentType:'image/svg+xml',
+  body:'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600"><rect width="900" height="600" fill="#fff"/><rect width="450" height="300" x="450" fill="#b21e35"/><rect width="450" height="300" y="300" fill="#06366b"/><polygon points="225,60 255,162 155,102 295,102 195,162" fill="#06366b"/></svg>'}));
+ for(const [width,height] of [[1280,720],[1920,1080],[768,1024]]){
+  await page.setViewportSize({width,height});
+  for(const phase of ['question','result']){
+   await page.evaluate(({phase,imageUrl})=>{
+    ctx.renderKey='';
+    render({code:'A1B2C3D4',phase,index:1,total:10,ends_at:new Date(Date.now()+25000).toISOString(),
+     question:{kind:'flag',prompt:'Выберите флаг государства Панама',options:[
+       {image_url:imageUrl},{image_url:imageUrl},{image_url:imageUrl},{image_url:imageUrl}]},
+     answer:phase==='result'?{indices:[0],text:'Панама'}:null,teams:[],
+     screen_settings:{sound_enabled:false,volume:0}});
+   },{phase,imageUrl});
+   const selector=phase==='question'?'.projection-public-options .flag-choice-art':'.projection-answer-reveal .correct-flag-art img';
+   await expect(page.locator(selector).first()).toBeVisible();
+   await expect.poll(()=>page.locator(selector).first().evaluate(img=>img.naturalWidth),{timeout:12000}).toBeGreaterThan(0);
+   await expect.poll(()=>page.evaluate(()=>Number(document.querySelector('.projection-question-only')?.dataset.fittedZoom))).toBeGreaterThan(0);
+   const boxes=await page.locator(selector).evaluateAll((images,phase)=>images.map(img=>{
+    const r=img.getBoundingClientRect();
+    const parent=img.closest(phase==='question'?'.projection-option':'.correct-flag-art');
+    const p=parent.getBoundingClientRect();
+    return {image:{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height},
+      parent:{left:p.left,right:p.right,top:p.top,bottom:p.bottom},fit:getComputedStyle(img).objectFit};
+   }),phase);
+   for(const b of boxes){
+    expect(b.fit).toBe('contain');
+    expect(b.image.width).toBeGreaterThan(35);
+    expect(b.image.height).toBeGreaterThan(20);
+    expect(b.image.left).toBeGreaterThanOrEqual(b.parent.left-3);
+    expect(b.image.right).toBeLessThanOrEqual(b.parent.right+3);
+    expect(b.image.top).toBeGreaterThanOrEqual(b.parent.top-3);
+    expect(b.image.bottom).toBeLessThanOrEqual(b.parent.bottom+3);
+   }
+  }
+ }
+});
