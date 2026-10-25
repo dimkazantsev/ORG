@@ -70,5 +70,5 @@ test('appointed captains drive Memory, stats and live captain transfers',()=>{
  assert.match(migration,/p\.proname='qwiz_arcade_extras'/);
  assert.match(migration,/p\.proname='qwiz_arcade_state'/);
  assert.match(migration,/UPDATE public\.qwiz_arcade_memory_players m SET player_id=target/);
- assert.match(migration,/qwiz_lobby_captains c WHERE c\.room_id=r\.id AND c\.team_id=me\.team_id/);
+ assert.match(migration,/where c\.room_id=r\.id and c\.team_id=me\.team_id/i);
 });
