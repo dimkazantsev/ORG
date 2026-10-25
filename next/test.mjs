@@ -86,6 +86,7 @@ test('Hidden unset bonus cards and maps without selected mechanics cannot compil
  const html=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
  assert.match(migration,/Unconfigured arcade card must not be scheduled/);
  assert.match(migration,/v_card\.card_type IN \('bonus','duel'\)/);
+ assert.match(migration,/v_card\.card_type IN \('team_stats','player_stats'\)/);
  assert.match(migration,/geo_modes/);
  assert.match(migration,/CONTINUE/);
  assert.match(host,/function previewLaunchBuild\(/);
