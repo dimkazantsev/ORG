@@ -11,7 +11,7 @@ async function projector(page,data){
 }
 async function workspace(page){
  await page.route('https://cdn.jsdelivr.net/**',r=>r.fulfill({contentType:'application/javascript',body:
- 'window.savedBuild=null;window.actions=[];window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:{user:{id:"host"}}}}),signOut:async()=>({})},rpc:async(name,args)=>{window.actions.push([name,args]);if(name==="org_quiz_is_admin_check")return {data:true};if(name==="qwiz_studio"&&args.p_action==="overview")return {data:{topics:[],builds:[],total_questions:0}};if(name==="qwiz_studio"&&args.p_action==="questions")return {data:{items:[],total:0}};if(name==="qwiz_studio"&&args.p_action==="build_save"){window.savedBuild=args.p_input;return {data:{id:"saved"}}}if(name==="qwiz_host_rooms")return {data:[]};if(name==="qwiz_party_state")return {data:window.fixture};if(name==="qwiz_party_control"){window.fixture={...window.fixture,phase:window.fixture.phase==="question"?"result":"question",ends_at:new Date(Date.now()+10000).toISOString()};return {data:window.fixture.phase}}return {data:{items:[],total:0}}},channel:()=>({on(){return this},subscribe(){return this}}),removeChannel:()=>{}})};'}));
+ 'window.savedBuild=null;window.actions=[];window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:{user:{id:"host"}}}}),signOut:async()=>({})},rpc:async(name,args)=>{window.actions.push([name,args]);if(name==="org_quiz_is_admin_check")return {data:true};if(name==="qwiz_studio"&&args.p_action==="overview")return {data:{topics:[],builds:[],total_questions:0}};if(name==="qwiz_studio"&&args.p_action==="questions")return {data:{items:[],total:0}};if(name==="qwiz_studio"&&args.p_action==="build_save"){window.savedBuild=args.p_input;return {data:{id:"saved"}}}if(name==="qwiz_host_rooms")return {data:[]};if(name==="qwiz_party_state")return {data:window.fixture};if(name==="qwiz_party_control_checked"){window.fixture={...window.fixture,phase:window.fixture.phase==="question"?"result":"question",ends_at:new Date(Date.now()+10000).toISOString()};return {data:window.fixture.phase}}return {data:{items:[],total:0}}},channel:()=>({on(){return this},subscribe(){return this}}),removeChannel:()=>{}})};'}));
  await page.goto(base+'workspace.html');await expect(page.locator('#connText')).toHaveAttribute('data-state','ready');
 }
 test('Question screen remains readable without leaking team standings or fallback decorations',async({page})=>{
@@ -137,9 +137,9 @@ test('Final card stays last and opens settings only on double click',async({page
  await expect(page.locator('#cardRoundSettings')).toBeHidden();
 });
 test('Moderator Next is available in question and answer and uses the protected RPC',async({page})=>{
- await workspace(page);await page.evaluate(s=>{window.fixture={...s,room_id:'room',players:[],teams:[]};state.roomCode=s.code;state.room=window.fixture;document.getElementById('liveConsole').hidden=false;section('rooms');renderLive(window.fixture)},state());
+ await workspace(page);await page.evaluate(s=>{window.fixture={...s,room_id:'room',control_revision:'revision-1',players:[],teams:[]};state.roomCode=s.code;state.room=window.fixture;document.getElementById('liveConsole').hidden=false;section('rooms');renderLive(window.fixture)},state());
  await expect(page.locator('#liveNext')).toBeVisible();await expect(page.locator('#liveNext')).toContainText('Далее');await page.locator('#liveNext').click();await expect(page.locator('#livePhase')).toHaveText('Разбор ответа');await expect(page.locator('#liveNext')).toBeVisible();
- expect(await page.evaluate(()=>window.actions.some(([name,args])=>name==='qwiz_party_control'&&args.p_action==='next'))).toBe(true);
+ expect(await page.evaluate(()=>window.actions.some(([name,args])=>name==='qwiz_party_control_checked'&&args.p_action==='next'&&args.p_revision==='revision-1'))).toBe(true);
 });
 test('Broken illustration still leaves a drawing in the moving frame',async({page})=>{
  const s=state();s.question.illustration_url='https://assets.example.org/missing.svg';await page.route('https://assets.example.org/**',r=>r.fulfill({status:404,body:''}));await projector(page,s);await expect(page.locator('.question-picture svg')).toBeVisible();await expect(page.locator('.question-frame figcaption')).toHaveText('Иллюстрация недоступна');
@@ -231,13 +231,13 @@ test('Projector processes a phase event that arrives during a slow state request
 test('Moderator ignores a double tap while its first server control is pending',async({page})=>{
  await workspace(page);
  await page.evaluate(s=>{
-  window.fixture={...s,room_id:'room',players:[],teams:[]};
+  window.fixture={...s,room_id:'room',control_revision:'revision-1',players:[],teams:[]};
   state.roomCode=s.code;state.room=window.fixture;
   document.getElementById('liveConsole').hidden=false;section('rooms');renderLive(window.fixture);
   window.controlCalls=0;
   const oldRpc=state.db.rpc.bind(state.db);
   state.db.rpc=(name,args)=>{
-   if(name==='qwiz_party_control'){
+   if(name==='qwiz_party_control_checked'){
     window.controlCalls++;
     return new Promise(resolve=>{window.finishFirstControl=()=>resolve({data:{phase:'result'},error:null});});
    }
