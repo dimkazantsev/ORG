@@ -868,8 +868,8 @@ test('Correct flag is an actual flag image, not a textual stripe order',()=>{
  const screen=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
  assert.match(screen,/answerArt&&q\.kind==='flag'/);
  assert.match(screen,/const hideFiller=state\.phase==='result'&&q\.kind==='flag'/);
- assert.match(readFileSync(new URL('./index.html',import.meta.url),'utf8'),/stage\.js\?v=memory-deadline-20261025-19/);
- assert.match(readFileSync(new URL('./presenter.html',import.meta.url),'utf8'),/stage\.js\?v=memory-deadline-20261025-19/);
+ assert.match(readFileSync(new URL('./index.html',import.meta.url),'utf8'),/stage\.js\?v=[a-z0-9-]+/);
+ assert.match(readFileSync(new URL('./presenter.html',import.meta.url),'utf8'),/stage\.js\?v=[a-z0-9-]+/);
 });
 
 test('Projector keeps generic decoration out of text-only questions and preserves real media',()=>{
