@@ -102,6 +102,8 @@ async function refreshRoom(showError=true){
    if(!code)break;
    try{
     const data=await rpc('qwiz_party_state',{p_code:code});
+    // A response that arrived during a network outage is not trusted.
+    if(!navigator.onLine){updateConnectionHealth(false);ctx.refreshQueued=false;break;}
     // A slow response from room A must never overwrite room B after a switch.
     if(code!==ctx.roomCode){ctx.refreshQueued=Boolean(ctx.roomCode);continue;}
     ctx.lastRefresh=Date.now();dataState(data);updateConnectionHealth(true);latest=data;
