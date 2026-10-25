@@ -1089,8 +1089,8 @@ test('Room preparation reuses a safe empty lobby and never enables unselected ma
  const sql=readFileSync(new URL('./migrations/20261025_mechanics_and_reused_lobby_fail_closed.sql',import.meta.url),'utf8');
  assert.match(sql,/Map modes must be selected explicitly/);
  assert.match(sql,/raise exception ''Для карты России выберите механики/);
- assert.match(sql,/jsonb_array_elements\(run\.tasks\)/);
- assert.match(sql,/modes \? \(old_task->>''mode''\)/);
+ assert.match(sql,/jsonb_array_elements\(run\.tasks\) as old_task\(value\)/);
+ assert.match(sql,/modes \? \(old_task\.value->>''mode''\)/);
  assert.match(sql,/Некорректная механика карты России/);
  assert.match(sql,/cardinality\(candidate\.neighbors\)>0/);
  assert.match(sql,/candidate\.flag is not null/);
