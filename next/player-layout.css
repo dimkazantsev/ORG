@@ -468,25 +468,33 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
 @media(prefers-reduced-motion:reduce){.round-intro-symbol .round-flag-sculpture .flag-sculpture-cloth{animation:none}}
 
 
-/* Each participant sees their own placement without scrolling through a long roster. */
+/* Personal round metrics: never split a numeric score into vertical digits. */
 .round-self-summary{
- display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,155px),1fr));
- gap:clamp(9px,1.7vw,16px);margin:0;
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+ gap:clamp(9px,1.7vw,16px);margin:0;min-width:0;
 }
 .round-self-summary>div{
- display:grid;grid-template-columns:auto auto;column-gap:8px;align-items:baseline;
- padding:clamp(13px,2dvh,19px);
+ display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+ gap:4px;min-width:0;padding:clamp(10px,2dvh,18px);
  border-radius:16px;background:linear-gradient(145deg,#f0e7ff,#fff 80%);
  border:1px solid #d7c3f4;box-shadow:0 8px 22px #6943a51a;
 }
 .round-self-summary span{
- grid-column:1/-1;color:#7853a6;font-size:clamp(10px,1.7dvh,13px);
- font-weight:850;letter-spacing:.045em;overflow-wrap:anywhere;
+ display:block;max-width:100%;min-width:0;color:#7853a6;
+ font-size:clamp(10px,1.7dvh,13px);font-weight:850;letter-spacing:.02em;
+ overflow-wrap:break-word;
 }
-.round-self-summary strong{font-size:clamp(26px,5.5dvh,48px);font-weight:900;line-height:1.13;color:#6033bf}
-.round-self-summary small{font-size:clamp(11px,1.7dvh,14px);color:#705b8b}
+.round-self-summary strong{
+ display:block;min-width:0;max-width:100%;white-space:nowrap;word-break:normal;
+ overflow-wrap:normal;font-variant-numeric:tabular-nums;
+ font-size:clamp(24px,7vw,42px);font-weight:900;line-height:1.14;color:#6033bf;
+}
+.round-self-summary small{
+ display:block;min-width:0;max-width:100%;font-size:clamp(11px,1.7dvh,14px);
+ color:#705b8b;overflow-wrap:break-word;
+}
+@media(max-width:380px){.round-self-summary{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:390px){.round-self-summary>div{padding:11px}}
-
 
 /* Compact landscape: long single-column flag options remain fully inside the
    question surface without reducing the minimum 44px touch area. */
