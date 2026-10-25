@@ -138,7 +138,7 @@ BEGIN
   'if p_team is not null AND EXISTS(SELECT 1 FROM public.qwiz_lobby_config c WHERE c.room_id=r.id)'||
   ' AND (r.team_mode=''random'' AND (SELECT confirmed_at FROM public.qwiz_lobby_config WHERE room_id=r.id) IS NULL'||
   ' OR r.team_mode=''captain'' AND (SELECT count(*) FROM public.qwiz_lobby_captains WHERE room_id=r.id)<>'||
-  ' (SELECT count(*) FROM public.org_next_teams WHERE room_id=r.id))) THEN'||
+  ' (SELECT count(*) FROM public.org_next_teams WHERE room_id=r.id)) THEN'||
   ' RAISE EXCEPTION ''Приглашения команд ещё не активированы'';END IF;'||E'\n'||
   ' if p_team is not null and not exists(select 1 from public.org_next_teams');
  EXECUTE changed;
