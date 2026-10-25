@@ -687,7 +687,9 @@ test('Round editor filters flags by twelve ready mechanics',async({page})=>{
  await expect(page.locator('#cardModesDetails')).toHaveAttribute('open','');
  await expect(page.locator('#cardFlagModes [data-card-mode]')).toHaveCount(12);
  await expect(page.locator('#cardFlagModes [data-card-mode]:not(:disabled)')).toHaveCount(12);
- await expect(page.locator('#cardFlagModes [data-card-mode]:checked')).toHaveCount(12);
+ await expect(page.locator('#cardFlagModes [data-card-mode]:checked')).toHaveCount(0);
+ await page.locator('[data-card-mode="country"]').check();
+ await page.locator('[data-card-mode="similar"]').check();
  await page.locator('[data-card-mode="picker"]').uncheck();
  await page.locator('[data-card-mode="colors"]').uncheck();
  await page.locator('[data-card-mode="symbols"]').uncheck();
