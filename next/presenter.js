@@ -250,7 +250,7 @@ function questionScene(state){
  const choices=Array.isArray(q.options)?q.options:[];
  const longChoice=choices.some(v=>String(typeof v==='object'?(v?.label||''):v).length>72);
  const publicChoices=choices.length
-  ?'<div class="projection-options projection-public-options'+(longChoice?' has-long-options':'')+'" role="list" data-count="'+choices.length+'">'+
+  ?'<div class="projection-options projection-public-options'+(longChoice?' has-long-options':'')+'" role="list" data-count="'+choices.length+'"'+(state.phase==='question'&&q.flag_memory?' data-memory-answer':'')+'>'+
    choices.map((option,i)=>'<div class="projection-option" role="listitem"><span class="letter" aria-hidden="true">'+String.fromCharCode(65+i)+'</span>'+projectionOption(option,i)+'</div>').join('')+
    '</div>'
   :'<div class="projection-question-instruction">'+
