@@ -525,7 +525,7 @@ function saveCard(event){event.preventDefault();const c=state.cards[state.editin
    $('cardTopic').value=geoTopic.id;
   }
  if(ordinaryGeo&&!geoSelected.length){const first=$('cardGeoQuestionModes').querySelector('input');first?.setCustomValidity('Выберите административный центр и/или федеральный округ');first?.reportValidity();first?.addEventListener('change',()=>first.setCustomValidity(''),{once:true});return;}
- if(c.type==='round'&&c.settings?.arcade_mode!=='russia_map'&&!geography&&!selected.length){
+ if(c.type==='round'&&c.settings?.arcade_mode!=='russia_map'&&!geography&&!!$('cardTopic').value&&!selected.length){
   const first=$('cardFlagModes').querySelector('[data-card-mode]:not(:disabled)');
   first?.setCustomValidity('Выберите хотя бы одну доступную механику');first?.reportValidity();
   first?.addEventListener('change',()=>first.setCustomValidity(''),{once:true});return;
