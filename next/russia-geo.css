@@ -110,3 +110,35 @@
 .geo-game .geo-answer-feedback{font-size:clamp(14px,3.9vw,19px);padding:14px 16px;line-height:1.4}
 @keyframes geo-confirm-appear{from{opacity:.2;transform:translateY(8px)}to{opacity:1;transform:none}}
 @media(prefers-reduced-motion:reduce){.geo-game .geo-confirm:not([hidden]){animation:none}}
+
+/* First-tap response: instantly visible request state, with no accidental second input. */
+.geo-game .geo-options .geo-option-pending{
+ border:2px solid #9561e7;
+ background:#eee4ff;
+ color:#532ba2;
+ box-shadow:inset 0 0 0 1px #cbb5f4;
+ opacity:1;
+}
+.geo-game .geo-options button:disabled.geo-option-pending{opacity:1}
+.geo-game .geo-confirm[aria-busy="true"]{
+ opacity:1;background:#64517d;border-color:#64517d;
+ cursor:progress;
+}
+.geo-game .geo-map-svg .geo-region.geo-focus{
+ fill:#7541de;
+ stroke:#3d207b;
+ stroke-width:3.5;
+ filter:drop-shadow(0 0 3px #5627ab70);
+}
+.geo-game .geo-map-svg .geo-region.geo-correct-answer{
+ fill:#2eb875!important;
+ stroke:#0a713f!important;
+ stroke-width:4.5!important;
+ filter:drop-shadow(0 0 5px #13834f90);
+}
+.geo-game .geo-map-frame{scroll-margin-block:18px}
+.geo-game .geo-answer-feedback,.geo-game .geo-option-correct{scroll-margin-block:35vh}
+@media(prefers-reduced-motion:reduce){
+ .geo-game .geo-map-svg .geo-region.geo-focus,
+ .geo-game .geo-map-svg .geo-region.geo-correct-answer{filter:none}
+}

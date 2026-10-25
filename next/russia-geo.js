@@ -40,6 +40,23 @@
    }).catch(e=>{loadPromise=null;throw e});
   return loadPromise;
  }
+ // Centre the selected region in a readable viewport, including very small subjects.
+ function regionViewBox(regionId){
+  const g=geometry?.find(item=>String(item.id)===String(regionId));
+  if(!g)return null;
+  const [bx,by,bw,bh]=g.box;
+  const w=Math.min(960,Math.max(135,bw*1.45,bh*1120/480*1.45));
+  const h=w*480/1120;
+  const cx=bx+bw/2,cy=by+bh/2;
+  return [Math.max(0,Math.min(1120-w,cx-w/2)),Math.max(0,Math.min(480-h,cy-h/2)),w,h]
+   .map(n=>+n.toFixed(2)).join(' ');
+ }
+ function revealTarget(t,selector){
+  const node=t.root?.querySelector(selector);
+  if(!node||!node.isConnected)return;
+  const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  node.scrollIntoView?.({block:'center',inline:'nearest',behavior:reduced?'instant':'smooth'});
+ }
  function mapMarkup(active=null,interactive=false,silhouette=false){
   if(!geometry)return '<div class="geo-map-loading">Загружаем карту субъектов России…</div>';
   if(silhouette){
@@ -85,7 +102,7 @@
    const q=feedbackActive?(t.revealQuestion||v.question):v.question,done=!q||(!v.open&&!feedbackActive);
    const key=[v.index,q?.mode,q?.name,q?.region,feedbackActive].join(':');
    const taskKey=[v.index,q?.mode,q?.name,q?.region].join(':');
-   if(t.taskKey!==undefined&&t.taskKey!==taskKey&&!feedbackActive){t.selectedRegion=null;t.message='';}
+   if(t.taskKey!==undefined&&t.taskKey!==taskKey&&!feedbackActive){t.selectedRegion=null;t.confirmRevealed=false;t.message='';}
    if(!feedbackActive)t.taskKey=taskKey;
    if(t.renderKey===key&&root.querySelector('.geo-game')){
      const time=root.querySelector('.geo-footer>span');if(time)time.textContent='Осталось '+Math.max(0,v.remaining)+' сек.';
@@ -94,6 +111,11 @@
    t.renderKey=key;
    const oldSvg=root.querySelector('.geo-map-frame .geo-map-svg');
    if(oldSvg&&!oldSvg.classList.contains('geo-silhouette'))t.zoomBox=oldSvg.getAttribute('viewBox');
+   // A new "find this region" task must not inherit the previous answer's zoom.
+   if(t.viewportTaskKey!==taskKey){
+     t.viewportTaskKey=taskKey;
+     if(q?.mode==='locate'&&!feedbackActive)t.zoomBox=null;
+   }
   let hint='';
   if(q?.mode==='detective')hint='<div class="geo-clues"><span>Подсказка 1: '+esc(q.region_type)+'</span><span>Подсказка 2: '+esc(q.district)+'</span><span>Подсказка 3: центр — '+esc(q.capital)+'</span></div>';
   const img=q?.mode==='flag'&&q.flag?'<img class="geo-flag" loading="lazy" decoding="async" alt="Флаг субъекта России" src="https://raw.githubusercontent.com/russian-flags/regions/3c411c7b305c678c49798cc610538c66108adbde/assets/'+encodeURIComponent(q.flag)+'/index.svg">':'';
@@ -106,7 +128,7 @@
    (showMap?(t.mapError?'<div class="geo-map-loading">Не удалось загрузить карту. <button type="button" data-geo-map-retry>Повторить загрузку</button></div>':(geometry&&qmode==='silhouette'?mapMarkup(q.region,false,true):mapMarkup(qmode==='identify'?q.region:null,interactive&&!feedbackActive))):'')+
    (showMap&&qmode!=='silhouette'?'<div class="geo-map-toolbar" aria-label="Масштаб карты"><button type="button" data-geo-zoom="in" aria-label="Увеличить">＋</button><button type="button" data-geo-zoom="out" aria-label="Уменьшить">−</button><button type="button" data-geo-zoom="reset">Вся карта</button></div>':'')+
    (interactive?'<p class="geo-tip">Один раз нажмите на субъект, проверьте выделение и нажмите «Подтвердить выбор». Карту можно перемещать пальцем и двумя пальцами изменять масштаб.</p>'+
-    '<button type="button" class="geo-confirm" data-geo-confirm '+(!t.selectedRegion?'hidden disabled':'')+'>'+ (t.selectedRegion?'Подтвердить выбранный регион':'Подтвердить выбранный регион')+'</button>':options(q,t,feedbackActive)))+
+    '<button type="button" class="geo-confirm" data-geo-confirm '+(!t.selectedRegion||feedbackActive?'hidden disabled':'')+'>Подтвердить</button>':options(q,t,feedbackActive)))+
    '<p class="geo-message" role="status" aria-live="polite">'+esc(t.message||'')+'</p>'+
    '<div class="geo-footer"><span>Осталось '+v.remaining+' сек.</span><small>Результат каждого игрока индивидуален</small></div></section>';
   const nextSvg=root.querySelector('.geo-map-frame .geo-map-svg');
@@ -121,12 +143,26 @@
      }
      if(t.zoomBox)nextSvg.setAttribute('viewBox',t.zoomBox);
      if(t.selectedRegion&&!feedbackActive)nextSvg.querySelectorAll('.geo-region').forEach(p=>p.classList.toggle('geo-selected',p.dataset.region===t.selectedRegion));
-     if(feedbackActive&&t.lastAnswer.correct_region_id){
+     const correctId=feedbackActive?(t.lastAnswer.correct_region_id||(qmode==='identify'?q?.region:null)):null;
+     if(correctId){
        nextSvg.querySelectorAll('[data-region]').forEach(n=>{
-         if(n.dataset.region===t.lastAnswer.correct_region_id)n.classList.add('geo-correct-answer');
+         if(String(n.dataset.region)===String(correctId))n.classList.add('geo-correct-answer');
          else if(n.dataset.region===t.lastAnswer.selected_region_id)n.classList.add('geo-wrong-answer');
        });
      }
+     const focusId=correctId||(qmode==='identify'&&!feedbackActive?q?.region:null);
+     const focusKey=focusId?taskKey+':'+(feedbackActive?'answer:':'question:')+focusId:null;
+     if(focusId&&t.focusKey!==focusKey){
+       const focusBox=regionViewBox(focusId);
+       if(focusBox){
+         t.focusKey=focusKey;t.zoomBox=focusBox;nextSvg.setAttribute('viewBox',focusBox);
+         requestAnimationFrame(()=>{if(!t.closed&&t.focusKey===focusKey)revealTarget(t,'.geo-map-frame')});
+       }
+     }
+   }
+   if(feedbackActive&&!t.lastAnswer.correct_region_id&&t.feedbackScrollKey!==key){
+     t.feedbackScrollKey=key;
+     requestAnimationFrame(()=>{if(!t.closed)revealTarget(t,t.root.querySelector('.geo-option-correct')?'.geo-option-correct':'.geo-answer-feedback')});
    }
    if(showMap&&!geometry&&!done&&!t.mapPending&&!t.mapError){t.mapPending=true;loadMap().then(()=>{t.mapPending=false;t.renderKey=null;roundState(t)}).catch(e=>{t.mapPending=false;t.mapError=true;t.renderKey=null;t.message='Геометрия недоступна: '+e.message;roundState(t)})}
  }
@@ -138,15 +174,21 @@
    if(error)throw error;
    if(answer!==null&&data.last_answer){
      t.revealQuestion=t.view?.question;
-     t.lastAnswer=data.last_answer;t.feedbackUntil=Date.now()+3800;
+     t.lastAnswer=data.last_answer;t.feedbackUntil=Date.now()+5500;
      setTimeout(()=>{if(!t.closed&&Date.now()>=t.feedbackUntil){
        t.lastAnswer=null;t.revealQuestion=null;t.renderKey=null;roundState(t);
-     }},3850);
+     }},5550);
    }
    t.view=data;
    t.message=answer===null?'':data.last_correct?'Верно! +100 очков':'Нет, этот ответ неверный.';
    roundState(t);
-  }catch(e){t.message=e.message||'Нет связи';if(t.root)t.root.innerHTML='<div class="geo-wait">'+esc(t.message)+'</div>'}
+  }catch(e){
+    t.message=e.message||'Нет связи. Попробуйте ещё раз.';
+    const notice=t.root?.querySelector('.geo-message');
+    if(notice)notice.textContent=t.message;
+    const buttons=t.root?.querySelectorAll('[data-geo-answer], [data-geo-confirm]');
+    buttons?.forEach(button=>{button.disabled=false;button.removeAttribute('aria-busy');button.classList.remove('geo-option-pending')});
+  }
   finally{t.busy=false}
  }
  function bindZoom(root){
@@ -183,6 +225,10 @@
   if(button){button.disabled=false;button.hidden=false;button.textContent='Подтвердить: '+(node.getAttribute('aria-label')||'регион');button.setAttribute('aria-label','Подтвердить выбранный регион');}
   t.message='Регион выбран. Нажмите «Подтвердить».';
   const label=t.root.querySelector('.geo-message');if(label)label.textContent=t.message;
+  if(button&&!t.confirmRevealed){
+    t.confirmRevealed=true;
+    requestAnimationFrame(()=>{if(!t.closed&&button.isConnected)revealTarget(t,'[data-geo-confirm]')});
+  }
   return true;
  }
  function mountPlayer(root,s,ctx){
@@ -190,7 +236,7 @@
   const key=s.code+':player',existing=sessions.get(key);
   if(existing&&!existing.closed&&existing.root===root)return true;
   stop('player');
-  const t={root,client:ctx.client||ctx.db,roomId:s.room_id,kind:'player',closed:false,view:null,busy:false,message:'',mapPending:false,pointers:new Map(),suppressUntil:0,zoomBox:null,selectedRegion:null,lastAnswer:null,feedbackUntil:0,revealQuestion:null,renderKey:null,gestureMoved:false};sessions.set(key,t);
+  const t={root,client:ctx.client||ctx.db,roomId:s.room_id,kind:'player',closed:false,view:null,busy:false,message:'',mapPending:false,pointers:new Map(),suppressUntil:0,zoomBox:null,selectedRegion:null,lastAnswer:null,feedbackUntil:0,revealQuestion:null,renderKey:null,gestureMoved:false,focusKey:null,confirmRevealed:false};sessions.set(key,t);
   root.innerHTML='<section class="geo-game"><h2>Карта России</h2><p>Готовим вашу индивидуальную карту…</p></section>';
   t.onClick=e=>{
    if(e.target.closest('[data-geo-map-retry]')){t.mapError=false;t.message='Повторяем загрузку карты…';roundState(t);return}
@@ -206,19 +252,33 @@
      x=Math.max(0,Math.min(1120-nw,x+(w-nw)/2));y=Math.max(0,Math.min(480-nh,y+(h-nh)/2));w=nw;h=nh}
     t.zoomBox=[x,y,w,h].join(' ');svg.setAttribute('viewBox',t.zoomBox);return;
    }
-   if(Date.now()<t.suppressUntil||Date.now()<t.feedbackUntil||t.pointers.size)return;
-   if(Date.now()<(t.regionPointerSelectedUntil||0)&&e.target.closest('[data-region]'))return;
-   if(e.target.closest('[data-geo-confirm]')){if(t.selectedRegion&&!t.busy&&t.view?.open)fetchView(t,t.selectedRegion);return;}
-   const b=e.target.closest('[data-geo-answer],[data-region]');if(!b||!t.view?.open||t.busy||!t.view?.question)return;
-   const selected=b.dataset.geoAnswer||b.dataset.region;
-   if(b.dataset.region&&t.view.question.mode!=='locate')return;
-   if(b.dataset.region){selectRegion(t,b);return;}
+   if(Date.now()<t.feedbackUntil||t.busy)return;
+   // Map dragging suppression never blocks an ordinary answer or Confirm button.
+   const confirm=e.target.closest('[data-geo-confirm]');
+   if(confirm){
+     if(t.selectedRegion&&t.view?.open&&!confirm.disabled){
+       confirm.disabled=true;confirm.setAttribute('aria-busy','true');
+       confirm.textContent='Проверяем…';fetchView(t,t.selectedRegion);
+     }
+     return;
+   }
+   const b=e.target.closest('[data-geo-answer],[data-region]');
+   if(!b||!t.view?.open||!t.view?.question)return;
+   if(b.dataset.region){
+     if(Date.now()<t.suppressUntil||t.pointers.size||Date.now()<(t.regionPointerSelectedUntil||0))return;
+     selectRegion(t,b);return;
+   }
+   if(b.disabled)return;
+   const selected=b.dataset.geoAnswer;
    t.chosenAnswerId=selected;
+   b.classList.add('geo-option-pending');b.setAttribute('aria-busy','true');
+   root.querySelectorAll('[data-geo-answer]').forEach(button=>button.disabled=true);
+   const message=root.querySelector('.geo-message');if(message)message.textContent='Проверяем ответ…';
    fetchView(t,selected);
   };
   root.addEventListener('click',t.onClick);
   t.onPointerDown=e=>{
-   const svg=e.target.closest?.('.geo-map-frame .geo-map-svg');if(!svg)return;
+   const svg=e.target.closest?.('.geo-map-frame .geo-map-svg');if(!svg||t.busy||Date.now()<t.feedbackUntil)return;
    t.pointers.set(e.pointerId,{x:e.clientX,y:e.clientY,startX:e.clientX,startY:e.clientY,region:e.target.closest?.('[data-region]')||null});
    if(t.pointers.size===1)t.gestureMoved=false;
     // A drag or pinch must not submit a region as an answer.
@@ -245,7 +305,8 @@
   };
   t.onPointerUp=e=>{
    const pointer=t.pointers.get(e.pointerId);t.pointers.delete(e.pointerId);
-   if(t.gestureMoved){t.suppressUntil=Date.now()+850;return}
+   if(e.type==='pointercancel')return;
+   if(t.gestureMoved){t.suppressUntil=Date.now()+500;return}
    if(pointer?.region&&Math.hypot(e.clientX-pointer.startX,e.clientY-pointer.startY)<16){
     if(selectRegion(t,pointer.region))t.regionPointerSelectedUntil=Date.now()+350;
    }

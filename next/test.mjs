@@ -1033,3 +1033,53 @@ test('Each card topic follows explicitly selected mechanics and never guesses a 
  assert.equal(result.newCard.settings.flag_modes.length,0);
  assert.equal(result.newCard.settings.geo_modes.length,0);
 });
+
+
+test('Arcade timeline is enforced on both server tick passes and manual Next',()=>{
+ const sql=readFileSync(new URL('./migrations/20261025_arcade_deadline_guards.sql',import.meta.url),'utf8');
+ const tick=sql.slice(sql.indexOf('CREATE OR REPLACE FUNCTION public.qwiz_tick'),sql.indexOf('CREATE OR REPLACE FUNCTION public.qwiz_advance_room'));
+ const next=sql.slice(sql.indexOf('CREATE OR REPLACE FUNCTION public.qwiz_advance_room'));
+ const guard=/if clock_timestamp\(\)<a\.entered_at\+make_interval\(secs=>stage_seconds\) then return false;end if;/g;
+ assert.equal((tick.match(guard)||[]).length>=2,true,'Two arcade deadline checks required');
+ assert.match(tick,/public\.qwiz_arcade_duration\(a\.settings,a\.settings->>'arcade_mode'\)/);
+ assert.match(next,/if v_active\.settings->>'arcade_mode' in \('rocket','blitz','tug','captain'\)/);
+ assert.match(next,/Мини-игра ещё идёт/);
+ assert.match(sql,/SECURITY DEFINER/);
+ assert.match(sql,/SET search_path TO ''/);
+});
+test('Geography mobile taps confirm immediately and correct region is enlarged',()=>{
+ const src=readFileSync(new URL('./russia-geo.js',import.meta.url),'utf8');
+ const styles=readFileSync(new URL('./russia-geo.css',import.meta.url),'utf8');
+ const arcade=readFileSync(new URL('./arcade.js',import.meta.url),'utf8');
+ assert.match(src,/function regionViewBox\(regionId\)/);
+ assert.match(src,/function revealTarget\(t,selector\)/);
+ assert.match(src,/const focusId=correctId\|\|/);
+ assert.match(src,/t\.focusKey=focusKey;t\.zoomBox=focusBox/);
+ assert.match(src,/if\(e\.type==='pointercancel'\)return/);
+ assert.match(src,/confirm\.textContent='Проверяем…'/);
+ assert.match(src,/b\.classList\.add\('geo-option-pending'\)/);
+ assert.match(src,/t\.feedbackUntil=Date\.now\(\)\+5500/);
+ assert.match(styles,/\.geo-option-pending/);
+ assert.match(styles,/\.geo-region\.geo-correct-answer/);
+ assert.match(arcade,/setTimeout\(\(\)=>flush\(tr\),220\)/);
+ assert.match(arcade,/data-arcade-tap disabled/);
+ const begin=src.indexOf(' function regionViewBox(regionId)');
+ const end=src.indexOf(' function revealTarget(t,selector)',begin);
+ assert.ok(begin>0&&end>begin);
+ const fn=src.slice(begin,end);
+ const geo=[{id:'small',box:[220,120,12,9]},{id:'large',box:[100,50,430,250]}];
+ const first=runInNewContext(fn+"regionViewBox('small')",{geometry:geo}).split(' ').map(Number);
+ const second=runInNewContext(fn+"regionViewBox('large')",{geometry:geo}).split(' ').map(Number);
+ assert.equal(first.length,4);
+ assert.ok(first[2]>=135&&first[2]<300,'Small region must be magnified');
+ assert.ok(second[2]<=960&&second[2]>first[2]);
+ for(const rect of [first,second]){
+  assert.ok(rect[0]>=0&&rect[1]>=0&&rect[2]>0&&rect[3]>0);
+  assert.ok(rect[0]+rect[2]<=1120.01&&rect[1]+rect[3]<=480.01);
+ }
+ for(const name of ['index.html','presenter.html','workspace.html']){
+  const page=readFileSync(new URL('./'+name,import.meta.url),'utf8');
+  assert.match(page,/russia-geo\.js\?v=region-focus-20261025-14/);
+  assert.match(page,/arcade\.js\?v=firsttap-timerguard-20261025-27/);
+ }
+});
