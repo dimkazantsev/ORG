@@ -190,7 +190,7 @@ BEGIN
       'completed',jsonb_array_length(matched_new)=12);
   END IF;
   UPDATE public.qwiz_arcade_memory_players SET second_tile=p_tile,
-       hide_until=now_at+interval '850 milliseconds',moves=moves+1
+       hide_until=now_at+interval '1350 milliseconds',moves=moves+1
     WHERE room_id=p_room AND card_position=v.card_position AND player_id=p.id;
   RETURN jsonb_build_object('ok',true,'match',false);
  END IF;
@@ -262,6 +262,14 @@ RETURNS integer LANGUAGE sql IMMUTABLE SET search_path TO '' AS $duration$
  ELSE greatest(30,least(120,coalesce(nullif(p_settings->>'arcade_seconds','')::int,
    CASE p_mode WHEN 'rocket' THEN 45 WHEN 'blitz' THEN 60 WHEN 'tug' THEN 45 ELSE 45 END))) END;
 $duration$;
+
+-- Return optional mini-game state in the EXISTING arcade RPC. No second HTTP poll per player.
+CREATE OR REPLACE FUNCTION public.qwiz_party_arcade(p_code text)
+RETURNS jsonb LANGUAGE sql SECURITY DEFINER SET search_path TO '' AS $publicarcade$
+ SELECT public.qwiz_arcade_state(p_code)
+    || jsonb_build_object('vote',public.qwiz_boost_view(p_code))
+    || jsonb_build_object('extra',public.qwiz_arcade_extras(p_code));
+$publicarcade$;
 
 -- These functions must not be accessible via direct anonymous writes.
 REVOKE ALL ON FUNCTION public.qwiz_arcade_play(uuid,text,integer) FROM PUBLIC,anon;
