@@ -267,10 +267,51 @@ function questionScene(state){
 }
  // Keep the visible scene inside the actual TV/projector viewport.
  let fitQueued=false;
+ // Fit the lobby AS A WHOLE: the generic scene fitter only measures its first
+ // child (room banner), otherwise leaving the entire team board offscreen.
+ function fitTeamLobby(main,banner){
+  const entry=main.querySelector('.projection-team-entry');
+  const board=entry?.querySelector('.team-board');
+  if(!board)return;
+  banner.style.zoom='1';banner.style.flexShrink='0';
+  banner.style.maxHeight='none';banner.style.marginTop='0';
+  banner.style.marginBottom='0';banner.dataset.fittedZoom='1.000';
+  const count=board.querySelectorAll('.team-board-card').length;
+  if(!count||window.innerWidth<=760||window.innerHeight<=540){
+   for(const name of ['--team-columns','--team-rows','--team-gap','--team-qr-size'])
+    board.style.removeProperty(name);
+   return;
+  }
+  const width=Math.max(1,board.clientWidth);
+  const height=Math.max(1,board.clientHeight);
+  const gap=window.innerWidth>=1400?9:6;
+  // Three teams stay in one row; a full sixteen-team room is 8 × 2 on
+  // classroom-size screens. Narrower devices use more rows, not cropped cards.
+  const minCell=window.innerWidth>=1200?113:125;
+  const maxCols=Math.max(1,Math.floor((width+gap)/(minCell+gap)));
+  const idealCols=count<=3?count:Math.ceil(count/2);
+  const columns=Math.min(idealCols,maxCols);
+  const rows=Math.ceil(count/columns);
+  const cellWidth=(width-gap*(columns-1))/columns;
+  const cellHeight=(height-gap*(rows-1))/rows;
+  // Reserve room for the habitat icon/name, participants and quiet zone.
+  // CSS scales the existing QR rendering without rebuilding its join URL.
+  const qrSize=Math.max(38,Math.floor(Math.min(168,cellWidth-22,cellHeight-64)));
+  board.style.setProperty('--team-columns',String(columns));
+  board.style.setProperty('--team-rows',String(rows));
+  board.style.setProperty('--team-gap',gap+'px');
+  board.style.setProperty('--team-qr-size',qrSize+'px');
+  board.dataset.columns=String(columns);
+  board.dataset.rows=String(rows);
+ }
  function fitProjectionScene(){
   fitQueued=false;
   const main=$('projectionMain'),scene=main?.firstElementChild;
   if(!main||!scene||main.clientHeight<100||main.clientWidth<100)return;
+  if(scene.matches('.projection-lobby.has-team-entry')){
+   fitTeamLobby(main,scene);
+   return;
+  }
   // The clock and round heading are permanent screen coordinates: NEVER zoom
   // the question scene itself. Fit only its content viewport on overflow.
   if(scene.matches('.projection-question-only')){
