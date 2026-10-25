@@ -148,3 +148,43 @@ test('One region touch exposes confirm; server correct region appears highlighte
  await expect(page.locator('#geoTapConfirm [data-region="region-1"]')).toHaveClass(/geo-correct-answer/);
  await expect(page.locator('#geoTapConfirm [data-region="region-3"]')).toHaveClass(/geo-wrong-answer/);
 });
+
+
+test('Four Russia geography choices are compact colorful tiles, not huge empty panels',async({page})=>{
+ await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({
+  contentType:'application/javascript',
+  body:'window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}})}})};'
+ }));
+ await page.setViewportSize({width:390,height:760});
+ await page.goto(HOME);
+ await page.evaluate(()=>{
+  const host=document.createElement('div');host.id='geoIndieTiles';document.body.append(host);
+  const q={mode:'capital',name:'Республика Марий Эл',
+   options:[{id:'a',text:'Махачкала'},{id:'b',text:'Йошкар-Ола'},
+    {id:'c',text:'Донецк'},{id:'d',text:'Тверь'}]};
+  const client={rpc:async()=>({data:{active:true,open:true,remaining:90,index:10,total:15,
+   score:0,correct:0,question:q},error:null})};
+  QwizGeo.mountPlayer(host,{code:'AAAABBBB',
+   room_id:'00000000-0000-4000-8000-000000000333',phase:'intermission',
+   activity:{settings:{arcade_mode:'russia_map'}}},{client});
+ });
+ const tiles=page.locator('#geoIndieTiles .geo-options button');
+ await expect(tiles).toHaveCount(4);
+ await expect(tiles.locator('.geo-choice-number')).toHaveText(['A','B','C','D']);
+ for(const tile of await tiles.all()){
+  const bounds=await tile.boundingBox();
+  expect(bounds.height).toBeGreaterThanOrEqual(68);
+  expect(bounds.height).toBeLessThanOrEqual(152);
+  await expect(tile.locator('.geo-choice-label')).toBeVisible();
+  const style=await tile.evaluate(el=>({background:getComputedStyle(el).backgroundImage,shadow:getComputedStyle(el).boxShadow}));
+  expect(style.background).toContain('linear-gradient');
+  expect(style.shadow).not.toBe('none');
+ }
+ const heights=await page.locator('#geoIndieTiles .geo-options').evaluate(el=>({
+  height:el.getBoundingClientRect().height,width:el.getBoundingClientRect().width
+ }));
+ expect(heights.height).toBeLessThan(330);
+ expect(heights.width).toBeLessThanOrEqual(390);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
+ await page.screenshot({path:'visual-artifacts/geography-indie-choices-390.png',fullPage:true});
+});
