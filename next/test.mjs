@@ -66,6 +66,33 @@ test('Room preparation is serialized per build and never duplicates an empty lob
  assert.doesNotMatch(migration,/DELETE FROM public\.org_next_rooms|DROP TABLE/i);
  assert.match(host,/created\.reused\?/);
 });
+test('Replay of a finished game reuses an empty lobby without corrupting real sessions',()=>{
+ const migration=readFileSync(new URL('./migrations/20261025_replay_idempotent_empty_lobby.sql',import.meta.url),'utf8');
+ const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ assert.match(migration,/FOR UPDATE/);
+ assert.match(migration,/reused_lobby_is_valid/);
+ assert.match(migration,/candidate\.quiz_id=old_room\.quiz_id/);
+ assert.match(migration,/cb\.timeline IS NOT DISTINCT FROM sb\.timeline/);
+ assert.match(migration,/NOT EXISTS\(SELECT 1 FROM public\.org_next_players/);
+ assert.match(migration,/NOT EXISTS\(SELECT 1 FROM public\.org_next_answers/);
+ assert.match(migration,/'reused',true/);
+ assert.match(migration,/'reused'',false/);
+ assert.doesNotMatch(migration,/DELETE FROM public\.org_next_rooms|DROP TABLE/i);
+ assert.match(host,/created\.reused\?/);
+});
+test('Hidden unset bonus cards and maps without selected mechanics cannot compile',()=>{
+ const migration=readFileSync(new URL('./migrations/20261025_reject_unconfigured_legacy_mini_game_cards.sql',import.meta.url),'utf8');
+ const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const html=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ assert.match(migration,/Unconfigured arcade card must not be scheduled/);
+ assert.match(migration,/v_card\.card_type IN \('bonus','duel'\)/);
+ assert.match(migration,/v_card\.card_type IN \('team_stats','player_stats'\)/);
+ assert.match(migration,/geo_modes/);
+ assert.match(migration,/CONTINUE/);
+ assert.match(host,/function previewLaunchBuild\(/);
+ assert.match(host,/const cards=snapshot\.cards\|\|\[\]/);
+ assert.match(html,/id="launchPlanCards"/);
+});
 test('Paused rooms preserve frozen memory and reject both answer RPCs',()=>{
  const migration=readFileSync(new URL('./migrations/20261025_pause_resume_memory_and_answer_guard.sql',import.meta.url),'utf8');
  const client=readFileSync(new URL('./app.js',import.meta.url),'utf8');
