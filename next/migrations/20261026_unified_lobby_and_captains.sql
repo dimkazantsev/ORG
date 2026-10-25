@@ -52,7 +52,7 @@ BEGIN
     FROM public.org_next_players p WHERE p.room_id=p_room AND p.team_id=team) ELSE '[]'::jsonb END,
   'effects_history',CASE WHEN host THEN
    (SELECT coalesce(jsonb_agg(jsonb_build_object('team_id',b.team_id,'choice',b.choice,
-    'points_awarded',b.points_awarded,'round_index',b.round_index,'card_position',b.card_position)
+    'points_awarded',b.points_awarded,'applied_at',b.applied_at,'round_index',b.round_index,'card_position',b.card_position)
     ORDER BY b.card_position),'[]'::jsonb) FROM public.qwiz_round_boosts b WHERE b.room_id=p_room)
     ELSE '[]'::jsonb END,
   'captains',CASE WHEN host THEN
@@ -155,6 +155,12 @@ BEGIN
   'if v_team is null and r.team_mode=''random'' then',
   'if v_team is null and r.team_mode=''random'' AND NOT EXISTS('||
   ' SELECT 1 FROM public.qwiz_lobby_config cfg WHERE cfg.room_id=r.id AND cfg.confirmed_at IS NULL) then');
+ changed:=replace(changed,
+  'if p_inviter is not null and (p_team is null or not exists(select 1 from public.org_next_players',
+  'if p_team is not null and r.team_mode=''captain'' and exists(select 1 from public.qwiz_lobby_config where room_id=r.id)'||
+  ' and not exists(select 1 from public.qwiz_lobby_captains c where c.room_id=r.id and c.team_id=p_team and c.player_id=p_inviter)'||
+  ' then raise exception ''Только QR действующего капитана позволяет вступить в команду'';end if;'||E'\n'||
+  ' if p_inviter is not null and (p_team is null or not exists(select 1 from public.org_next_players');
  changed:=replace(changed,
   'if p_team is not null and not exists(select 1 from public.org_next_teams',
   'if p_team is not null AND EXISTS(SELECT 1 FROM public.qwiz_lobby_config c WHERE c.room_id=r.id)'||
