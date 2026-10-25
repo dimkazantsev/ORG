@@ -111,6 +111,7 @@ test('Reduced motion keeps answer legible and disables decorative animation',asy
 });
 test('Selecting a round is separate from opening settings with double-click or Shift+Enter',async({page})=>{
  await workspace(page);await page.locator('[data-section="builder"]').click();await page.locator('#newBuild').click();
+ await page.evaluate(()=>{state.topics=[{id:'flags-topic',name:'Флаги мира'}];state.cards[1].topic_id='flags-topic';state.cards[1].settings.flag_modes=['country'];updateSelectors();renderCards();});
  const card=page.locator('.round-card[data-type="round"]');
  await card.locator('h3').click();await expect(card).toHaveAttribute('aria-current','true');
  await expect(page.locator('#cardDialog')).not.toBeVisible();
