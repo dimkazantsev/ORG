@@ -514,3 +514,41 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
   gap:6px
  }
 }
+
+
+/* Indie arcade mobile stage: do not crush 3D worlds into the legacy 70px
+   decorative image slot on standard-height phones. Compact landscape stays
+   unchanged, preserving 44px interaction targets and thumb-zone controls. */
+@media (max-width:760px) and (min-height:700px){
+ .player-compact #gameContent .arcade-scene:has(.arcade-3d-world){
+  height:clamp(118px,18dvh,176px)!important;
+  min-height:118px!important;
+  max-height:176px;
+  margin:4px 0 7px;
+  padding:0!important;
+  border-radius:17px;
+  box-shadow:0 6px 0 #59409a2c,0 13px 24px #492a7e26;
+ }
+ .player-compact #gameContent .arcade-scene:has(.arcade-3d-world)>*{
+  max-height:none!important;
+ }
+ .player-compact #gameContent .arcade-3d-world{
+  height:100%;
+  min-height:0!important;
+  max-height:100%!important;
+  overflow:hidden;
+ }
+ .player-compact #gameContent .arcade-3d-shadow{
+  bottom:7%;
+ }
+ .player-compact #gameContent .arcade-3d-horizon{
+  bottom:-44%;
+ }
+}
+@media (max-width:420px) and (min-height:700px){
+ .player-compact #gameContent .arcade-3d-object{scale:.82}
+ .player-compact #gameContent .arcade-3d-goal{right:5%}
+}
+@media (prefers-reduced-motion:reduce){
+ .player-compact #gameContent .arcade-scene:has(.arcade-3d-world){transition:none!important}
+}
