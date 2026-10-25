@@ -88,3 +88,10 @@ test('regression: a mobile round score cannot wrap 700 into vertical digits',()=
  assert.match(block,/\.round-self-summary strong\s*\{[^}]*white-space:nowrap/);
  assert.match(read('index.html'),/player-layout\.css\?v=score-layout-20261026-1/);
 });
+
+test('regression: geography must NOT reuse distractor ranking for answer display order',()=>{
+ const sql=read('migrations/20261026_geo_independent_answer_shuffle.sql');
+ assert.match(sql,/order by md5\(x\.id/);
+ assert.match(sql,/replace\(definition,old_order,'order by random\(\)\)'\)/);
+ assert.match(sql,/Already saved|Already saved/i);
+});
