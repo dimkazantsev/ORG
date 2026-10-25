@@ -10,7 +10,7 @@ const ctx={client:null,last:null,channel:null,local:null,checking:false,timer:nu
 const seconds=t=>Math.max(0,Math.ceil((Date.parse(t)-Date.now()-ctx.offset)/1000))||0;
 function showError(s){$('projectionError').textContent=s;$('projectionError').hidden=false}
 function clearError(){$('projectionError').hidden=true}
-function qr(div,url){if(typeof QRCode==='function'&&div){div.replaceChildren();new QRCode(div,{text:url,width:240,height:240,colorLight:'#fff',colorDark:'#27302b',correctLevel:QRCode.CorrectLevel.M})}}
+function qr(div,url,size=240){if(typeof QRCode==='function'&&div){div.replaceChildren();new QRCode(div,{text:url,width:size,height:size,colorLight:'#fff',colorDark:'#342257',correctLevel:QRCode.CorrectLevel.M})}}
 function link(code){const u=new URL('./',location.href);u.searchParams.set('room',code);return u.toString()}
 const recentRoomKey='qwiz-presenter-recent-room';
 const roomPattern=/^[A-F0-9]{8}$/;
@@ -314,6 +314,7 @@ function questionScene(state){
   fitQueued=false;
   const main=$('projectionMain'),scene=main?.firstElementChild;
   if(!main||!scene||main.clientHeight<100||main.clientWidth<100)return;
+  if(scene.matches('.lobby-cinematic')){scene.style.zoom='1';return;}
   if(scene.matches('.projection-lobby.has-team-entry')){
    fitTeamLobby(main,scene);
    return;
@@ -415,18 +416,41 @@ function render(state){
   joinQr.hidden=true; // The lobby has one large QR; live questions stay QR-free.
  }
  $('projectionPlay').hidden=!state.code;$('projectionPlay').href=link(state.code);
- const key=[state.code,state.phase,state.index,state.activity?.title,state.activity?.type,state.activity?.settings?.arcade_mode].join(':');
+ const key=[state.code,state.phase,state.index,state.activity?.title,state.activity?.type,state.activity?.settings?.arcade_mode,state.team_lobby?.confirmed,state.team_lobby?.captains_ready,state.team_lobby?.captain_count].join(':');
  if(key===ctx.renderKey){
   if(state.phase==='intermission'&&state.activity?.type==='round_stats'&&$('projectorResultCountdown')){
    $('projectorResultCountdown').textContent=state.ends_at?seconds(state.ends_at):'—';
   }
-  if(state.phase==='lobby'){QwizTeams.board($('projectionTeamBoard'),state.lobby_teams||[],state.code);scheduleFitProjection();}
+  if(state.phase==='lobby'){if($('projectionTeamBoard'))QwizTeams.board($('projectionTeamBoard'),state.lobby_teams||[],state.code);scheduleFitProjection();}
   if(state.phase==='question'){QwizStage.patchTeams($('projectionMain'),state.teams);if($('teamAnswerCount'))$('teamAnswerCount').textContent=(typeof QwizStage.countLabel==='function'?QwizStage.countLabel((state.teams||[]).reduce((a,t)=>a+Number(t.answered||0),0),{one:'ответ',few:'ответа',many:'ответов'}):((state.teams||[]).reduce((a,t)=>a+Number(t.answered||0),0))+' ответов')+' получено'}
   if(!state.paused)updateProjectorClock(state);return;
  }
  ctx.renderKey=key;const previous=ctx.lastPhase;ctx.lastPhase=state.phase;QwizStage.audio.stopMusic();
  if(state.phase!=='intermission')window.QwizArcade?.stop('screen');
  if(state.phase!=='intermission'||state.activity?.settings?.arcade_mode!=='russia_map')window.QwizGeo?.stop('screen');
+ if(state.phase==='lobby'&&state.team_lobby){
+  const lobby=state.team_lobby;
+  if(lobby.mode==='random'&&lobby.confirmed){
+   $('projectionMain').innerHTML='<section class="projection-lobby has-team-entry"><div><div class="projection-eyebrow">КОМАНДЫ СФОРМИРОВАНЫ</div><h1>Идите к своей команде!</h1><p>Найдите название и значок своей команды. При необходимости сканируйте её QR-код.</p><strong class="projection-code">'+escapeText(state.code)+'</strong></div><div class="projection-qr" id="projectionQr"></div></section><section class="projection-team-entry"><h2>Ваши команды</h2><p>Команды отмечены иконками и названиями.</p><div class="team-board" id="projectionTeamBoard"></div></section>';
+   qr($('projectionQr'),link(state.code));QwizTeams.board($('projectionTeamBoard'),state.lobby_teams||[],state.code);
+   scheduleFitProjection();return;
+  }
+  const n=lobby.team_count||1,c=lobby.captain_count||0;
+  const hint=lobby.mode==='captain'?
+   (lobby.captains_ready?'Капитаны выбраны. Сканируйте QR своего капитана на его телефоне.':'Выбираем капитанов: '+c+' из '+n+'. Нажмите «Я капитан» на своём телефоне.'):
+   'Подключайтесь! Преподаватель распределит участников по командам.';
+  $('projectionMain').innerHTML='<section class="lobby-cinematic" aria-label="Вход в игру по одному QR-коду">'+
+   '<div class="lobby-starfield" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>'+
+   '<div class="lobby-3d-orbit" aria-hidden="true"><span class="orbit-a"></span><span class="orbit-b"></span><span class="orbit-c"></span><span class="orbit-core">✦</span></div>'+
+   '<div class="lobby-cinema-content"><span class="lobby-cinema-eyebrow">QWIZ-PARTY · ПОДКЛЮЧЕНИЕ</span>'+
+   '<h1>Начни игру!</h1><p class="lobby-cinema-lead">Сканируй QR и присоединяйся с телефона</p>'+
+   '<div class="lobby-qr-frame"><i class="corner-tl"></i><i class="corner-tr"></i><i class="corner-bl"></i><i class="corner-br"></i>'+
+   '<div id="projectionQr" class="lobby-cinema-qr" role="img" aria-label="QR-код комнаты"></div></div>'+
+   '<span class="lobby-cinema-code-label">КОД КОМНАТЫ</span><strong class="lobby-cinema-code">'+escapeText(state.code)+'</strong>'+
+   '<p class="lobby-cinema-instructions">'+escapeText(hint)+'</p></div></section>';
+  qr($('projectionQr'),link(state.code),320);
+  scheduleFitProjection();return;
+ }
  if(state.phase==='lobby'){
   $('projectionMain').innerHTML='<section class="projection-lobby has-team-entry"><div><div class="projection-eyebrow">КОМНАТА ОТКРЫТА</div><h1>Присоединяйтесь!</h1><p>Наведите камеру на QR-код или введите код комнаты на телефоне.</p><strong class="projection-code">'+escapeText(state.code)+'</strong></div><div class="projection-qr" id="projectionQr"></div></section><section class="projection-team-entry"><h2>Выберите свою команду</h2><p>Сканируйте QR под её иконкой. Нажмите на карточку, чтобы увеличить код.</p><div class="team-board" id="projectionTeamBoard"></div></section>';qr($('projectionQr'),link(state.code));$('projectionQr').setAttribute('role','button');$('projectionQr').setAttribute('tabindex','0');$('projectionQr').setAttribute('aria-label','Увеличить общий QR-код входа в игру');$('projectionQr').onclick=()=>openJoinQr(state.code);$('projectionQr').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openJoinQr(state.code)}};QwizTeams.board($('projectionTeamBoard'),state.lobby_teams||[],state.code);scheduleFitProjection();return;
  }
