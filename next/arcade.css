@@ -566,3 +566,28 @@
 .arcade-player .arcade-runner-jump-btn:disabled{opacity:.65}
 .arcade-player .arcade-runner-jump-btn:focus-visible{outline:3px solid #21114d;outline-offset:3px}
 @media(max-width:440px){.arcade-player .arcade-runner-jump-btn{width:104px;min-height:64px;font-size:17px}}
+
+
+/* Real game arenas override the obsolete 70px decorative illustration slot.
+   These declarations intentionally precede player-layout.css in load order. */
+.player-compact #gameContent .arcade-scene:has(.arcade-runner-world),
+.player-compact #gameContent .arcade-scene:has(.arcade-tap-stage){
+ height:clamp(154px,25dvh,255px)!important;
+ min-height:154px!important;max-height:255px!important;
+ margin:5px 0 9px;padding:0!important;border-radius:19px;overflow:hidden;
+}
+.player-compact #gameContent .arcade-scene:has(.arcade-memory-hero){
+ height:clamp(92px,17dvh,160px)!important;
+ min-height:92px!important;max-height:160px!important;
+ padding:0!important;margin:4px 0 8px;
+}
+.player-compact #gameContent .arcade-scene:has(.arcade-runner-world)>*,
+.player-compact #gameContent .arcade-scene:has(.arcade-tap-stage)>*,
+.player-compact #gameContent .arcade-scene:has(.arcade-memory-hero)>*{max-height:none!important}
+.player-compact #gameContent .arcade-scene :is(.arcade-runner-world,.arcade-tap-stage,.arcade-memory-hero){
+ height:100%;width:100%;min-height:0;max-height:none!important;
+}
+@media(max-width:390px) and (max-height:620px){
+ .player-compact #gameContent .arcade-scene:has(.arcade-runner-world),
+ .player-compact #gameContent .arcade-scene:has(.arcade-tap-stage){height:154px!important}
+}
