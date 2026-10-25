@@ -195,7 +195,7 @@ async function importQuiz(){busy($('importQuiz'),true);notice('importNotice','И
  }catch(error){notice('importNotice',error.message,'error')}finally{busy($('importQuiz'),false)}}
 async function createRoom(event){event.preventDefault();busy($('createRoomButton'),true);notice('createRoomNotice','Создание комнаты…');
  try{const quiz=$('roomQuizSelect').value;if(!quiz)throw Error('Выберите набор.');
- const code=await rpc('org_next_create_room',{p_quiz:quiz,p_title:$('roomTitle').value.trim(),p_teams:Number($('roomTeamCount').value)});
+ const code=await rpc('org_next_create_room',{p_quiz:quiz,p_title:$('roomTitle').value.trim(),p_teams:1});
  ctx.roomCode=code;storage.set('host-room',code);renderQrPanels();await refreshRoom();renderRoom();notice('createRoomNotice','');
  }catch(error){notice('createRoomNotice',error.message,'error')}finally{busy($('createRoomButton'),false)}}
 function phaseText(phase){return QwizStage.phaseLabel(phase)}
