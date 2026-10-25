@@ -191,7 +191,7 @@ async function saveQuiz(event){event.preventDefault();busy($('saveQuizButton'),t
  }catch(error){notice('quizNotice',error.message,'error')}finally{busy($('saveQuizButton'),false)}}
 async function importQuiz(){busy($('importQuiz'),true);notice('importNotice','Импорт…');
  try{const id=$('legacyQuizSelect').value;if(!id)throw Error('Выберите набор.');
- const data=await rpc('org_next_import_legacy',{p_quiz:id});await loadCatalog();notice('importNotice','Импортировано '+data.imported+' вопросов. Исходный набор сохранён.','success');
+ const data=await rpc('org_next_import_legacy',{p_quiz:id});await loadCatalog();notice('importNotice','Импортировано '+QwizStage.countLabel(data.imported,{one:'вопрос',few:'вопроса',many:'вопросов'})+'. Исходный набор сохранён.','success');
  }catch(error){notice('importNotice',error.message,'error')}finally{busy($('importQuiz'),false)}}
 async function createRoom(event){event.preventDefault();busy($('createRoomButton'),true);notice('createRoomNotice','Создание комнаты…');
  try{const quiz=$('roomQuizSelect').value;if(!quiz)throw Error('Выберите набор.');
