@@ -307,6 +307,6 @@ test('Four indie-inspired game stages use distinct palettes and never clip at mo
   expect(computed.right).toBeLessThanOrEqual(392);
   expect(computed.background).toContain('radial-gradient');
   expect(computed.scene).toBe('2px');
-  await page.screenshot({path:'visual-artifacts/indie-arcade-'+mode+'-390.png',animations:'disabled'});
+  await page.locator('#arcadeStyleFixture .arcade-scene').screenshot({path:'visual-artifacts/indie-arcade-'+mode+'-390.png',animations:'disabled'});
  }
 });
