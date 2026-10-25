@@ -304,3 +304,36 @@ html.portrait-atlas-verified .animal-portrait.has-avatar-photo.avatar-photo-fail
  /* Exception: too little vertical space for legible QR codes, so keep scrolling. */
  .projection-shell:has(.projection-team-entry){min-height:100dvh;height:auto;overflow:visible}
 }
+
+/* Public lobby only: allocate real room for team emblems before sizing QR.
+   Values come from the measured screen/cell, never from an assumed TV size. */
+@media (min-width:761px) and (min-height:541px){
+ #projectionMain .projection-team-entry .team-board-heading{
+  gap:clamp(7px,.75vw,16px);
+  min-width:0;
+ }
+ #projectionMain .projection-team-entry .team-board-heading .habitat-icon{
+  display:block;
+  width:var(--team-icon-size,52px);
+  height:var(--team-icon-size,52px);
+  min-width:var(--team-icon-size,52px);
+  min-height:var(--team-icon-size,52px);
+  max-width:none;
+  max-height:none;
+  flex:0 0 auto;
+ }
+ #projectionMain .projection-team-entry .team-board-heading strong{
+  font-size:var(--team-title-size,16px);
+  line-height:1.14;
+  min-width:0;
+  overflow-wrap:anywhere;
+  text-wrap:balance;
+ }
+ #projectionMain .projection-team-entry .board-count{
+  font-size:clamp(11px,.95vw,16px);
+  line-height:1.25;
+ }
+ #projectionMain .projection-team-entry .team-board-card{
+  padding:clamp(4px,.65dvh,10px);
+ }
+}
