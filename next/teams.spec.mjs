@@ -19,7 +19,7 @@ async function mock(page,room,{host=true,registered=false}={}){
  if(name==='qwiz_host_rooms')return {data:[{code:s.code,title:s.title,phase:s.phase,players:s.players.length,teams:s.teams.length}]};
  if(name==='qwiz_prepare_room')return {data:{code:s.code,room_id:s.room_id,total_questions:s.total,issues:s.setup_issues}};
  if(name==='qwiz_party_state')return {data:s};
- if(name==='qwiz_party_projection')return {data:{...s,players:[],lobby_teams:s.teams.map(t=>({...t,members:s.players.filter(p=>p.team_id===t.id).length}))}};
+ if(name==='qwiz_party_projection')return {data:{...s,team_lobby:s.team_lobby||{mode:'random',confirmed:true,team_count:s.teams.length,captain_count:0,captains_ready:false},players:[],lobby_teams:s.teams.map(t=>({...t,members:s.players.filter(p=>p.team_id===t.id).length}))}};
  if(name==='qwiz_lobby_action'){
   if(args.p_action==='confirm'&&s.team_lobby?.mode==='random'){
    s.team_lobby.confirmed=true;
@@ -276,4 +276,17 @@ test('Captain signup and QR are directly visible on mobile, not hidden in statis
  await expect(page.locator('#playerTeamPanel .captain-qr-image img')).toHaveCount(1);
  const rect=await page.locator('#playerTeamPanel .captain-qr-image').boundingBox();
  expect(rect.width).toBeGreaterThan(230);
+});
+
+test('Legacy audience also uses one central room QR, never team links before play',async({page})=>{
+ const s=fixture(3,6);await mock(page,s,{host:false});
+ await page.goto(base+'presenter.html?room=AABBCCDD');
+ await page.evaluate(()=>{
+  const state={...window.fixture,team_lobby:null,
+   lobby_teams:window.fixture.teams.map(t=>({...t,members:2}))};
+  render(state);
+ });
+ await expect(page.locator('.lobby-cinematic')).toBeVisible();
+ await expect(page.locator('.lobby-cinema-qr img')).toHaveCount(1);
+ await expect(page.locator('.team-board-card')).toHaveCount(0);
 });
