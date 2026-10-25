@@ -1139,3 +1139,31 @@ body:fullscreen .projection-shell{height:100dvh}
 @media(prefers-reduced-motion:reduce){
  #projectionMain .projection-finale-compact .finale-star{animation:none}
 }
+
+
+/* Complete final report is opt-in; its collapsed summary never reduces
+   readability of the automatic public 5–10 second finale. */
+#projectionMain .projection-finale-compact .projection-finale-report{min-width:0;margin:0}
+#projectionMain .projection-finale-compact .projection-finale-report>summary{
+ display:block;cursor:pointer;text-align:center;
+ padding:6px 12px;margin:0 auto;width:max-content;max-width:100%;
+ color:#6840ac;background:#eee6fb;border:1px solid #dacaf1;
+ border-radius:12px;font-size:clamp(12px,1.1vw,16px);font-weight:750;
+}
+#projectionMain .projection-finale-compact .projection-finale-report>summary::marker{display:none}
+#projectionMain .projection-finale-compact .projection-finale-report>summary:focus-visible{
+ outline:3px solid #8959dc;outline-offset:3px;
+}
+#projectionMain .projection-finale-compact .projection-finale-report-content{
+ display:grid;gap:15px;overflow:auto;overscroll-behavior:contain;
+ box-sizing:border-box;max-height:min(48dvh,690px);
+ padding:14px;margin:10px 0 0;border-radius:17px;
+ background:#fff;border:1px solid #e0d4f3;
+}
+#projectionMain .projection-finale-compact .projection-finale-report-content .habitat-grid{
+ grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+}
+#projectionMain .projection-finale-compact .projection-finale-report-content .stage-team-results,
+#projectionMain .projection-finale-compact .projection-finale-report-content .stage-player-results{
+ margin:0;padding:0;border:0;
+}
