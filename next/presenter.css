@@ -1302,3 +1302,16 @@ body:fullscreen .projection-shell{height:100dvh}
   max-height:25dvh!important;
  }
 }
+
+/* Fade only the changing question body, never the fixed timer or chapter header. */
+#projectionMain .projection-question-flow{
+ opacity:0;transform:translate3d(0,10px,0);
+ transition:opacity .38s cubic-bezier(.2,.76,.22,1),transform .38s cubic-bezier(.2,.76,.22,1);
+ will-change:opacity,transform;
+}
+#projectionMain .projection-question-flow.projection-flow-visible{
+ opacity:1;transform:translate3d(0,0,0);
+}
+@media(prefers-reduced-motion:reduce){
+ #projectionMain .projection-question-flow{transition:none;transform:none}
+}

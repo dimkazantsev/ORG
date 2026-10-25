@@ -51,10 +51,10 @@ const trashSvg='<svg class="trash-svg" viewBox="0 0 24 24" fill="none" stroke="c
 const titles={round:'Раунд вопросов',intro:'Начало игры',break:'Музыкальная пауза',team_stats:'Рейтинг команд',player_stats:'Статистика игроков',bonus:'Бонусная активность',duel:'Дуэль команд',finale:'Финал игры'};
 const buildDefaults={count:5,seconds:30,answer_seconds:10,order:'random',offset:0,team_cap:null,player_cap:null,sound:'fanfare',lead_seconds:5,stats_seconds:7,bonus_percent:70,bonus_lead:15};
 const arcadeGames={
- rocket:{title:'Ракетная гонка',icon:'arcade_rocket',seconds:30,help:'Все игроки разгоняют командную ракету. Учитывается средний вклад игрока, а не размер команды. Победа: +25 очков и награда.'},
- blitz:{title:'Блиц-вопрос',icon:'arcade_blitz',seconds:35,help:'7 секунд команды борются за право ответа. После захвата открывается вопрос из банка флагов. Правильный ответ: +80 очков.'},
- tug:{title:'Перетягивание очков',icon:'arcade_tug',seconds:30,help:'Команды соревнуются нажатиями. Лидеру +15 очков, последняя активная команда уступает не более 15 очков (ниже нуля не опускается).'},
- captain:{title:'Дуэль капитанов',icon:'arcade_captain',seconds:30,help:'Капитан команды ждёт 3 секунды до сигнала, затем нажимает один раз. Фальстарт расходует попытку. Участникам показываются ход дуэли и результаты. Победа: +15 очков.'}
+ rocket:{title:'Ракетная гонка',icon:'arcade_rocket',seconds:45,help:'Все игроки разгоняют командную ракету. Учитывается средний вклад игрока, а не размер команды. Победа: +25 очков и награда.'},
+ blitz:{title:'Блиц-вопрос',icon:'arcade_blitz',seconds:60,help:'7 секунд команды борются за право ответа. После захвата открывается вопрос из банка флагов. Правильный ответ: +80 очков.'},
+ tug:{title:'Перетягивание очков',icon:'arcade_tug',seconds:45,help:'Команды соревнуются нажатиями. Лидеру +15 очков, последняя активная команда уступает не более 15 очков (ниже нуля не опускается).'},
+ captain:{title:'Дуэль капитанов',icon:'arcade_captain',seconds:40,help:'Капитан команды ждёт 3 секунды до сигнала, затем нажимает один раз. Фальстарт расходует попытку. Участникам показываются ход дуэли и результаты. Победа: +15 очков.'}
 };
 const state={db:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,bankOffset:0,bankPageSize:25,bankRequest:0,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',dragFrom:null,selectedCard:null,clockOffset:0,liveKey:'',lastDeadlineRefresh:0};
 function msg(id,text='',isError=false){const el=$(id);if(!el)return;el.textContent=text;el.classList.toggle('error',!!isError)}
@@ -452,7 +452,7 @@ function appendCard(type='round',arcadeMode=null){
 }
 function cardDesc(c){const settings=c.settings||{};
  if(settings.arcade_mode==='russia_map')return 'География России · карта · '+(settings.geo_count||15)+' случайных субъектов каждому игроку · '+(settings.geo_seconds||180)+' сек. · индивидуальный прогресс';
-  if(arcadeGames[settings.arcade_mode])return 'Командная мини-игра · '+(settings.arcade_seconds||arcadeGames[settings.arcade_mode].seconds)+' секунд · достижения и жетоны';
+  if(arcadeGames[settings.arcade_mode])return 'Командная мини-игра · '+Math.max(30,Math.min(120,Number(settings.arcade_seconds)||arcadeGames[settings.arcade_mode].seconds))+' секунд · достижения и жетоны';
  if(c.type==='round')return (c.topic_id?nameTopic(c.topic_id):'Тема не выбрана')+' · '+(Array.isArray(settings.flag_modes)&&settings.flag_modes.length?settings.flag_modes.map(titleKind).join(', '):'Все доступные механики')+' · '+(settings.count||5)+' вопр. · '+(settings.seconds||30)+' сек. · ответ '+(settings.answer_seconds||10)+' сек.';
  if(c.type==='finale')return 'Итог всей игры: результаты команд и каждого игрока · автоматически';
  return 'Дополнительная активность · настройки в карточке'}
@@ -493,7 +493,7 @@ function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{}
   if(geo){if(!c.topic_id)c.topic_id=state.topics.find(t=>t.name==='География России')?.id||null;$('cardTopic').value=c.topic_id||'';
    $('cardGeoCount').value=s.geo_count||15;$('cardGeoSeconds').value=s.geo_seconds||180;
    for(const item of all('#cardGeoModes input:not(:disabled)'))item.checked=!Array.isArray(s.geo_modes)||s.geo_modes.includes(item.value);}
- $('cardArcadeSeconds').value=s.arcade_seconds||arcade?.seconds||30;
+ $('cardArcadeSeconds').value=Math.max(30,Math.min(120,Number(s.arcade_seconds)||arcade?.seconds||45));
  $('cardArcadeHelp').textContent=arcade?.help||'';
  $('cardOrder').value=s.order||'random';$('cardOffset').value=(s.offset||0)+1;
  $('cardTeamCap').value=s.team_cap||'';$('cardPlayerCap').value=s.player_cap||'';
@@ -524,7 +524,7 @@ function saveCard(event){event.preventDefault();const c=state.cards[state.editin
   sound:$('cardSound').value,lead_seconds:c.settings.lead_seconds??buildDefaults.lead_seconds,
   stats_seconds:c.settings.stats_seconds??buildDefaults.stats_seconds,bonus_percent:c.settings.bonus_percent??buildDefaults.bonus_percent,
   bonus_lead:c.settings.bonus_lead??buildDefaults.bonus_lead,flag_modes:selected.length===flagModes.filter(x=>x[2]).length?[]:selected};
- if(arcadeGames[c.settings.arcade_mode])c.settings.arcade_seconds=Math.max(8,Math.min(40,Number($('cardArcadeSeconds').value)||arcadeGames[c.settings.arcade_mode].seconds));
+ if(arcadeGames[c.settings.arcade_mode])c.settings.arcade_seconds=Math.max(30,Math.min(120,Number($('cardArcadeSeconds').value)||arcadeGames[c.settings.arcade_mode].seconds));
   if(c.settings.arcade_mode==='russia_map'){
    const modes=all('#cardGeoModes input:checked:not(:disabled)').map(x=>x.value);
    if(!modes.length){$('cardModesDetails').open=true;msg('buildMessage','Выберите хотя бы одну механику карты России.',true);return}
@@ -625,7 +625,9 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  QwizStage.iconLabel($('liveStart'),s.phase==='finished'?'Повторить игру':'Начать',s.phase==='finished'?'refresh':'play');
  $('liveStart').setAttribute('aria-label',s.phase==='finished'?'Создать новую сессию той же игры, сохранив историю':'Начать текущую игру');
  $('livePause').hidden=false;$('livePause').disabled=!['countdown','question','result','intermission'].includes(s.phase);QwizStage.iconLabel($('livePause'),s.paused?'Продолжить':'Пауза',s.paused?'play':'pause');$('livePause').setAttribute('aria-pressed',String(!!s.paused));
- $('liveNext').hidden=false;$('liveNext').disabled=!!s.paused||!['question','result','intermission'].includes(s.phase);QwizStage.iconLabel($('liveNext'),'Далее','forward');$('liveReveal').hidden=true;$('liveFinish').hidden=false;$('liveFinish').disabled=s.phase==='finished';
+ $('liveNext').hidden=false;$('liveNext').disabled=!!s.paused||!['question','result','intermission'].includes(s.phase);const geoPlaying=s.phase==='intermission'&&s.activity?.settings?.arcade_mode==='russia_map';
+ const introPlaying=s.phase==='intermission'&&s.activity?.type==='card_intro';
+ QwizStage.iconLabel($('liveNext'),geoPlaying?'Показать итоги':introPlaying?'Запустить испытание':'Далее','forward');$('liveReveal').hidden=true;$('liveFinish').hidden=false;$('liveFinish').disabled=s.phase==='finished';
  $('liveConsole').classList.toggle('is-finished',s.phase==='finished');
  $('liveControlsHint').textContent=s.phase==='finished'?
    'Начните новую сессию той же сборки. Предыдущая игра и результаты сохранятся.':
@@ -778,12 +780,18 @@ async function control(action){
  for(const id of ['liveStart','livePause','liveReveal','liveNext','liveFinish'])disable(id,true);
  try{
   if(action==='finish'&&!confirm('Завершить игру?'))return;
+  const completingGeography=action==='next'&&state.room.phase==='intermission'&&state.room.activity?.settings?.arcade_mode==='russia_map';
+  const completingIntro=action==='next'&&state.room.phase==='intermission'&&state.room.activity?.type==='card_intro';
   if(!revision){await refreshLive();throw Error('Состояние комнаты обновлено. Повторите действие.');}
   await rpc('qwiz_party_control_checked',{p_room:roomId,p_action:action,p_revision:revision});
   // A slow response for a previous room must not signal the newly selected room.
   if(roomCode===state.roomCode){
    state.channel?.send({type:'broadcast',event:'phase',payload:{room:roomCode}})?.catch(()=>{});
    await refreshLive();
+   if(completingGeography&&state.room?.activity?.type==='round_stats')
+    msg('liveMessage','Раунд «Регионы» завершён. На экране идут итоги; следующий этап откроется автоматически.');
+   else if(completingIntro&&state.room?.phase==='intermission')
+    msg('liveMessage','Испытание запущено. Время отсчитывается на сервере.');
   }
  }catch(e){
   if(roomCode===state.roomCode){

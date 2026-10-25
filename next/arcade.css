@@ -243,3 +243,118 @@
  .arcade-scene .arcade-rocket-art,.arcade-duel-trophy,
  .arcade-king:not(.arcade-duel-trophy){animation:none!important;transform:none!important}
 }
+
+
+/* QWIZ-PARTY / Four layered 3D arcade worlds. Russia map remains unchanged. */
+.arcade-scene:has(.arcade-3d-world){padding:0!important;overflow:hidden;isolation:isolate;border-radius:24px}
+.arcade-3d-world{--arcade-depth:0px;position:relative;display:grid;place-items:center;
+ width:100%;min-height:clamp(175px,28dvh,330px);
+ perspective:960px;transform-style:preserve-3d;isolation:isolate;overflow:hidden;
+ background:radial-gradient(ellipse at 48% 12%,#fff 0%,#eee7ff 55%,#ccb8f0 100%)}
+.arcade-3d-world *{box-sizing:border-box}
+.arcade-3d-horizon{position:absolute;width:135%;height:83%;bottom:-44%;border-radius:50%;
+ transform:rotateX(68deg) translateZ(-32px);
+ background:linear-gradient(155deg,#ffffffc8,#bda8e7 67%,#9b77ce);
+ box-shadow:inset 0 4px 12px #fff8,0 -12px 45px #7450aa22}
+.arcade-3d-horizon::before{content:"";position:absolute;inset:10%;
+ border:3px dashed #ffffff80;border-radius:50%}
+.arcade-3d-shadow{position:absolute;bottom:14%;left:34%;width:32%;height:11%;
+ border-radius:50%;background:#43256a4a;filter:blur(16px);transform:translateZ(-25px)}
+.arcade-3d-object{position:relative;z-index:3;transform-style:preserve-3d;pointer-events:none;will-change:transform}
+.arcade-world-rocket{background:radial-gradient(circle at 79% 17%,#fff 0%,#ece4ff 42%,#a79cde 100%)}
+.arcade-model-rocket{--arcade-progress:0%;width:clamp(150px,23vw,310px);height:clamp(75px,12dvh,120px);
+ transform:translate3d(calc(-40px + var(--arcade-travel,0px)),-8px,70px) rotateY(-12deg) rotateZ(-9deg);
+ animation:arcade-ship-float 3.2s ease-in-out infinite alternate}
+.arcade-rocket-hull{position:absolute;inset:22% 17% 24% 15%;border-radius:48%;
+ transform:translateZ(29px);
+ background:linear-gradient(0deg,#493083,#7652be 25%,#b9a3ed 55%,#fffaff 77%,#a18be7);
+ box-shadow:inset 0 -9px 10px #452a7e70,0 12px 17px #38277058}
+.arcade-rocket-hull::before{content:"";position:absolute;inset:0;border-radius:inherit;
+ transform:translateZ(-24px);background:#5d42a5}
+.arcade-rocket-window{position:absolute;right:23%;top:12%;height:75%;aspect-ratio:1;border-radius:50%;
+ border:5px solid #534196;
+ background:radial-gradient(circle at 28% 26%,#fff,#92e0fa 45%,#3876aa 100%);
+ box-shadow:0 0 0 3px #f8efff}
+.arcade-rocket-highlight{position:absolute;left:14%;top:11%;width:35%;height:5px;
+ border-radius:50%;background:#ffffffb3;filter:blur(2px)}
+.arcade-rocket-nose{position:absolute;right:2%;top:23%;width:29%;height:54%;
+ clip-path:polygon(0 0,100% 50%,0 100%);transform:translateZ(29px);
+ background:linear-gradient(160deg,#fff5d9,#f1b6ca 56%,#a04eac)}
+.arcade-rocket-fin{position:absolute;left:17%;width:27%;height:41%;
+ clip-path:polygon(0 0,100% 22%,60% 100%);background:linear-gradient(110deg,#593aa2,#c4acee);
+ filter:drop-shadow(2px 4px 2px #3d2e6d66)}
+.arcade-rocket-fin.fin-left{top:-4%;transform:translateZ(1px) rotateX(38deg)}
+.arcade-rocket-fin.fin-right{bottom:-6%;transform:translateZ(25px) rotateX(-27deg) scaleY(-1)}
+.arcade-rocket-wing{position:absolute;left:35%;bottom:7%;width:40%;height:14%;
+ background:#7655ac;transform:rotateZ(-18deg) translateZ(-3px);border-radius:80%}
+.arcade-rocket-plume{position:absolute;left:-29%;top:27%;width:58%;height:48%;
+ transform:translateZ(18px);filter:drop-shadow(0 0 14px #ffa04e);
+ background:linear-gradient(90deg,transparent 0%,#ffdd7c 42%,#ff9937 65%,#fff3d5 100%);
+ clip-path:polygon(0 50%,28% 10%,50% 30%,90% 0,100% 50%,88% 100%,49% 70%,26% 90%);
+ animation:arcade-plume-breathe .25s ease-in-out infinite alternate}
+.arcade-3d-goal{position:absolute;right:10%;top:24%;font-size:clamp(32px,6vw,78px);
+ color:#fff5c1;text-shadow:0 0 20px #f9d17c,0 9px 18px #7a5aba}
+.arcade-model-tug{width:min(78%,710px);height:clamp(80px,16dvh,170px);
+ --arcade-progress:50%;transform:rotateX(13deg) rotateY(-5deg) translateZ(45px)}
+.arcade-tug-cable{position:absolute;left:10%;right:10%;top:42%;height:clamp(15px,2.4dvh,27px);
+ border-radius:999px;transform:translateZ(29px);
+ background:repeating-linear-gradient(125deg,#8d6cbd 0 14px,#f6e3ba 14px 27px,#ac90d1 27px 39px);
+ box-shadow:0 11px 0 #69529d,0 19px 20px #47336a72,inset 0 4px 4px #ffffffab}
+.arcade-tug-marker{position:absolute;top:26%;left:var(--arcade-progress,50%);
+ width:clamp(25px,3.8vw,43px);height:48%;transform:translateX(-50%) translateZ(56px);
+ background:linear-gradient(95deg,#ee95a3,#a93f69);border:3px solid #fff3ee;
+ border-radius:11px;box-shadow:0 10px 22px #8c467990;transition:left .4s ease}
+.arcade-tug-team{position:absolute;top:13%;width:14%;height:75%;border-radius:28%;
+ transform:translateZ(60px);box-shadow:inset 0 8px 11px #ffffff90,0 16px 20px #4d348c4d}
+.arcade-tug-team.team-left{left:0;background:linear-gradient(90deg,#6948b4,#c29cf3,#6e43b4)}
+.arcade-tug-team.team-right{right:0;background:linear-gradient(90deg,#da8266,#f9c78b,#b97151)}
+.arcade-model-captain{width:clamp(130px,19vw,240px);height:clamp(128px,20dvh,238px);
+ transform:rotateY(-13deg) rotateX(9deg) translateZ(64px);
+ animation:arcade-trophy-sway 4.2s ease-in-out infinite alternate}
+.arcade-trophy-cup{position:absolute;left:19%;top:7%;width:62%;height:60%;
+ display:grid;place-items:center;border-radius:9% 9% 44% 44%;font-size:clamp(36px,6vw,76px);
+ color:#fff0bb;text-shadow:0 4px 3px #9b6110;
+ background:linear-gradient(105deg,#b4762a 0%,#ffe8a1 35%,#e6b454 62%,#95611f 100%);
+ border:3px solid #f9d88b;
+ transform:translateZ(32px);box-shadow:inset 0 12px 14px #fff9,0 15px 19px #54347a44}
+.arcade-trophy-handle{position:absolute;top:14%;width:30%;height:39%;border:clamp(8px,1.3vw,17px) solid #e9b85d;
+ box-shadow:0 5px 8px #92612450;border-radius:50%;transform:translateZ(-1px)}
+.arcade-trophy-handle.handle-left{left:2%}.arcade-trophy-handle.handle-right{right:2%}
+.arcade-trophy-stem{position:absolute;left:43%;bottom:15%;width:14%;height:28%;
+ background:linear-gradient(90deg,#946023,#ffe8aa,#a66e2b);transform:translateZ(18px)}
+.arcade-trophy-base{position:absolute;left:23%;bottom:8%;width:54%;height:12%;
+ border-radius:8px;background:linear-gradient(#fff0bb,#ad782d);
+ transform:translateZ(24px);box-shadow:0 10px 10px #69428b55}
+.arcade-world-captain .arcade-captain-ready{position:absolute;z-index:5;bottom:0;left:0;right:0;
+ text-align:center;font-weight:850;letter-spacing:.08em}
+.arcade-model-blitz{width:clamp(115px,16vw,210px);height:clamp(115px,16vw,210px);
+ transform:rotateY(15deg) rotateX(-10deg) translateZ(72px);
+ animation:arcade-crystal-spin 5.5s ease-in-out infinite}
+.arcade-blitz-facet{position:absolute;inset:5%;clip-path:polygon(50% 0,96% 35%,77% 88%,50% 100%,20% 88%,4% 35%);
+ background:linear-gradient(135deg,#f6d8ff,#9a8af0 40%,#5133a4 80%);opacity:.88}
+.arcade-blitz-facet.facet-left{transform:rotateY(58deg) translateZ(22px)}
+.arcade-blitz-facet.facet-back{transform:rotateY(-32deg) translateZ(-32px);background:#8764cb}
+.arcade-blitz-facet.facet-right{transform:rotateY(-42deg) translateZ(27px);background:linear-gradient(130deg,#e1dcff,#836be2)}
+.arcade-blitz-bolt{position:absolute;inset:12%;display:grid;place-items:center;
+ color:#fff5ce;font-size:clamp(82px,11vw,150px);text-shadow:0 0 18px #fff,0 13px 14px #3d287c;
+ transform:translateZ(59px)}
+.arcade-blitz-ring{position:absolute;width:clamp(150px,31vw,400px);
+ height:clamp(45px,8dvh,90px);border:3px solid #ffffffbb;border-radius:50%;
+ box-shadow:0 0 25px #b3a9fb70;transform:rotateX(68deg) translateZ(20px);
+ animation:arcade-ring-pulse 2.6s ease-in-out infinite alternate}
+.arcade-blitz-ring.ring-b{transform:rotateX(73deg) rotateZ(43deg) translateZ(15px);
+ animation-delay:-1.3s}
+@keyframes arcade-ship-float{to{transform:translate3d(calc(-34px + var(--arcade-travel,0px)),-23px,85px) rotateY(6deg) rotateZ(-5deg)}}
+@keyframes arcade-plume-breathe{to{transform:translateZ(18px) scaleX(.73)}}
+@keyframes arcade-trophy-sway{to{transform:rotateY(14deg) rotateX(-2deg) translateZ(84px) translateY(-8px)}}
+@keyframes arcade-crystal-spin{to{transform:rotateY(375deg) rotateX(7deg) translateZ(72px)}}
+@keyframes arcade-ring-pulse{to{opacity:.35;filter:blur(2px)}}
+@media(max-width:620px){
+ .arcade-3d-world{min-height:160px}
+ .arcade-model-rocket{width:185px}
+ .arcade-model-tug{width:89%}
+ .arcade-world-captain .arcade-captain-ready{font-size:18px}
+}
+@media(prefers-reduced-motion:reduce){
+ .arcade-3d-world *, .arcade-3d-world *::before,.arcade-3d-world *::after{animation:none!important;transition:none!important}
+}

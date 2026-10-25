@@ -45,7 +45,9 @@ for(const [width,height] of [[1280,720],[1366,768],[1920,1080],[3840,2160],[7680
        ends_at:new Date(Date.now()+60000).toISOString(),
        teams:[{id:'a',name:'Фантастические',score:10}],players:[],paused:false,screen_settings:{sound_enabled:false,volume:0}});
    },sample);
-   await page.waitForTimeout(180);
+   // Two animation frames at 8K can exceed a fixed delay on CI runners.
+   // Require the fitter to finish instead of racing an arbitrary 180ms sleep.
+   await expect.poll(()=>page.evaluate(()=>Number(document.querySelector('#projectionMain')?.firstElementChild?.dataset.fittedZoom)),{timeout:12000}).toBeGreaterThan(0);
    const size=await page.evaluate(()=>{
     const main=document.querySelector('#projectionMain'),scene=main.firstElementChild;
     const stage=main.getBoundingClientRect(),content=scene.getBoundingClientRect();
@@ -291,4 +293,41 @@ test('Question, long variants and answer reveal keep the exact same fixed clock 
    expect(Math.abs(p.titleTop-layouts[0].titleTop),'prompt top '+width).toBeLessThanOrEqual(3);
   }
  }
+});
+
+
+test('Question and answer content enter gently after fit while clock remains stationary',async({page})=>{
+ await page.setViewportSize({width:1280,height:720});
+ for(const phase of ['question','result']){
+  await page.evaluate(phase=>{
+   ctx.renderKey='';
+   render({code:'A1B2C3D4',phase,index:1,total:7,ends_at:new Date(Date.now()+20000).toISOString(),
+    question:{kind:'single',prompt:'Определите страну по описанию',options:['Россия','Бразилия','Аргентина','Индия']},
+    answer:phase==='result'?{indices:[0],text:'Россия'}:null,teams:[],
+    screen_settings:{sound_enabled:false,volume:0}});
+  },phase);
+  const flow=page.locator('.projection-question-flow');
+  await expect(flow).toBeVisible();
+  await expect(flow).toHaveCSS('transition-property',/opacity/);
+  await expect.poll(()=>page.evaluate(()=>document.querySelector('.projection-question-flow')?.dataset.motionReady)).toBe('true');
+  await expect(page.locator('.stage-clock')).toBeVisible();
+ }
+});
+
+
+test('All four competitive mini-games have real layered CSS-3D stages; map is untouched',async({page})=>{
+ for(const mode of ['rocket','blitz','tug','captain']){
+  await page.evaluate(mode=>{
+   const area=document.getElementById('projectionMain');
+   QwizArcade.stop('screen');
+   const start=Date.now();
+   const client={rpc:async()=>({data:{mode,running:true,started_at:new Date(start).toISOString(),ends_at:new Date(start+60000).toISOString(),
+    server_now:new Date().toISOString(),teams:[{id:'a',name:'Альфа',points:10,place:1}],mine:null,awards:[]},error:null})};
+   QwizArcade.mountProjector(area,{code:'A1B2C3D4',activity:{settings:{arcade_mode:mode}}},client);
+  },mode);
+  await expect(page.locator('.arcade-3d-world')).toBeVisible();
+  await expect(page.locator('.arcade-3d-object')).toHaveCSS('transform-style','preserve-3d');
+  await expect(page.locator('[data-arcade-clock]')).toContainText('с');
+ }
+ await page.evaluate(()=>QwizArcade.stop('screen'));
 });

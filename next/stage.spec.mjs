@@ -249,3 +249,30 @@ test('Moderator ignores a double tap while its first server control is pending',
  await page.evaluate(()=>window.finishFirstControl());
  await expect.poll(()=>page.evaluate(()=>controlRequestBusy)).toBe(false);
 });
+
+test('Moderator Next in Russia geography opens results and clearly signals the transition',async({page})=>{
+ await workspace(page);
+ await page.evaluate(s=>{
+  window.fixture={...s,room_id:'room',control_revision:'revision-geo-1',phase:'intermission',players:[],teams:[],
+   activity:{type:'game',title:'Регионы России',settings:{arcade_mode:'russia_map',geo_seconds:180}}};
+  state.roomCode=s.code;state.room=window.fixture;
+  document.getElementById('liveConsole').hidden=false;section('rooms');
+  const original=state.db.rpc;
+  state.db.rpc=async(name,args)=>{
+   if(name==='qwiz_party_control_checked'&&args.p_action==='next'){
+    window.actions.push([name,args]);
+    window.fixture={...window.fixture,activity:{type:'round_stats',title:'Итоги раунда',settings:{stats_seconds:7}}};
+    return {data:{phase:'intermission'},error:null};
+   }
+   return original(name,args);
+  };
+  renderLive(window.fixture);
+ },state());
+ await expect(page.locator('#liveNext')).toBeEnabled();
+ await expect(page.locator('#liveNext')).toContainText('Показать итоги');
+ await page.locator('#liveNext').click();
+ await expect(page.locator('#liveQuestion')).toContainText('Итоги раунда');
+ await expect(page.locator('#liveMessage')).toContainText('Раунд «Регионы» завершён');
+ await expect(page.locator('#liveNext')).toContainText('Далее');
+ expect(await page.evaluate(()=>window.actions.some(([name,args])=>name==='qwiz_party_control_checked'&&args.p_action==='next'))).toBe(true);
+});
