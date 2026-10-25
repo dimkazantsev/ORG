@@ -296,6 +296,16 @@ function questionScene(state){
      flow.style.zoom=String(zoom);
     }
     scene.dataset.fittedZoom=zoom.toFixed(3);
+    // Commit the finished geometry before revealing the new question/answer.
+    // The fixed clock and section heading never animate.
+    if(flow.dataset.motionReady==='false'){
+     requestAnimationFrame(()=>{
+      if(flow.isConnected){
+       flow.dataset.motionReady='true';
+       flow.classList.add('projection-flow-visible');
+      }
+     });
+    }
    }
    return;
   }
@@ -388,6 +398,10 @@ function render(state){
  if(!state.question){$('projectionMain').innerHTML='<div class="projection-loading"><h1>Следующий раунд</h1><p>Смотрите на экран.</p></div>';return}
  if(state.phase==='result')tone('reveal');else if(previous!=='question'||ctx.previousQuestion!==state.index)tone('pop');ctx.previousQuestion=state.index;
  $('projectionMain').innerHTML=questionScene(state);
+ // Keep new content invisible for the two-frame geometry fitter. No flash at
+ // unmeasured scale; the clock remains visible and anchored throughout.
+ const entering=$('projectionMain').querySelector('.projection-question-flow');
+ if(entering){entering.dataset.motionReady='false';entering.classList.remove('projection-flow-visible');}
 
 
  updateProjectorClock(state);QwizStage.hydrateIllustrations($('projectionMain'));scheduleFitProjection();
