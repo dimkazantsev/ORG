@@ -358,3 +358,145 @@
 @media(prefers-reduced-motion:reduce){
  .arcade-3d-world *, .arcade-3d-world *::before,.arcade-3d-world *::after{animation:none!important;transition:none!important}
 }
+
+
+/* Vibrant indie arenas: four distinct moods, tactile controls, no external
+   textures/scripts, and no layout changes to the approved studio UI. */
+.arcade-scene:has(.arcade-3d-world){
+ border:2px solid #ffffffee!important;
+ box-shadow:inset 0 2px 0 #ffffffc9,0 12px 0 #604da326,0 18px 32px #4c328b26;
+ background:#d7edff;
+}
+.arcade-3d-world{
+ --sky-top:#4dbaff;--sky-base:#8665f1;--sky-floor:#dc9dfa;
+ min-height:clamp(180px,30dvh,345px);
+ background:
+  radial-gradient(circle at 80% 17%,#ffffffd0 0 1.3%,transparent 1.6%),
+  radial-gradient(circle at 11% 22%,#ffffffb0 0 1.9%,transparent 2.2%),
+  radial-gradient(circle at 42% 9%,#ffffffaf 0 1%,transparent 1.3%),
+  radial-gradient(ellipse at 54% 9%,var(--sky-top) 0%,var(--sky-base) 58%,var(--sky-floor) 100%)!important;
+}
+.arcade-3d-world::before{
+ content:"";position:absolute;z-index:1;inset:0;pointer-events:none;
+ background:
+  radial-gradient(circle at 12% 17%,#fff8 0 4px,transparent 5px),
+  radial-gradient(circle at 90% 54%,#fff9 0 7px,transparent 8px),
+  radial-gradient(circle at 71% 11%,#fff9 0 3px,transparent 4px),
+  radial-gradient(circle at 22% 75%,#fff7 0 5px,transparent 6px),
+  radial-gradient(circle at 52% 20%,#fff9 0 3px,transparent 4px);
+ opacity:.9;
+}
+.arcade-3d-world::after{
+ content:"";position:absolute;z-index:4;inset:0;pointer-events:none;
+ border-radius:inherit;border:3px solid #ffffff45;
+ box-shadow:inset 0 7px 28px #ffffff38,inset 0 -19px 45px #3f288b19;
+}
+.arcade-3d-horizon{
+ z-index:0;bottom:-46%;height:88%;width:148%;
+ background:linear-gradient(145deg,#ffffffdb,var(--ground-light,#ffdfc8) 37%,var(--ground-dark,#ff88b5) 75%)!important;
+ border:5px solid #ffffff82;
+ box-shadow:inset 0 7px 14px #ffffff99,0 -13px 25px #ffffff33,0 18px 35px #39256725;
+}
+.arcade-3d-horizon::before{
+ inset:8%!important;border:4px dashed #ffffff9b!important;
+}
+.arcade-3d-shadow{
+ background:#3322627d!important;filter:blur(13px)!important;
+}
+.arcade-3d-object{
+ filter:drop-shadow(0 15px 15px #37275b5c) saturate(1.16);
+}
+.arcade-world-rocket{
+ --sky-top:#00d7fa;--sky-base:#4f79e9;--sky-floor:#b15ee2;
+ --ground-light:#dcfbff;--ground-dark:#4dcdd9;
+}
+.arcade-world-rocket .arcade-rocket-hull{
+ background:linear-gradient(0deg,#6a2087 0%,#9850ee 21%,#ebccff 58%,#ffffff 75%,#c38bfa 100%)!important;
+ border:2px solid #f9e7ffb3;box-shadow:inset 0 -11px 12px #6d1f9e81,0 11px 21px #38277055,0 0 20px #ffffff60;
+}
+.arcade-world-rocket .arcade-rocket-nose{
+ background:linear-gradient(155deg,#fffebd,#ffcd4e 40%,#fa7399 92%)!important;
+}
+.arcade-world-rocket .arcade-rocket-plume{
+ background:linear-gradient(90deg,transparent,#ff7c2f 28%,#ffdd32 67%,#ffffdb)!important;
+ filter:drop-shadow(0 0 11px #fff188);
+}
+.arcade-world-rocket .arcade-3d-goal{
+ color:#fff1a7;text-shadow:0 0 4px #fff,0 0 22px #fff19e,0 0 42px #f675fc;
+}
+.arcade-world-tug{
+ --sky-top:#ffe06e;--sky-base:#ff8ea5;--sky-floor:#fb60c3;
+ --ground-light:#ffeab0;--ground-dark:#ff9b82;
+}
+.arcade-world-tug .arcade-tug-cable{
+ background:repeating-linear-gradient(125deg,#7141ad 0 12px,#fff1b8 12px 26px,#df8252 26px 38px)!important;
+ box-shadow:0 10px 0 #743f8b,0 17px 18px #58226758,inset 0 4px 3px #fff;
+}
+.arcade-world-tug .arcade-tug-team.team-left{
+ background:linear-gradient(110deg,#1165bd,#66e6ee 45%,#2b99d3 100%)!important;
+ border:3px solid #ffffffa8;
+}
+.arcade-world-tug .arcade-tug-team.team-right{
+ background:linear-gradient(110deg,#f65991,#ffde6d 45%,#f77847 100%)!important;
+ border:3px solid #ffffffad;
+}
+.arcade-world-tug .arcade-tug-marker{
+ background:linear-gradient(150deg,#ffffff,#ffdc4e 42%,#fb6b78)!important;
+ border:4px solid #ffffff;box-shadow:0 12px 20px #b7416c91;
+}
+.arcade-world-captain{
+ --sky-top:#71f1c9;--sky-base:#53b9ed;--sky-floor:#986be4;
+ --ground-light:#fff4c0;--ground-dark:#f9b766;
+}
+.arcade-world-captain .arcade-trophy-cup{
+ background:linear-gradient(95deg,#c46c1d,#ffe975 25%,#fff6c1 39%,#f1b638 63%,#a86210)!important;
+ border:4px solid #fff3bc;box-shadow:inset 0 6px 14px #fffac5,0 17px 24px #7f45164d,0 0 22px #ffda6999;
+}
+.arcade-world-captain .arcade-captain-ready{
+ bottom:5px!important;color:#fff!important;font-weight:900;letter-spacing:.1em;
+ text-shadow:0 3px 0 #7453b9,0 5px 15px #553e96;
+}
+.arcade-world-blitz{
+ --sky-top:#48e6fd;--sky-base:#7564ea;--sky-floor:#e36feb;
+ --ground-light:#ccfaff;--ground-dark:#777bec;
+}
+.arcade-world-blitz .arcade-blitz-facet{
+ background:linear-gradient(130deg,#f8ffff,#78f0ff 35%,#8b78f2 55%,#4f319d)!important;
+ border:2px solid #ffffff8c;
+ filter:drop-shadow(0 3px 9px #3ff6ff73);
+}
+.arcade-world-blitz .arcade-blitz-ring{
+ border:4px solid #d1ffffd9!important;
+ box-shadow:0 0 13px #ffffffbc,0 0 35px #52fffab3;
+}
+.arcade-world-blitz .arcade-blitz-bolt{
+ color:#fff7ac!important;text-shadow:0 0 8px #fff,0 0 24px #f8ff83,0 11px 8px #48318c;
+}
+.arcade-shell .arcade-tap-btn{
+ background:linear-gradient(145deg,#a75cff 0%,#7a3fe2 55%,#6538c8 100%);
+ border:3px solid #d5b1ff;
+ border-bottom-color:#51229e;
+ box-shadow:0 9px 0 #46229a,0 14px 0 #32186628,0 23px 32px #5934ba47;
+ text-shadow:0 2px 2px #3c1c7f65;
+ font-weight:900;letter-spacing:-.018em;
+}
+.arcade-shell .arcade-tap-btn:hover:not(:disabled){
+ filter:brightness(1.07) saturate(1.1);
+}
+.arcade-shell .arcade-tap-btn:active:not(:disabled){
+ transform:translateY(6px) scale(.99);
+ box-shadow:0 3px 0 #46229a,0 7px 0 #32186620,0 12px 20px #5934ba37;
+}
+.arcade-shell .arcade-tap-btn:focus-visible{
+ outline:4px solid #12c6e7;outline-offset:4px;
+}
+@media(max-width:620px){
+ .arcade-3d-world{min-height:170px}
+ .arcade-scene:has(.arcade-3d-world){box-shadow:0 6px 0 #604da326,0 12px 20px #4c328b20}
+ .arcade-3d-world::before{opacity:.55}
+ .arcade-shell .arcade-tap-btn{min-height:88px;font-size:clamp(19px,5vw,28px)}
+}
+@media(prefers-reduced-motion:reduce){
+ .arcade-3d-world *, .arcade-3d-world *::before,.arcade-3d-world *::after{animation:none!important;transition:none!important}
+ .arcade-shell .arcade-tap-btn{transition:none!important}
+}
