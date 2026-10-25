@@ -200,6 +200,8 @@ BEGIN
  IF position('mode not in (''random'',''manual'')' IN src)=0 THEN RAISE EXCEPTION 'Team settings ABI changed';END IF;
  changed:=replace(src,'mode not in (''random'',''manual'')','mode not in (''random'',''manual'',''captain'')');
  changed:=replace(changed,'if team_count not between 1 and 15 or mode not in (''random'',''manual'',''captain'') then',
+   'if mode=''captain'' and NOT exists(select 1 from public.qwiz_lobby_config WHERE room_id=p_room) then' ||
+   ' raise exception ''Капитанский набор доступен только в новых комнатах'';end if;'||E'\n' ||
    'if exists(select 1 from public.qwiz_lobby_config WHERE room_id=p_room) and mode=''manual'' then'||
    ' raise exception ''Выберите случайный или капитанский способ'';end if;'||E'\n'||
    ' if team_count not between 1 and 15 or mode not in (''random'',''manual'',''captain'') then');
