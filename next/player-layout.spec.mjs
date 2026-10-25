@@ -243,3 +243,20 @@ test('Centered lobby constellation is visible without Play and the signal captio
   expect(coords.icon.bottom).toBeLessThan(coords.caption.top);
  }
 });
+
+
+test('3D arcade world gets a playable portrait-height viewport, without hiding the tap control',async({page})=>{
+ await page.setViewportSize({width:390,height:844});await setup(page);await question(page,{prompt:'Тест мини-игры',options:['1','2']});
+ await page.evaluate(()=>{
+  window.arcadeFixture={mode:'rocket',running:true,server_now:new Date().toISOString(),
+   ends_at:new Date(Date.now()+45000).toISOString(),teams:[{id:'t',name:'Исследователи',points:5,place:1}],
+   mine:{team_id:'t',credits:0},awards:[]};
+  ctx.room.phase='intermission';ctx.room.activity={title:'Ракетная гонка',
+   settings:{arcade_mode:'rocket'}};ctx.gameRenderKey='';renderGame();
+ });
+ const scene=page.locator('.arcade-player .arcade-scene:has(.arcade-3d-world)');
+ await expect(scene).toBeVisible();
+ await expect.poll(()=>scene.evaluate(el=>el.getBoundingClientRect().height)).toBeGreaterThanOrEqual(118);
+ await expect(page.locator('[data-arcade-tap]')).toBeInViewport();
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
+});
