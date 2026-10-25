@@ -156,6 +156,12 @@ BEGIN
   'if v_team is null and r.team_mode=''random'' AND NOT EXISTS('||
   ' SELECT 1 FROM public.qwiz_lobby_config cfg WHERE cfg.room_id=r.id AND cfg.confirmed_at IS NULL) then');
  changed:=replace(changed,
+  'if p_team is not null and p_team is distinct from player_team then',
+  'if p_team is not null and p_team is distinct from player_team then'||
+   E'\n' || ' if player_team is not null and exists(select 1 from public.qwiz_lobby_config WHERE room_id=r.id)'||
+   ' and ((r.team_mode=''random'' and (select confirmed_at from public.qwiz_lobby_config where room_id=r.id) is not null)'||
+   ' or r.team_mode=''captain'') then raise exception ''Команда уже закреплена'';end if;');
+ changed:=replace(changed,
   'if p_inviter is not null and (p_team is null or not exists(select 1 from public.org_next_players',
   'if p_team is not null and r.team_mode=''captain'' and exists(select 1 from public.qwiz_lobby_config where room_id=r.id)'||
   ' and not exists(select 1 from public.qwiz_lobby_captains c where c.room_id=r.id and c.team_id=p_team and c.player_id=p_inviter)'||
