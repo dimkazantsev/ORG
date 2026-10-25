@@ -11,7 +11,7 @@ function roomReadiness(s){
  const replay=s.phase==='finished';
  $('liveStart').disabled=!replay&&(teamUI.busy||s.phase!=='lobby'||!ready||waiting>0);
  $('liveStart').title=replay?'Создать новую игровую комнату с теми же заданиями. История результатов сохранится.':
-  !ready?'Добавьте вопросы или картографический раунд в сборку':waiting?'Распределите ожидающих участников':'';
+  !ready?'Добавьте вопросы или картографический раунд в сборку':waiting?'Распределите ожидающих участников':!formed?'Сначала завершите формирование команд':'';
 }
 function teamMember(p,s){
  const movable=!teamUI.busy&&(s.phase==='lobby'||(!p.team_id&&s.phase!=='finished'));
@@ -19,24 +19,45 @@ function teamMember(p,s){
  '<select data-team-player="'+esc(p.id)+'" aria-label="Команда: '+esc(p.name)+'" '+(!movable?'disabled':'')+'><option value="">Без команды</option>'+(s.teams||[]).map(t=>'<option value="'+esc(t.id)+'" '+(t.id===p.team_id?'selected':'')+'>'+esc(t.name)+'</option>').join('')+'</select></div>';
 }
 function renderTeamManager(s){
- roomReadiness(s);const editing=$('teamSettings').contains(document.activeElement);
+ roomReadiness(s);
+ const lobby=s.team_lobby,old=!lobby,editable=s.phase==='lobby'&&!lobby?.confirmed;
+ const editing=$('teamSettings').contains(document.activeElement);
  if(!editing){$('teamCount').value=s.teams?.length||1;$('teamMode').value=s.team_mode||'random';}
- const editable=s.phase==='lobby';for(const id of ['teamCount','teamMode','applyTeamSettings','shuffleTeams'])$(id).disabled=!editable||teamUI.busy;
- $('teamEditHint').textContent=editable?(s.team_mode==='manual'?'Обычный вход — в список ожидания. QR-код сразу выбирает команду.':'Обычный вход — в случайную наименьшую команду. QR-код выбирает указанную команду.'):'Составы зафиксированы. Новые участники смогут отвечать со следующего вопроса.';
- const players=s.players||[],teams=s.teams||[],key=JSON.stringify([s.code,s.phase,s.team_mode,teams,players,teamUI.busy]);
+ for(const id of ['teamCount','teamMode','applyTeamSettings'])$(id).disabled=!editable||teamUI.busy;
+ $('shuffleTeams').hidden=s.team_mode!=='random'||!!lobby?.confirmed;
+ $('shuffleTeams').disabled=!editable||teamUI.busy;
+ $('confirmTeams').hidden=!lobby||s.team_mode!=='random'||!!lobby.confirmed||s.phase!=='lobby';
+ $('confirmTeams').disabled=teamUI.busy||!(s.players||[]).length;
+ $('teamEditHint').textContent=lobby?
+  s.team_mode==='captain'?
+   'Капитанский набор: '+lobby.captain_count+'/'+lobby.team_count+' капитанов. Первые участники нажимают «Я капитан». QR команд появятся у них одновременно после набора всех капитанов.':
+   lobby.confirmed?'Распределение подтверждено. Пригласите участников подойти к своим командам.':
+   'Студенты подключаются по одному QR комнаты и видят «Создаю команды». Нажмите «Перемешать», затем «Подтвердить».':
+  s.team_mode==='manual'?'Ручная расстановка, команды перетаскиваются.':'В прежних комнатах действует первоначальная логика распределения.';
+ const players=s.players||[],teams=s.teams||[];
+ const key=JSON.stringify([s.code,s.phase,s.team_mode,teams,players,lobby,teamUI.busy,s.public_stats?.teams]);
  if(teamUI.key===key||teamUI.dragged||$('teamGrid').contains(document.activeElement)||$('teamPool').contains(document.activeElement))return;
  teamUI.key=key;
- const pending=players.filter(p=>!p.team_id);$('teamPool').hidden=!pending.length;
- $('teamPool').innerHTML='<h4>Ожидают распределения · '+pending.length+'</h4><div class="team-members">'+pending.map(p=>teamMember(p,s)).join('')+'</div>';
- const qrIcon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h6v6H3zM15 3h6v6h-6zM3 15h6v6H3zM15 15h2v2h-2zM19 15h2v6h-6v-2"/></svg>';
- $('teamGrid').innerHTML=teams.map(t=>{const members=players.filter(p=>p.team_id===t.id);return '<article class="team-card" data-drop-team="'+esc(t.id)+'"><div class="team-card-head">'+QwizStage.icon(t,true)+'<div><h4>'+esc(t.name)+'</h4><small>'+members.length+' участников</small></div><button type="button" class="team-qr-button" data-team-qr="'+esc(t.id)+'" aria-label="QR-код команды '+esc(t.name)+'">'+qrIcon+'</button></div><div class="team-members">'+(members.length?members.map(p=>teamMember(p,s)).join(''):'<p class="team-empty">Перенесите участника или пригласите по QR-коду.</p>')+'</div></article>';}).join('');
+ const pending=players.filter(p=>!p.team_id);
+ $('teamPool').hidden=!pending.length;
+ $('teamPool').innerHTML='<h4>Ожидают команду · '+pending.length+'</h4><div class="team-members">'+pending.map(p=>teamMember(p,s)).join('')+'</div>';
+ const captains=new Map((lobby?.captains||[]).map(x=>[x.team_id,x.player_id]));
+ const effectMap=new Map((lobby?.effects_history||[]).reduce((a,e)=>{a.set(e.team_id,[...(a.get(e.team_id)||[]),e]);return a;},new Map()));
+ $('teamGrid').innerHTML=teams.map(t=>{
+   const members=players.filter(p=>p.team_id===t.id),effects=effectMap.get(t.id)||[];
+   return '<article class="team-card" data-drop-team="'+esc(t.id)+'"><div class="team-card-head">'+QwizStage.icon(t,true)+
+    '<div><h4>'+esc(t.name)+'</h4><small>'+members.length+' '+(members.length===1?'участник':'участников')+'</small></div></div>'+
+    (captains.get(t.id)?'<div class="team-captain-tag">★ Капитан: '+esc(players.find(p=>p.id===captains.get(t.id))?.name||'Назначен')+'</div>':'')+
+    (effects.length?'<div class="team-effects-history"><strong>Эффекты раундов</strong>'+effects.map(x=>'<span class="'+(Number(x.points_awarded)<0?'is-penalty':'is-bonus')+'">'+esc(x.choice)+' · '+(Number(x.points_awarded)>=0?'+':'')+Number(x.points_awarded)+'</span>').join('')+'</div>':'')+
+    '<div class="team-members">'+(members.length?members.map(p=>teamMember(p,s)).join(''):'<p class="team-empty">Ожидание участников.</p>')+'</div></article>';
+ }).join('');
 }
 async function teamAction(action,input={}){
  if(!state.room||teamUI.busy)return;teamUI.busy=true;msg('teamMessage','Сохраняем…');renderTeamManager(state.room);
  try{await rpc('qwiz_team_admin',{p_room:state.room.room_id,p_action:action,p_input:input});
   state.channel?.send({type:'broadcast',event:'team',payload:{changed:true}})?.catch(()=>{});
   if('BroadcastChannel' in window){const c=new BroadcastChannel('qwiz-projector-'+state.roomCode);c.postMessage({event:'team'});c.close();}
-  teamUI.key='';await refreshLive();msg('teamMessage',action==='shuffle'?'Участники распределены случайно и поровну.':action==='refresh_content'?'Вопросы обновлены из сохранённой сборки.':'Распределение сохранено.');QwizStage.audio.play('accept');
+  teamUI.key='';await refreshLive();msg('teamMessage',action==='shuffle'?'Участники распределены случайно и поровну.':action==='confirm'?'Команды подтверждены. Экран аудитории показывает их расположение.':action==='refresh_content'?'Вопросы обновлены из сохранённой сборки.':'Распределение сохранено.');QwizStage.audio.play('accept');
  }catch(e){teamUI.key='';msg('teamMessage',e.message,true);await refreshLive();}
  finally{teamUI.busy=false;if(state.room)renderTeamManager(state.room);}
 }
