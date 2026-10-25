@@ -73,7 +73,7 @@ window.QwizArcade=(()=>{
   }catch(e){showMessage(tr,e.message||'Состояние игры недоступно',true)}finally{tr.fetching=false}
  }
  function showMessage(tr,msg,bad=false){const el=tr.root?.querySelector('[data-arcade-alert]');if(el){el.textContent=msg;el.dataset.error=String(!!bad)}}
- function sceneProgress(tr,v){if(v.mode==='rocket'){const lead=Math.max(0,...(v.teams||[]).map(t=>Number(t.points)||0));const rocket=tr.root.querySelector('[data-rocket-model]');if(rocket){const progress=Math.min(100,lead*7);rocket.style.setProperty('--arcade-progress',progress+'%');}}
+ function sceneProgress(tr,v){if(v.mode==='rocket'){const lead=Math.max(0,...(v.teams||[]).map(t=>Number(t.points)||0));const rocket=tr.root.querySelector('[data-rocket-model]');if(rocket){const progress=Math.min(100,lead*7);rocket.style.setProperty('--arcade-progress',progress+'%');rocket.style.setProperty('--arcade-travel',Math.round(progress*1.9)+'px');}}
   if(v.mode==='tug'){const teams=v.teams||[],first=Number(teams[0]?.points)||0,last=Number(teams.at(-1)?.points)||0,mark=first+last>0?50+40*(first-last)/(first+last):50;const rope=tr.root.querySelector('[data-rope]');if(rope)rope.style.setProperty('--arcade-progress',Math.max(10,Math.min(90,mark))+'%');}
  }
  function promptMarkup(q,allow,shown){if(!q)return '';const images=(q.options||[]).map((o,i)=>{const img=o&&typeof o==='object'&&/^https:\/\/\S+$/.test(o.image_url||'')?'<img class="arcade-choice-image" src="'+escape(o.image_url)+'" alt="Вариант '+(i+1)+'">':'<span>'+escape(typeof o==='string'?o:o?.label||'Флаг')+'</span>';
