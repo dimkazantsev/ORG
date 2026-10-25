@@ -547,7 +547,7 @@ function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{}
   if(geo)$('cardModesInfo').textContent='8 способов ответа · выберите нужные';
   if(geo){$('cardTopic').value=topicIdByName('География России')||'';
    $('cardGeoCount').value=s.geo_count||15;$('cardGeoSeconds').value=s.geo_seconds||180;
-   for(const item of all('#cardGeoModes input:not(:disabled)'))item.checked=!Array.isArray(s.geo_modes)||s.geo_modes.includes(item.value);}
+   for(const item of all('#cardGeoModes input:not(:disabled)'))item.checked=Array.isArray(s.geo_modes)&&s.geo_modes.includes(item.value);}
  $('cardArcadeSeconds').value=Math.max(30,Math.min(120,Number(s.arcade_seconds)||arcade?.seconds||45));
  $('cardArcadeHelp').textContent=arcade?.help||'';
  $('cardOrder').value=s.order||'random';$('cardOffset').value=(s.offset||0)+1;
@@ -1078,7 +1078,7 @@ function wire(){
    if(b.dataset.geo==='russia_map'){
     const c=appendCard('round');if(!c)return;c.title='География России · карта 89 субъектов';c.icon='map';
     c.topic_id=state.topics.find(t=>t.name==='География России')?.id||null;
-    c.settings={...c.settings,arcade_mode:'russia_map',geo_count:15,geo_seconds:180,geo_modes:['locate','identify','capital','flag','silhouette','neighbour','detective','district']};renderCards();
+    c.settings={...c.settings,arcade_mode:'russia_map',geo_count:15,geo_seconds:180,geo_modes:[]};renderCards();
    }else appendCard(b.dataset.card,b.dataset.arcade||null);
   };
  $('openGamesPalette').onclick=()=>{const panel=$('gamesPalette'),show=panel.hidden;panel.hidden=!show;$('openGamesPalette').setAttribute('aria-expanded',String(show));};
@@ -1088,7 +1088,7 @@ function wire(){
    const c=appendCard('round');if(!c)return;c.title='География России · карта 89 субъектов';c.icon='map';
    c.topic_id=state.topics.find(t=>t.name==='География России')?.id||null;
    c.settings={...c.settings,arcade_mode:'russia_map',geo_count:15,geo_seconds:180,
-    geo_modes:['locate','identify','capital','flag','silhouette','neighbour','detective','district']};renderCards();
+    geo_modes:[]};renderCards();
   }else appendCard(b.dataset.card,b.dataset.arcade);
  };
  let lastCardTap=null;
