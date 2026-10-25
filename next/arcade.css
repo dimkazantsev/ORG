@@ -263,7 +263,7 @@
 .arcade-3d-object{position:relative;z-index:3;transform-style:preserve-3d;pointer-events:none;will-change:transform}
 .arcade-world-rocket{background:radial-gradient(circle at 79% 17%,#fff 0%,#ece4ff 42%,#a79cde 100%)}
 .arcade-model-rocket{--arcade-progress:0%;width:clamp(150px,23vw,310px);height:clamp(75px,12dvh,120px);
- transform:translate3d(calc(-40px + var(--arcade-progress)*.72),-8px,70px) rotateY(-12deg) rotateZ(-9deg);
+ transform:translate3d(calc(-40px + var(--arcade-travel,0px)),-8px,70px) rotateY(-12deg) rotateZ(-9deg);
  animation:arcade-ship-float 3.2s ease-in-out infinite alternate}
 .arcade-rocket-hull{position:absolute;inset:22% 17% 24% 15%;border-radius:48%;
  transform:translateZ(29px);
@@ -344,7 +344,7 @@
  animation:arcade-ring-pulse 2.6s ease-in-out infinite alternate}
 .arcade-blitz-ring.ring-b{transform:rotateX(73deg) rotateZ(43deg) translateZ(15px);
  animation-delay:-1.3s}
-@keyframes arcade-ship-float{to{transform:translate3d(calc(-34px + var(--arcade-progress)*.72),-23px,85px) rotateY(6deg) rotateZ(-5deg)}}
+@keyframes arcade-ship-float{to{transform:translate3d(calc(-34px + var(--arcade-travel,0px)),-23px,85px) rotateY(6deg) rotateZ(-5deg)}}
 @keyframes arcade-plume-breathe{to{transform:translateZ(18px) scaleX(.73)}}
 @keyframes arcade-trophy-sway{to{transform:rotateY(14deg) rotateX(-2deg) translateZ(84px) translateY(-8px)}}
 @keyframes arcade-crystal-spin{to{transform:rotateY(375deg) rotateX(7deg) translateZ(72px)}}
