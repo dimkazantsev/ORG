@@ -8,6 +8,12 @@ BEGIN
  anchor:='v_timeline:=v_timeline||jsonb_build_array(jsonb_build_object(';
  extension:=$guard$
    -- Unconfigured arcade card must not be scheduled.
+   IF v_card.card_type IN ('team_stats','player_stats') THEN
+     v_missing:=v_missing||jsonb_build_array(jsonb_build_object(
+       'title',v_card.title,
+       'reason','Устаревшая отдельная карточка рейтинга. Откройте сборку и сохраните её'));
+     CONTINUE;
+   END IF;
    IF v_card.card_type IN ('bonus','duel')
       AND COALESCE(v_card.settings->>'arcade_mode','') NOT IN
          ('rocket','blitz','tug','captain','russia_map') THEN
