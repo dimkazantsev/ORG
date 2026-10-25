@@ -227,3 +227,25 @@ test('Projector processes a phase event that arrives during a slow state request
  await expect(page.locator('.projection-answer-reveal')).toBeVisible();
  await expect(page.locator('.projection-answer-text')).toHaveText('Меркурий');
 });
+
+test('Moderator ignores a double tap while its first server control is pending',async({page})=>{
+ await workspace(page);
+ await page.evaluate(s=>{
+  window.fixture={...s,room_id:'room',players:[],teams:[]};
+  state.roomCode=s.code;state.room=window.fixture;
+  document.getElementById('liveConsole').hidden=false;section('rooms');renderLive(window.fixture);
+  window.controlCalls=0;
+  const oldRpc=state.db.rpc.bind(state.db);
+  state.db.rpc=(name,args)=>{
+   if(name==='qwiz_party_control'){
+    window.controlCalls++;
+    return new Promise(resolve=>{window.finishFirstControl=()=>resolve({data:{phase:'result'},error:null});});
+   }
+   return oldRpc(name,args);
+  };
+ },state());
+ await page.evaluate(()=>{control('next');control('next');});
+ expect(await page.evaluate(()=>window.controlCalls)).toBe(1);
+ await page.evaluate(()=>window.finishFirstControl());
+ await expect.poll(()=>page.evaluate(()=>controlRequestBusy)).toBe(false);
+});
