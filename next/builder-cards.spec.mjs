@@ -186,6 +186,7 @@ for(const width of [320,390,768,1440]){
      editCard(1);
     });
    }
+   await expect(page.locator('#cardModesDetails .card-modes-title')).toHaveText(kind==='flags'?'Механики внутри темы':kind==='geography'?'Механики географии':'Механики карты России');
    const selector=kind==='flags'?'#cardFlagModes>.flag-mode-item':
     kind==='geography'?'#cardGeoQuestionModes>label.check-row':'#cardGeoModes>label';
    const tiles=page.locator(selector);
