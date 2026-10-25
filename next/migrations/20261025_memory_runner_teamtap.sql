@@ -43,9 +43,9 @@ DECLARE r public.org_next_rooms%rowtype; a public.qwiz_room_activity%rowtype;
  IF v.mode='rocket' THEN
    INSERT INTO public.qwiz_arcade_runner_players(room_id,card_position,team_id,player_id)
    SELECT r.id,v.card_position,t.id,(SELECT p.id FROM public.org_next_players p
-      WHERE p.room_id=r.id AND p.team_id=t.id ORDER BY random() LIMIT 1)
+      WHERE p.room_id=r.id AND p.team_id=t.id AND p.joined_at<=v.started_at ORDER BY random() LIMIT 1)
    FROM public.org_next_teams t WHERE t.room_id=r.id
-    AND EXISTS(SELECT 1 FROM public.org_next_players p WHERE p.room_id=r.id AND p.team_id=t.id)
+    AND EXISTS(SELECT 1 FROM public.org_next_players p WHERE p.room_id=r.id AND p.team_id=t.id AND p.joined_at<=v.started_at)
    ON CONFLICT(room_id,card_position,team_id) DO NOTHING;
    UPDATE public.qwiz_arcade_runner_players rp
     SET eliminated_at=now_at FROM public.qwiz_arcade_runs rr
@@ -80,7 +80,7 @@ DECLARE r public.org_next_rooms%rowtype; a public.qwiz_room_activity%rowtype;
       FROM (SELECT ((i+1)/2)::int AS pair FROM generate_series(1,12) i) x)
  FROM public.org_next_teams t
  JOIN LATERAL (SELECT x.id FROM public.org_next_players x WHERE x.team_id=t.id
-         AND x.room_id=r.id ORDER BY x.joined_at,x.id LIMIT 1) p ON true
+         AND x.room_id=r.id AND x.joined_at<=v.started_at ORDER BY x.joined_at,x.id LIMIT 1) p ON true
  WHERE t.room_id=r.id
  ON CONFLICT(room_id,card_position,team_id) DO NOTHING;
  SELECT * INTO board FROM public.qwiz_arcade_memory_players m
@@ -230,14 +230,15 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path TO '' AS $rank$
    END) AS pts,
    CASE WHEN mode='captain' THEN CASE WHEN mp.moves>0 THEN 1 ELSE 0 END
     WHEN mode='rocket' THEN CASE WHEN rp.cleared>0 THEN 1 ELSE 0 END
-    ELSE x.tapped_members END AS players_active
+    ELSE x.tapped_members END AS players_active,
+   coalesce(mp.moves,0) AS moves
  FROM totals x
  LEFT JOIN public.qwiz_arcade_memory_players mp ON mp.room_id=p_room AND mp.card_position=p_position AND mp.team_id=x.team_id
  LEFT JOIN public.qwiz_arcade_runner_players rp ON rp.room_id=p_room AND rp.card_position=p_position AND rp.team_id=x.team_id
  )
  SELECT x.team_id,x.name,x.pts,x.taps,x.players_active,x.members,
- row_number() OVER (ORDER BY x.pts DESC,x.position)::int
- FROM scores x ORDER BY x.pts DESC,x.position;
+ row_number() OVER (ORDER BY x.pts DESC,CASE WHEN x.mode='captain' THEN x.moves ELSE 0 END ASC,x.position)::int
+ FROM scores x ORDER BY x.pts DESC,CASE WHEN x.mode='captain' THEN x.moves ELSE 0 END ASC,x.position;
 $rank$;
 
 -- Don't permit legacy reaction/tap requests to influence Memory and Runner scores.
@@ -254,6 +255,25 @@ BEGIN
    EXECUTE new_src;
  END IF;
 END $guards$;
+
+-- Tapping is a cooperative competition, not the former tug-of-war penalty.
+-- Preserve the winner's +15 and achievements; no automatic deduction from the losing team.
+DO $reward$
+DECLARE old_source text; src text; p1 int; p2 int;
+BEGIN
+ SELECT pg_get_functiondef(p.oid) INTO old_source FROM pg_proc p
+ JOIN pg_namespace n ON n.oid=p.pronamespace
+ WHERE n.nspname='public' AND p.proname='qwiz_arcade_finalize' LIMIT 1;
+ IF position('Повелители каната' in old_source)=0 THEN RETURN;END IF;
+ p1:=position('if r.mode=''tug'' then' in old_source);
+ p2:=position('v_title:=case r.mode' in old_source);
+ IF p1=0 OR p2<=p1 THEN RAISE EXCEPTION 'Old tug penalty source changed; inspect before release';END IF;
+ src:=substring(old_source FROM 1 FOR p1-1)||substring(old_source FROM p2);
+ src:=replace(src,'Пилоты скорости','Покорители препятствий');
+ src:=replace(src,'Повелители каната','Мастера тапов');
+ src:=replace(src,'Молниеносная реакция','Мастера памяти');
+ EXECUTE src;
+END $reward$;
 
 -- A full 12-tile memory game should not inherit the old 40-second reflex deadline.
 CREATE OR REPLACE FUNCTION public.qwiz_arcade_duration(p_settings jsonb,p_mode text)
