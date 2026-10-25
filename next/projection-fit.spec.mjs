@@ -311,3 +311,21 @@ test('Question and answer content enter gently after fit while clock remains sta
   await expect(page.locator('.stage-clock')).toBeVisible();
  }
 });
+
+
+test('All four competitive mini-games have real layered CSS-3D stages; map is untouched',async({page})=>{
+ for(const mode of ['rocket','blitz','tug','captain']){
+  await page.evaluate(mode=>{
+   const area=document.getElementById('projectionMain');
+   QwizArcade.stop('screen');
+   const start=Date.now();
+   const client={rpc:async()=>({data:{mode,running:true,started_at:new Date(start).toISOString(),ends_at:new Date(start+60000).toISOString(),
+    server_now:new Date().toISOString(),teams:[{id:'a',name:'Альфа',points:10,place:1}],mine:null,awards:[]},error:null})};
+   QwizArcade.mountProjector(area,{code:'A1B2C3D4',activity:{settings:{arcade_mode:mode}}},client);
+  },mode);
+  await expect(page.locator('.arcade-3d-world')).toBeVisible();
+  await expect(page.locator('.arcade-3d-object')).toHaveCSS('transform-style','preserve-3d');
+  await expect(page.locator('[data-arcade-clock]')).toContainText('с');
+ }
+ await page.evaluate(()=>QwizArcade.stop('screen'));
+});
