@@ -120,6 +120,16 @@ test('Two moderator devices use an owner-checked atomic stage revision',()=>{
  assert.match(host,/if\(!revision\)/);
  assert.match(host,/Состояние игры изменилось/);
 });
+test('Legacy question snapshots with unselected modes cannot start again',()=>{
+ const sql=readFileSync(new URL('./migrations/20261025_reject_legacy_unselected_question_modes.sql',import.meta.url),'utf8');
+ assert.match(sql,/CREATE OR REPLACE FUNCTION public\.qwiz_room_snapshot_issue/);
+ assert.match(sql,/v_question->'solution'->>'geo_mode'/);
+ assert.match(sql,/v_question->'solution'->>'flag_mode'/);
+ assert.match(sql,/v_card->'settings'->'geo_modes'/);
+ assert.match(sql,/v_card->'settings'->'flag_modes'/);
+ assert.match(sql,/IF public\.qwiz_room_snapshot_issue\(p_room\) IS NOT NULL THEN/);
+ assert.match(sql,/REVOKE ALL ON FUNCTION public\.qwiz_room_snapshot_issue/);
+});
 test('Moderator can finish rooms without a PL/pgSQL activity alias conflict',()=>{
  const migration=readFileSync(new URL('./migrations/20261024_qwiz_party_control_alias_fix.sql',import.meta.url),'utf8');
  const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
