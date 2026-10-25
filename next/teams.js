@@ -65,7 +65,7 @@ window.QwizTeams=(()=>{
    '<div class="team-board-heading">'+QwizStage.icon(t,true)+'<strong>'+escape(t.name)+'</strong></div><div class="team-board-qr"></div><span class="board-count"></span></button>').join('');
    for(const card of root.children){const team=teams.find(t=>t.id===card.dataset.boardTeam);qr(card.querySelector('.team-board-qr'),url(code,team?.id),144);card.onclick=()=>showQr({code,team,title:team?'Приглашение в команду':'Вход в игру '+code});}
   }
-  for(const card of root.children){const team=teams.find(t=>t.id===card.dataset.boardTeam);if(team)card.querySelector('.board-count').textContent=QwizStage.countLabel(Number(team.members??team.players??0),{one:'участник',few:'участника',many:'участников'});}
+  for(const card of root.children){const team=teams.find(t=>t.id===card.dataset.boardTeam);if(team)card.querySelector('.board-count').textContent=((n)=>n+' '+({one:'участник',few:'участника',many:'участников'})[new Intl.PluralRules('ru').select(n)])(Number(team.members??team.players??0));}
  }
  function keepInvitationLinks(){const target=intent();if(!target.room||!/^[A-F0-9]{8}$/.test(target.room)||target.invalid)return;
   for(const a of document.querySelectorAll('a[href]')){const u=new URL(a.getAttribute('href'),location.href);if(u.origin!==location.origin)continue;
