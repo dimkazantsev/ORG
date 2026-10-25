@@ -5,11 +5,17 @@ CREATE TABLE IF NOT EXISTS public.qwiz_arcade_memory_players(
  room_id uuid NOT NULL,card_position int NOT NULL,team_id uuid NOT NULL,player_id uuid NOT NULL,
  deck jsonb NOT NULL,matched jsonb NOT NULL DEFAULT '[]'::jsonb,first_tile int,
  second_tile int,hide_until timestamptz,moves int NOT NULL DEFAULT 0,
- completed_at timestamptz,PRIMARY KEY(room_id,card_position,team_id));
+ completed_at timestamptz,PRIMARY KEY(room_id,card_position,team_id),
+ FOREIGN KEY(room_id,card_position) REFERENCES public.qwiz_arcade_runs(room_id,card_position) ON DELETE CASCADE,
+ FOREIGN KEY(team_id) REFERENCES public.org_next_teams(id) ON DELETE CASCADE,
+ FOREIGN KEY(player_id) REFERENCES public.org_next_players(id) ON DELETE CASCADE);
 CREATE TABLE IF NOT EXISTS public.qwiz_arcade_runner_players(
  room_id uuid NOT NULL,card_position int NOT NULL,team_id uuid NOT NULL,player_id uuid NOT NULL,
  cleared int NOT NULL DEFAULT 0,eliminated_at timestamptz,
- PRIMARY KEY(room_id,card_position,team_id));
+ PRIMARY KEY(room_id,card_position,team_id),
+ FOREIGN KEY(room_id,card_position) REFERENCES public.qwiz_arcade_runs(room_id,card_position) ON DELETE CASCADE,
+ FOREIGN KEY(team_id) REFERENCES public.org_next_teams(id) ON DELETE CASCADE,
+ FOREIGN KEY(player_id) REFERENCES public.org_next_players(id) ON DELETE CASCADE);
 ALTER TABLE public.qwiz_arcade_memory_players ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.qwiz_arcade_runner_players ENABLE ROW LEVEL SECURITY;
 REVOKE ALL ON public.qwiz_arcade_memory_players,public.qwiz_arcade_runner_players FROM PUBLIC,anon,authenticated;
@@ -190,7 +196,7 @@ BEGIN
       'completed',jsonb_array_length(matched_new)=12);
   END IF;
   UPDATE public.qwiz_arcade_memory_players SET second_tile=p_tile,
-       hide_until=now_at+interval '1350 milliseconds',moves=moves+1
+       hide_until=now_at+interval '1900 milliseconds',moves=moves+1
     WHERE room_id=p_room AND card_position=v.card_position AND player_id=p.id;
   RETURN jsonb_build_object('ok',true,'match',false);
  END IF;
