@@ -63,7 +63,7 @@ window.QwizArcade=(()=>{
      tr.pending=0;tr.qkey='';tr.alertOverride=0;
      if(tr.flushTimer){clearTimeout(tr.flushTimer);tr.flushTimer=null;}
    }
-   if(['captain','rocket'].includes(data?.mode)){const ex=await tr.client.rpc('qwiz_arcade_extras',{p_code:tr.code});if(ex.error)throw ex.error;data.extra=ex.data||{};}tr.view=data;tr.offset=Date.parse(data.server_now)-Date.now();paint(tr);if(tr.kind==='player')paintWallet(data);
+   tr.view=data;tr.offset=Date.parse(data.server_now)-Date.now();paint(tr);if(tr.kind==='player')paintWallet(data);
   }catch(e){showMessage(tr,e.message||'Состояние игры недоступно',true)}finally{tr.fetching=false}
  }
  function showMessage(tr,msg,bad=false){const el=tr.root?.querySelector('[data-arcade-alert]');if(el){el.textContent=msg;el.dataset.error=String(!!bad)}}
