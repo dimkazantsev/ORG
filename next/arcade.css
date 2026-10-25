@@ -591,3 +591,82 @@
  .player-compact #gameContent .arcade-scene:has(.arcade-runner-world),
  .player-compact #gameContent .arcade-scene:has(.arcade-tap-stage){height:154px!important}
 }
+
+/* Captain memory: the decorative preview depicts rotating paired cards, not a text poster.
+   All interactive tiles live in .arcade-memory-board; this scene never captures taps. */
+.arcade-memory-hero{
+ position:relative;overflow:hidden;isolation:isolate;
+ background:radial-gradient(ellipse at 50% 24%,#e2cfff 0%,#f6f0ff 49%,#e7d8fd 100%);
+ border-radius:inherit;
+}
+.arcade-memory-hero::before{
+ content:"";position:absolute;inset:0;opacity:.42;pointer-events:none;
+ background:repeating-linear-gradient(108deg,transparent 0 37px,#9671da1b 38px 39px);
+ transform:perspective(340px) rotateX(59deg) scale(1.45);transform-origin:50% 100%;
+}
+.memory-stage{
+ position:relative;z-index:1;width:min(360px,94%);flex:1;min-height:0;
+ max-height:clamp(75px,15dvh,155px);perspective:900px;transform-style:preserve-3d;
+}
+.memory-stage-halo{
+ position:absolute;left:50%;top:60%;width:65%;height:42%;
+ transform:translate(-50%,-15%) rotateX(65deg);border:2px solid #a78cd4aa;
+ border-radius:50%;box-shadow:0 0 28px #a27cf685,inset 0 0 20px #aa7be270;
+ background:radial-gradient(ellipse,#ceb1f3b0,transparent 70%);
+}
+.memory-stage-card{
+ position:absolute;top:7%;left:50%;width:clamp(42px,9dvh,80px);
+ aspect-ratio:.78;display:grid;place-items:center;transform-style:preserve-3d;
+ border-radius:12px;border:2px solid #ffffffdf;
+ background:linear-gradient(145deg,#bd96fc,#8950e5 56%,#5633ad);
+ box-shadow:0 8px 0 #4c2a97,0 21px 25px #4a308263,inset 0 5px 8px #ffffff96;
+ color:#fcefa2;backface-visibility:visible;
+}
+.memory-stage-card::before{
+ content:"";position:absolute;inset:5px;border:1px solid #f8eaffb0;
+ border-radius:7px;pointer-events:none;
+}
+.memory-stage-card i{
+ display:grid;place-items:center;width:68%;height:68%;font-style:normal;
+ font-size:clamp(23px,4.4dvh,43px);text-shadow:0 2px 9px #512ca2;
+}
+.memory-stage-card-b,.memory-stage-card-d{
+ background:linear-gradient(145deg,#ffdf96,#f5a8a7 50%,#ae68cf);
+ box-shadow:0 8px 0 #9d5c91,0 21px 25px #69498152,inset 0 5px 8px #fff8d0a0;
+ color:#fff;
+}
+.memory-stage-card-a{animation:memory-float-a 5.2s ease-in-out infinite}
+.memory-stage-card-b{animation:memory-float-b 5.2s ease-in-out infinite}
+.memory-stage-card-c{animation:memory-float-c 5.2s ease-in-out infinite}
+.memory-stage-card-d{animation:memory-float-d 5.2s ease-in-out infinite}
+@keyframes memory-float-a{
+ 0%,100%{transform:translate3d(-156%,-1%,15px) rotateZ(-23deg) rotateY(31deg)}
+ 50%{transform:translate3d(-158%,8%,29px) rotateZ(-17deg) rotateY(-15deg)}
+}
+@keyframes memory-float-b{
+ 0%,100%{transform:translate3d(-82%,1%,-15px) rotateZ(-7deg) rotateY(-16deg)}
+ 50%{transform:translate3d(-77%,-8%,11px) rotateZ(-2deg) rotateY(25deg)}
+}
+@keyframes memory-float-c{
+ 0%,100%{transform:translate3d(9%,-5%,13px) rotateZ(9deg) rotateY(19deg)}
+ 50%{transform:translate3d(6%,5%,-17px) rotateZ(3deg) rotateY(-24deg)}
+}
+@keyframes memory-float-d{
+ 0%,100%{transform:translate3d(95%,6%,-11px) rotateZ(24deg) rotateY(-30deg)}
+ 50%{transform:translate3d(90%,-5%,18px) rotateZ(17deg) rotateY(18deg)}
+}
+.arcade-memory-hero>.memory-hero-caption{
+ position:relative;z-index:2;flex:none;max-width:96%;padding:2px 8px 4px;
+ font-size:clamp(11px,2.2dvh,17px);font-weight:800;letter-spacing:.02em;
+ color:#58318d;background:#f7f0ffb8;border-radius:999px;
+}
+@media(max-width:520px){
+ .memory-stage-card{width:clamp(42px,8dvh,62px)}
+ .memory-stage{max-height:115px}
+}
+@media(prefers-reduced-motion:reduce){
+ .memory-stage-card-a{animation:none;transform:translate3d(-156%,0,0) rotate(-23deg)}
+ .memory-stage-card-b{animation:none;transform:translate3d(-82%,0,0) rotate(-7deg)}
+ .memory-stage-card-c{animation:none;transform:translate3d(9%,0,0) rotate(9deg)}
+ .memory-stage-card-d{animation:none;transform:translate3d(95%,0,0) rotate(24deg)}
+}
