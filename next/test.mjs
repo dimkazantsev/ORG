@@ -36,6 +36,19 @@ test('Paused rooms preserve frozen memory and reject both answer RPCs',()=>{
  assert.match(client,/\|\|!!s\.paused/);
  assert.match(client,/s\.phase!=='question'\|\|s\.paused\|\|s\.has_answer/);
 });
+test('Two moderator devices use an owner-checked atomic stage revision',()=>{
+ const migration=readFileSync(new URL('./migrations/20261025_atomic_moderator_control_revision.sql',import.meta.url),'utf8');
+ const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ assert.match(migration,/qwiz_party_control_checked/);
+ assert.match(migration,/FOR UPDATE/);
+ assert.match(migration,/public\.qwiz_control_revision\(p_room\)/);
+ assert.match(migration,/public\.qwiz_party_control\(p_room,p_action\)/);
+ assert.match(migration,/FROM PUBLIC, anon/);
+ assert.match(migration,/TO authenticated/);
+ assert.match(host,/p_revision:revision/);
+ assert.match(host,/if\(!revision\)/);
+ assert.match(host,/Состояние игры изменилось/);
+});
 test('Moderator can finish rooms without a PL/pgSQL activity alias conflict',()=>{
  const migration=readFileSync(new URL('./migrations/20261024_qwiz_party_control_alias_fix.sql',import.meta.url),'utf8');
  const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
