@@ -45,7 +45,9 @@ for(const [width,height] of [[1280,720],[1366,768],[1920,1080],[3840,2160],[7680
        ends_at:new Date(Date.now()+60000).toISOString(),
        teams:[{id:'a',name:'Фантастические',score:10}],players:[],paused:false,screen_settings:{sound_enabled:false,volume:0}});
    },sample);
-   await page.waitForTimeout(180);
+   // Two animation frames at 8K can exceed a fixed delay on CI runners.
+   // Require the fitter to finish instead of racing an arbitrary 180ms sleep.
+   await expect.poll(()=>page.evaluate(()=>Number(document.querySelector('#projectionMain')?.firstElementChild?.dataset.fittedZoom)),{timeout:12000}).toBeGreaterThan(0);
    const size=await page.evaluate(()=>{
     const main=document.querySelector('#projectionMain'),scene=main.firstElementChild;
     const stage=main.getBoundingClientRect(),content=scene.getBoundingClientRect();
