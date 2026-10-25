@@ -34,7 +34,7 @@ window.QwizArcade=(()=>{
   const ground='<span class="arcade-3d-horizon" aria-hidden="true"></span><span class="arcade-3d-shadow" aria-hidden="true"></span>';
   if(mode==='rocket')return '<div class="arcade-runner-world" role="img" aria-label="Бегун и движущееся препятствие"><div class="arcade-runner-sky"><i></i><i></i><i></i></div><div class="arcade-runner-character" data-runner-character><span class="runner-head"></span><span class="runner-eye"></span><span class="runner-body"></span><span class="runner-tail"></span><span class="runner-foot left"></span><span class="runner-foot right"></span></div><div class="arcade-runner-obstacle" data-runner-obstacle><span></span><i></i><b></b></div><div class="arcade-runner-floor"></div></div>';
   if(mode==='tug')return '<div class="arcade-tap-stage" aria-hidden="true"><div class="arcade-tap-glow"></div><span class="arcade-tap-sparks">✧　✦　✧</span></div>';
-  if(mode==='captain')return '<div class="arcade-memory-hero" aria-hidden="true"><span class="arcade-memory-star">✦</span><strong>MEMORY</strong><span>Найди все пары</span></div>';
+  if(mode==='captain')return '<div class="arcade-memory-hero" aria-hidden="true"><div class="memory-stage"><span class="memory-stage-halo"></span><span class="memory-stage-card memory-stage-card-a"><i>◈</i></span><span class="memory-stage-card memory-stage-card-b"><i>✦</i></span><span class="memory-stage-card memory-stage-card-c"><i>◈</i></span><span class="memory-stage-card memory-stage-card-d"><i>✦</i></span></div><span class="memory-hero-caption">Найдите шесть пар раньше соперников</span></div>';
   return '<div class="arcade-3d-world arcade-world-blitz" role="img" aria-label="Трёхмерный энергетический кристалл для блиц-вопроса">'+ground+
    '<div class="arcade-3d-object arcade-model-blitz">'+
     '<span class="arcade-blitz-facet facet-left"></span><span class="arcade-blitz-facet facet-back"></span>'+
@@ -86,7 +86,7 @@ window.QwizArcade=(()=>{
   if(v.mode==='captain'&&tr.kind==='player'){
    const board=tr.root.querySelector('[data-arcade-memory]'),info=tr.root.querySelector('[data-memory-info]');
    const m=v.extra||{},enabled=valid&&!!m.captain&&m.completed_ms==null;
-   if(info)info.textContent=!m.captain?'Memory: капитаны играют, остальные наблюдают.':m.completed_ms!=null?'Готово за '+(m.completed_ms/1000).toFixed(2)+' сек. · '+m.moves+' ходов.':'Найдено '+(m.pairs||0)+'/6 пар · '+(m.moves||0)+' ходов. Откройте две плитки.';
+   if(info)info.textContent=!m.captain?'Мэмори: играют капитаны, остальные наблюдают.':m.completed_ms!=null?'Готово за '+(m.completed_ms/1000).toFixed(2)+' сек. · '+m.moves+' ходов.':'Найдено '+(m.pairs||0)+'/6 пар · '+(m.moves||0)+' ходов. Откройте две плитки.';
    if(board){const key=JSON.stringify([m.tiles,m.moves,enabled]);if(tr.memoryKey!==key){
     tr.memoryKey=key;board.innerHTML=(m.tiles||[]).map(tile=>'<button type="button" class="arcade-memory-tile'+(tile.matched?' is-matched':'')+(tile.icon?' is-open':'')+'" data-arcade-tile="'+tile.index+'" '+(!enabled||tile.matched||tile.open?'disabled':'')+' aria-label="'+(tile.icon?'Открытая':'Закрытая')+' плитка '+(tile.index+1)+'"><span class="arcade-memory-tile-inner"><span class="arcade-memory-back">✦</span><span class="arcade-memory-front">'+escape(tile.icon||'')+'</span></span></button>').join('');
    }}
@@ -213,7 +213,7 @@ window.QwizArcade=(()=>{
   try{const {data,error}=await tr.client.rpc('qwiz_arcade_play',{p_room:tr.roomId,p_action:action,p_tile:tile});if(error)throw error;
    if(data?.early){tr.lastJumpTarget=null;showMessage(tr,'Рано! Прыгните ближе к препятствию.');}
    else if(data?.eliminated)showMessage(tr,'Столкновение. Попытка завершена.',true);
-   else if(data?.completed)showMessage(tr,'Memory пройдена. Результат зафиксирован.');
+   else if(data?.completed)showMessage(tr,'Мэмори пройдена. Результат зафиксирован.');
    await fetchState(tr);
   }catch(e){showMessage(tr,e.message||'Действие не принято',true);tr.alertOverride=Date.now()+2600}
   finally{tr.gameBusy=false}
