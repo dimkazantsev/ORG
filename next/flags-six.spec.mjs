@@ -42,6 +42,51 @@ test('Memory conceals the image and unlocks choices at the absolute deadline, in
  await page.evaluate(()=>{delete ctx.room.question.media_url;ctx.gameRenderKey='';renderGame()});
  await expect(page.locator('[data-memory-study]')).toBeHidden();await expect(page.locator('[data-memory-answer]')).toBeVisible();
 });
+test('Public projector hides memory choices while the flag is studied, then reveals them at the shared deadline',async({page})=>{
+ await page.clock.install();
+ await page.setViewportSize({width:1280,height:720});
+ await stub(page);
+ await page.goto(base+'presenter.html?room=ABCDEF12');
+ const memory=snapshot(sample('memory'));
+ // Stress the adaptive projector fit when a short study image becomes eight long choices.
+ memory.options=Array.from({length:8},(_,i)=>'Вариант '+(i+1)+': расширенное описание страны, её государственных символов и особенностей флага.');
+ await page.evaluate(question=>{
+  const data={code:'ABCDEF12',title:'Флаги мира',phase:'question',index:0,total:1,duration:30,
+   ends_at:new Date(Date.now()+30000).toISOString(),question,teams:[],
+   screen_settings:{sound_enabled:false,volume:0}};
+  window.fixture=data;ctx.client.rpc=async()=>({data:window.fixture,error:null});
+  ctx.last=data;ctx.renderKey='';render(data);
+ },memory);
+ const study=page.locator('#projectionMain [data-memory-study]');
+ const choices=page.locator('#projectionMain .projection-public-options');
+ await expect(study).toBeVisible();
+ await expect(choices).toHaveAttribute('data-memory-answer','');
+ await expect(choices).toBeHidden();
+ await expect(choices).toHaveAttribute('aria-hidden','true');
+ await page.clock.fastForward(5500);
+ await page.evaluate(()=>QwizStage.updateClock(ctx.last,ctx.offset));
+ await expect(study).toBeHidden();
+ await expect(choices).toBeVisible();
+ await expect(choices).toHaveAttribute('aria-hidden','false');
+ await expect(choices.locator('.projection-option')).toHaveCount(memory.options.length);
+ await expect.poll(()=>page.evaluate(()=>{
+  const main=document.getElementById('projectionMain').getBoundingClientRect();
+  const scene=document.querySelector('#projectionMain>.projection-question-only').getBoundingClientRect();
+  const options=[...document.querySelectorAll('.projection-public-options .projection-option')].map(el=>el.getBoundingClientRect());
+  return options.length===8&&scene.top>=main.top-4&&scene.bottom<=main.bottom+4&&
+   options.every(r=>r.top>=main.top-4&&r.bottom<=main.bottom+4&&r.left>=main.left-4&&r.right<=main.right+4);
+ })).toBe(true);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);
+ // A new ordinary question is not subject to the preceding memory gate.
+ await page.evaluate(question=>{
+  const next={...ctx.last,index:1,total:2,question,
+   ends_at:new Date(Date.now()+30000).toISOString()};
+  window.fixture=next;ctx.last=next;ctx.renderKey='';render(next);
+ },snapshot(sample('similar')));
+ await expect(page.locator('#projectionMain .projection-public-options')).toBeVisible();
+ await expect(page.locator('#projectionMain [data-memory-answer]')).toHaveCount(0);
+});
+
 test('Assembly paints the selected stripes and submits their actual order',async({page})=>{
  const q=sample('assemble');await player(page,q);
  for(let i=0;i<3;i++)await page.locator('select.rich-order').nth(i).selectOption(String(2-i));
