@@ -632,6 +632,7 @@ function describeLaunchCard(c){
   return {title,description:'Карта России · '+(selected.length?selected.map(x=>launchModeNames[x]||x).join(', '):'механики не выбраны'),invalid:!selected.length};
  }
  if(arcadeGames[mode])return {title,description:'Командная мини-игра · '+arcadeGames[mode].title};
+ if(['bonus','duel'].includes(c.type))return {title,description:'Механика мини-игры не выбрана — настройте или удалите карточку',invalid:true};
  if(c.type==='round'){
   const topic=state.topics.find(x=>x.id===c.topic_id)?.name||'Тема не выбрана';
   const selected=topic==='География России'?(settings.geo_modes||[]):(settings.flag_modes||[]);
@@ -656,7 +657,7 @@ async function previewLaunchBuild(){
  try{
   const snapshot=await studio('build_get',{id});
   if(serial!==launchPlanRequest||$('launchBuild').value!==id)return;
-  const cards=(snapshot.cards||[]).filter(c=>!['team_stats','player_stats'].includes(c.type)&&!(c.type==='bonus'&&!c.settings?.arcade_mode));
+  const cards=snapshot.cards||[]; // Show legacy cards too: the compiler must not launch hidden mechanics.
   const plan=cards.map(describeLaunchCard);
   list.innerHTML=plan.map((row,i)=>'<li class="launch-plan-item'+(row.invalid?' is-unconfigured':'')+'">'+
    '<span class="launch-plan-number">'+(i+1)+'</span><span class="launch-plan-detail"><strong>'+
