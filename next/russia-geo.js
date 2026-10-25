@@ -162,7 +162,7 @@
    }
    if(feedbackActive&&!t.lastAnswer.correct_region_id&&t.feedbackScrollKey!==key){
      t.feedbackScrollKey=key;
-     requestAnimationFrame(()=>{if(!t.closed)revealTarget(t,'.geo-option-correct, .geo-answer-feedback')});
+     requestAnimationFrame(()=>{if(!t.closed)revealTarget(t,t.root.querySelector('.geo-option-correct')?'.geo-option-correct':'.geo-answer-feedback')});
    }
    if(showMap&&!geometry&&!done&&!t.mapPending&&!t.mapError){t.mapPending=true;loadMap().then(()=>{t.mapPending=false;t.renderKey=null;roundState(t)}).catch(e=>{t.mapPending=false;t.mapError=true;t.renderKey=null;t.message='Геометрия недоступна: '+e.message;roundState(t)})}
  }
@@ -187,7 +187,7 @@
     const notice=t.root?.querySelector('.geo-message');
     if(notice)notice.textContent=t.message;
     const buttons=t.root?.querySelectorAll('[data-geo-answer], [data-geo-confirm]');
-    buttons?.forEach(button=>{button.disabled=false;button.removeAttribute('aria-busy')});
+    buttons?.forEach(button=>{button.disabled=false;button.removeAttribute('aria-busy');button.classList.remove('geo-option-pending')});
   }
   finally{t.busy=false}
  }
