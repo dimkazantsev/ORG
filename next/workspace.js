@@ -610,12 +610,13 @@ async function loadRooms(){try{const list=await rpc('qwiz_host_rooms');state.hos
  '<article class="room-row"><div><div class="question-meta"><span class="chip">'+esc(QwizStage.phaseLabel(r.phase))+'</span><span class="chip lilac">'+esc(r.code)+'</span></div><h3>'+esc(QwizStage.capitalize(r.title))+'</h3><p>'+esc(QwizStage.countLabel(r.players,{one:'участник',few:'участника',many:'участников',other:'участника'}))+' · '+esc(QwizStage.countLabel(r.teams,{one:'команда',few:'команды',many:'команд',other:'команды'}))+'</p></div><div class="room-row-actions"><button class="primary-button" data-room="'+esc(r.code)+'">Управлять →</button><button type="button" class="card-trash" data-delete-room="'+esc(r.id)+'" title="Удалить комнату" aria-label="Удалить комнату '+esc(r.title)+'">'+trashSvg+'</button></div></article>').join(''):
  '<div class="empty">Создайте комнату из сохранённой сборки.</div>';
  }catch(e){msg('launchMessage',e.message,true)}}
-async function launch(){projection();disable('launchButton',true);msg('launchMessage','');
+let launchRequestBusy=false;
+async function launch(){if(launchRequestBusy)return;launchRequestBusy=true;disable('launchButton',true);msg('launchMessage','');
  try{if(!$('launchBuild').value)throw Error('Выберите сборку.');
  const created=await rpc('qwiz_prepare_room',{p_build:$('launchBuild').value,p_title:$('launchTitle').value.trim()||null,p_teams:Number($('launchTeams').value)});
- msg('launchMessage','Комната '+created.code+' создана. '+(created.issues?.length?'Можно собирать команды; вопросы добавьте перед началом.':'Вопросов: '+created.total_questions));
+ msg('launchMessage','Комната '+created.code+' создана. Вопросов: '+created.total_questions+'. Пригласите участников и затем начните игру.');
  await loadRooms();await selectRoom(created.code);if(audienceWindow&&!audienceWindow.closed){const url=new URL('./presenter.html',location.href);url.searchParams.set('room',created.code);audienceWindow.location.href=url.toString()}}
- catch(e){msg('launchMessage',e.message,true)}finally{disable('launchButton',false)}}
+ catch(e){msg('launchMessage',e.message,true)}finally{launchRequestBusy=false;disable('launchButton',false)}}
 function subscribeRoom(code){if(state.channel){state.db.removeChannel(state.channel);state.channel=null}
  state.channel=state.db.channel('org-next-'+code,{config:{broadcast:{ack:false}}})
  .on('broadcast',{event:'phase'},()=>refreshLive())
