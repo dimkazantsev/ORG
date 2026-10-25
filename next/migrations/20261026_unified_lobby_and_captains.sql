@@ -116,6 +116,14 @@ BEGIN
   IF NOT EXISTS(SELECT 1 FROM public.org_next_players WHERE id=target AND room_id=p_room AND team_id=team)
    THEN RAISE EXCEPTION 'Новый капитан должен быть из вашей команды';END IF;
   UPDATE public.qwiz_lobby_captains SET player_id=target WHERE room_id=p_room AND team_id=team;
+  -- A memory duel already in progress must follow the captain role transfer
+  -- without restarting the deck or resetting previously collected pairs.
+  UPDATE public.qwiz_arcade_memory_players m SET player_id=target
+  WHERE m.room_id=p_room AND m.team_id=team AND m.completed_at IS NULL
+   AND EXISTS(SELECT 1 FROM public.qwiz_room_activity a
+     WHERE a.room_id=p_room AND a.card_position=m.card_position AND
+       a.settings->>'arcade_mode'='captain');
+
  ELSIF p_action='confirm' THEN
   IF NOT is_host OR r.phase<>'lobby' OR r.team_mode<>'random' THEN RAISE EXCEPTION 'Подтверждает преподаватель в случайном режиме';END IF;
   IF NOT EXISTS(SELECT 1 FROM public.org_next_players WHERE room_id=p_room) THEN RAISE EXCEPTION 'Сначала дождитесь участников';END IF;
@@ -277,6 +285,41 @@ REVOKE ALL ON FUNCTION public.qwiz_lobby_action(uuid,text,jsonb),public.qwiz_lob
 GRANT EXECUTE ON FUNCTION public.qwiz_lobby_action(uuid,text,jsonb) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.qwiz_lobby_view(uuid,boolean) TO authenticated,anon;
 
+
+-- Keep explicit lobby captain roles authoritative in all arcade systems.
+-- Legacy rooms without a lobby assignment retain the earliest-arrival captain.
+DO $captain_arcade_patch$
+DECLARE src text;changed text;
+BEGIN
+ SELECT pg_get_functiondef(p.oid) INTO src FROM pg_proc p
+ JOIN pg_namespace n ON n.oid=p.pronamespace
+ WHERE n.nspname='public' AND p.proname='qwiz_arcade_extras' LIMIT 1;
+ IF src IS NULL OR position('JOIN LATERAL (SELECT x.id FROM public.org_next_players x' IN src)=0
+ THEN RAISE EXCEPTION 'Memory arena captain selector has changed; inspect before deployment';END IF;
+ changed:=replace(src,
+  'JOIN LATERAL (SELECT x.id FROM public.org_next_players x WHERE x.team_id=t.id'||
+   E'\n' || '          AND x.room_id=r.id AND x.joined_at<=v.started_at ORDER BY x.joined_at,x.id LIMIT 1) p ON true',
+  'JOIN LATERAL (SELECT COALESCE('||
+   ' (SELECT c.player_id FROM public.qwiz_lobby_captains c WHERE c.room_id=r.id AND c.team_id=t.id),'||
+   ' (SELECT x.id FROM public.org_next_players x WHERE x.team_id=t.id'||
+   ' AND x.room_id=r.id AND x.joined_at<=v.started_at ORDER BY x.joined_at,x.id LIMIT 1)) AS id) p ON p.id IS NOT NULL');
+ IF changed=src THEN RAISE EXCEPTION 'Could not patch Memory captain selection';END IF;
+ EXECUTE changed;
+
+ SELECT pg_get_functiondef(p.oid) INTO src FROM pg_proc p
+ JOIN pg_namespace n ON n.oid=p.pronamespace
+ WHERE n.nspname='public' AND p.proname='qwiz_arcade_state' LIMIT 1;
+ IF src IS NULL OR position('select p.id into v_captain from public.org_next_players p' IN src)=0
+ THEN RAISE EXCEPTION 'Arcade player captain status changed; inspect before deployment';END IF;
+ changed:=replace(src,
+  'select p.id into v_captain from public.org_next_players p where p.team_id=me.team_id order by p.joined_at,p.id limit 1;',
+  'select coalesce((select c.player_id from public.qwiz_lobby_captains c'||
+   ' where c.room_id=r.id and c.team_id=me.team_id),'||
+   ' (select p.id from public.org_next_players p where p.team_id=me.team_id'||
+   ' order by p.joined_at,p.id limit 1)) into v_captain;');
+ IF changed=src THEN RAISE EXCEPTION 'Could not patch arcade captain status';END IF;
+ EXECUTE changed;
+END $captain_arcade_patch$;
 
 -- Visual effect metadata, including the THREE penalties. The actual balance
 -- and point calculations continue to use qwiz_apply_round_boost unchanged.
