@@ -87,6 +87,49 @@ test('Public projector hides memory choices while the flag is studied, then reve
  await expect(page.locator('#projectionMain [data-memory-answer]')).toHaveCount(0);
 });
 
+test('Reconnect during pause retains frozen memory display and blocks submissions until resume',async({page})=>{
+ await page.clock.install();
+ await player(page,sample('memory'));
+ const original=await page.evaluate(()=>ctx.room.question);
+ await page.evaluate(()=>{
+  ctx.room={...ctx.room,paused:true,ends_at:new Date(Date.now()+28000).toISOString(),
+   question:{...ctx.room.question,memory_until:new Date(Date.now()+3000).toISOString()}};
+  ctx.gameRenderKey='';renderGame();
+ });
+ await expect(page.locator('[data-memory-study]')).toBeVisible();
+ await expect(page.locator('[data-memory-answer]')).toBeHidden();
+ await expect(page.locator('#gameContent')).toContainText('Игра на паузе');
+ await expect(page.locator('#playerStatus')).toContainText('приостановлена');
+ // Pause time does not consume study time, even after a full local UI rebuild.
+ await page.clock.fastForward(9000);
+ await page.evaluate(()=>{ctx.gameRenderKey='';ctx.room.question.memory_until=new Date(Date.now()+3000).toISOString();renderGame()});
+ await expect(page.locator('[data-memory-study]')).toBeVisible();
+ await expect(page.locator('[data-memory-answer]')).toBeHidden();
+ await page.evaluate(()=>{
+  ctx.room={...ctx.room,paused:false,ends_at:new Date(Date.now()+28000).toISOString(),
+   question:{...ctx.room.question,memory_until:new Date(Date.now()+3000).toISOString()}};
+  renderGame();
+ });
+ await expect(page.locator('#gameContent')).not.toContainText('Игра на паузе');
+ await page.clock.fastForward(3500);
+ await expect(page.locator('[data-memory-study]')).toBeHidden();
+ await expect(page.locator('[data-memory-answer]')).toBeVisible();
+});
+
+test('Player sees disabled choices while paused and can answer after resume only',async({page})=>{
+ await player(page,sample('similar'));
+ await expect(page.locator('#gameContent [data-answer]').first()).toBeEnabled();
+ await page.evaluate(()=>{ctx.room={...ctx.room,paused:true};renderGame()});
+ await expect(page.locator('#gameContent [data-answer]').first()).toBeDisabled();
+ await expect(page.locator('#gameContent')).toContainText('Игра на паузе');
+ await page.evaluate(()=>document.querySelector('#gameContent [data-answer]').dispatchEvent(new MouseEvent('click',{bubbles:true})));
+ expect(await page.evaluate(()=>window.sent.some(x=>x.name==='org_next_answer'||x.name==='qwiz_submit_answer'))).toBe(false);
+ await page.evaluate(()=>{ctx.room={...ctx.room,paused:false};renderGame()});
+ await expect(page.locator('#gameContent [data-answer]').first()).toBeEnabled();
+ await page.locator('#gameContent [data-answer]').first().click();
+ await expect.poll(()=>page.evaluate(()=>window.sent.filter(x=>x.name==='org_next_answer'||x.name==='qwiz_submit_answer').length)).toBe(1);
+});
+
 test('Assembly paints the selected stripes and submits their actual order',async({page})=>{
  const q=sample('assemble');await player(page,q);
  for(let i=0;i<3;i++)await page.locator('select.rich-order').nth(i).selectOption(String(2-i));
