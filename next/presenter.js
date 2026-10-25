@@ -188,7 +188,15 @@ function finalShow(state){
   '<div><strong>'+accuracy+'%</strong><span>верных ответов</span></div></div>'+
   '<div class="projection-round-columns"><section class="stage-team-results"><h2>Рейтинг команд</h2>'+list(teams)+'</section>'+
   '<section class="stage-player-results"><h2>Личный рейтинг</h2>'+list(players)+'</section></div>'+
-  '<p class="projection-final-footnote">Полная статистика игры доступна каждому участнику на его устройстве.</p></section>';
+  '<p class="projection-final-footnote">Полная статистика игры доступна каждому участнику на его устройстве.</p>'+
+  // Preserve the original detailed report for optional post-game review.
+  // It is collapsed during the short, readable public finale.
+  '<details class="projection-finale-report"><summary>Подробные итоги · все команды, игроки и вопросы</summary>'+
+  '<div class="projection-finale-report-content"><section class="stage-team-results"><h2>Все команды</h2>'+
+   QwizStage.teams(teams,{full:true,ranked:true})+'</section>'+
+  '<section class="stage-player-results"><h2>Все участники</h2>'+QwizStage.leaderboard(players,80)+'</section>'+
+  (stats.length?questionStats(stats):'<p class="stage-empty">Нет статистики вопросов.</p>')+
+  '</div></details></section>';
 }
 function projectionOption(value,index){
  const bands=QwizStage.stripeOption(value);if(bands)return bands;
