@@ -841,7 +841,7 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
   s.phase==='finished'?'Игра завершена. Итоги на экране аудитории.':'Ожидание начала игры.';
  const boosts=new Map((s.public_stats?.teams||[]).map(t=>[t.id,t.boost]));
  $('liveRanking').innerHTML=(s.teams||[]).slice().sort((a,b)=>b.score-a.score).map((t,i)=>{
-  const effects=(s.team_lobby?.effects_history||[]).filter(x=>x.team_id===t.id);
+  const effects=(s.team_effects||s.team_lobby?.effects_history||[]).filter(x=>x.team_id===t.id);
   return '<div class="live-line"><span>'+(i+1)+'. '+esc(t.name)+
    (boosts.get(t.id)?'<b class="team-boost-chip" title="Активный бонус текущего раунда">✦ '+esc(boosts.get(t.id).title)+'</b>':'')+
    (effects.length?'<small class="team-effects-history">'+effects.map(x=>esc(x.choice)+' ('+(Number(x.points_awarded)>=0?'+':'')+Number(x.points_awarded)+')').join(' · ')+'</small>':'')+
