@@ -48,6 +48,8 @@ test('Public projector hides memory choices while the flag is studied, then reve
  await stub(page);
  await page.goto(base+'presenter.html?room=ABCDEF12');
  const memory=snapshot(sample('memory'));
+ // Stress the adaptive projector fit when a short study image becomes eight long choices.
+ memory.options=Array.from({length:8},(_,i)=>'Вариант '+(i+1)+': расширенное описание страны, её государственных символов и особенностей флага.');
  await page.evaluate(question=>{
   const data={code:'ABCDEF12',title:'Флаги мира',phase:'question',index:0,total:1,duration:30,
    ends_at:new Date(Date.now()+30000).toISOString(),question,teams:[],
@@ -67,6 +69,13 @@ test('Public projector hides memory choices while the flag is studied, then reve
  await expect(choices).toBeVisible();
  await expect(choices).toHaveAttribute('aria-hidden','false');
  await expect(choices.locator('.projection-option')).toHaveCount(memory.options.length);
+ await expect.poll(()=>page.evaluate(()=>{
+  const main=document.getElementById('projectionMain').getBoundingClientRect();
+  const scene=document.querySelector('#projectionMain>.projection-question-only').getBoundingClientRect();
+  const options=[...document.querySelectorAll('.projection-public-options .projection-option')].map(el=>el.getBoundingClientRect());
+  return options.length===8&&scene.top>=main.top-4&&scene.bottom<=main.bottom+4&&
+   options.every(r=>r.top>=main.top-4&&r.bottom<=main.bottom+4&&r.left>=main.left-4&&r.right<=main.right+4);
+ })).toBe(true);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);
  // A new ordinary question is not subject to the preceding memory gate.
  await page.evaluate(question=>{
