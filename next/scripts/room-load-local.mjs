@@ -6,6 +6,7 @@ import {performance} from 'node:perf_hooks';
 import {mkdir,writeFile} from 'node:fs/promises';
 import {dirname} from 'node:path';
 import assert from 'node:assert/strict';
+import {gzipSync} from 'node:zlib';
 
 const clients=40;
 const teams=Array.from({length:15},(_,i)=>({
@@ -23,8 +24,28 @@ const sample={
  question:{kind:'single',prompt:'Какое государство изображено на флаге?',
   options:['Российская Федерация','Республика Казахстан','Республика Беларусь','Кыргызская Республика'],
   media_url:'/next/assets/flags-world/ru.svg'},
- teams,players,public_stats:{teams,players},answers_count:20,eligible:true,has_answer:false
+ teams,players:[],public_stats:{teams,players:[],question_stats:[]},answers_count:20,eligible:true,has_answer:false
 };
+// Real student snapshots omit individual leaderboards during ordinary questions.
+// These are phase-shaped synthetic examples, NOT captures of live player data.
+const phaseSnapshots={
+ question:sample,
+ result:{...sample,phase:'result',public_stats:{teams,players,question_stats:[]},
+  answer:{text:'Российская Федерация',explanation:'Демонстрационный ответ'}},
+ round_stats:{...sample,phase:'intermission',question:null,
+  activity:{type:'round_stats',title:'Итоги раунда'},
+  public_stats:{teams,players,question_stats:[]},round_results:{teams,players}},
+ finished:{...sample,phase:'finished',question:null,answer:null,
+  public_stats:{teams,players,question_stats:Array.from({length:16},(_,i)=>({
+   index:i,prompt:'Учебный вопрос '+(i+1),participants:40,answered:36,
+   correct:25,incorrect:11,unanswered:4,correct_rate:62.5,incorrect_rate:27.5}))}}
+};
+const phaseProfile=()=>Object.fromEntries(Object.entries(phaseSnapshots).map(([phase,state])=>{
+ const payload=JSON.stringify({...state,server_now:new Date().toISOString(),
+  ends_at:new Date(Date.now()+30000).toISOString(),me:{id:'player-1',team_id:'team-1'}});
+ return [phase,{json_bytes:Buffer.byteLength(payload,'utf8'),
+  potential_gzip_bytes:gzipSync(payload).byteLength}];
+}));
 const byteLength=s=>Buffer.byteLength(s,'utf8');
 const percentile=(values,fraction)=>values.slice().sort((a,b)=>a-b)[Math.max(0,Math.ceil(values.length*fraction)-1)];
 const fixed=n=>Math.round(n*100)/100;
@@ -81,7 +102,7 @@ async function main(){
    assert.equal(response.status,200);
    assert.equal(data.code,'A1B2C3D4');
    assert.equal(data.me.id,'player-'+player);
-   assert.equal(data.players.length,40);
+   assert.equal(data.players.length,0);
    return {player,ms:performance.now()-start,request_bytes:byteLength(body),
     response_bytes:byteLength(raw)};
   };
@@ -99,6 +120,9 @@ async function main(){
   assert.equal(serverBytesIn,inBytes);
   assert.equal(serverBytesOut,outBytes);
   const meanJsonBytes=(inBytes+outBytes)/rows.length;
+  const phases=phaseProfile();
+  assert(phases.question.json_bytes<phases.result.json_bytes);
+  assert(phases.result.json_bytes<phases.finished.json_bytes);
   const pollIntervalSec=20;
   const sessionMinutes=90;
   const sessionsPerMonth=20;
@@ -113,9 +137,11 @@ async function main(){
    staggered:{count:staggered.length,p50_ms:fixed(percentile(staggered.map(x=>x.ms),.5)),
     p95_ms:fixed(percentile(staggered.map(x=>x.ms),.95))},
    peak_local_requests_per_second:Math.max(...requestsPerSecond.values()),
+   synthetic_phase_profiles:phases,
    measured_json_body_bytes:{requests:inBytes,responses:outBytes,
     avg_per_read:fixed(meanJsonBytes),headers_tls_websocket_excluded:true},
    projection_only_not_measured:{
+    scenario:'90 minutes entirely in question phase (upper-duration illustration only)',
     assumed_poll_interval_seconds:pollIntervalSec,
     assumed_session_minutes:sessionMinutes,
     assumed_sessions_per_month:sessionsPerMonth,
