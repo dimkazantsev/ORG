@@ -58,7 +58,7 @@ window.QwizTeams=(()=>{
   if(!root)return;
   const lobby=s.team_lobby,team=(s.teams||[]).find(t=>t.id===s.me?.team_id),mode=lobby?.mode;
   const lockedRandom=mode==='random'&&!lobby.confirmed;
-  const key=[s.code,s.me?.id,team?.id,team?.name,s.phase,lobby?.confirmed,lobby?.captain_count,lobby?.captains_ready,lobby?.my_captain,JSON.stringify(lobby?.team_members)].join(':');
+  const key=[s.code,s.me?.id,team?.id,team?.name,s.phase,lobby?.mode,lobby?.team_count,lobby?.can_claim,lobby?.confirmed,lobby?.captain_count,lobby?.captains_ready,lobby?.my_captain,JSON.stringify(lobby?.team_members)].join(':');
   if(root.dataset.teamKey===key)return;root.dataset.teamKey=key;
   if(lockedRandom){
     root.innerHTML='<div class="team-forming-inline"><span class="team-infinity" aria-hidden="true">∞</span><span>Создаю команды</span></div>';
