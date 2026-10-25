@@ -260,3 +260,41 @@ test('3D arcade world gets a playable portrait-height viewport, without hiding t
  await expect(page.locator('[data-arcade-tap]')).toBeInViewport();
  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
 });
+
+test('Personal round totals stay horizontal on narrow phones',async({page})=>{
+ for(const width of [320,360,390,465]){
+  await page.setViewportSize({width,height:790});
+  await setup(page);
+  await page.evaluate(()=>{
+   window.fixture={
+    code:'ABCDEF12',room_id:'fixture-room',phase:'intermission',title:'ОРГ',index:0,total:2,
+    ends_at:new Date(Date.now()+15000).toISOString(),
+    activity:{type:'round_stats',title:'Итоги раунда',settings:{stats_seconds:7}},
+    round_results:{
+     teams:[{id:'fixture-team',name:'Пружинистые',score:700}],
+     players:[{id:'fixture-player',name:'Дима',score:700}],
+     team_unit:'баллы раунда',player_unit:'баллы раунда'
+    },
+    teams:[{id:'fixture-team',name:'Пружинистые',score:700}],
+    me:{id:'fixture-player',team_id:'fixture-team'},public_stats:{teams:[],players:[]},
+    server_now:new Date().toISOString()
+   };
+   ctx.room=window.fixture;ctx.gameRenderKey='';
+   showScreen('game');renderGame();
+  });
+  const numbers=page.locator('#gameContent .round-self-summary strong');
+  await expect(numbers).toHaveCount(2);
+  for(const number of await numbers.all()){
+   await expect(number).toHaveText('700');
+   const geometry=await number.evaluate(el=>{
+    const parent=el.closest('.round-self-summary>div');
+    const range=document.createRange();range.selectNodeContents(el);
+    const textRect=range.getBoundingClientRect();
+    const parentRect=parent.getBoundingClientRect();
+    return {top:textRect.top,bottom:textRect.bottom,width:textRect.width,available:parentRect.width};
+   });
+   expect(geometry.bottom-geometry.top,JSON.stringify({width,geometry})).toBeLessThan(75);
+   expect(geometry.width,JSON.stringify({width,geometry})).toBeLessThan(geometry.available+1);
+  }
+ }
+});
