@@ -284,7 +284,7 @@ function roundScorePanel(view,title,final=false,endsAt=null){
  '<h1>'+esc(title||'Результаты')+'</h1>'+highlight+rewardBanner+
  '<div class="round-results-grid"><section><h2>Команды</h2>'+render(rows,true)+'</section>'+
  '<section><h2>Участники</h2>'+render(players,false)+'</section></div>'+
- (!final?'<p class="round-results-next">Следующая карточка через <strong id="playerResultCountdown">'+(endsAt?remaining(endsAt):'—')+'</strong> сек.</p>':'')+'</section>';
+ (!final?'<p class="round-results-next" id="playerNextStatus" role="status">'+(endsAt&&remaining(endsAt)>0?'Следующая карточка через <strong id="playerResultCountdown">'+remaining(endsAt)+'</strong> сек.':'Ожидаем перехода от сервера…')+'</p>':'')+'</section>';
 }
 function roundIntroMarkup(s){
  const title=s.activity?.title||'Следующий раунд',icon=s.activity?.icon||s.activity?.settings?.queued_icon;
@@ -452,7 +452,7 @@ async function copyInvite(){if(!ctx.roomCode)return;const invite=joinUrl(ctx.roo
 function roomPollOffset(random=Math.random){return Math.floor(Math.max(0,Math.min(0.999999,Number(random())||0))*20000)}
 function updateClocks(){if(ctx.room?.paused){lockDisconnectedAnswers();return;}
  if(ctx.room?.phase==='intermission'&&ctx.room?.activity?.type==='round_stats'){
-  const left=remaining(ctx.room.ends_at);text('playerResultCountdown',left);
+  const left=remaining(ctx.room.ends_at);if(left>0)text('playerResultCountdown',left);else {const status=$('playerNextStatus');if(status)status.textContent='Ожидаем перехода от сервера…';}
   if(left===0&&!ctx.releaseTimer)ctx.releaseTimer=setTimeout(()=>{ctx.releaseTimer=null;if(ctx.roomCode)refreshRoom(false)},650+Math.floor(Math.random()*800));
   return;
  }if(ctx.room?.phase==='intermission'&&ctx.room?.activity?.type==='card_intro'){
