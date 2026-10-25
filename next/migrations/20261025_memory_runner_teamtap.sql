@@ -156,11 +156,9 @@ BEGIN
      WHERE room_id=p_room AND card_position=v.card_position AND player_id=p.id;
    RETURN jsonb_build_object('ok',false,'eliminated',true);
   END IF;
-  IF now_at<target_time-interval '420 milliseconds' THEN
-   -- Prevent rapid blind-tapping; the participant must time the obstacle.
-   UPDATE public.qwiz_arcade_runner_players SET eliminated_at=now_at
-     WHERE room_id=p_room AND card_position=v.card_position AND player_id=p.id;
-   RETURN jsonb_build_object('ok',false,'eliminated',true,'early',true);
+  IF now_at<target_time-interval '720 milliseconds' THEN
+   -- Early taps do not score, but do not instantly end a valid run.
+   RETURN jsonb_build_object('ok',false,'early',true);
   END IF;
   UPDATE public.qwiz_arcade_runner_players SET cleared=cleared+1
    WHERE room_id=p_room AND card_position=v.card_position AND player_id=p.id;
