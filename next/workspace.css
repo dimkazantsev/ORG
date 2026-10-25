@@ -1346,3 +1346,7 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 @media(prefers-reduced-motion:reduce){
   #roundCards .round-card{transition:none}
 }
+
+/* Theme-specific mechanics: generic subjects do not expose flag choices. */
+#cardModesDetails .card-topic-note{margin:0 14px 15px;padding:12px 14px;line-height:1.55;background:#f5f1fc;border:1px solid #e2d5f5;border-radius:11px;color:#67567b;font-size:12px;overflow-wrap:anywhere}
+#cardDialog #cardTopic:disabled{opacity:1;color:#503b77;background:#f5f0ff}
