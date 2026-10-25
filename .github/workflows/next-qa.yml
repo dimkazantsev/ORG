@@ -19,6 +19,17 @@ jobs:
           node-version: '22'
       - name: Validate new app
         run: node --test next/test.mjs next/arcade-20261025.spec.mjs next/flags-six.test.cjs
+      - name: Validate new PostgreSQL migration syntax (no production writes)
+        run: |
+          python -m pip install --quiet pglast
+          python - <<'PY'
+          from pathlib import Path
+          from pglast import parse_sql
+          for name in ('20261025_shuffle_all_presented_answers.sql','20261025_memory_runner_teamtap.sql'):
+              path=Path('next/migrations')/name
+              parse_sql(path.read_text(encoding='utf-8'))
+              print('Parsed:',path)
+          PY
       - name: Static asset checks
         run: |
           test -s next/index.html
