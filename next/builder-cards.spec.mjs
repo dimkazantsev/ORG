@@ -358,6 +358,7 @@ test('Finished rooms are stored only in a collapsed history, while active rooms 
  await expect(page.locator('#hostRoomList .rooms-history')).toHaveCount(1);
  await expect(page.locator('#hostRoomList .rooms-history')).not.toHaveAttribute('open','');
  await expect(page.locator('#hostRoomList .rooms-history-count')).toHaveText('2');
+ await page.evaluate(()=>section('rooms'));
  await page.locator('#hostRoomList .rooms-history summary').click();
  await expect(page.locator('#hostRoomList .rooms-history .room-row')).toHaveCount(2);
  await expect(page.locator('#hostRoomList .rooms-history [data-room="D9F77416"]')).toContainText('Результаты');
