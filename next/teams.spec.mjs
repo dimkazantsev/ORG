@@ -299,3 +299,21 @@ test('Legacy audience also uses one central room QR, never team links before pla
  await expect(page.locator('.lobby-cinema-qr img')).toHaveCount(1);
  await expect(page.locator('.team-board-card')).toHaveCount(0);
 });
+
+
+test('Switching lobby from random to captain updates the phone and projector without a page reload',async({page})=>{
+ const s=fixture(2,2);s.host=false;s.me={id:uid(701),team_id:null};s.team_mode='random';
+ s.team_lobby={mode:'random',team_count:2,confirmed:false,captain_count:0,captains_ready:false,can_claim:false,my_captain:false};
+ await mock(page,s,{host:false});await page.setViewportSize({width:390,height:844});
+ await page.goto(base);
+ await page.evaluate(()=>{ctx.roomCode='AABBCCDD';ctx.room=window.fixture;showScreen('game');renderGame()});
+ await expect(page.locator('#gameContent')).toContainText('Создаю команды');
+ await page.evaluate(()=>{window.fixture.team_mode='captain';window.fixture.team_lobby.mode='captain';window.fixture.team_lobby.can_claim=true;dataState(window.fixture)});
+ await expect(page.locator('#gameContent')).toContainText('Выбираем капитанов');
+ await expect(page.locator('#playerTeamPanel [data-captain-claim]')).toBeVisible();
+ await page.setViewportSize({width:1280,height:720});
+ await mock(page,s,{host:false});await page.goto(base+'presenter.html?room=AABBCCDD');
+ await expect(page.locator('.lobby-cinema-instructions')).toContainText('Выбираем капитанов');
+ await page.evaluate(()=>{window.fixture.team_mode='random';window.fixture.team_lobby.mode='random';render(window.fixture)});
+ await expect(page.locator('.lobby-cinema-instructions')).toContainText('Преподаватель распределит');
+});
