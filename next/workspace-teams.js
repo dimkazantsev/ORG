@@ -48,7 +48,11 @@ function renderTeamManager(s){
    return '<article class="team-card" data-drop-team="'+esc(t.id)+'"><div class="team-card-head">'+QwizStage.icon(t,true)+
     '<div><h4>'+esc(t.name)+'</h4><small>'+members.length+' '+(members.length===1?'участник':'участников')+'</small></div></div>'+
     (captains.get(t.id)?'<div class="team-captain-tag">★ Капитан: '+esc(players.find(p=>p.id===captains.get(t.id))?.name||'Назначен')+'</div>':'')+
-    (effects.length?'<div class="team-effects-history"><strong>Эффекты раундов</strong>'+effects.map(x=>'<span class="'+(Number(x.points_awarded)<0?'is-penalty':'is-bonus')+'">'+esc(x.choice)+' · '+(Number(x.points_awarded)>=0?'+':'')+Number(x.points_awarded)+'</span>').join('')+'</div>':'')+
+    (effects.length?'<div class="team-effects-history"><strong>Бонусы и штрафы</strong>'+effects.map(x=>{
+      const labels={headstart:'Фора',teamwork:'Командный рывок',momentum:'Импульс',fog:'Туман',storm:'Шторм',drain:'Потеря очков'};
+      const penalty=['fog','storm','drain'].includes(x.choice);
+      return '<span class="'+(penalty?'is-penalty':'is-bonus')+'">'+(penalty?'− ':'+ ')+esc(labels[x.choice]||x.choice)+' · '+(x.applied_at?(Number(x.points_awarded)>=0?'+':'')+Number(x.points_awarded)+' очков':'ожидает применения')+'</span>';
+    }).join('')+'</div>':'')+
     '<div class="team-members">'+(members.length?members.map(p=>teamMember(p,s)).join(''):'<p class="team-empty">Ожидание участников.</p>')+'</div></article>';
  }).join('');
 }
