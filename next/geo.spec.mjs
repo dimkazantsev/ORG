@@ -82,6 +82,8 @@ test('Geography Russia question round has eight mechanics and teacher-owned topi
  await expect(page.locator('#cardGeoModes input:not(:disabled)')).toHaveCount(8);
  await expect(page.locator('#cardGeoModes [value="coat"]')).toBeDisabled();
  await expect(page.locator('#cardGeoCount')).toHaveValue('15');
+ await expect(page.locator('#cardGeoModes input:checked')).toHaveCount(0);
+ await page.locator('#cardGeoModes [value="locate"]').check();
  await page.locator('#cardGeoCount').fill('27');
  await page.locator('#cardForm button[type="submit"]').click();
  await expect(page.locator('#roundCards [data-index="2"]')).toContainText('27 случайных субъектов');
