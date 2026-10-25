@@ -614,7 +614,7 @@ let launchRequestBusy=false;
 async function launch(){if(launchRequestBusy)return;launchRequestBusy=true;disable('launchButton',true);msg('launchMessage','');
  try{if(!$('launchBuild').value)throw Error('Выберите сборку.');
  const created=await rpc('qwiz_prepare_room',{p_build:$('launchBuild').value,p_title:$('launchTitle').value.trim()||null,p_teams:Number($('launchTeams').value)});
- msg('launchMessage','Комната '+created.code+' создана. Вопросов: '+created.total_questions+'. Пригласите участников и затем начните игру.');
+ msg('launchMessage','Комната '+created.code+(created.reused?' уже подготовлена — открываем существующую, без дубликата.':' создана.')+' Вопросов: '+created.total_questions+'. Пригласите участников и затем начните игру.');
  await loadRooms();await selectRoom(created.code);if(audienceWindow&&!audienceWindow.closed){const url=new URL('./presenter.html',location.href);url.searchParams.set('room',created.code);audienceWindow.location.href=url.toString()}}
  catch(e){msg('launchMessage',e.message,true)}finally{launchRequestBusy=false;disable('launchButton',false)}}
 function subscribeRoom(code){if(state.channel){state.db.removeChannel(state.channel);state.channel=null}
