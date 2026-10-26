@@ -268,5 +268,8 @@ window.QwizArcade=(()=>{
   wallet.lastFetch=Date.now();
   try{const {data,error}=await ctx.client.rpc('qwiz_party_arcade',{p_code:s.code});if(!error)paintWallet(data)}catch{}
  }
+ // An interrupted mobile connection must not require a page reload.
+ window.addEventListener('online',()=>{for(const tr of Object.values(ui)){if(tr&&!tr.closed)fetchState(tr);}});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden){for(const tr of Object.values(ui)){if(tr&&!tr.closed)fetchState(tr);}}});
  return {isArcade,mountPlayer,mountProjector,mountHost,syncWallet,stop};
 })();
