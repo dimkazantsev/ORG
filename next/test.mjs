@@ -172,6 +172,7 @@ test('Every non-final card can be duplicated with isolated settings and stable f
  const cards=[original,{type:'finale',title:'Финал',settings:{}}];
  let renders=0,announced='';
  const context={state:{cards},titles:{round:'Раунд вопросов'},
+   gameTitle(c){return String(c.title||'').replace(/(?:\\s*[—–-]\\s*копия)+\\s*$/giu,'').trim()},
    renderCards(){renders++},
    msg(id,text){announced=text},
    motionPreference:{matches:true},
@@ -179,7 +180,7 @@ test('Every non-final card can be duplicated with isolated settings and stable f
  };
  runInNewContext(host.slice(start,end)+'duplicateCard(0);',context);
  assert.equal(cards.length,3);
- assert.equal(cards[1].title,'Флаги — копия');
+ assert.equal(cards[1].title,'Флаги');
  assert.equal(cards[2].type,'finale');
  assert.equal(cards[1].id,undefined);
  assert.equal(cards[1].topic_id,original.topic_id);
