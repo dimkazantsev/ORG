@@ -49,6 +49,19 @@ async function fetchRoomSnapshot(code,timeoutMs=10000){
   return result.data;
  }finally{if(timer!==null)clearTimeout(timer)}
 }
+async function sendAnswerOnce(name,params){
+ const controller=new AbortController();
+ const query=ctx.client.rpc(name,params);
+ const request=typeof query?.abortSignal==='function'?query.abortSignal(controller.signal):query;
+ let timer;
+ try{
+  const res=await Promise.race([request,new Promise((_,reject)=>{
+   timer=setTimeout(()=>{controller.abort();reject(Error('Подтверждение ответа задерживается. Проверяем сервер…'));},9000);
+  })]);
+  if(res?.error)throw Error(res.error.message||'Не удалось подтвердить ответ');
+  return res?.data;
+ }finally{clearTimeout(timer);}
+}
 async function ensureAuth(){const {data:{session},error}=await ctx.client.auth.getSession();if(error)throw Error(error.message);if(session)return session;const r=await ctx.client.auth.signInAnonymously();if(r.error)throw Error(r.error.message);return r.data.session}
 function dataState(room){if(room?.server_now)ctx.clockOffset=Date.parse(room.server_now)-Date.now();ctx.room=room; if(!room)return;renderQrPanels();connectRoom(room.code); if(ctx.mode==='studio'){renderRoom();renderResults()}else if(ctx.mode==='game')renderGame()}
 // Preserve draft inputs across short and long outages. Only the server can
@@ -97,7 +110,16 @@ function connectRoom(code){if(!ctx.client||!code)return;if(ctx.channel&&ctx.chan
  .on('broadcast',{event:'phase'},()=>scheduleRefresh(500))
  .on('broadcast',{event:'team'},()=>scheduleRefresh(600))
  .on('broadcast',{event:'answer'},()=>{if(ctx.mode==='studio')scheduleRefresh(1300)})
- .subscribe(status=>{if(status==='SUBSCRIBED'&&code===ctx.roomCode&&ctx.room)scheduleRefresh(300)});
+ .subscribe((status,error)=>{
+   if(code!==ctx.roomCode)return;
+   if(status==='SUBSCRIBED')scheduleRefresh(250+Math.floor(Math.random()*450));
+   else if(['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status)){
+    // Supabase handles WS reconnection. HTTP state polling remains authoritative.
+    // Avoid immediately recreating channels or sending more broadcasts.
+    ctx.lastRealtimeStatus=status;
+    scheduleRefresh(900+Math.floor(Math.random()*1600));
+   }
+  });
 }
 function signal(event){
  ctx.channel?.send({type:'broadcast',event,payload:{changed:true}})?.catch(()=>{});
@@ -151,7 +173,7 @@ async function joinRoom(event){event.preventDefault();const button=$('joinButton
  try{await ensureAuth();const code=$('joinCode').value.trim().toUpperCase();const name=$('joinName').value.trim();const group=$('joinGroup').value.trim();
   if(!/^[A-F0-9]{8}$/.test(code))throw Error('Код комнаты должен содержать восемь символов.');
   const request=QwizTeams.joinRequest(code,name,group);await rpc(request.method,request.args);
-  ctx.roomCode=code;storage.set('room',code);showScreen('game');await refreshRoom();signal('team');
+  ctx.roomCode=code;storage.set('room',code);showScreen('game');await refreshRoom(); // Join is persisted by RPC; no 40-player broadcast storm.
   notice('joinNotice','');
  }catch(error){notice('joinNotice',error.message,'error')}finally{busy(button,false)}}
 async function login(event){event.preventDefault();busy($('loginButton'),true);notice('loginNotice','Проверка доступа…');
@@ -414,8 +436,12 @@ async function advance(action){const s=ctx.room;if(!s)return;busy($('host'+({sta
  }catch(e){notice('hostNotice',e.message,'error')}finally{for(const b of ['hostStart','hostReveal','hostNext','hostFinish'])busy($(b),false)}}
 async function assign(playerId,teamId){if(!ctx.room||ctx.room.phase!=='lobby')return;try{await rpc('org_next_assign',{p_room:ctx.room.room_id,p_player:playerId,p_team:teamId});signal('team');await refreshRoom()}catch(e){notice('hostNotice',e.message,'error')}}
 async function submitAnswer(choice){if(ctx.mode!=='game'||!ctx.room||ctx.room.phase!=='question'||ctx.room.paused||ctx.room.has_answer||ctx.answerPending)return;if(ctx.connectionStale||!navigator.onLine){updateConnectionHealth(false);return}ctx.answerPending=true;const buttons=qa('[data-answer]');buttons.forEach(x=>busy(x,true));
- notice('gameNotice','Отправляем ответ…');try{await (['single','boolean','flag','portrait','image'].includes(ctx.room.question?.kind||'single')?rpc('org_next_answer',{p_room:ctx.room.room_id,p_choice:choice}):rpc('qwiz_submit_answer',{p_room:ctx.room.room_id,p_payload:{index:choice}}));QwizStage.audio.play('accept');signal('answer');notice('gameNotice','Ответ сохранён.','success');await refreshRoom(false);
- }catch(e){notice('gameNotice',e.message,'error');await refreshRoom(false)}finally{ctx.answerPending=false;buttons.forEach(x=>busy(x,false));lockDisconnectedAnswers()}}
+ notice('gameNotice','Отправляем ответ…');try{await (['single','boolean','flag','portrait','image'].includes(ctx.room.question?.kind||'single')?sendAnswerOnce('org_next_answer',{p_room:ctx.room.room_id,p_choice:choice}):sendAnswerOnce('qwiz_submit_answer',{p_room:ctx.room.room_id,p_payload:{index:choice}}));QwizStage.audio.play('accept');notice('gameNotice','Ответ сохранён.','success');await refreshRoom(false);
+ }catch(e){
+   await refreshRoom(false);
+   if(ctx.room?.has_answer)notice('gameNotice','Ответ подтверждён сервером.','success');
+   else notice('gameNotice',ctx.connectionStale?'Связь прервана. После восстановления проверьте ответ и отправьте его, если время ещё не вышло.':e.message,'error');
+  }finally{ctx.answerPending=false;buttons.forEach(x=>busy(x,false));lockDisconnectedAnswers()}}
 async function submitRichAnswer(){
  const s=ctx.room,q=s?.question;if(!s||!q||s.phase!=='question'||s.paused||s.has_answer||s.eligible===false||ctx.answerPending)return;if(ctx.connectionStale||!navigator.onLine){updateConnectionHealth(false);return}
  const kind=q.kind||'single';let payload={};
@@ -441,9 +467,13 @@ async function submitRichAnswer(){
  ctx.answerPending=true;
  const button=document.querySelector('#gameContent [data-submit-rich]');if(button)busy(button,true);
  try{notice('gameNotice','Отправляем ответ…');
-  await rpc('qwiz_submit_answer',{p_room:s.room_id,p_payload:payload});
-  QwizStage.audio.play('accept');signal('answer');notice('gameNotice','Ответ принят сервером.','success');await refreshRoom(false);
- }catch(e){notice('gameNotice',e.message,'error');await refreshRoom(false)}
+  await sendAnswerOnce('qwiz_submit_answer',{p_room:s.room_id,p_payload:payload});
+  QwizStage.audio.play('accept');notice('gameNotice','Ответ принят сервером.','success');await refreshRoom(false);
+ }catch(e){
+  await refreshRoom(false);
+  if(ctx.room?.has_answer)notice('gameNotice','Ответ подтверждён сервером.','success');
+  else notice('gameNotice',ctx.connectionStale?'Связь прервана. Отправка пока не подтверждена.':e.message,'error');
+ }
  finally{ctx.answerPending=false;if(button)busy(button,false);lockDisconnectedAnswers()}
 }
 function exportResults(){const s=ctx.room;if(!s)return;const rows=[['Место','Команда','Игроков','Очков'],...s.teams.slice().sort((a,b)=>b.score-a.score).map((x,i)=>[i+1,x.name,x.players,x.score])];const csv='\uFEFF'+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(';')).join('\r\n');
@@ -489,7 +519,7 @@ async function restore(){if(!ctx.client)return;try{
      if(profile?.registered){
        $('joinName').value=profile.full_name;
        const request=QwizTeams.joinRequest(code,profile.full_name);await rpc(request.method,request.args);
-       ctx.roomCode=code;storage.set('room',code);showScreen('game');await refreshRoom(false);signal('team');
+       ctx.roomCode=code;storage.set('room',code);showScreen('game');await refreshRoom(false); // Joining does not fan out one event per student.
        if(ctx.room)return;
      }
    }catch(error){notice('joinNotice',error.message||'Не удалось принять приглашение. Подтвердите вход.','error');}
@@ -571,10 +601,18 @@ function attach(){q('#logoHome').addEventListener('click',home);
  addQuestion();
  // Spread otherwise synchronized room polls across a full period. With 40 phones,
  // this avoids a burst of 40 requests every 20 seconds without polling more often.
- setTimeout(()=>{
-  const periodicPoll=()=>{if(ctx.roomCode&&!document.hidden&&navigator.onLine&&!ctx.reconnectRetryTimer)refreshRoom(false)};
-  periodicPoll();setInterval(periodicPoll,20000);
- },roomPollOffset());
+ // Players still recover phase transitions if WebSocket heartbeats stop on mobile.
+ // Spaced HTTP snapshots avoid the burst of simultaneous Realtime re-joins.
+ const periodicPoll=()=>{
+  const room=ctx.room;
+  const active=ctx.mode==='game'&&room&&['question','result','countdown','intermission'].includes(room.phase);
+  const delay=(active?5400:13000)+Math.floor(Math.random()*(active?1800:3500));
+  setTimeout(()=>{
+   if(ctx.roomCode&&!document.hidden&&navigator.onLine&&!ctx.reconnectRetryTimer)refreshRoom(false);
+   periodicPoll();
+  },delay);
+ };
+ setTimeout(()=>{if(ctx.roomCode&&!document.hidden&&navigator.onLine)refreshRoom(false);periodicPoll()},Math.floor(roomPollOffset()/4));
  ctx.clock=setInterval(updateClocks,500);
  renderQrPanels();
  const incoming=new URLSearchParams(location.search).get('room');
