@@ -31,11 +31,19 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
 /* One acknowledgement stays below the answers; the team/header never changes height. */
 .player-compact #gameView .player-responses>.player-answer-confirmation{display:flex;align-items:center;flex:none;box-sizing:border-box;height:30px;min-height:30px;max-height:30px;overflow:hidden;line-height:1.2;padding:4px 8px;margin:0;white-space:nowrap}
 .player-compact #gameView .player-responses>.player-answer-confirmation:empty{display:flex;visibility:hidden}
-/* Error/status toasts are out of normal flex flow, so answers do not resize. */
+/* No status banners above the answers. Only actionable errors may appear at the
+   bottom of the screen, outside normal layout flow; the answer cards never jump. */
 .player-compact #gameView .player-layout{position:relative}
-.player-compact #gameView #gameNotice{position:absolute;z-index:10;left:10px;right:10px;top:0;max-height:96px;overflow:auto;box-shadow:0 4px 20px #3e296026;background:#fff;color:var(--ink);pointer-events:none}
-.player-compact #gameView #gameNotice:empty,
-#gameView #gameNotice.success{display:none}
+#gameView #gameNotice:not(.error){display:none!important}
+.player-compact #gameView #gameNotice.error{
+ position:fixed;z-index:30;top:auto;bottom:calc(10px + env(safe-area-inset-bottom,0px));
+ left:max(10px,env(safe-area-inset-left,0px));right:max(10px,env(safe-area-inset-right,0px));
+ box-sizing:border-box;max-height:min(22dvh,110px);overflow:auto;
+ padding:9px 14px;margin:0;line-height:1.35;
+ background:#fff6f6;border:1px solid #f3c4ce;border-radius:12px;
+ box-shadow:0 4px 20px #3e296026;color:var(--danger);pointer-events:none;
+}
+.player-compact #gameView #gameNotice.error:empty{display:none!important}
 .player-compact .player-more{display:grid;place-items:center}
 .player-compact #gameView .game-card{display:flex;flex:1;flex-direction:column;min-height:0;margin:0;padding:12px;border-radius:18px;gap:8px}
 .player-compact #gameView .player-question-top{flex:none;align-items:center;min-height:28px;margin:0;gap:8px}
