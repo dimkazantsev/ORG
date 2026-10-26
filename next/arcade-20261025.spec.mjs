@@ -95,3 +95,19 @@ test('regression: geography must NOT reuse distractor ranking for answer display
  assert.match(sql,/replace\(definition,old_order,'order by random\(\)\)'\)/);
  assert.match(sql,/Already saved|Already saved/i);
 });
+
+test('audience room keeps a clean white background and one live QR mount',()=>{
+ const presenter=read('presenter.js'),css=read('presenter.css');
+ assert.match(presenter,/section class="lobby-cinematic"/);
+ assert.doesNotMatch(presenter,/lobby-starfield" aria-hidden/);
+ assert.doesNotMatch(presenter,/lobby-3d-orbit" aria-hidden/);
+ assert.match(css,/#projectionMain>\.lobby-cinematic\{background:#fff!important/);
+ assert.match(css,/#projectionMain>\.lobby-cinematic::before,#projectionMain>\.lobby-cinematic::after\{content:none!important/);
+ assert.match(read('presenter.html'),/presenter\.css\?v=white-room-20261026-2/);
+});
+test('launch action matches selector height across supported desktop widths',()=>{
+ const css=read('workspace.css');
+ assert.match(css,/#roomsPage \.launch-fields :is\(input,select\)\{[^}]*height:56px/);
+ assert.match(css,/#roomsPage #launchButton\{[^}]*height:56px/);
+ assert.match(read('workspace.html'),/workspace\.css\?v=launch-height-20261026-2/);
+});
