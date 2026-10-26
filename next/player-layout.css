@@ -585,6 +585,7 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
  color:#282638!important;
  opacity:1!important;
  box-shadow:inset 0 0 0 1px #b9bec8!important;
+ transition:none!important;
 }
 #gameView #gameContent .option.is-picked .letter{
  background:#dfe2e8!important;
