@@ -384,3 +384,32 @@ test('New Russia map mechanic never silently selects all eight geography modes',
  await expect(page.locator('#cardDialog')).not.toBeVisible();
  expect(await page.evaluate(()=>state.selectedCard.settings.geo_modes)).toEqual(['locate']);
 });
+
+test('Duplicated cards keep the original title without copy or repeated-copy suffixes',async({page})=>{
+ const cards=page.locator('#roundCards .round-card');
+ await page.evaluate(()=>{
+  state.cards[1].title='Раунд вопросов — копия — копия';
+  renderCards();
+ });
+ await expect(cards.nth(1).locator('h3')).toHaveText('Раунд вопросов');
+ await cards.nth(1).locator('[data-duplicate-card]').click();
+ await expect(cards).toHaveCount(4);
+ await expect(cards.nth(1).locator('h3')).toHaveText('Раунд вопросов');
+ await expect(cards.nth(2).locator('h3')).toHaveText('Раунд вопросов');
+ const snapshot=await page.evaluate(()=>({
+  names:state.cards.slice(1,3).map(x=>gameTitle(x)),
+  persistedTitle:state.cards[2].title,
+  noInheritedId:state.cards[2].id===undefined,
+  distinctSettings:state.cards[1].settings!==state.cards[2].settings,
+  displayedLaunch:describeLaunchCard({...state.cards[1],title:'Раунд вопросов — копия'}).title
+ }));
+ expect(snapshot.names).toEqual(['Раунд вопросов','Раунд вопросов']);
+ expect(snapshot.persistedTitle).toBe('Раунд вопросов');
+ expect(snapshot.noInheritedId).toBe(true);
+ expect(snapshot.distinctSettings).toBe(true);
+ expect(snapshot.displayedLaunch).toBe('Раунд вопросов');
+ await page.evaluate(()=>duplicateCard(2));
+ await expect(cards).toHaveCount(5);
+ await expect(cards.nth(3).locator('h3')).toHaveText('Раунд вопросов');
+ await expect(page.locator('#roundCards')).not.toContainText('— копия');
+});
