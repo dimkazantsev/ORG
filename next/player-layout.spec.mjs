@@ -25,7 +25,7 @@ for(const [width,height] of [[320,480],[320,568],[390,844],[768,1024],[667,375],
  for(const mode of ['similar','assemble','multiple','memory','geo','history']){
   const row=rows.find(x=>x.mode===mode),q={kind:row.kind,prompt:row.prompt,options:row.options,media_url:row.solution.media_url,flag_memory:row.solution.flag_memory,flag_assembly:row.solution.flag_assembly,memory_until:new Date(Date.now()-1).toISOString()};
   await question(page,q);await fits(page);
-  await page.evaluate(()=>{ctx.room.has_answer=true;ctx.gameRenderKey='';renderGame();notice('gameNotice','Ответ сохранён.','success')});await fits(page);await expect(page.locator('#playerAccepted')).toHaveText('Ответ принят.');
+  await page.evaluate(()=>{ctx.room.has_answer=true;ctx.gameRenderKey='';renderGame();notice('gameNotice','Ответ сохранён.','success')});await fits(page);await expect(page.locator('.player-responses .player-answer-confirmation')).toContainText('Ваш ответ принят.');await expect(page.locator('#playerAccepted')).toHaveCount(0);
  }
  await page.mouse.wheel(0,600);expect(await page.evaluate(()=>scrollY)).toBe(0);
  await page.screenshot({path:'visual-artifacts/player-compact-'+width+'x'+height+'.png'});
@@ -296,5 +296,50 @@ test('Personal round totals stay horizontal on narrow phones',async({page})=>{
    expect(geometry.bottom-geometry.top,JSON.stringify({width,geometry})).toBeLessThan(75);
    expect(geometry.width,JSON.stringify({width,geometry})).toBeLessThan(geometry.available+1);
   }
+ }
+});
+
+test('Answer confirmation remains at bottom without resizing choice buttons or header',async({page})=>{
+ for(const [width,height] of [[320,480],[390,844],[667,375]]){
+  await page.setViewportSize({width,height});
+  await setup(page);
+  await question(page,{kind:'single',prompt:'Выберите государство на карте',options:['Россия','Канада','Италия','Франция']});
+  await expect(page.locator('html')).toHaveClass(/player-compact/);
+  const before=await page.evaluate(()=>{
+   const rect=el=>{const r=el.getBoundingClientRect();return {top:r.top,bottom:r.bottom,height:r.height}};
+   return {
+    cards:[...document.querySelectorAll('#gameContent [data-answer]')].map(rect),
+    card:rect(document.querySelector('#gameContent')),
+    team:rect(document.querySelector('#playerTeamName')),
+    footer:rect(document.querySelector('#gameContent .player-answer-confirmation'))
+   };
+  });
+  await page.evaluate(()=>{
+   ctx.room.has_answer=true;ctx.gameRenderKey='';renderGame();
+   notice('gameNotice','Ответ сохранён.','success');
+  });
+  await expect(page.locator('.player-responses>.player-answer-confirmation')).toBeVisible();
+  await expect(page.locator('.player-responses>.player-answer-confirmation')).toContainText('Ваш ответ принят.');
+  await expect(page.locator('#playerAccepted')).toHaveCount(0);
+  await expect(page.locator('#playerTeamName')).toBeVisible();
+  await expect(page.locator('#gameNotice')).toBeHidden();
+  const after=await page.evaluate(()=>{
+   const rect=el=>{const r=el.getBoundingClientRect();return {top:r.top,bottom:r.bottom,height:r.height}};
+   return {
+    cards:[...document.querySelectorAll('#gameContent [data-answer]')].map(rect),
+    card:rect(document.querySelector('#gameContent')),
+    team:rect(document.querySelector('#playerTeamName')),
+    footer:rect(document.querySelector('#gameContent .player-answer-confirmation'))
+   };
+  });
+  expect(after.cards).toHaveLength(4);
+  for(let i=0;i<4;i++){
+   expect(Math.abs(after.cards[i].top-before.cards[i].top)).toBeLessThanOrEqual(1);
+   expect(Math.abs(after.cards[i].height-before.cards[i].height)).toBeLessThanOrEqual(1);
+  }
+  expect(Math.abs(after.card.height-before.card.height)).toBeLessThanOrEqual(1);
+  expect(Math.abs(after.team.height-before.team.height)).toBeLessThanOrEqual(1);
+  expect(Math.abs(after.footer.height-before.footer.height)).toBeLessThanOrEqual(1);
+  await fits(page);
  }
 });
