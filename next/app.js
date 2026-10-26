@@ -442,7 +442,7 @@ async function advance(action){const s=ctx.room;if(!s)return;busy($('host'+({sta
   await rpc('qwiz_party_control',{p_room:s.room_id,p_action:action});signal('phase');await refreshRoom();if(action==='finish')tab('results');
  }catch(e){notice('hostNotice',e.message,'error')}finally{for(const b of ['hostStart','hostReveal','hostNext','hostFinish'])busy($(b),false)}}
 async function assign(playerId,teamId){if(!ctx.room||ctx.room.phase!=='lobby')return;try{await rpc('org_next_assign',{p_room:ctx.room.room_id,p_player:playerId,p_team:teamId});signal('team');await refreshRoom()}catch(e){notice('hostNotice',e.message,'error')}}
-async function submitAnswer(choice){if(ctx.mode!=='game'||!ctx.room||ctx.room.phase!=='question'||ctx.room.paused||ctx.room.has_answer||ctx.answerPending)return;if(ctx.connectionStale||!navigator.onLine){updateConnectionHealth(false);return}ctx.answerPending=true;const buttons=qa('[data-answer]');buttons.forEach(x=>busy(x,true));
+async function submitAnswer(choice){if(ctx.mode!=='game'||!ctx.room||ctx.room.phase!=='question'||ctx.room.paused||ctx.room.has_answer||ctx.answerPending)return;if(!navigator.onLine){updateConnectionHealth(false);return}if(ctx.connectionStale)updateConnectionHealth(false);ctx.answerPending=true;const buttons=qa('[data-answer]');buttons.forEach(x=>busy(x,true));
  notice('gameNotice','');try{await (['single','boolean','flag','portrait','image'].includes(ctx.room.question?.kind||'single')?sendAnswerOnce('org_next_answer',{p_room:ctx.room.room_id,p_choice:choice}):sendAnswerOnce('qwiz_submit_answer',{p_room:ctx.room.room_id,p_payload:{index:choice}}));QwizStage.audio.play('accept');notice('gameNotice','');await refreshRoom(false);
  }catch(e){
    await refreshRoom(false);
@@ -450,7 +450,7 @@ async function submitAnswer(choice){if(ctx.mode!=='game'||!ctx.room||ctx.room.ph
    else notice('gameNotice',ctx.connectionStale?'Связь прервана. После восстановления проверьте ответ и отправьте его, если время ещё не вышло.':e.message,'error');
   }finally{ctx.answerPending=false;buttons.forEach(x=>busy(x,false));lockDisconnectedAnswers()}}
 async function submitRichAnswer(){
- const s=ctx.room,q=s?.question;if(!s||!q||s.phase!=='question'||s.paused||s.has_answer||s.eligible===false||ctx.answerPending)return;if(ctx.connectionStale||!navigator.onLine){updateConnectionHealth(false);return}
+ const s=ctx.room,q=s?.question;if(!s||!q||s.phase!=='question'||s.paused||s.has_answer||s.eligible===false||ctx.answerPending)return;if(!navigator.onLine){updateConnectionHealth(false);return}if(ctx.connectionStale)updateConnectionHealth(false);
  const kind=q.kind||'single';let payload={};
  if(kind==='multi'){
   const indices=qa('#gameContent [data-multi]').filter(x=>x.checked).map(x=>Number(x.dataset.multi));
@@ -618,7 +618,7 @@ function attach(){q('#logoHome').addEventListener('click',home);
  $('leaveGame').onclick=async()=>{await QwizStage.exitFullscreen();cleanupRoom();home()};
  document.addEventListener('visibilitychange',()=>{if(!document.hidden&&ctx.roomCode)scheduleRefresh(200)});
  window.addEventListener('offline',()=>{if(ctx.roomCode)updateConnectionHealth(false)});
- window.addEventListener('online',()=>{if(ctx.roomCode)scheduleRefresh(100)});
+ window.addEventListener('online',()=>{if(ctx.roomCode){updateConnectionHealth(false);scheduleRefresh(100)}});
  addQuestion();
  // Spread otherwise synchronized room polls across a full period. With 40 phones,
  // this avoids a burst of 40 requests every 20 seconds without polling more often.
