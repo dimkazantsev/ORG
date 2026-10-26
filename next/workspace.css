@@ -1423,7 +1423,8 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 
 /* Completed history: one quiet, deliberate destructive action.
    Positioned beside the heading, never inside interactive <summary>. */
-#hostRoomList .rooms-history{position:relative}
+#hostRoomList .rooms-history-group{position:relative;margin-top:16px}
+#hostRoomList .rooms-history-group .rooms-history{margin-top:0}
 #hostRoomList .rooms-history>summary{padding-right:202px}
 #hostRoomList .clear-archive-button{
  appearance:none;position:absolute;top:7px;right:12px;z-index:2;
@@ -1443,7 +1444,7 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 @media(max-width:560px){
  #hostRoomList .rooms-history>summary{padding-right:14px}
  #hostRoomList .clear-archive-button{
-  position:relative;top:auto;right:auto;margin:0 12px 12px auto;
+  position:relative;top:auto;right:auto;margin:8px 0 0 auto;
   min-height:42px;
  }
 }
