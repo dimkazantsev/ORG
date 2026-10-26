@@ -8,7 +8,7 @@ test('all resilience code parses and new builds are referenced',()=>{
  for(const name of ['app.js','arcade.js','presenter.js','workspace.js']){
   assert.doesNotThrow(()=>new Script(read(name),{filename:name}));
  }
- const pages=[['index.html','app.js?v=answer-stable-20261027-2'],
+ const pages=[['index.html','app.js?v=no-status-popup-20261027-1'],
   ['index.html','arcade.js?v=idempotent-40p-20261026-3'],
   ['workspace.html','workspace.js?v=sync40-20261026-3'],
   ['presenter.html','presenter.js?v=sync40-20261026-3']];
@@ -27,7 +27,9 @@ test('ambiguous answer acknowledgements are reconciled from server before UI suc
  const app=read('app.js');
  assert.match(app,/async function sendAnswerOnce/);
  assert.match(app,/controller\.abort\(\);reject\(Error\('Подтверждение ответа задерживается/);
- assert.match(app,/if\(ctx\.room\?\.has_answer\)notice\('gameNotice','Ответ подтверждён сервером/);
+ assert.match(app,/if\\(ctx\\.room\\?\\.has_answer\\)notice\\('gameNotice',''\\)/);
+ assert.match(app,/done\\?'Ответ принят\\.'/);
+ assert.doesNotMatch(app,/notice\\('gameNotice','Отправляем ответ/);
  assert.match(app,/function updateConnectionHealth\(connected\)/);
 });
 test('tap batches are server-idempotent and client reuses stable UUID',()=>{
