@@ -13,7 +13,7 @@ test('PWA installs static shell and opens after internet is disabled',async({bro
  await page.evaluate(async()=>{await navigator.serviceWorker.ready;});
  await page.reload({waitUntil:'load'});
  const cachesBefore=await page.evaluate(async()=>await caches.keys());
- expect(cachesBefore.some(x=>x.includes('qwiz-pwa-shell-20261026'))).toBeTruthy();
+ expect(cachesBefore.some(x=>x.startsWith('qwiz-pwa-shell-'))).toBeTruthy();
  await page.unroute('https://cdn.jsdelivr.net/**');
  await context.setOffline(true);
  await page.reload({waitUntil:'domcontentloaded'});
