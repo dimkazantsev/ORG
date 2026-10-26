@@ -185,19 +185,19 @@ function finalShow(state){
  });
  const list=rows=>rows.length
   ?'<ol class="projection-round-leaders">'+ranked(rows).slice(0,limit).map((r,i)=>
-   '<li><span>'+(Number(r.position)>0?Number(r.position):i+1)+'</span><strong>'+escapeText(r.nickname||r.name||'Участник')+
+   '<li><span class="projection-medal">'+(i===0?'♛':(Number(r.position)>0?Number(r.position):i+1))+'</span><strong>'+escapeText(r.nickname||r.name||'Участник')+
    '</strong><b>'+Number(r.score||0).toLocaleString('ru-RU')+'</b></li>').join('')+'</ol>'+
    (rows.length>limit?'<p class="projection-rank-more">Ещё '+(rows.length-limit)+' · полный рейтинг на устройствах игроков</p>':'')
   :'<p class="projection-final-empty">Результаты появятся после первых ответов.</p>';
  $('projectionMain').innerHTML='<section class="projection-finale projection-finale-compact" aria-label="Итоги всей игры">'+
   '<div class="finale-heading"><div><span class="projection-eyebrow">QWIZ-PARTY / ФИНАЛ</span><h1>'+escapeText(title)+
   '</h1><p>'+escapeText(state.title||'Квиз')+' · '+QwizStage.countLabel(teams.length,{one:'команда',few:'команды',many:'команд'})+' · '+QwizStage.countLabel(players.length,{one:'участник',few:'участника',many:'участников'})+'</p></div>'+
-  '<span class="finale-star" aria-hidden="true">✦</span></div>'+
-  '<div class="finale-summary"><div><strong>'+stats.length+'</strong><span>'+({one:'вопрос',few:'вопроса',many:'вопросов'})[new Intl.PluralRules('ru').select(stats.length)]+'</span></div>'+
-  '<div><strong>'+answered+'</strong><span>'+({one:'ответ',few:'ответа',many:'ответов'})[new Intl.PluralRules('ru').select(answered)]+' участников</span></div>'+
-  '<div><strong>'+accuracy+'%</strong><span>верных ответов</span></div></div>'+
-  '<div class="projection-round-columns"><section class="stage-team-results"><h2>Рейтинг команд</h2>'+list(teams)+'</section>'+
-  '<section class="stage-player-results"><h2>Личный рейтинг</h2>'+list(players)+'</section></div>'+
+  '<div class="finale-trophy" aria-hidden="true"><svg viewBox="0 0 168 148" fill="none"><defs><linearGradient id="qwizCupGrad" x1="25" y1="0" x2="150" y2="130"><stop stop-color="#d1a3ff"/><stop offset=".55" stop-color="#9e62ef"/><stop offset="1" stop-color="#6c39d0"/></linearGradient></defs><path d="M47 24h74v47c0 28-18 46-37 46S47 99 47 71V24Z" fill="url(#qwizCupGrad)" stroke="#fff" stroke-width="3"/><path d="M47 36H23v13c0 26 13 38 33 38M121 36h24v13c0 26-13 38-33 38" stroke="#b58aeb" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M84 116v15m-23 3h46" stroke="#8148cc" stroke-width="10" stroke-linecap="round"/><path d="m84 45 7 14 15 2-11 11 3 16-14-7-14 7 3-16-11-11 15-2Z" fill="#fff3c9"/></svg></div></div>'+
+  '<div class="finale-summary"><div><i aria-hidden="true">?</i><strong>'+stats.length+'</strong><span>'+({one:'вопрос',few:'вопроса',many:'вопросов'})[new Intl.PluralRules('ru').select(stats.length)]+'</span></div>'+
+  '<div><i aria-hidden="true">♙</i><strong>'+answered+'</strong><span>'+({one:'ответ',few:'ответа',many:'ответов'})[new Intl.PluralRules('ru').select(answered)]+' участников</span></div>'+
+  '<div><i aria-hidden="true">✓</i><strong>'+accuracy+'%</strong><span>верных ответов</span></div></div>'+
+  '<div class="projection-round-columns"><section class="stage-team-results"><h2><span class="finale-heading-icon">♛</span>Рейтинг команд</h2><p class="finale-panel-caption">Финальные результаты игры</p>'+list(teams)+'</section>'+
+  '<section class="stage-player-results"><h2><span class="finale-heading-icon">♙</span>Личный рейтинг</h2><p class="finale-panel-caption">Финальные результаты участников</p>'+list(players)+'</section></div>'+
   '<p class="projection-final-footnote">Полная статистика игры доступна каждому участнику на его устройстве.</p>'+
   // Preserve the original detailed report for optional post-game review.
   // It is collapsed during the short, readable public finale.
