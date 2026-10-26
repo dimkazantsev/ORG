@@ -75,7 +75,7 @@ window.QwizStage=(()=>{
   }
   // A flag-identification question must keep the flag visible until the answer; never replace it with a recall placeholder.
   if(Array.isArray(q.options)&&q.options.some(x=>x&&typeof x==='object'&&typeof x.image_url==='string')&&!q.media_url&&!q.illustration_url)return '';
-  if(q.flag_assembly&&!answer)return '<figure class="question-frame assembly-frame"><div class="question-picture">'+assemblyPalette(q)+'</div><figcaption>Соберите флаг из этих полос</figcaption></figure>';
+  if(q.flag_assembly&&!answer)return '';
   const source=q.flag_visual?.type?q.media_url:q.kind==='hotspot'?q.media_url:q.illustration_url||(!['audio','video'].includes(q.kind)?q.media_url:'');
   if(q.flag_visual?.type&&typeof source==='string'&&/^https:\/\//i.test(source)){
    const revealed=!!answer;
@@ -321,24 +321,90 @@ window.QwizStage=(()=>{
    }
   }
  }
- function assemblyPalette(q){
-  const colors=q.flag_assembly?.colors||{};
-  return '<div class="assembly-palette">'+(q.options||[]).map(name=>'<span><i style="background:'+esc(/^#[0-9a-f]{6}$/i.test(colors[name])?colors[name]:'#888888')+'" aria-hidden="true"></i>'+esc(capitalize(name))+'</span>').join('')+'</div>';
- }
+ function assemblyPalette(q){return '';} // The colors now belong below the flag, never above the question.
  function assemblyMarkup(q,locked=false){
-  const vertical=q.flag_assembly?.orientation==='vertical';
-  return '<p class="muted-small">Расположите полосы '+(vertical?'слева направо':'сверху вниз')+'. Каждый цвет используется один раз.</p><div class="assembly-preview flag-stripe-art '+(vertical?'vertical':'horizontal')+'" role="img" aria-label="Собираемый флаг">'+(q.options||[]).map(()=>'<span></span>').join('')+'</div><div class="rich-rows">'+(q.options||[]).map((_,i)=>'<label class="rich-row"><span>Полоса '+(i+1)+'</span><select class="rich-order"'+(locked?' disabled':'')+'><option value="">Выберите цвет</option>'+(q.options||[]).map((name,k)=>'<option value="'+k+'">'+esc(capitalize(name))+'</option>').join('')+'</select></label>').join('')+'</div>';
+  const colors=q.flag_assembly?.colors||{}, vertical=q.flag_assembly?.orientation==='vertical';
+  const options=Array.isArray(q.options)?q.options:[];
+  const choice=(name,i)=>'<button type="button" class="assembly-color" data-assembly-color="'+i+'" draggable="'+(!locked)+'"'+(locked?' disabled':'')+'><i class="assembly-swatch" style="background:'+esc(/^#[0-9a-f]{6}$/i.test(colors[name])?colors[name]:'#888888')+'"></i><span>'+esc(capitalize(name))+'</span><span class="assembly-grip" aria-hidden="true">⠿</span></button>';
+  return '<div class="assembly-builder" data-assembly-builder data-assembly-locked="'+Boolean(locked)+'">'+
+   '<div class="assembly-preview '+(vertical?'vertical':'horizontal')+'" aria-label="Соберите флаг: '+(vertical?'полосы слева направо':'полосы сверху вниз')+'">'+
+    options.map((_,i)=>'<button type="button" class="assembly-slot" data-assembly-slot="'+i+'" data-value=""'+(locked?' disabled':'')+' aria-label="Поместить цвет в полосу '+(i+1)+'"><span aria-hidden="true">↓</span></button>').join('')+
+   '</div><div class="assembly-colors" aria-label="Цвета для перетаскивания">'+options.map(choice).join('')+'</div>'+
+   '<p class="assembly-hint">Перетащите цвета на флаг или выберите цвет и коснитесь полосы. Можно менять расположение до нажатия «ОК».</p></div>';
+ }
+ function assemblyItems(root,q){
+  const slots=[...root.querySelectorAll('[data-assembly-slot]')];
+  if(slots.length!==(q?.options||[]).length)return null;
+  const values=slots.map(s=>s.dataset.value);
+  if(values.some(v=>v==='')||new Set(values).size!==values.length)return null;
+  return values.map(v=>q.options[Number(v)]);
  }
  function hydrateAssembly(root,q){
-  if(!q.flag_assembly)return;
-  const preview=root.querySelector('.assembly-preview');if(!preview)return;
-  const inputs=Array.from(root.querySelectorAll('select.rich-order'));
-  const update=()=>{
-   const labels=[];
-   inputs.forEach((input,i)=>{const name=input.value===''?'':q.options[Number(input.value)],color=q.flag_assembly.colors?.[name];preview.children[i].style.background=/^#[0-9a-f]{6}$/i.test(color)?color:'';labels.push(name||'не выбрана')});
-   preview.setAttribute('aria-label','Полосы: '+labels.join(', '));
+  if(!q?.flag_assembly)return;
+  const builder=root.querySelector('[data-assembly-builder]');if(!builder||builder.dataset.assemblyLocked==='true')return;
+  const slots=[...builder.querySelectorAll('[data-assembly-slot]')],colors=[...builder.querySelectorAll('[data-assembly-color]')];
+  const submit=root.querySelector('[data-submit-rich]'),swatches=q.flag_assembly.colors||{};
+  const state=Array(slots.length).fill(null);
+  let selected=null,dragging=null,pointer=null;
+  const paint=()=>{
+   slots.forEach((slot,i)=>{
+    const n=state[i],name=n===null?'':q.options[n],color=swatches[name];
+    slot.dataset.value=n===null?'':String(n);
+    slot.style.background=n===null?'':(/^#[0-9a-f]{6}$/i.test(color)?color:'');
+    slot.classList.toggle('is-filled',n!==null);
+    slot.innerHTML=n===null?'<span aria-hidden="true">↓</span>':'<span class="assembly-slot-label">'+esc(capitalize(name))+'</span>';
+    slot.setAttribute('aria-label',n===null?'Полоса '+(i+1)+': пусто':'Полоса '+(i+1)+': '+capitalize(name)+'. Коснитесь для замены');
+   });
+   colors.forEach((b,i)=>{b.hidden=state.includes(i);b.classList.toggle('is-selected',selected===i)});
+   if(submit)submit.disabled=state.includes(null);
   };
-  inputs.forEach(input=>input.addEventListener('change',update));update();
+  const apply=(target,n)=>{
+   if(!Number.isInteger(target)||target<0||target>=slots.length||!Number.isInteger(n)||n<0||n>=colors.length)return;
+   const existing=state.indexOf(n),previous=state[target];
+   if(existing===target)return;
+   if(existing>=0)state[existing]=previous;
+   state[target]=n;selected=null;paint();
+  };
+  builder.addEventListener('click',event=>{
+   const color=event.target.closest('[data-assembly-color]'),slot=event.target.closest('[data-assembly-slot]');
+   if(color){selected=Number(color.dataset.assemblyColor);paint();return}
+   if(slot){const i=Number(slot.dataset.assemblySlot);
+    if(selected!==null)apply(i,selected);
+    else if(state[i]!==null){selected=state[i];state[i]=null;paint();}
+   }
+  });
+  builder.addEventListener('dragstart',event=>{
+   const item=event.target.closest('[data-assembly-color]');
+   if(!item)return;dragging=Number(item.dataset.assemblyColor);
+   event.dataTransfer.setData('text/plain',String(dragging));event.dataTransfer.effectAllowed='move';
+  });
+  builder.addEventListener('dragover',event=>{
+   if(event.target.closest('[data-assembly-slot]')){event.preventDefault();event.dataTransfer.dropEffect='move'}
+  });
+  builder.addEventListener('drop',event=>{
+   const slot=event.target.closest('[data-assembly-slot]');if(!slot)return;event.preventDefault();
+   const value=dragging??Number(event.dataTransfer.getData('text/plain'));apply(Number(slot.dataset.assemblySlot),value);dragging=null;
+  });
+  // Pointer events work on Android/iOS where HTML drag-and-drop is not consistently supported.
+  builder.addEventListener('pointerdown',event=>{
+   const color=event.target.closest('[data-assembly-color]');
+   if(!color||event.pointerType==='mouse')return;
+   pointer={id:event.pointerId,index:Number(color.dataset.assemblyColor),x:event.clientX,y:event.clientY,moved:false};
+  },{passive:true});
+  builder.addEventListener('pointermove',event=>{
+   if(!pointer||event.pointerId!==pointer.id)return;
+   if(Math.hypot(event.clientX-pointer.x,event.clientY-pointer.y)>9){pointer.moved=true;event.preventDefault()}
+  },{passive:false});
+  builder.addEventListener('pointerup',event=>{
+   if(!pointer||event.pointerId!==pointer.id)return;
+   if(pointer.moved){
+    const target=document.elementFromPoint(event.clientX,event.clientY)?.closest('[data-assembly-slot]');
+    if(target&&builder.contains(target))apply(Number(target.dataset.assemblySlot),pointer.index);
+   }
+   pointer=null;
+  });
+  builder.addEventListener('pointercancel',()=>{pointer=null});
+  paint();
  }
  function sourceLinks(answer){
   const urls=(Array.isArray(answer?.sources)?answer.sources:[]).filter(url=>typeof url==='string'&&/^https:\/\//i.test(url));
@@ -372,5 +438,5 @@ window.QwizStage=(()=>{
   const hardest=scored.filter(x=>x.answered>0).sort((a,b)=>(b.incorrect_rate??100-b.correct_rate)-(a.incorrect_rate??100-a.correct_rate)||b.incorrect-a.incorrect||a.index-b.index).slice(0,3);
   return '<div class="question-insights"><section><h2>Знаем лучше всего</h2><p>Три вопроса с наибольшей долей верных ответов.</p><ol>'+items(best)+'</ol></section><section><h2>Чаще ошибались</h2><p>Три вопроса с наибольшей долей ошибок. Пропуски считаются отдельно.</p><ol>'+items(hardest,true)+'</ol></section></div><details class="all-question-stats"><summary>Все вопросы · '+rows.length+'</summary><ol>'+items(rows)+'</ol></details>';
  }
- return{esc,fmt,habitats,icon,roundIconSvg,teamTile,teams,patchTeams,progress,leaderboard,illustration,hydrateIllustrations,clockMarkup,updateClock,audio,questionStats,stripeOption,correctFlagMarkup,flagVisualContent,hydrateFlagVisuals,uiIcon,iconLabel,decorateControls,updateMemory,assemblyPalette,assemblyMarkup,hydrateAssembly,sourceLinks,capitalize,countLabel,phaseLabel,bindFullscreen,exitFullscreen};
+ return{esc,fmt,habitats,icon,roundIconSvg,teamTile,teams,patchTeams,progress,leaderboard,illustration,hydrateIllustrations,clockMarkup,updateClock,audio,questionStats,stripeOption,correctFlagMarkup,flagVisualContent,hydrateFlagVisuals,uiIcon,iconLabel,decorateControls,updateMemory,assemblyPalette,assemblyMarkup,assemblyItems,hydrateAssembly,sourceLinks,capitalize,countLabel,phaseLabel,bindFullscreen,exitFullscreen};
 })();
