@@ -449,11 +449,11 @@ function render(state){
    (lobby.captains_ready?'Капитаны выбраны. Сканируйте QR своего капитана на его телефоне.':'Выбираем капитанов: '+c+' из '+n+'. Нажмите «Я капитан» на своём телефоне.'):
    (lobby.mode==='legacy'?'Сканируйте QR комнаты — команда назначается при входе.':'Подключайтесь! Преподаватель распределит участников по командам.');
   $('projectionMain').innerHTML='<section class="lobby-cinematic" aria-label="Вход в игру по одному QR-коду">'+
-   '<div class="lobby-starfield" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>'+
-   '<div class="lobby-3d-orbit" aria-hidden="true"><span class="orbit-a"></span><span class="orbit-b"></span><span class="orbit-c"></span><span class="orbit-core">✦</span></div>'+
+   
+   
    '<div class="lobby-cinema-content"><span class="lobby-cinema-eyebrow">QWIZ-PARTY · ПОДКЛЮЧЕНИЕ</span>'+
-   '<h1>Начни игру!</h1><p class="lobby-cinema-lead">Сканируй QR и присоединяйся с телефона</p>'+
-   '<div class="lobby-qr-frame"><i class="corner-tl"></i><i class="corner-tr"></i><i class="corner-bl"></i><i class="corner-br"></i>'+
+   '<h1>Присоединяйтесь к игре</h1><p class="lobby-cinema-lead">Отсканируйте QR-код с телефона</p>'+
+   '<div class="lobby-qr-frame">'+
    '<div id="projectionQr" class="lobby-cinema-qr" role="img" aria-label="QR-код комнаты"></div></div>'+
    '<span class="lobby-cinema-code-label">КОД КОМНАТЫ</span><strong class="lobby-cinema-code">'+escapeText(state.code)+'</strong>'+
    '<p class="lobby-cinema-instructions">'+escapeText(hint)+'</p></div></section>';
