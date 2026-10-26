@@ -70,7 +70,7 @@ window.QwizArcade=(()=>{
    // A repeated mechanic in a later card is a new game, not a continuation
    // of the previous card's taps, question, selection or pending work.
    if(tr.view?.card_position!==undefined&&tr.view.card_position!==data.card_position){
-     tr.pending=0;tr.qkey='';tr.alertOverride=0;
+     tr.pending=0;tr.batch=null;tr.qkey='';tr.alertOverride=0;
       tr.memoryKey=null;tr.lastJumpTarget=null;tr.gameBusy=false;tr.visualTapCount=0;
      if(tr.flushTimer){clearTimeout(tr.flushTimer);tr.flushTimer=null;}
    }
@@ -163,7 +163,7 @@ window.QwizArcade=(()=>{
   const key=code+':'+mode+':'+(kind==='player'?roomId||'':'');
   if(ui[kind]?.key===key&&ui[kind].root===root)return;
   stop(kind);
-  const tr={kind,key,root,code,roomId,client,mode,offset:0,closed:false,fetching:false,pending:0,sending:false,view:null,flushTimer:null,qkey:''};
+  const tr={kind,key,root,code,roomId,client,mode,offset:0,closed:false,fetching:false,pending:0,batch:null,sending:false,view:null,flushTimer:null,qkey:''};
   ui[kind]=tr;root.innerHTML=rootMarkup(mode,kind);
   if(kind==='player'){tr.onClick=e=>{
     if(e.target.closest('[data-arcade-tap]'))tap(tr);const tile=e.target.closest('[data-arcade-tile]');if(tile)flip(tr,Number(tile.dataset.arcadeTile));
@@ -216,15 +216,58 @@ window.QwizArcade=(()=>{
   // the server's eight-clicks-per-second acceptance limit.
   if(!tr.flushTimer)tr.flushTimer=setTimeout(()=>flush(tr),220);
  }
- async function flush(tr){if(tr.closed)return;tr.flushTimer=null;if(tr.sending||!tr.pending)return;
-  const amount=Math.min(6,tr.pending);tr.pending-=amount;await sendTap(tr,amount);
-  if(tr.pending&&!tr.flushTimer)tr.flushTimer=setTimeout(()=>flush(tr),700);
+ async function flush(tr){
+  if(tr.closed||tr.sending)return;
+  tr.flushTimer=null;
+  if(!tr.batch){
+   if(!tr.pending)return;
+   const count=Math.min(6,tr.pending);
+   tr.pending-=count;
+   // One stable UUID per batch: HTTP retries never create duplicate points.
+   tr.batch={id:crypto.randomUUID(),count,attempts:0,card:tr.view?.card_position};
+  }
+  await sendTap(tr);
  }
- async function sendTap(tr,count){if(tr.sending||tr.closed)return;tr.sending=true;
-  try{const {data,error}=await tr.client.rpc('qwiz_arcade_action',{p_room:tr.roomId,p_action:'tap',p_count:count});if(error)throw error;
-   if(data?.false_start){showMessage(tr,'Фальстарт! Попытка капитана использована.',true);tr.alertOverride=Date.now()+3000;}
-  }catch(e){showMessage(tr,e.message||'Не удалось засчитать нажатие',true);tr.alertOverride=Date.now()+2500;}
-  finally{tr.sending=false;if(tr.pending&&!tr.flushTimer&&!tr.closed)tr.flushTimer=setTimeout(()=>flush(tr),750)}
+ async function sendTap(tr){
+  if(tr.sending||tr.closed||!tr.batch)return;
+  const batch=tr.batch;tr.sending=true;
+  try{
+   if(!navigator.onLine)throw Error('Нет подключения к серверу');
+   const controller=new AbortController();
+   const q=tr.client.rpc('qwiz_arcade_tap_once',
+    {p_room:tr.roomId,p_batch:batch.id,p_count:batch.count});
+   const request=typeof q?.abortSignal==='function'?q.abortSignal(controller.signal):q;
+   let timer;
+   let result;
+   try{
+    result=await Promise.race([request,new Promise((_,reject)=>{
+     timer=setTimeout(()=>{controller.abort();reject(Error('Нет ответа сервера'));},8000);
+    })]);
+   }finally{clearTimeout(timer);}
+   if(result?.error)throw result.error;
+   if(tr.closed||tr.batch!==batch)return;
+   if(result?.data?.ok!==true)throw Error('Нажатия не подтверждены');
+   tr.batch=null;tr.batchRetries=0;
+   const label=tr.root?.querySelector('[data-arcade-personal]');
+   if(label)label.textContent='Пакет нажатий подтверждён сервером.';
+  }catch(e){
+   if(tr.closed||tr.batch!==batch)return;
+   batch.attempts++;
+   const age=Date.now()+(tr.offset||0)-(Date.parse(tr.view?.ends_at)||0);
+   const rejected=/Время нажатий истекло|Испытание сейчас не проводится|Здесь нет активной|Некорректный пакет|не найдена|засчитана/i.test(String(e.message||''));
+   if(rejected||age>15000||batch.attempts>6){
+    tr.batch=null;showMessage(tr,'Не удалось подтвердить часть нажатий. Неподтверждённые очки не начислены.',true);
+   }else{
+    showMessage(tr,'Восстанавливаем связь и повторяем пакет без двойного начисления…',true);
+   }
+   tr.alertOverride=Date.now()+2200;
+  }finally{
+   tr.sending=false;
+   if(!tr.closed&&(tr.batch||tr.pending)&&!tr.flushTimer){
+    const wait=tr.batch?Math.min(5000,500*Math.pow(2,Math.min(3,batch.attempts))):700;
+    tr.flushTimer=setTimeout(()=>flush(tr),wait+Math.floor(Math.random()*250));
+   }
+  }
  }
  async function gameAction(tr,action,tile=null){
   if(tr.closed||tr.gameBusy||!tr.roomId)return;tr.gameBusy=true;
@@ -279,7 +322,7 @@ window.QwizArcade=(()=>{
   try{const {data,error}=await ctx.client.rpc('qwiz_party_arcade',{p_code:s.code});if(!error)paintWallet(data)}catch{}
  }
  // An interrupted mobile connection must not require a page reload.
- window.addEventListener('online',()=>{for(const tr of Object.values(ui)){if(tr&&!tr.closed)fetchState(tr);}});
+ window.addEventListener('online',()=>{for(const tr of Object.values(ui)){if(tr&&!tr.closed){fetchState(tr);if(tr.batch&&!tr.sending)flush(tr);}}});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden){for(const tr of Object.values(ui)){if(tr&&!tr.closed)fetchState(tr);}}});
  return {isArcade,mountPlayer,mountProjector,mountHost,syncWallet,stop};
 })();
