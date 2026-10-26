@@ -698,6 +698,47 @@ async function deleteRoom(id){
   msg('launchMessage',result.archived?'Комната убрана из списка. История ответов сохранена.':'Пустая комната удалена.');
  }catch(error){msg('launchMessage',error.message,true)}
 }
+let clearingFinishedArchive=false;
+async function clearFinishedArchive(){
+ if(clearingFinishedArchive)return;
+ clearingFinishedArchive=true;
+ const trigger=$('clearFinishedArchive');
+ if(trigger){trigger.disabled=true;trigger.setAttribute('aria-busy','true')}
+ try{
+  // Preview from the server also includes completed rooms previously hidden
+  // via qwiz_remove_room. Never rely only on the visible (limit 30) room list.
+  const preview=await rpc('qwiz_clear_finished_rooms',{p_confirm:false});
+  const count=Number(preview?.count)||0;
+  if(count===0){
+   await loadRooms();
+   msg('launchMessage','Архив уже пуст.');
+   return;
+  }
+  const noun=QwizStage.countLabel(count,{one:'завершённую игру',few:'завершённые игры',many:'завершённых игр',other:'завершённых игр'});
+  const confirmed=window.confirm(
+   'Очистить архив?\n\nБудут безвозвратно удалены '+noun+', включая скрытые ранее сессии, их ответы и результаты.\n\nДействующие игры, сборки и данные профиля останутся.\n\nОтменить удаление после подтверждения невозможно.'
+  );
+  if(!confirmed)return;
+  const result=await rpc('qwiz_clear_finished_rooms',{p_confirm:true});
+  const deleted=Number(result?.count)||0;
+  if(state.room?.phase==='finished'){
+   state.room=null;state.roomCode=null;
+   sessionStorage.removeItem('qwiz-host-room');
+   $('liveConsole').hidden=true;
+   if(state.channel)state.db.removeChannel(state.channel);
+   state.channel=null;
+   savePosition();
+  }
+  await loadRooms();
+  msg('launchMessage','Архив очищен: '+QwizStage.countLabel(deleted,{one:'игра удалена',few:'игры удалены',many:'игр удалено',other:'игр удалено'})+'.');
+ }catch(error){
+  msg('launchMessage',error.message||'Не удалось очистить архив.',true);
+ }finally{
+  clearingFinishedArchive=false;
+  const button=$('clearFinishedArchive');
+  if(button){button.disabled=false;button.removeAttribute('aria-busy')}
+ }
+}
 async function loadBuild(id){try{const r=await studio('build_get',{id});state.buildId=r.build.id;
  $('buildTitle').value=r.build.title;
  state.selectedCard=null;state.cards=(r.cards||[]).filter(c=>!['team_stats','player_stats'].includes(c.type)).map(c=>({...c,title:gameTitle(c)})); // Keep legacy blank bonuses visible for deletion.
@@ -729,7 +770,7 @@ function roomsListMarkup(rooms){
  const current=rooms.filter(room=>room.phase!=='finished');
  const history=rooms.filter(room=>room.phase==='finished');
  return '<div class="active-rooms" aria-label="Текущие комнаты">'+(current.length?current.map(roomRowMarkup).join(''):'<p class="empty rooms-empty-active">Активных комнат пока нет. Выберите сборку и создайте новую игру.</p>')+'</div>'+
- (history.length?'<details class="rooms-history"><summary>История завершённых игр <span class="rooms-history-count">'+history.length+'</span><span class="rooms-history-hint">Прошлые сессии и результаты</span></summary><div class="rooms-history-list">'+history.map(roomRowMarkup).join('')+'</div></details>':'');
+ (history.length?'<details class="rooms-history"><summary>История завершённых игр <span class="rooms-history-count">'+history.length+'</span></summary><button type="button" class="clear-archive-button" id="clearFinishedArchive" title="Удалить все завершённые игры" aria-label="Очистить архив завершённых игр">'+trashSvg+'<span>Очистить архив</span></button><div class="rooms-history-list">'+history.map(roomRowMarkup).join('')+'</div></details>':'');
 }
 async function loadRooms(){
  try{
@@ -1176,7 +1217,7 @@ function wire(){
  $('launchBuild').addEventListener('change',()=>void previewLaunchBuild());
  $('launchPlanEdit').onclick=()=>{if($('launchBuild').value)void loadBuild($('launchBuild').value)};
  // Team setup handlers are owned by workspace-teams.js; no duplicate listeners here.
- $('hostRoomList').onclick=e=>{const d=e.target.closest('[data-delete-room]');if(d){deleteRoom(d.dataset.deleteRoom);return}
+ $('hostRoomList').onclick=e=>{if(e.target.closest('#clearFinishedArchive')){void clearFinishedArchive();return}const d=e.target.closest('[data-delete-room]');if(d){deleteRoom(d.dataset.deleteRoom);return}
   const b=e.target.closest('[data-room]');if(b)selectRoom(b.dataset.room)};
  $('liveStart').onclick=()=>{if(state.room?.phase==='finished'){void repeatFinishedRoom();return;}projection();control('start')};$('liveReveal').onclick=()=>control('reveal');
  $('liveNext').onclick=()=>control('next');$('livePause').onclick=()=>control(state.room?.paused?'resume':'pause');$('liveFinish').onclick=()=>control('finish');
