@@ -34,4 +34,4 @@ jobs:
         run: |
           mkdir -p visual-artifacts
           python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/qwiz-player-server.log 2>&1 &
-          npx playwright test next/player-layout.spec.mjs --grep "Older flag formats and long answer labels remain entirely visible|Personal round totals stay horizontal on narrow phones|Answer confirmation remains at bottom without resizing choice buttons or header|No sending or acceptance popup appears above mobile answer cards" --reporter=list --workers=1
+          npx playwright test next/player-layout.spec.mjs --grep "Older flag formats and long answer labels remain entirely visible|Personal round totals stay horizontal on narrow phones|Answer confirmation remains at bottom without resizing choice buttons or header|No sending or acceptance popup appears above mobile answer cards|Chosen answer has pale grey selected state during send|Legacy sending or saved status cannot create a top answer notification" --reporter=list --workers=1
