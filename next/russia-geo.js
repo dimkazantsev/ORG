@@ -174,13 +174,13 @@
    if(error)throw error;
    if(answer!==null&&data.last_answer){
      t.revealQuestion=t.view?.question;
-     t.lastAnswer=data.last_answer;t.feedbackUntil=Date.now()+5500;
+     t.lastAnswer=data.last_answer;t.feedbackUntil=Date.now()+Math.min(1000,Math.max(400,Number(data.question_seconds||5)*160));
      setTimeout(()=>{if(!t.closed&&Date.now()>=t.feedbackUntil){
        t.lastAnswer=null;t.revealQuestion=null;t.renderKey=null;roundState(t);
-     }},5550);
+     }},Math.min(1080,Math.max(480,Number(data.question_seconds||5)*160+80)));
    }
    t.view=data;
-   t.message=answer===null?'':data.last_correct?'Верно! +100 очков':'Нет, этот ответ неверный.';
+   t.message=answer===null?'':data.last_correct?'Верно! +10 очков':'Нет, этот ответ неверный.';
    roundState(t);
   }catch(e){
     t.message=e.message||'Нет связи. Попробуйте ещё раз.';
@@ -265,7 +265,10 @@
    const b=e.target.closest('[data-geo-answer],[data-region]');
    if(!b||!t.view?.open||!t.view?.question)return;
    if(b.dataset.region){
-     if(Date.now()<t.suppressUntil||t.pointers.size||Date.now()<(t.regionPointerSelectedUntil||0))return;
+     // Pointer selection happens exactly once on release; click is a
+     // keyboard-only fallback. Prevent synthetic touch clicks choosing a
+     // second neighbouring path when mobile browsers retarget the event.
+     if(e.detail!==0||Date.now()<t.suppressUntil||t.pointers.size)return;
      selectRegion(t,b);return;
    }
    if(b.disabled)return;
@@ -303,12 +306,20 @@
    }
    t.zoomBox=svg.getAttribute('viewBox');
   };
-  t.onPointerUp=e=>{
-   const pointer=t.pointers.get(e.pointerId);t.pointers.delete(e.pointerId);
-   if(e.type==='pointercancel')return;
-   if(t.gestureMoved){t.suppressUntil=Date.now()+500;return}
-   if(pointer?.region&&Math.hypot(e.clientX-pointer.startX,e.clientY-pointer.startY)<16){
-    if(selectRegion(t,pointer.region))t.regionPointerSelectedUntil=Date.now()+350;
+   t.onPointerUp=e=>{
+   const pointer=t.pointers.get(e.pointerId);
+   t.pointers.delete(e.pointerId);
+   if(e.type==='pointercancel'||!pointer)return;
+   const traveled=Math.hypot(e.clientX-pointer.startX,e.clientY-pointer.startY);
+   if(t.gestureMoved||traveled>7||t.pointers.size){
+     t.suppressUntil=Date.now()+550;return;
+   }
+   // Only accept the exact path under the released pointer, and only if it
+   // agrees with the region that received pointerdown. A border or a pan
+   // must not select a different overlapping polygon.
+   const hit=document.elementFromPoint(e.clientX,e.clientY)?.closest('.geo-map-svg path.geo-region[data-region]');
+   if(hit&&hit===pointer.region&&t.root.contains(hit)){
+     if(selectRegion(t,hit))t.regionPointerSelectedUntil=Date.now()+850;
    }
   };
   t.onWheel=e=>{
@@ -330,7 +341,7 @@
   root.addEventListener('keydown',t.onKeyDown);
 
   fetchView(t);
-  t.interval=setInterval(()=>{if(document.hidden||t.busy)return;if(t.view?.remaining>0)t.view.remaining-=1; if(t.view){const foot=root.querySelector('.geo-footer>span');if(foot)foot.textContent='Осталось '+Math.max(0,t.view.remaining)+' сек.';} if(!t.view||t.view.remaining%5===0)fetchView(t)},1000);
+  t.interval=setInterval(()=>{if(document.hidden||t.busy)return;if(t.view?.remaining>0)t.view.remaining-=1; if(t.view){const foot=root.querySelector('.geo-footer>span');if(foot)foot.textContent='Осталось '+Math.max(0,t.view.remaining)+' сек.';} if(!t.view||t.view.remaining<=1||t.view.remaining%2===0)fetchView(t)},1000);
   return true;
  }
  function mountProjector(root,s,client){
