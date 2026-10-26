@@ -10,7 +10,7 @@ test('all resilience code parses and new builds are referenced',()=>{
  }
  const pages=[['index.html','app.js?v=arcade-names-20261027-1'],
   ['index.html','arcade.js?v=pixel-dino-touch-20261027-1'],
-  ['workspace.html','workspace.js?v=clear-archive-20261027-1'],
+  ['workspace.html','workspace.js?v=clear-archive-20261027-2'],
   ['presenter.html','presenter.js?v=arcade-names-20261027-1']];
  for(const [page,asset] of pages) assert.ok(read(page).includes(asset),page+' missing '+asset);
 });
