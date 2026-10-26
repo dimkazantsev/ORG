@@ -109,7 +109,7 @@ test('launch action matches selector height across supported desktop widths',()=
  const css=read('workspace.css');
  assert.match(css,/#roomsPage \.launch-fields :is\(input,select\)\{[^}]*height:56px/);
  assert.match(css,/#roomsPage #launchButton\{[^}]*height:56px/);
- assert.match(read('workspace.html'),/workspace\.css\?v=launch-height-20261026-2/);
+ assert.match(read('workspace.html'),/workspace\.css\?v=projector-icons-20261027-1/);
 });
 
 test('room creation SQL avoids PL/pgSQL room_id ambiguity on INSERT and reuse UPDATE',()=>{
