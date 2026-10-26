@@ -480,32 +480,46 @@ function exportResults(){const s=ctx.room;if(!s)return;const rows=[['Место'
  const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=url;link.download='org-party-'+s.code+'.csv';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
 async function copyInvite(){if(!ctx.roomCode)return;const invite=joinUrl(ctx.roomCode);try{await navigator.clipboard.writeText(invite);notice('hostNotice','Ссылка скопирована.','success')}catch{notice('hostNotice','Ссылка для приглашения: '+invite)}}
 function roomPollOffset(random=Math.random){return Math.floor(Math.max(0,Math.min(0.999999,Number(random())||0))*20000)}
-function updateClocks(){if(ctx.room?.paused){lockDisconnectedAnswers();return;}
+// A deadline can trigger at most one eager read per phase/client.
+// The normal staggered poll remains the fallback if Realtime disconnects.
+function scheduleDeadlineRefresh(delay=700){
+ const r=ctx.room;
+ if(!r||!ctx.roomCode||ctx.connectionStale)return;
+ const key=[r.code,r.index,r.phase,r.activity?.type||'',r.ends_at||''].join(':');
+ if(ctx.deadlineRefreshKey===key)return;
+ ctx.deadlineRefreshKey=key;
+ if(ctx.releaseTimer)clearTimeout(ctx.releaseTimer);
+ ctx.releaseTimer=setTimeout(()=>{
+  ctx.releaseTimer=null;
+  if(ctx.roomCode===r.code&&navigator.onLine)refreshRoom(false);
+ },delay+Math.floor(Math.random()*1500));
+}
+function updateClocks(){
+ if(ctx.room?.paused){lockDisconnectedAnswers();return;}
  if(ctx.room?.phase==='intermission'&&ctx.room?.activity?.type==='round_stats'){
-  const left=remaining(ctx.room.ends_at);if(left>0)text('playerResultCountdown',left);else {const status=$('playerNextStatus');if(status)status.textContent='Ожидаем перехода от сервера…';}
-  if(left===0&&!ctx.releaseTimer)ctx.releaseTimer=setTimeout(()=>{ctx.releaseTimer=null;if(ctx.roomCode)refreshRoom(false)},650+Math.floor(Math.random()*800));
+  const remainingSeconds=remaining(ctx.room.ends_at);
+  if(remainingSeconds>0)text('playerResultCountdown',remainingSeconds);
+  else{const status=$('playerNextStatus');if(status)status.textContent='Ожидаем перехода от сервера…';scheduleDeadlineRefresh(800);}
   return;
- }if(ctx.room?.phase==='intermission'&&ctx.room?.activity?.type==='card_intro'){
- const n=remaining(ctx.room.ends_at);text('playerCountdown',n);
- if(n===0&&!ctx.releaseTimer)ctx.releaseTimer=setTimeout(()=>{ctx.releaseTimer=null;if(ctx.roomCode)refreshRoom(false)},600+Math.floor(Math.random()*850));
- return;
-}if(ctx.room?.phase==='countdown'){
-   const n=remaining(ctx.room.ends_at);text('playerCountdown',n);
-   if(n===0 && !ctx.releaseTimer){
-    ctx.releaseTimer=setTimeout(()=>{
-     ctx.releaseTimer=null;
-     if(ctx.room?.phase!=='countdown')return;
-     rpc('qwiz_release_countdown',{p_code:ctx.roomCode}).then(()=>scheduleRefresh(400)).catch(()=>{});
-    },1500+Math.floor(Math.random()*2700));
-   }
-   return;
+ }
+ if(ctx.room?.phase==='intermission'&&ctx.room?.activity?.type==='card_intro'){
+  const seconds=remaining(ctx.room.ends_at);text('playerCountdown',seconds);
+  if(seconds===0)scheduleDeadlineRefresh(800);
+  return;
+ }
+ if(ctx.room?.phase==='countdown'){
+  const seconds=remaining(ctx.room.ends_at);text('playerCountdown',seconds);
+  // qwiz_party_state already calls qwiz_tick: a separate release RPC from
+  // each of 40 students would create duplicate writes and lock contention.
+  if(seconds===0)scheduleDeadlineRefresh(1100);
+  return;
  }
  if(!['question','result'].includes(ctx.room?.phase))return;
  const seconds=QwizStage.updateClock(ctx.room,ctx.clockOffset,document,'playerTimer');text('hostTimer',seconds);
  lockDisconnectedAnswers();
  if(seconds===0){
   for(const button of qa('#gameContent [data-answer],#gameContent [data-submit-rich],#gameContent #richSpot'))button.disabled=true;
-  if(!ctx.releaseTimer)ctx.releaseTimer=setTimeout(()=>{ctx.releaseTimer=null;if(ctx.roomCode)refreshRoom(false)},700+Math.floor(Math.random()*1800));
+  scheduleDeadlineRefresh(700);
  }
 }
 async function restore(){if(!ctx.client)return;try{
