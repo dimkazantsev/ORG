@@ -352,8 +352,7 @@ function roundScorePanel(view,title,final=false,endsAt=null){
 }
 function roundIntroMarkup(s){
  const title=s.activity?.title||'Следующий раунд',icon=s.activity?.icon||s.activity?.settings?.queued_icon;
- const isDino=false;
- const drawing=isDino?'<svg viewBox="0 0 96 100" fill="none" aria-hidden="true"><path d="M47 13h29v7h7v19H65v11H54v10H44v10H30V57H20V48H12V38h9v9h11V34h10V20h5Z" fill="#753de6"/><circle cx="70" cy="27" r="4" fill="white"/><path d="M41 69v15h-9m20-20v21h11" stroke="#6536c8" stroke-width="8" stroke-linecap="round"/><path d="M14 38l-7-9" stroke="#ac83ed" stroke-width="6" stroke-linecap="round"/></svg>':QwizStage.roundIconSvg(icon||'flag');
+ const drawing=QwizStage.roundIconSvg(icon||'flag');
  return '<section class="game-empty round-intro" aria-label="Представление раунда"><div class="round-intro-sparks" aria-hidden="true"><i></i><i></i><i></i></div>'+
  '<div class="round-intro-symbol" aria-hidden="true">'+drawing+'</div><div class="eyebrow">СЛЕДУЮЩИЙ РАУНД</div>'+
  '<h1>'+esc(title)+'</h1><p>Подготовьтесь к новому испытанию</p>'+
