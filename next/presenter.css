@@ -1525,3 +1525,19 @@ body:fullscreen .projection-shell{height:100dvh}
 @media(prefers-reduced-motion:reduce){
  #projectionMain>.lobby-cinematic::before,.lobby-3d-orbit>span,.lobby-starfield i{animation:none!important}
 }
+
+/* 2026-10-26 user-approved return to the light QWIZ-PARTY visual system. */
+#projectionMain>.lobby-cinematic{background:#fff!important;box-shadow:none!important;border:1px solid #eee6f8!important;border-radius:26px;color:#29233c!important;}
+#projectionMain>.lobby-cinematic::before,#projectionMain>.lobby-cinematic::after{content:none!important;animation:none!important}
+#projectionMain>.lobby-cinematic :is(.lobby-starfield,.lobby-3d-orbit){display:none!important}
+#projectionMain>.lobby-cinematic .lobby-cinema-content{color:#29233c!important;gap:clamp(8px,1.1dvh,15px);max-width:min(90%,950px);padding:clamp(20px,3dvh,42px)}
+#projectionMain>.lobby-cinematic .lobby-cinema-eyebrow{color:#8361c1!important;letter-spacing:.16em}
+#projectionMain>.lobby-cinematic .lobby-cinema-content h1{color:#29233c!important;text-shadow:none!important;font-size:clamp(32px,5.5dvh,72px);line-height:1.13;letter-spacing:-.045em}
+#projectionMain>.lobby-cinematic .lobby-cinema-lead{color:#7e758d!important;font-size:clamp(16px,2dvh,24px)!important}
+#projectionMain>.lobby-cinematic .lobby-qr-frame{background:#fff!important;padding:clamp(13px,1.8dvh,23px);border:1px solid #e5d8f4!important;box-shadow:0 14px 42px #6847a41b!important;border-radius:26px;margin:clamp(10px,1.6dvh,18px) auto}
+#projectionMain>.lobby-cinematic .lobby-qr-frame>i{display:none!important}
+#projectionMain>.lobby-cinematic .lobby-cinema-qr{background:#fff!important;width:clamp(180px,32dvh,350px);height:clamp(180px,32dvh,350px)}
+#projectionMain>.lobby-cinematic .lobby-cinema-code-label{color:#8c789f!important;font-size:clamp(12px,1.4dvh,16px)}
+#projectionMain>.lobby-cinematic .lobby-cinema-code{color:#7043c8!important;font-size:clamp(25px,3.8dvh,42px);letter-spacing:.19em}
+#projectionMain>.lobby-cinematic .lobby-cinema-instructions{color:#756a86!important;font-size:clamp(13px,1.9dvh,19px)!important;max-width:780px}
+@media(max-height:640px){#projectionMain>.lobby-cinematic .lobby-cinema-content{gap:4px;padding:9px}#projectionMain>.lobby-cinematic .lobby-cinema-qr{width:clamp(150px,29dvh,230px);height:clamp(150px,29dvh,230px)}}
