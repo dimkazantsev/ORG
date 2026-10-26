@@ -436,10 +436,10 @@ async function advance(action){const s=ctx.room;if(!s)return;busy($('host'+({sta
  }catch(e){notice('hostNotice',e.message,'error')}finally{for(const b of ['hostStart','hostReveal','hostNext','hostFinish'])busy($(b),false)}}
 async function assign(playerId,teamId){if(!ctx.room||ctx.room.phase!=='lobby')return;try{await rpc('org_next_assign',{p_room:ctx.room.room_id,p_player:playerId,p_team:teamId});signal('team');await refreshRoom()}catch(e){notice('hostNotice',e.message,'error')}}
 async function submitAnswer(choice){if(ctx.mode!=='game'||!ctx.room||ctx.room.phase!=='question'||ctx.room.paused||ctx.room.has_answer||ctx.answerPending)return;if(ctx.connectionStale||!navigator.onLine){updateConnectionHealth(false);return}ctx.answerPending=true;const buttons=qa('[data-answer]');buttons.forEach(x=>busy(x,true));
- notice('gameNotice','Отправляем ответ…');try{await (['single','boolean','flag','portrait','image'].includes(ctx.room.question?.kind||'single')?sendAnswerOnce('org_next_answer',{p_room:ctx.room.room_id,p_choice:choice}):sendAnswerOnce('qwiz_submit_answer',{p_room:ctx.room.room_id,p_payload:{index:choice}}));QwizStage.audio.play('accept');notice('gameNotice','Ответ сохранён.','success');await refreshRoom(false);
+ notice('gameNotice','');try{await (['single','boolean','flag','portrait','image'].includes(ctx.room.question?.kind||'single')?sendAnswerOnce('org_next_answer',{p_room:ctx.room.room_id,p_choice:choice}):sendAnswerOnce('qwiz_submit_answer',{p_room:ctx.room.room_id,p_payload:{index:choice}}));QwizStage.audio.play('accept');notice('gameNotice','');await refreshRoom(false);
  }catch(e){
    await refreshRoom(false);
-   if(ctx.room?.has_answer)notice('gameNotice','Ответ подтверждён сервером.','success');
+   if(ctx.room?.has_answer)notice('gameNotice','');
    else notice('gameNotice',ctx.connectionStale?'Связь прервана. После восстановления проверьте ответ и отправьте его, если время ещё не вышло.':e.message,'error');
   }finally{ctx.answerPending=false;buttons.forEach(x=>busy(x,false));lockDisconnectedAnswers()}}
 async function submitRichAnswer(){
@@ -466,12 +466,12 @@ async function submitRichAnswer(){
  }
  ctx.answerPending=true;
  const button=document.querySelector('#gameContent [data-submit-rich]');if(button)busy(button,true);
- try{notice('gameNotice','Отправляем ответ…');
+ try{notice('gameNotice','');
   await sendAnswerOnce('qwiz_submit_answer',{p_room:s.room_id,p_payload:payload});
-  QwizStage.audio.play('accept');notice('gameNotice','Ответ принят сервером.','success');await refreshRoom(false);
+  QwizStage.audio.play('accept');notice('gameNotice','');await refreshRoom(false);
  }catch(e){
   await refreshRoom(false);
-  if(ctx.room?.has_answer)notice('gameNotice','Ответ подтверждён сервером.','success');
+  if(ctx.room?.has_answer)notice('gameNotice','');
   else notice('gameNotice',ctx.connectionStale?'Связь прервана. Отправка пока не подтверждена.':e.message,'error');
  }
  finally{ctx.answerPending=false;if(button)busy(button,false);lockDisconnectedAnswers()}
