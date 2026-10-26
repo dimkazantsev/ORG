@@ -27,9 +27,9 @@ test('ambiguous answer acknowledgements are reconciled from server before UI suc
  const app=read('app.js');
  assert.match(app,/async function sendAnswerOnce/);
  assert.match(app,/controller\.abort\(\);reject\(Error\('Подтверждение ответа задерживается/);
- assert.match(app,/if\\(ctx\\.room\\?\\.has_answer\\)notice\\('gameNotice',''\\)/);
- assert.match(app,/done\\?'Ответ принят\\.'/);
- assert.doesNotMatch(app,/notice\\('gameNotice','Отправляем ответ/);
+ assert.ok(app.includes("if(ctx.room?.has_answer)notice('gameNotice','')"));
+ assert.ok(app.includes("done?'Ответ принят.'"));
+ assert.ok(!app.includes("notice('gameNotice','Отправляем ответ"));
  assert.match(app,/function updateConnectionHealth\(connected\)/);
 });
 test('tap batches are server-idempotent and client reuses stable UUID',()=>{
