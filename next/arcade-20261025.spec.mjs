@@ -111,3 +111,13 @@ test('launch action matches selector height across supported desktop widths',()=
  assert.match(css,/#roomsPage #launchButton\{[^}]*height:56px/);
  assert.match(read('workspace.html'),/workspace\.css\?v=launch-height-20261026-2/);
 });
+
+test('room creation SQL avoids PL/pgSQL room_id ambiguity on INSERT and reuse UPDATE',()=>{
+ const createSql=read('migrations/20261026_fix_prepare_room_ambiguous_room_id.sql');
+ const reuseSql=read('migrations/20261026_fix_reused_room_ambiguous_snapshot.sql');
+ assert.match(createSql,/ON CONFLICT ON CONSTRAINT qwiz_lobby_config_pkey DO NOTHING;/);
+ assert.match(createSql,/IF n<>2 THEN/);
+ assert.match(reuseSql,/WHERE snapshot\.room_id=\(SELECT existing_room\.id/);
+ assert.match(reuseSql,/existing_room\.owner_id=v_owner/);
+ assert.match(read('workspace.js'),/rpc\('qwiz_prepare_room'/);
+});
