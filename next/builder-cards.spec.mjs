@@ -413,3 +413,49 @@ test('Duplicated cards keep the original title without copy or repeated-copy suf
  await expect(cards.nth(3).locator('h3')).toHaveText('Раунд вопросов');
  await expect(page.locator('#roundCards')).not.toContainText('— копия');
 });
+
+
+test('Projector, sound and music buttons retain crisp SVG icons through toggles',async({page})=>{
+ await page.setViewportSize({width:1440,height:900});
+ await page.evaluate(()=>{
+  $('roomsPage').hidden=false;
+  $('liveConsole').hidden=false;
+  projectorPrefs={sound_enabled:true,music_enabled:false,volume:45};
+  state.room={room_id:'00000000-0000-4000-8000-000000000999',code:'TESTROOM'};
+  state.db={rpc:async(name,args)=>({data:{
+   sound_enabled:name==='qwiz_projector_settings'&&'p_enabled' in args?args.p_enabled:projectorPrefs.sound_enabled,
+   music_enabled:name==='qwiz_projector_music'?args.p_enable:projectorPrefs.music_enabled,
+   volume:projectorPrefs.volume
+  },error:null})};
+  renderProjectorPreferences();
+ });
+ const buttons=page.locator('#showRoomProjection,#hostProjectorSound,#hostProjectorMusic,#openScreen');
+ await expect(buttons).toHaveCount(4);
+ for(const id of ['showRoomProjection','hostProjectorSound','hostProjectorMusic','openScreen']){
+  const button=page.locator('#'+id);
+  await expect(button.locator('.projector-pref-icon svg.ui-icon')).toHaveCount(1);
+  const size=await button.locator('.projector-pref-icon svg').evaluate(node=>({
+   width:node.getBoundingClientRect().width,height:node.getBoundingClientRect().height
+  }));
+  expect(size).toEqual({width:18,height:18});
+ }
+ const sound=page.locator('#hostProjectorSound'),music=page.locator('#hostProjectorMusic');
+ await expect(sound).toHaveAttribute('aria-pressed','true');
+ await expect(music).toHaveAttribute('aria-pressed','false');
+ await expect(sound).toContainText('Звук проектора: вкл.');
+ await expect(music).toContainText('Музыка на всю игру: выкл.');
+ await sound.click();
+ await expect(sound).toHaveAttribute('aria-pressed','false');
+ await expect(sound).toContainText('Звук проектора: выкл.');
+ await expect(sound.locator('.projector-pref-icon svg')).toHaveCount(1);
+ const slash=await sound.locator('.pref-sound-slash').evaluate(el=>getComputedStyle(el).display);
+ expect(slash).not.toBe('none');
+ await music.click();
+ await expect(music).toHaveAttribute('aria-pressed','true');
+ await expect(music).toContainText('Музыка на всю игру: вкл.');
+ await expect(music.locator('.projector-pref-icon svg')).toHaveCount(1);
+ expect(await music.locator('.pref-music-slash').evaluate(el=>getComputedStyle(el).display)).toBe('none');
+ await page.setViewportSize({width:390,height:844});
+ const viewportOverflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
+ expect(viewportOverflow).toBeLessThanOrEqual(2);
+});
