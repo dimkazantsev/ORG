@@ -1124,3 +1124,26 @@ test('A room that never started cannot be finished by the host controls',()=>{
  assert.match(sql,/refusing unsafe patch/);
  assert.match(client,/\$\('liveFinish'\)\.disabled=\['lobby','finished'\]\.includes\(s\.phase\)/);
 });
+
+
+test('October 27 release: real flag assembly, source-scored questions, and no fake token shop',()=>{
+ const stage=readFileSync(new URL('./stage.js',import.meta.url),'utf8');
+ const arcade=readFileSync(new URL('./arcade.js',import.meta.url),'utf8');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const scorer=readFileSync(new URL('./migrations/20261027_ten_point_question_scoring_and_flag_verdict.sql',import.meta.url),'utf8');
+ const geo=readFileSync(new URL('./migrations/20261027_geo_ten_points_per_answer.sql',import.meta.url),'utf8');
+ assert.match(stage,/function assemblyItems\(/);
+ assert.match(stage,/data-assembly-slot/);
+ assert.match(stage,/addEventListener\('pointerup'/);
+ assert.match(stage,/function correctFlagMarkup\(/);
+ assert.match(app,/QwizStage\.assemblyItems\(/);
+ assert.match(app,/data-submit-rich disabled>ОК/);
+ assert.match(app,/qwiz_my_question_result/);
+ assert.match(app,/const drawing=isDino\?/);
+ assert.match(arcade,/classList\.add\('is-pending'\)/);
+ assert.match(arcade,/Командные бонусы/);
+ assert.doesNotMatch(arcade,/Командная мастерская|жетонов/);
+ assert.match(scorer,/v_points:=case when v_correct then 10 else 0 end;/);
+ assert.match(scorer,/set score=score\+10 where id=p\.team_id/);
+ assert.match(geo,/v_award:=case when v_hit then 10 else 0 end;/);
+});
