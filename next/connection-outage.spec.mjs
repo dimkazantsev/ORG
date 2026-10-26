@@ -100,7 +100,7 @@ test('A hanging room RPC times out and retries, without accepting a late stale a
  await expect.poll(()=>page.evaluate(()=>window.roomCalls)).toBe(1);
  await page.clock.fastForward(10100);
  await expect.poll(()=>page.evaluate(()=>window.hungSignal?.aborted)).toBe(true);
- await expect.poll(()=>page.evaluate(()=>ctx.connectionStale)).toBe(true);
+ await expect.poll(()=>page.evaluate(()=>ctx.connectionStale)).toBe(false);
  // Queued notifications must not bypass exponential backoff after failure.
  expect(await page.evaluate(()=>window.roomCalls)).toBe(1);
  await expect(page.locator('#richTextAnswer')).toBeEnabled();
@@ -188,4 +188,31 @@ test('Server-accepted answer remains confirmed when the following room snapshot 
  await page.evaluate(()=>dataState({...window.serverRoom,has_answer:false,server_now:new Date().toISOString()}));
  expect(await page.evaluate(()=>ctx.room?.has_answer)).toBe(true);
  expect(await page.evaluate(()=>window.answerWrites)).toBe(1);
+});
+
+test('Real offline interval keeps draft locked until a fresh server snapshot arrives',async({page})=>{
+ await ready(page);
+ await page.evaluate(room=>{
+  ctx.roomCode=room.code;ctx.room=room;showScreen('game');renderGame();
+  window.resolveFreshSnapshot=null;window.recoveryCalls=0;
+  ctx.client.rpc=(name)=>{
+   if(name!=='qwiz_party_state')return Promise.resolve({data:null,error:null});
+   window.recoveryCalls++;
+   return new Promise(resolve=>{window.resolveFreshSnapshot=()=>resolve({data:{
+    ...room,server_now:new Date().toISOString(),ends_at:new Date(Date.now()+60000).toISOString()
+   },error:null})});
+  };
+ },fixture());
+ await page.locator('#richTextAnswer').fill('Москва');
+ await page.context().setOffline(true);
+ await expect(page.locator('#richTextAnswer')).toBeDisabled();
+ await page.context().setOffline(false);
+ await expect.poll(()=>page.evaluate(()=>window.recoveryCalls)).toBeGreaterThanOrEqual(1);
+ // Network is back, but this server has not yet sent the new room state.
+ await expect(page.locator('#richTextAnswer')).toBeDisabled();
+ expect(await page.evaluate(()=>ctx.reconnectRequiresState)).toBe(true);
+ await page.evaluate(()=>window.resolveFreshSnapshot());
+ await expect(page.locator('#richTextAnswer')).toBeEnabled();
+ await expect(page.locator('#richTextAnswer')).toHaveValue('Москва');
+ expect(await page.evaluate(()=>ctx.reconnectRequiresState)).toBe(false);
 });
