@@ -8,7 +8,7 @@ test('all resilience code parses and new builds are referenced',()=>{
  for(const name of ['app.js','arcade.js','presenter.js','workspace.js']){
   assert.doesNotThrow(()=>new Script(read(name),{filename:name}));
  }
- const pages=[['index.html','app.js?v=answer-grey-20261027-1'],
+ const pages=[['index.html','app.js?v=answer-grey-20261027-2'],
   ['index.html','arcade.js?v=idempotent-40p-20261026-3'],
   ['workspace.html','workspace.js?v=sync40-20261026-3'],
   ['presenter.html','presenter.js?v=sync40-20261026-3']];
