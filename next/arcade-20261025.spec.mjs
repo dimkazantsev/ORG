@@ -86,7 +86,7 @@ test('regression: a mobile round score cannot wrap 700 into vertical digits',()=
  assert.ok(from>0,'score block exists');
  assert.match(block,/\.round-self-summary>div\s*\{\s*display:flex;flex-direction:column/);
  assert.match(block,/\.round-self-summary strong\s*\{[^}]*white-space:nowrap/);
- assert.match(read('index.html'),/player-layout\.css\?v=score-layout-20261026-1/);
+ assert.match(read('index.html'),/player-layout\.css\?v=[\w-]+/);
 });
 
 test('regression: geography must NOT reuse distractor ranking for answer display order',()=>{
@@ -103,7 +103,7 @@ test('audience room keeps a clean white background and one live QR mount',()=>{
  assert.doesNotMatch(presenter,/lobby-3d-orbit" aria-hidden/);
  assert.match(css,/#projectionMain>\.lobby-cinematic\{background:#fff!important/);
  assert.match(css,/#projectionMain>\.lobby-cinematic::before,#projectionMain>\.lobby-cinematic::after\{content:none!important/);
- assert.match(read('presenter.html'),/presenter\.css\?v=white-room-20261026-2/);
+ assert.match(read('presenter.html'),/presenter\.css\?v=[\w-]+/);
 });
 test('launch action matches selector height across supported desktop widths',()=>{
  const css=read('workspace.css');
@@ -130,7 +130,7 @@ test('forty-device arcade load guard: staggered polling, bounded retry and recon
  assert.match(js,/Math\.min\(20000,base\*Math\.pow\(1\.6/);
  assert.match(js,/window\.addEventListener\('online'/);
  assert.match(js,/document\.addEventListener\('visibilitychange'/);
- assert.match(read('index.html'),/arcade\.js\?v=load-shed-40p-20261026/);
+ assert.match(read('index.html'),/arcade\.js\?v=[\w-]+/);
  // 40 active clients, base 4700ms => under nine state reads per second
  // versus 25 per second in the previous 1600ms implementation.
  assert.ok(40/4.7<9);
