@@ -217,3 +217,19 @@
 .geo-projector-stats strong{display:block;max-width:100%;min-width:0;font-size:clamp(22px,3.4vw,56px);line-height:1.12;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .geo-projector-stats span,.geo-header span,.geo-header strong,.geo-footer span{min-width:0;overflow-wrap:anywhere}
 @media(max-width:680px){.geo-projector-stats strong{font-size:clamp(20px,6vw,35px)}.geo-header strong{text-align:right}}
+
+
+/* Precise region-only hit targets: no overdrawn selection frames or bleed onto neighbors. */
+.geo-map-svg path.geo-region{pointer-events:visibleFill!important;stroke:#ffffff!important;stroke-width:.8!important;paint-order:fill!important}
+.geo-map-svg path.geo-region.geo-selected,
+.geo-game .geo-map-svg path.geo-region.geo-selected{
+ fill:#9c74e4!important;stroke:#ffffff!important;stroke-width:.8!important;
+ filter:none!important;outline:0!important}
+.geo-game .geo-map-frame{outline:0!important;box-shadow:none!important}
+.geo-map-svg path.geo-region.geo-focus{stroke:#fff!important;stroke-width:.8!important;filter:none!important}
+.geo-map-svg path.geo-region.geo-correct-answer{
+ fill:#39b66b!important;stroke:#ffffff!important;stroke-width:.8!important;filter:none!important}
+.geo-map-svg path.geo-region.geo-wrong-answer{
+ fill:#eb8596!important;stroke:#ffffff!important;stroke-width:.8!important;filter:none!important}
+.geo-map-svg path.geo-region:focus{outline:none}
+.geo-map-svg path.geo-region:focus-visible{stroke:#7140c7!important;stroke-width:1.6!important}
