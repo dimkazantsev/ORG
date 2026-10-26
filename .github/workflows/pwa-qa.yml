@@ -1,0 +1,43 @@
+name: QWIZ-PARTY / PWA offline QA
+on:
+  push:
+    paths:
+      - 'next/sw.js'
+      - 'next/pwa.js'
+      - 'next/manifest.webmanifest'
+      - 'next/pwa-icon.svg'
+      - 'next/pwa.test.mjs'
+      - 'next/index.html'
+      - 'next/workspace.html'
+      - 'next/presenter.html'
+      - 'next/profile.html'
+      - '.github/workflows/pwa-qa.yml'
+  workflow_dispatch:
+jobs:
+  offline-shell:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check PWA assets and isolation
+        run: |
+          node --check next/sw.js
+          node --check next/pwa.js
+          node --test next/pwa.test.mjs
+      - name: Check manifest and cached resources exist
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re, json
+          root=Path('next')
+          src=(root/'sw.js').read_text()
+          entries=re.search(r"const SHELL=\[(.*?)\];",src,re.S).group(1)
+          for name in re.findall(r"'([^']+)'",entries):
+              resolved=(root/name).resolve()
+              assert resolved.is_file(), f'Missing offline shell resource: {name}'
+          print('Validated static resources and manifest:',json.loads((root/'manifest.webmanifest').read_text())['name'])
+          PY
