@@ -32,7 +32,14 @@ window.QwizArcade=(()=>{
   // A real CSS-3D stage (multiple independently transformed depth planes),
   // rather than a flat emoji or an image with a perspective filter.
   const ground='<span class="arcade-3d-horizon" aria-hidden="true"></span><span class="arcade-3d-shadow" aria-hidden="true"></span>';
-  if(mode==='rocket')return '<div class="arcade-runner-world" role="img" aria-label="Бегун и движущееся препятствие"><div class="arcade-runner-sky"><i></i><i></i><i></i></div><div class="arcade-runner-character" data-runner-character><span class="runner-head"></span><span class="runner-eye"></span><span class="runner-body"></span><span class="runner-tail"></span><span class="runner-foot left"></span><span class="runner-foot right"></span></div><div class="arcade-runner-obstacle" data-runner-obstacle><span></span><i></i><b></b></div><div class="arcade-runner-floor"></div></div>';
+  if(mode==='rocket')return '<div class="arcade-runner-world" role="img" aria-label="Пиксельный динозавр перепрыгивает кактусы"><div class="arcade-runner-sky"><i></i><i></i><i></i></div>'+
+    '<div class="arcade-runner-character" data-runner-character><svg class="dino-pixel" viewBox="0 0 96 100" aria-hidden="true" shape-rendering="crispEdges">'+
+    '<path d="M50 7H78V13H84V34H76V42H61V48H55V59H49V68H43V73H33V68H25V60H19V52H12V42H18V47H24V53H34V38H40V22H50Z" fill="#353544"/>'+
+    '<path d="M64 18H71V25H64Z" fill="#faf9ff"/><path d="M66 19H70V23H66Z" fill="#282739"/>'+
+    '<path d="M63 34H81V39H63Z" fill="#faf9ff"/><path d="M55 52H64V56H59V65H55Z" fill="#353544"/>'+
+    '<g class="dino-leg-a" fill="#353544"><path d="M38 67H47V83H52V89H33V84H38Z"/></g>'+
+    '<g class="dino-leg-b" fill="#353544"><path d="M52 65H61V82H67V89H49V84H52Z"/></g></svg></div>'+
+    '<div class="arcade-runner-obstacle" data-runner-obstacle><svg viewBox="0 0 52 86" class="dino-cactus" shape-rendering="crispEdges" aria-hidden="true"><path d="M20 6H31V78H20Z M9 25H18V51H9Z M9 45H26V54H9Z M33 34H43V60H33Z M26 51H43V61H26Z M16 77H36V84H16Z" fill="#4c806c"/></svg></div><div class="arcade-runner-floor"></div><span class="arcade-runner-score" aria-hidden="true">ДИНО · ЗАБЕГ</span></div>';
   if(mode==='tug')return '<div class="arcade-tap-stage" aria-hidden="true"><div class="arcade-tap-glow"></div><span class="arcade-tap-sparks">✧　✦　✧</span></div>';
   if(mode==='captain')return '<div class="arcade-memory-hero" aria-hidden="true"><div class="memory-stage"><span class="memory-stage-halo"></span><span class="memory-stage-card memory-stage-card-a"><i>◈</i></span><span class="memory-stage-card memory-stage-card-b"><i>✦</i></span><span class="memory-stage-card memory-stage-card-c"><i>◈</i></span><span class="memory-stage-card memory-stage-card-d"><i>✦</i></span></div><span class="memory-hero-caption">Найдите шесть пар раньше соперников</span></div>';
   return '<div class="arcade-3d-world arcade-world-blitz" role="img" aria-label="Трёхмерный энергетический кристалл для блиц-вопроса">'+ground+
@@ -54,7 +61,7 @@ window.QwizArcade=(()=>{
   (kind==='player'?(['tug','rocket'].includes(mode)?'':'<button type="button" class="arcade-tap-btn" data-arcade-tap '+(mode==='captain'?'hidden ':'')+'disabled>'+escape(m.cta)+'</button>')+'<span class="arcade-tap-caption" data-arcade-personal>Синхронизация с игровым сервером…</span>':'')+
   '<div class="arcade-alert" role="status" aria-live="polite" data-arcade-alert>Подключаем результаты…</div><div class="arcade-badges" data-arcade-badges></div><section class="arcade-vote" data-arcade-vote hidden></section></div>';
  }
- function stop(kind){const tr=ui[kind];if(!tr)return;if(tr.interval)clearTimeout(tr.interval);if(tr.clock)clearInterval(tr.clock);if(tr.flushTimer)clearTimeout(tr.flushTimer);if(tr.onClick)tr.root?.removeEventListener('click',tr.onClick);tr.closed=true;ui[kind]=null;}
+ function stop(kind){const tr=ui[kind];if(!tr)return;if(tr.interval)clearTimeout(tr.interval);if(tr.clock)clearInterval(tr.clock);if(tr.flushTimer)clearTimeout(tr.flushTimer);if(tr.onClick)tr.root?.removeEventListener('click',tr.onClick);if(tr.onPointerDown)tr.root?.removeEventListener('pointerdown',tr.onPointerDown);tr.closed=true;ui[kind]=null;}
  async function fetchState(tr){if(tr.closed||tr.fetching||!navigator.onLine)return;tr.fetching=true;const id=tr.key;
   try{
    // Abort a stalled snapshot read; otherwise 'fetching' could stay true forever.
@@ -166,10 +173,21 @@ window.QwizArcade=(()=>{
   const tr={kind,key,root,code,roomId,client,mode,offset:0,closed:false,fetching:false,pending:0,batch:null,sending:false,view:null,flushTimer:null,qkey:''};
   ui[kind]=tr;root.innerHTML=rootMarkup(mode,kind);
   if(kind==='player'){tr.onClick=e=>{
-    if(e.target.closest('[data-arcade-tap]'))tap(tr);const tile=e.target.closest('[data-arcade-tile]');if(tile)flip(tr,Number(tile.dataset.arcadeTile));
+    if(e.target.closest('[data-arcade-tap]')){
+      if(tr.mode!=='tug'||e.detail===0||Date.now()-(tr.lastPointerTapAt||0)>700)tap(tr);
+     }
+     const tile=e.target.closest('[data-arcade-tile]');if(tile)flip(tr,Number(tile.dataset.arcadeTile));
     const opt=e.target.closest('[data-arcade-answer]');if(opt)answer(tr,Number(opt.dataset.arcadeAnswer));
     const boost=e.target.closest('[data-boost-choice]');if(boost)voteBoost(tr,boost.dataset.boostChoice);
-   };root.addEventListener('click',tr.onClick);}
+   };root.addEventListener('click',tr.onClick);
+    tr.onPointerDown=e=>{
+     const button=e.target.closest('[data-arcade-tap]');
+     if(!button||tr.mode!=='tug'||button.disabled||!e.isPrimary)return;
+     e.preventDefault();
+     tr.lastPointerTapAt=Date.now();tap(tr);
+    };
+    root.addEventListener('pointerdown',tr.onPointerDown,{passive:false});
+   }
   // Spread room state reads: 40 devices no longer hit the same RPC 25 times/sec.
   // Actions still refresh immediately. Transient failures back off, preserving the last view.
   const poll=()=>{if(tr.closed)return;const base=tr.kind==='player'?4700:tr.kind==='screen'?3500:5500;
@@ -192,16 +210,10 @@ window.QwizArcade=(()=>{
  function animateTap(tr){
   const scene=tr.root.querySelector('.arcade-scene'),button=tr.root.querySelector('[data-arcade-tap]');
   if(!scene||!button)return;
-  const now=Date.now();if(now-(tr.lastVisualTap||0)<95)return;
-  tr.lastVisualTap=now;
-  scene.classList.remove('arcade-burst-active');
-  void scene.offsetWidth;scene.classList.add('arcade-burst-active');
-  const fleck=document.createElement('span');fleck.className='arcade-tap-particle';
-  fleck.textContent='✦';
-  const spread=(tr.visualTapCount=(tr.visualTapCount||0)+1)*29%70-35;
-  fleck.style.setProperty('--arcade-particle-x',spread+'px');
-  scene.appendChild(fleck);
-  setTimeout(()=>{fleck.remove();scene.classList.remove('arcade-burst-active')},700);
+  // Only animate compositor properties: no forced reflow or DOM particles on each tap.
+  if(tr.mode==='tug'&&typeof button.animate==='function'){
+   button.animate([{scale:'1'},{scale:'.955'},{scale:'1'}],{duration:115,easing:'ease-out'});
+  }
  }
  function tap(tr){const v=tr.view;if(tr.closed||!v||!v.running||!v.mine)return;
   const now=currentTime(tr),end=Date.parse(v.ends_at)||0;
@@ -209,19 +221,19 @@ window.QwizArcade=(()=>{
   if(v.mode==='blitz'&&now>(Date.parse(v.capture_until)||0))return;
   animateTap(tr);
   if(v.mode==='captain')return;if(v.mode==='rocket'){jump(tr);return;}
-  tr.pending=Math.min(24,tr.pending+1);
+  tr.pending=Math.min(48,tr.pending+1);tr.localTaps=(tr.localTaps||0)+1;
   const label=tr.root.querySelector('[data-arcade-personal]');
-  if(label)label.textContent='Нажатие получено · передаём очки серверу…';
+  if(label)label.textContent='Нажатия: '+tr.localTaps+' · засчитываются сервером';
   // Start the first batch promptly while keeping subsequent batches below
   // the server's eight-clicks-per-second acceptance limit.
-  if(!tr.flushTimer)tr.flushTimer=setTimeout(()=>flush(tr),220);
+  if(!tr.flushTimer&&!tr.sending)tr.flushTimer=setTimeout(()=>flush(tr),160);
  }
  async function flush(tr){
   if(tr.closed||tr.sending)return;
   tr.flushTimer=null;
   if(!tr.batch){
    if(!tr.pending)return;
-   const count=Math.min(6,tr.pending);
+   const count=Math.min(5,tr.pending);
    tr.pending-=count;
    // One stable UUID per batch: HTTP retries never create duplicate points.
    tr.batch={id:crypto.randomUUID(),count,attempts:0,card:tr.view?.card_position};
@@ -264,7 +276,7 @@ window.QwizArcade=(()=>{
   }finally{
    tr.sending=false;
    if(!tr.closed&&(tr.batch||tr.pending)&&!tr.flushTimer){
-    const wait=tr.batch?Math.min(5000,500*Math.pow(2,Math.min(3,batch.attempts))):700;
+    const wait=tr.batch?Math.min(5000,500*Math.pow(2,Math.min(3,batch.attempts))):790;
     tr.flushTimer=setTimeout(()=>flush(tr),wait+Math.floor(Math.random()*250));
    }
   }
