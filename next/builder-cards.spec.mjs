@@ -459,3 +459,78 @@ test('Projector, sound and music buttons retain crisp SVG icons through toggles'
  const viewportOverflow=await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth);
  expect(viewportOverflow).toBeLessThanOrEqual(2);
 });
+
+
+test('One archive-clear button previews all completed games, cancels safely and deletes only after confirmation',async({page})=>{
+ const rooms=[
+  {id:'active1',title:'Открытая игра',code:'A1B2C3D4',phase:'question',players:7,teams:2},
+  {id:'finished1',title:'Архив',code:'B2C3D4E5',phase:'finished',players:10,teams:2},
+  {id:'finished2',title:'Архив 2',code:'C3D4E5F6',phase:'finished',players:5,teams:2}
+ ];
+ await page.evaluate(rooms=>{
+  state.hostRooms=rooms;
+  window.archiveCalls=[];
+  window.archiveWasCleared=false;
+  state.db={rpc:async(method,params)=>{
+   window.archiveCalls.push({method,params});
+   if(method==='qwiz_clear_finished_rooms'){
+    if(params.p_confirm===false)return {data:{count:30,deleted:false},error:null};
+    window.archiveWasCleared=true;
+    return {data:{count:30,deleted:true},error:null};
+   }
+   if(method==='qwiz_host_rooms')return {data:window.archiveWasCleared?rooms.filter(x=>x.phase!=='finished'):rooms,error:null};
+   return {data:null,error:{message:'Unexpected RPC: '+method}};
+  }};
+  document.querySelector('#hostRoomList').innerHTML=roomsListMarkup(rooms);
+  section('rooms');
+ },rooms);
+ const button=page.locator('#clearFinishedArchive');
+ await expect(button).toBeVisible();
+ await expect(button).toHaveText('Очистить архив');
+ await expect(button.locator('svg.trash-svg')).toHaveCount(1);
+ await expect(page.locator('#hostRoomList .rooms-history-count')).toHaveText('2');
+ let dismissed=false;
+ page.once('dialog',async dialog=>{
+  expect(dialog.message()).toContain('30');
+  dismissed=true;
+  await dialog.dismiss();
+ });
+ await button.click();
+ await expect.poll(()=>dismissed).toBe(true);
+ await expect.poll(()=>page.evaluate(()=>window.archiveCalls.length)).toBe(1);
+ expect(await page.evaluate(()=>window.archiveCalls[0].params.p_confirm)).toBe(false);
+ await expect(page.locator('#hostRoomList .rooms-history')).toHaveCount(1);
+ await expect(button).toBeEnabled();
+ let accepted=false;
+ page.once('dialog',async dialog=>{
+  expect(dialog.message()).toContain('безвозвратно');
+  accepted=true;
+  await dialog.accept();
+ });
+ await button.click();
+ await expect.poll(()=>accepted).toBe(true);
+ await expect.poll(()=>page.evaluate(()=>window.archiveCalls.some(x=>x.params?.p_confirm===true))).toBe(true);
+ await expect(page.locator('#hostRoomList .rooms-history')).toHaveCount(0);
+ await expect(page.locator('#hostRoomList .active-rooms .room-row')).toHaveCount(1);
+ await expect(page.locator('#hostRoomList .active-rooms')).toContainText('Открытая игра');
+ await expect(page.locator('#launchMessage')).toContainText('30');
+ const requests=await page.evaluate(()=>window.archiveCalls.map(c=>c.method));
+ expect(requests.filter(x=>x==='qwiz_clear_finished_rooms')).toEqual(['qwiz_clear_finished_rooms','qwiz_clear_finished_rooms','qwiz_clear_finished_rooms']);
+});
+
+test('Archive-clear button fits at mobile width and does not toggle the history header',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.evaluate(()=>{
+  state.hostRooms=[{id:'finished',title:'Завершённая игра',code:'AABBCCDD',phase:'finished',players:4,teams:1}];
+  document.querySelector('#hostRoomList').innerHTML=roomsListMarkup(state.hostRooms);
+  section('rooms');
+ });
+ const archive=page.locator('#hostRoomList .rooms-history');
+ const button=archive.locator('#clearFinishedArchive');
+ await expect(button).toBeVisible();
+ await expect(archive).not.toHaveAttribute('open','');
+ const b=await button.boundingBox(),panel=await archive.boundingBox();
+ expect(b.x).toBeGreaterThanOrEqual(panel.x-1);
+ expect(b.x+b.width).toBeLessThanOrEqual(panel.x+panel.width+1);
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
+});
