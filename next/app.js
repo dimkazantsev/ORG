@@ -422,7 +422,7 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
    :typeof s.answer?.image_url==='string'&&/^https:\/\//i.test(s.answer.image_url)
      ?'<div class="result-flag-image"><img src="'+esc(s.answer.image_url)+'" alt="Правильный флаг государства" decoding="async"></div>'
      :'<h2>'+esc(s.answer?.text||gameRichResult(question).replace(/^Правильный ответ: /,''))+'</h2>')+
- (question.explanation?'<p>'+esc(question.explanation)+'</p>':'')+'</section>'+personalResults(s):optsMarkup+'<p class="notice player-answer-confirmation'+(done?' success':'')+'" role="status" aria-live="polite">'+(done?'Ваш ответ принят. Ожидайте остальных участников.':time===0?'Приём ответов завершён.':'')+'</p>')+'</div></div>';
+ (question.explanation?'<p>'+esc(question.explanation)+'</p>':'')+'</section>'+personalResults(s):optsMarkup+'<p class="notice player-answer-confirmation'+(done?' success':'')+'" role="status" aria-live="polite">'+(done?'Ответ принят.':time===0?'Приём ответов завершён.':'')+'</p>')+'</div></div>';
  if(question.flag_memory&&s.phase==='question'){
   const controls=el.querySelector('.option-list');if(controls)controls.setAttribute('data-memory-answer','');
  }
