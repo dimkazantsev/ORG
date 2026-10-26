@@ -335,13 +335,13 @@ function roundScorePanel(view,title,final=false,endsAt=null){
  '"><strong>'+(reward.tone==='harm'?'Красный манёвр':'Зелёный маршрут')+' · '+esc(reward.title)+'</strong>'+
  '<p>'+(reward.tone==='harm'?'Ограничение команде: ':'Усиление команды: ')+esc(reward.target)+
  '. Эффект применяется в следующем раунде.</p></div>':'';
- const render=(a,isTeam)=>a.length?'<ol class="round-score-list">'+a.map((x,i)=>'<li><span class="round-rank">'+(i+1)+'</span><strong>'+esc(x.nickname||x.name||'Участник')+'</strong><b>'+Number(x.score||0).toLocaleString('ru-RU')+'</b></li>').join('')+'</ol>':'<p class="small-help">Результаты ещё обрабатываются сервером</p>';
+ const render=(a,isTeam)=>a.length?'<ol class="round-score-list">'+a.map((x,i)=>'<li><span class="round-rank">'+(i+1)+'</span><strong>'+esc(x.nickname||x.name||'Участник')+'</strong><b>'+Math.round(Number(x.score||0)).toLocaleString('ru-RU',{maximumFractionDigits:0})+'</b></li>').join('')+'</ol>':'<p class="small-help">Результаты ещё обрабатываются сервером</p>';
  const myId=ctx.room?.me?.id,myTeamId=ctx.room?.me?.team_id;
  const myIndex=players.findIndex(x=>x.id===myId),teamIndex=rows.findIndex(x=>x.id===myTeamId);
  const individual=myIndex>=0?players[myIndex]:null,team=teamIndex>=0?rows[teamIndex]:null;
  const highlight=individual||team?'<div class="round-self-summary" aria-label="Ваши результаты">'+
-  (team?'<div><span>ВАША КОМАНДА · '+(teamIndex+1)+' МЕСТО</span><strong>'+Number(team.score||0).toLocaleString('ru-RU')+'</strong><small>'+esc(view?.team_unit||'баллы')+'</small></div>':'')+
-  (individual?'<div><span>ВАШ РЕЗУЛЬТАТ · '+(myIndex+1)+' МЕСТО</span><strong>'+Number(individual.score||0).toLocaleString('ru-RU')+'</strong><small>'+esc(view?.player_unit||'баллы')+'</small></div>':'')+
+  (team?'<div><span>ВАША КОМАНДА · '+(teamIndex+1)+' МЕСТО</span><strong>'+Math.round(Number(team.score||0)).toLocaleString('ru-RU',{maximumFractionDigits:0})+'</strong><small>'+esc(view?.team_unit||'баллы')+'</small></div>':'')+
+  (individual?'<div><span>ВАШ РЕЗУЛЬТАТ · '+(myIndex+1)+' МЕСТО</span><strong>'+Math.round(Number(individual.score||0)).toLocaleString('ru-RU',{maximumFractionDigits:0})+'</strong><small>'+esc(view?.player_unit||'баллы')+'</small></div>':'')+
  '</div>':'';
  return '<section class="round-results-page'+(final?' is-final':'')+'"><div class="round-results-orbit" aria-hidden="true">✦</div>'+
  '<span class="eyebrow">'+(final?'ИГРА ЗАВЕРШЕНА':'РАУНД ЗАВЕРШЁН')+'</span>'+
