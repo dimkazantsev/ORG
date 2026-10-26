@@ -71,7 +71,7 @@ async function fullRun(){
  const lobby=await Promise.all(users.map(u=>timed(async()=>{
   const {data,error}=await u.client.rpc('qwiz_party_state',{p_code:ROOM});
   if(error||data?.code!==ROOM)throw Error('state: '+(error?.message||'invalid code'));
-  return data?.phase;
+  return {phase:data.phase,room_id:data.room_id};
  })));
  report('40_authenticated_room_reads',lobby);
  if(lobby.some(x=>!x.ok)){process.exitCode=1;return}
@@ -84,8 +84,10 @@ async function fullRun(){
   if(!error&&data?.phase==='question'){started=true;break}
  }
  if(!started){console.error('QUESTION_STAGE_NOT_STARTED: stopping without answer writes');process.exitCode=1;return}
+ const roomId=lobby[0]?.value?.room_id;
+ if(!/^[0-9a-f-]{36}$/i.test(roomId||''))throw Error('Test room ID not resolved from authenticated state');
  const answers=await Promise.all(users.map((u,i)=>timed(async()=>{
-  const {data,error}=await u.client.rpc('org_next_answer',{p_room:process.env.QWIZ_LOAD_ROOM_ID,p_choice:i%2});
+  const {data,error}=await u.client.rpc('org_next_answer',{p_room:roomId,p_choice:i%2});
   if(error||!data?.accepted)throw Error('answer: '+(error?.message||'not confirmed'));
   return data;
  })));
