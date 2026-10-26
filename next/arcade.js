@@ -2,7 +2,6 @@
 /* QWIZ-PARTY: synchronised team arcade. Client shows state; Postgres owns scores, boosts and achievements. */
 window.QwizArcade=(()=>{
  const META={
-  rocket:{title:'Дино-забег',desc:'Случайно выбранный игрок каждой команды прыгает через препятствия. Одно нажатие — один прыжок. Скорость растёт. Побеждает наибольшая дистанция.',cta:'ПРЫЖОК!'},
   blitz:{title:'Блиц-вопрос',desc:'Захватите право ответить первыми. Команда-победитель получит право проголосовать за усиление следующего раунда.',cta:'ЗАХВАТИТЬ ВОПРОС'},
   tug:{title:'Тап-баттл',desc:'Все участники нажимают кнопку одновременно. Считаются реальные суммарные нажатия всей команды, а не среднее значение на человека.',cta:'ТАП!'},
   captain:{title:'Мэмори капитанов',desc:'Открывайте по две плитки и собирайте пары. Быстрее всех!',cta:'ОТКРЫТЬ ПЛИТКУ'}
@@ -50,8 +49,8 @@ window.QwizArcade=(()=>{
  }
  function rankMarkup(v){const teams=v?.teams||[],max=Math.max(1,...teams.map(t=>Number(t.points)||0));
   return teams.map((t,i)=>{const d=(v.extra?.players||[]).find(p=>p.team_id===t.id);
-   const score=v.mode==='captain'?(d?.completed_ms!=null?(d.completed_ms/1000).toFixed(2)+' сек.':(d?.pairs||0)+'/6 пар'):
-    v.mode==='rocket'?(d?.cleared||0)+' препятствий':v.mode==='tug'?Number(t.taps||0).toLocaleString('ru-RU')+' тапов':Number(t.points||0).toFixed(1);
+   const score=v.mode==='captain'?(d?.completed_ms!=null?Math.ceil(d.completed_ms/1000)+' сек.':(d?.pairs||0)+'/6 пар'):
+    v.mode==='rocket'?(d?.cleared||0)+' препятствий':v.mode==='tug'?Number(t.taps||0).toLocaleString('ru-RU')+' тапов':Math.round(Number(t.points)||0).toLocaleString('ru-RU');
    return '<div class="arcade-rank"><span class="arcade-rank-name" title="'+escape(t.name)+'">'+escape(t.name)+'</span><div class="arcade-rank-track"><div class="arcade-rank-fill" style="--arcade-value:'+Math.max(0,100*(Number(t.points)||0)/max).toFixed(2)+'%;--arcade-team-color:'+COLORS[i%COLORS.length]+'"></div></div><span class="arcade-rank-score">'+score+'</span></div>';}).join('');
  }
  function rootMarkup(mode,kind='player'){const m=META[mode];return '<div class="arcade-shell arcade-'+kind+'" data-arcade-root="'+mode+'">'+
@@ -118,7 +117,7 @@ window.QwizArcade=(()=>{
    const personal=tr.root.querySelector('[data-arcade-personal]');
     if(personal)personal.textContent=v.mode==='captain'?(v.extra?.captain?'Переворачивайте по две плитки.':'Наблюдайте за вашим капитаном.'):v.mode==='rocket'?(v.extra?.selected?(v.extra.alive?'Вы бегун! Прыгайте перед препятствием.':'Столкновение. Сравниваем результаты.'):'От команды выбран один случайный бегун.'):v.mode==='blitz'&&!claim?(canAnswer?'Ваша команда выиграла захват! Выберите ответ.':'Захват завершён. Смотрите рейтинг.'):(tr.localTaps?'Нажатия: '+tr.localTaps+' · счёт команды обновляется сервером':'Все игроки нажимают. До 8 нажатий в секунду на человека.');
   }
-  const badges=tr.root.querySelector('[data-arcade-badges]');if(badges)badges.innerHTML=(v.awards||[]).slice(0,12).map(a=>'<span class="arcade-award">'+escape(a.title)+' · +'+Number(a.credits)+' жет.</span>').join('');
+  const badges=tr.root.querySelector('[data-arcade-badges]');if(badges)badges.innerHTML=(v.awards||[]).slice(0,12).map(a=>'<span class="arcade-award">'+escape(a.title)+'</span>').join('');
   const vote=v.vote,ballot=tr.root.querySelector('[data-arcade-vote]');
   // The ballot replaces the spent arcade scene on a player's phone; never send it below the viewport.
   tr.root.querySelector('.arcade-shell.arcade-player')?.classList.toggle('is-boost-voting',Boolean(vote&&tr.kind==='player'&&vote.can_vote));
@@ -129,7 +128,7 @@ window.QwizArcade=(()=>{
     const tally=vote.counts||{},mine=vote.my_choice;
     const remaining=Math.max(0,Math.ceil((Date.parse(vote.vote_ends_at)-currentTime(tr))/1000));
     const strategyStage=vote.stage==='strategy';
-    const selections=strategyStage?STRATEGIES:vote.strategy==='sabotage'?HINDRANCES:vote.strategy==='support'?BOOSTS:[];
+    const selections=strategyStage?(vote.target_name?STRATEGIES:STRATEGIES.filter(x=>x[0]==='support')):vote.strategy==='sabotage'?HINDRANCES:vote.strategy==='support'?BOOSTS:[];
     const canChoose=tr.kind==='player'&&vote.can_vote&&vote.open&&remaining>0;
     const tone=vote.strategy==='sabotage'?'harm':'boost';
     const title=strategyStage?'Что выбирает команда?':vote.strategy==='sabotage'?'Выберите ограничение сопернику':'Выберите усиление своей команде';
@@ -330,7 +329,7 @@ window.QwizArcade=(()=>{
  }
  async function answer(tr,choice){if(tr.closed||tr.answerBusy)return;tr.answerBusy=true;
   try{const {data,error}=await tr.client.rpc('qwiz_arcade_action',{p_room:tr.roomId,p_action:'answer',p_choice:choice});if(error)throw error;
-   showMessage(tr,data.correct?'Правильный ответ! +80 очков и достижение.':'Ответ неверный. Ход переходит следующей команде.',!data.correct);
+   showMessage(tr,data.correct?'Правильный ответ! +10 очков и достижение.':'Ответ неверный. Ход переходит следующей команде.',!data.correct);
    tr.alertOverride=Date.now()+3500;await fetchState(tr);
   }catch(e){showMessage(tr,e.message||'Ответ отклонён',true);tr.alertOverride=Date.now()+3200}
   finally{tr.answerBusy=false}
@@ -339,30 +338,72 @@ window.QwizArcade=(()=>{
  function mountProjector(el,s,client){if(!isArcade(s.activity))return false;activate('screen',el,s.code,null,client,s.activity.settings.arcade_mode);return true;}
  function mountHost(el,s,client){if(!el)return;if(s.phase==='intermission'&&isArcade(s.activity)){el.hidden=false;activate('host',el,s.code,s.room_id,client,s.activity.settings.arcade_mode)}else{el.hidden=true;stop('host')}}
  function paintWallet(view){
-  wallet.view=view;
-  const el=document.getElementById('arcadeWalletPanel');if(!el)return;
-  const mine=view?.mine;
-  if(!mine){el.hidden=true;return}
-  // Rewards are read-only here. No phantom shop or unused token currency.
-  const earned=[];
-  if(mine.navigator)earned.push({title:'Навигатор',description:'+10% к результату блиц-вопроса',active:true,icon:'◉'});
-  for(const a of (mine.achievements||[]).slice(0,8)){
-   earned.push({title:String(a.title||'Достижение'),description:'Получено в мини-игре',active:false,icon:'✦'});
-  }
+  if(view)wallet.view=view;
+  const el=document.getElementById('arcadeWalletPanel');
+  if(!el)return;
+  const effects=(wallet.effects||[]).filter(x=>wallet.isHost||x.team_id===wallet.teamId);
+  const vote=wallet.view?.vote,canVote=Boolean(vote?.can_vote&&vote?.open);
+  if((!wallet.teamId&&!wallet.isHost)||(!effects.length&&!vote)){el.hidden=true;return}
   el.hidden=false;
-  el.innerHTML='<div class="arcade-bonus-header"><h2>Командные бонусы</h2><p>Усиления, полученные в мини-играх. Действуют в следующем раунде.</p></div>'+
-   (earned.length?'<div class="arcade-bonus-list">'+earned.map(b=>
-    '<div class="arcade-bonus-card"><span class="arcade-bonus-icon" aria-hidden="true">'+escape(b.icon)+'</span>'+
-    '<div><strong>'+escape(b.title)+'</strong><span>'+escape(b.description)+'</span></div>'+
-    '<span class="arcade-bonus-state">'+(b.active?'Активен':'Получено')+'</span></div>').join('')+'</div>':
-    '<p class="arcade-bonus-empty">Активных бонусов пока нет. Они появятся после игровых достижений.</p>');
+  const labels={headstart:['Фора +12','+12 очков команды'],teamwork:['Командный рывок','+3 за участника (до 24)'],
+   momentum:['Импульс','+15% к счёту (до 30)'],fog:['Туман соперника','−5 очков сопернику'],
+   storm:['Штормовой заслон','−8 очков сопернику'],drain:['Энергетический отток','−12 очков сопернику']};
+  const cards=effects.map(x=>{
+   const label=labels[x.choice]||['Командный эффект','Результат голосования'];
+   return '<article class="arcade-bonus-card"><span class="arcade-bonus-icon" aria-hidden="true">✦</span>'+
+    '<div><strong>'+escape(label[0])+'</strong><span>'+escape(label[1])+'</span></div>'+
+    '<span class="arcade-bonus-state">'+(x.applied_at?'Применён':'На следующий раунд')+'</span></article>';
+  }).join('');
+  let ballot='';
+  if(vote){
+   const leader=(wallet.view?.teams||[]).find(t=>t.id===vote.winner_team)?.name||'Команда-победитель';
+   const strategy=vote.stage==='strategy';
+   const items=strategy?(vote.target_name?STRATEGIES:STRATEGIES.filter(v=>v[0]==='support')):
+    vote.strategy==='sabotage'?HINDRANCES:vote.strategy==='support'?BOOSTS:[];
+   const seconds=Math.max(0,Math.ceil((Date.parse(vote.vote_ends_at||'')-Date.now()-(wallet.clockOffset||0))/1000));
+   ballot='<section class="arcade-bonus-ballot"><small>ГОЛОСОВАНИЕ · '+(strategy?'ЭТАП 1 / 2':'ЭТАП 2 / 2')+'</small>'+
+    '<h3>'+escape(strategy?'Выберите путь команды':'Выберите конкретный бонус')+'</h3>'+
+    '<p>'+escape(leader)+' · '+seconds+' сек. · решение принимается большинством команды.</p>'+
+    '<div class="arcade-bonus-ballot-options">'+items.map(([id,title,description])=>
+     '<button type="button" data-wallet-boost-choice="'+id+'" '+(!canVote?'disabled':'')+
+     ' class="'+(vote.my_choice===id?'selected':'')+'"><strong>'+escape(title)+'</strong><span>'+escape(description)+'</span>'+
+     '<b>'+Math.round(Number(vote.counts?.[id]||0))+' голосов</b></button>').join('')+'</div>'+
+    '<p class="arcade-bonus-ballot-note">'+(vote.can_vote?'До конца этапа вы можете изменить голос.':'Голосует команда-победитель.')+'</p></section>';
+  }
+  el.innerHTML='<div class="arcade-bonus-header"><h2>Командные бонусы</h2>'+
+   '<p>После победы команда голосует за стратегию и конкретное усиление следующего раунда. Достижения не заменяют голосование.</p></div>'+
+   ballot+(cards?'<div class="arcade-bonus-list">'+cards+'</div>':'');
+  if(!el.dataset.voteBound){
+   el.dataset.voteBound='true';
+   el.addEventListener('click',async event=>{
+    const item=event.target.closest('[data-wallet-boost-choice]');
+    if(!item||item.disabled||wallet.voteBusy||!wallet.client||!wallet.roomId)return;
+    wallet.voteBusy=true;item.disabled=true;
+    try{
+     const {error}=await wallet.client.rpc('qwiz_vote_boost',{p_room:wallet.roomId,p_choice:item.dataset.walletBoostChoice});
+     if(error)throw error;
+     if(ui.player&&!ui.player.closed)await fetchState(ui.player);
+     else{
+      const result=await wallet.client.rpc('qwiz_party_arcade',{p_code:wallet.code});
+      if(result.error)throw result.error;
+      paintWallet(result.data);
+     }
+    }catch(error){const node=el.querySelector('.arcade-bonus-ballot-note');
+     if(node)node.textContent=error?.message||'Голос не принят';}
+    finally{wallet.voteBusy=false;if(item.isConnected)item.disabled=false}
+   });
+  }
  }
- async function syncWallet(s,ctx){if(!s?.code||!ctx?.client)return;wallet.phase=s.phase;
-  if(s.phase==='intermission'&&isArcade(s.activity)){if(ui.player?.view)paintWallet(ui.player.view);return}
-  wallet.code=s.code;wallet.roomId=s.room_id;wallet.client=ctx.client;
-  if(wallet.busy||Date.now()-wallet.lastFetch<3200)return;
-  wallet.lastFetch=Date.now();
-  try{const {data,error}=await ctx.client.rpc('qwiz_party_arcade',{p_code:s.code});if(!error)paintWallet(data)}catch{}
+ async function syncWallet(s,ctx){
+  if(!s?.code||!ctx?.client)return;
+  wallet.phase=s.phase;wallet.code=s.code;wallet.roomId=s.room_id;wallet.client=ctx.client;
+  wallet.teamId=s.me?.team_id;wallet.isHost=Boolean(s.host);
+  wallet.effects=Array.isArray(s.team_effects)?s.team_effects:[];
+  if(s.phase==='intermission'&&isArcade(s.activity)){
+   if(ui.player?.view){wallet.clockOffset=ui.player.offset;paintWallet(ui.player.view)}
+   return;
+  }
+  wallet.view=null;wallet.clockOffset=0;paintWallet(null);
  }
  // An interrupted mobile connection must not require a page reload.
  window.addEventListener('online',()=>{for(const tr of Object.values(ui)){if(tr&&!tr.closed){fetchState(tr);if(tr.batch&&!tr.sending)flush(tr);}}});
