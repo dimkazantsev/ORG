@@ -83,7 +83,7 @@ function dataState(room){
 // confirm that the current answer window is still open after reconnection.
 const connectionControls='#gameContent [data-answer],#gameContent [data-submit-rich],#gameContent [data-multi],#gameContent .rich-match,#gameContent .rich-order,#gameContent #richTextAnswer,#gameContent #richSpot';
 function lockDisconnectedAnswers(){
- if(!ctx.connectionStale||ctx.mode!=='game')return;
+ if((!ctx.connectionStale&&!ctx.reconnectRequiresState)||ctx.mode!=='game')return;
  for(const input of qa(connectionControls)){input.dataset.connectionHold='true';input.disabled=true;}
 }
 function updateConnectionHealth(connected){
@@ -91,6 +91,10 @@ function updateConnectionHealth(connected){
  // Browsers can lose one HTTP request while a later write is accepted.
  // Server-side answer validation remains authoritative.
  const offline=!navigator.onLine;
+ // A genuine offline interval needs one fresh server snapshot before
+ // previously blocked controls can reopen (the question may have advanced).
+ if(offline)ctx.reconnectRequiresState=true;
+ else if(connected)ctx.reconnectRequiresState=false;
  ctx.connectionStale=!connected&&offline;
  ctx.snapshotFailures=connected?0:(ctx.snapshotFailures||0)+1;
  if(connected){
@@ -116,6 +120,7 @@ function updateConnectionHealth(connected){
  }
  // No warning banner or disabled choices for a transient failed room snapshot.
  if(ctx.connectionNotice){notice('gameNotice','');ctx.connectionNotice=false;}
+ if(ctx.reconnectRequiresState)return; // Wait for the actual fresh room response.
  const room=ctx.room;
  const canAnswer=!!room&&room.phase==='question'&&!room.paused&&!room.has_answer&&room.eligible!==false&&!ctx.answerPending&&remaining(room.ends_at)>0;
  if(room?.phase==='question')QwizStage.updateClock(room,ctx.clockOffset,document,'playerTimer',false);
@@ -126,7 +131,7 @@ function updateConnectionHealth(connected){
   delete input.dataset.connectionHold;
  }
 }
-function cleanupRoom(){if(ctx.channel){ctx.client?.removeChannel(ctx.channel);ctx.channel=null}if(ctx.reconnectRetryTimer)clearTimeout(ctx.reconnectRetryTimer);ctx.reconnectRetryTimer=null;ctx.connectionStale=false;ctx.connectionNotice=false;ctx.reconnectDelay=2000;ctx.answerAck=null;ctx.room=null;ctx.roomCode=null;storage.del('room');renderQrPanels();}
+function cleanupRoom(){if(ctx.channel){ctx.client?.removeChannel(ctx.channel);ctx.channel=null}if(ctx.reconnectRetryTimer)clearTimeout(ctx.reconnectRetryTimer);ctx.reconnectRetryTimer=null;ctx.connectionStale=false;ctx.connectionNotice=false;ctx.reconnectRequiresState=false;ctx.reconnectDelay=2000;ctx.answerAck=null;ctx.room=null;ctx.roomCode=null;storage.del('room');renderQrPanels();}
 function connectRoom(code){if(!ctx.client||!code)return;if(ctx.channel&&ctx.channel.topic==='realtime:org-next-'+code)return;if(ctx.channel)ctx.client.removeChannel(ctx.channel);
  ctx.channel=ctx.client.channel('org-next-'+code,{config:{broadcast:{ack:false}}})
  .on('broadcast',{event:'phase'},()=>scheduleRefresh(500))
