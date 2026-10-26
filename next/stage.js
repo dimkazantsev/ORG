@@ -271,6 +271,23 @@ window.QwizStage=(()=>{
  // For colour-order questions, the correct answer is a flag drawing, never
  // a label such as "синий — жёлтый — красный".
  function correctFlagMarkup(question,answer){
+  if(question?.flag_assembly){
+   // A finished assembly reveals the actual country flag, never the answer as words.
+   const prompt=String(question.prompt||'');
+   const country=/государств[ао]\s+[«"]([^»"]+)[»"]/iu.exec(prompt)?.[1]?.toLocaleLowerCase('ru-RU');
+   const iso={'германия':'de','россия':'ru','венгрия':'hu','болгария':'bg','нидерланды':'nl',
+    'эстония':'ee','литва':'lt','люксембург':'lu','йемен':'ye','габон':'ga','армения':'am',
+    'сьерра-леоне':'sl','франция':'fr','италия':'it','ирландия':'ie','бельгия':'be',
+    'румыния':'ro','мали':'ml','гвинея':'gn','чад':'td'}[country];
+   if(iso)return '<div class="correct-flag-art"><img src="./assets/flags-world/'+iso+'.svg" alt="Правильный флаг: '+esc(country)+'" loading="eager" decoding="async"></div>';
+   const sequence=Array.isArray(question.solution?.order)?question.solution.order:[];
+   const palette=question.flag_assembly.colors||{};
+   const stripes=sequence.map(name=>palette[name]);
+   if(stripes.length>=2&&stripes.every(hex=>/^#[0-9a-f]{6}$/i.test(hex))){
+    return '<div class="correct-flag-art">'+stripeOption({orientation:question.flag_assembly.orientation,stripes})+'</div>';
+   }
+  }
+
   const opts=Array.isArray(question?.options)?question.options:[];
   const idx=Array.isArray(answer?.indices)&&answer.indices.length===1?Number(answer.indices[0]):NaN;
   const item=Number.isInteger(idx)&&idx>=0&&idx<opts.length?opts[idx]:null;
