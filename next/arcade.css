@@ -720,3 +720,100 @@
  .arcade-runner-character.runner-jump{animation:arcade-jump .76s linear!important}
  .arcade-runner-floor,.arcade-runner-sky i{animation:none!important}
 }
+
+
+/* QWIZ-PARTY release: compact, responsive captain Memory. */
+#gameContent .arcade-player[data-arcade-root="captain"]{
+ display:flex;flex-direction:column;gap:9px;min-height:0;width:100%;
+}
+#gameContent .arcade-player[data-arcade-root="captain"] .arcade-head{align-items:center;gap:8px}
+#gameContent .arcade-player[data-arcade-root="captain"] .arcade-head h2{
+ font-size:clamp(20px,5vw,31px);margin:2px 0 0;line-height:1.1;
+}
+#gameContent .arcade-player[data-arcade-root="captain"] .arcade-lead{
+ font-size:clamp(12px,3vw,14px);line-height:1.4;margin:0;max-width:none;
+}
+#gameContent .arcade-player[data-arcade-root="captain"] .arcade-countdown{
+ flex:none;font-size:clamp(16px,4vw,24px);white-space:nowrap;
+ border-radius:14px;padding:7px 11px;background:#f3ecff;border:1px solid #e0d2ff;
+}
+#gameContent .arcade-player[data-arcade-root="captain"] .arcade-scene{
+ flex:none;min-height:0!important;height:clamp(70px,13dvh,112px)!important;padding:0!important;
+ background:radial-gradient(ellipse at center,#e9dcff,#fcfaff)!important;
+ border:1px solid #e7dcf9!important;border-radius:18px!important;
+}
+#gameContent .arcade-player[data-arcade-root="captain"] .arcade-memory-hero{
+ height:100%;min-height:0!important;max-height:100%;border:0;pointer-events:none!important;
+}
+#gameContent .arcade-player[data-arcade-root="captain"] .arcade-memory-hero .memory-stage{
+ transform:scale(.63);transform-origin:50% 50%;
+}
+#gameContent .arcade-player[data-arcade-root="captain"] .arcade-memory-info{
+ margin:2px auto 4px;min-height:0;font-weight:800;font-size:clamp(13px,3.2vw,16px);
+}
+#gameContent .arcade-player[data-arcade-root="captain"] .arcade-memory-board{
+ flex:0 0 auto;position:relative;z-index:2;
+ width:min(100%,440px);max-width:440px;display:grid;
+ grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(7px,2vw,11px);
+ margin:0 auto 12px;perspective:none;
+}
+#gameContent .arcade-player[data-arcade-root="captain"] .arcade-memory-tile{
+ min-height:0!important;aspect-ratio:1;border-radius:13px;touch-action:manipulation;
+ user-select:none;-webkit-tap-highlight-color:transparent;transform:translateZ(0);
+}
+#gameContent .arcade-player[data-arcade-root="captain"] .arcade-memory-tile-inner{
+ transition:transform .16s ease-out;
+}
+#gameContent .arcade-memory-tile.is-pending{
+ outline:3px solid #a881f2;outline-offset:1px;
+ filter:brightness(1.18);transform:scale(.95);
+}
+#gameContent .arcade-memory-tile.is-pending .arcade-memory-back{
+ background:linear-gradient(145deg,#cda7fa,#8d59e2);
+}
+#gameContent .arcade-player[data-arcade-root="captain"] .arcade-ranks{margin-top:0}
+#gameContent .arcade-player[data-arcade-root="captain"] .arcade-tap-caption{display:none!important}
+#gameContent .arcade-player[data-arcade-root="captain"] .arcade-alert:not([data-error="true"]){
+ padding:0!important;min-height:0!important;margin:0!important;border:0!important;
+ background:transparent!important;font-size:11px!important;
+}
+@media(max-height:680px){
+ #gameContent .arcade-player[data-arcade-root="captain"] .arcade-scene{height:65px!important}
+ #gameContent .arcade-player[data-arcade-root="captain"] .arcade-memory-board{width:min(100%,320px);gap:6px}
+}
+@media(prefers-reduced-motion:reduce){
+ #gameContent .arcade-memory-tile-inner{transition:none!important}
+}
+
+/* Bonuses replace the old token shop; nothing can be bought on this panel. */
+#arcadeWalletPanel.arcade-wallet-panel{
+ padding:clamp(15px,4vw,23px);background:linear-gradient(180deg,#fff,#fcfaff);
+ border:1px solid #e7def5;border-radius:24px;box-shadow:0 9px 32px #604d8010;
+}
+#arcadeWalletPanel .arcade-bonus-header h2{
+ margin:0 0 6px;font-size:clamp(22px,5.5vw,30px);color:#27203f;letter-spacing:-.04em;
+}
+#arcadeWalletPanel .arcade-bonus-header p{font-size:13px;line-height:1.5;color:#857b94;margin:0 0 20px}
+#arcadeWalletPanel .arcade-bonus-list{display:grid;gap:12px}
+#arcadeWalletPanel .arcade-bonus-card{
+ display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:12px;align-items:center;
+ border:1px solid #f0dfae;border-radius:20px;background:#fffcf2;
+ padding:14px 12px;min-height:89px;
+}
+#arcadeWalletPanel .arcade-bonus-icon{
+ width:56px;height:56px;display:grid;place-items:center;border-radius:16px;
+ background:#fff3d5;color:#bd7d05;font-size:28px;
+}
+#arcadeWalletPanel .arcade-bonus-card>div{min-width:0;display:flex;flex-direction:column;gap:5px}
+#arcadeWalletPanel .arcade-bonus-card strong{font-size:clamp(13px,3.7vw,19px);color:#29233b}
+#arcadeWalletPanel .arcade-bonus-card div span{font-size:12px;color:#96761d;overflow-wrap:anywhere}
+#arcadeWalletPanel .arcade-bonus-state{
+ border-radius:99px;background:#def6e6;color:#23784b;padding:7px 10px;
+ font-size:11px;font-weight:800;white-space:nowrap;
+}
+#arcadeWalletPanel .arcade-bonus-empty{color:#786c8b;background:#f7f3ff;padding:16px;border-radius:14px}
+@media(max-width:380px){
+ #arcadeWalletPanel .arcade-bonus-card{grid-template-columns:42px minmax(0,1fr);gap:8px}
+ #arcadeWalletPanel .arcade-bonus-icon{width:42px;height:42px}
+ #arcadeWalletPanel .arcade-bonus-state{grid-column:2;justify-self:start}
+}
