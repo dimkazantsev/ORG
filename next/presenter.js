@@ -6,6 +6,9 @@ const KEY='sb_publishable_Hv7NgYuVsfKhFuhX_9pl0Q_qXWA2wOr';
 let room=new URLSearchParams(location.search).get('room')?.trim().toUpperCase()||'';
 const $=id=>document.getElementById(id);
 const escapeText=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+// Saved-room labels can be legacy; projector must display the same name as phones.
+const ARCADE_VISIBLE_NAMES={rocket:'Дино-забег',tug:'Тап-баттл',blitz:'Блиц-вопрос',captain:'Мэмори капитанов'};
+const screenArcadeActivity=a=>a?.settings?.arcade_mode&&ARCADE_VISIBLE_NAMES[a.settings.arcade_mode]?{...a,title:ARCADE_VISIBLE_NAMES[a.settings.arcade_mode]}:a;
 const ctx={client:null,last:null,channel:null,local:null,checking:false,timer:null,previousQuestion:-2,finalStep:0,finalTimer:null,sound:false,audio:null,lastReleaseAttempt:0,offset:0,renderKey:''};
 const seconds=t=>Math.max(0,Math.ceil((Date.parse(t)-Date.now()-ctx.offset)/1000))||0;
 function showError(s){$('projectionError').textContent=s;$('projectionError').hidden=false}
@@ -414,6 +417,7 @@ function applyProjectionSettings(settings){
  }
 }
 function render(state){
+ if(state?.activity)state={...state,activity:screenArcadeActivity(state.activity)};
  applyProjectionSettings(state.screen_settings);
  document.body.classList.toggle('projection-screen-ready',Boolean(state.code));
  clearError();$('projectionRoom').textContent=state.code||'';$('projectionPaused').hidden=!state.paused;
