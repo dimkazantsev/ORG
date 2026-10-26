@@ -72,32 +72,39 @@ function lockDisconnectedAnswers(){
  for(const input of qa(connectionControls)){input.dataset.connectionHold='true';input.disabled=true;}
 }
 function updateConnectionHealth(connected){
- ctx.connectionStale=!connected;
+ // A failed state-poll is NOT proof that the answer RPC is unreachable.
+ // Browsers can lose one HTTP request while a later write is accepted.
+ // Server-side answer validation remains authoritative.
+ const offline=!navigator.onLine;
+ ctx.connectionStale=!connected&&offline;
+ ctx.snapshotFailures=connected?0:(ctx.snapshotFailures||0)+1;
  if(connected){
   if(ctx.reconnectRetryTimer)clearTimeout(ctx.reconnectRetryTimer);
   ctx.reconnectRetryTimer=null;
   ctx.reconnectDelay=2000;
- }else if(ctx.roomCode&&navigator.onLine&&!ctx.reconnectRetryTimer){
-  // One retry per room, with a capped exponential delay: no 40-client retry storm.
+  ctx.lastVerifiedAt=Date.now();
+ }else if(ctx.roomCode&&!offline&&!ctx.reconnectRetryTimer){
+  // Retry reads with per-device jitter. A brief failed read cannot lock answers.
   const delay=ctx.reconnectDelay||2000;
   ctx.reconnectDelay=Math.min(delay*2,20000);
   ctx.reconnectRetryTimer=setTimeout(()=>{
    ctx.reconnectRetryTimer=null;
    if(ctx.roomCode&&!document.hidden)refreshRoom(false);
-  },delay);
+  },delay+Math.floor(Math.random()*650));
  }
  if(ctx.mode!=='game')return;
- if(!connected){
+ if(offline){
   lockDisconnectedAnswers();
-  notice('gameNotice','Соединение с комнатой не подтверждено. Ответы временно недоступны; после восстановления связи обновим игру.','error');
+  if(!ctx.connectionNotice)notice('gameNotice','Нет интернета. После восстановления сети ответы снова станут доступны.','error');
   ctx.connectionNotice=true;
   return;
  }
+ // No warning banner or disabled choices for a transient failed room snapshot.
  if(ctx.connectionNotice){notice('gameNotice','');ctx.connectionNotice=false;}
- const s=ctx.room;
- const canAnswer=!!s&&s.phase==='question'&&!s.paused&&!s.has_answer&&s.eligible!==false&&remaining(s.ends_at)>0;
- if(s?.phase==='question')QwizStage.updateClock(s,ctx.clockOffset,document,'playerTimer',false);
- const memoryLocked=!!s?.question?.flag_memory&&Number.isFinite(Date.parse(s.question.memory_until))&&Date.parse(s.question.memory_until)>Date.now()+ctx.clockOffset;
+ const room=ctx.room;
+ const canAnswer=!!room&&room.phase==='question'&&!room.paused&&!room.has_answer&&room.eligible!==false&&!ctx.answerPending&&remaining(room.ends_at)>0;
+ if(room?.phase==='question')QwizStage.updateClock(room,ctx.clockOffset,document,'playerTimer',false);
+ const memoryLocked=!!room?.question?.flag_memory&&Number.isFinite(Date.parse(room.question.memory_until))&&Date.parse(room.question.memory_until)>Date.now()+ctx.clockOffset;
  for(const input of qa(connectionControls)){
   if(input.dataset.connectionHold!=='true')continue;
   input.disabled=!canAnswer||memoryLocked;
