@@ -19,9 +19,8 @@
  }
  function sync(){
   const compact=media.matches&&!game.hidden;root.classList.toggle('player-compact',compact);
-  const confirmation=content.querySelector('.player-responses>.notice.success'),accepted=document.getElementById('playerAccepted');
-  accepted.hidden=!compact||!confirmation;accepted.textContent=confirmation?'Ответ принят.':'';
-  if(confirmation)confirmation.hidden=compact;
+  // Keep the single answer confirmation in its reserved slot below the options.
+  // Never copy it into the session header or hide it on compact screens.
   if(!compact)close();
   for(const {node,anchor} of blocks){const keepLobbyTeam=compact&&node.id==='playerTeamPanel'&&!!content.querySelector('.player-team-building');const toSheet=compact&&!keepLobbyTeam;const target=toSheet?(node.classList.contains('control-row')?document.getElementById('playerSheetControls'):body):anchor.parentNode;if(node.parentNode!==target){if(toSheet)target.append(node);else anchor.after(node)}}
   for(let i=transient.length-1;i>=0;i--){const item=transient[i];if(!item.anchor.isConnected){item.node.remove();transient.splice(i,1)}}
