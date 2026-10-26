@@ -343,3 +343,48 @@ test('Answer confirmation remains at bottom without resizing choice buttons or h
   await fits(page);
  }
 });
+
+test('No sending or acceptance popup appears above mobile answer cards',async({page})=>{
+ for(const [width,height] of [[320,480],[390,844],[667,375]]){
+  await page.setViewportSize({width,height});
+  await setup(page);
+  await question(page,{kind:'single',prompt:'Кому принадлежит этот государственный флаг?',options:['Армения','Доминика','Камбоджа','Науру']});
+  await page.evaluate(()=>{
+   const original=ctx.client.rpc.bind(ctx.client);
+   window.__releaseAnswer=null;
+   ctx.client.rpc=(name,args)=>name==='org_next_answer'
+    ?new Promise(resolve=>{window.__releaseAnswer=()=>resolve({data:{accepted:true},error:null})})
+    :original(name,args);
+  });
+  const before=await page.locator('#gameContent [data-answer]').evaluateAll(nodes=>nodes.map(el=>{
+   const r=el.getBoundingClientRect();return {top:r.top,height:r.height};
+  }));
+  await page.locator('#gameContent [data-answer]').first().click();
+  await expect.poll(()=>page.evaluate(()=>ctx.answerPending)).toBe(true);
+  await expect(page.locator('#gameNotice')).toBeHidden();
+  expect(await page.locator('#gameNotice').textContent()).not.toMatch(/Отправляем|Ответ сохран|Ответ принят сервером/);
+  const whileSending=await page.locator('#gameContent [data-answer]').evaluateAll(nodes=>nodes.map(el=>{
+   const r=el.getBoundingClientRect();return {top:r.top,height:r.height};
+  }));
+  expect(whileSending).toEqual(before);
+  await page.evaluate(()=>window.__releaseAnswer());
+  await expect.poll(()=>page.evaluate(()=>ctx.answerPending)).toBe(false);
+  await page.evaluate(()=>{ctx.room.has_answer=true;ctx.gameRenderKey='';renderGame()});
+  await expect(page.locator('.player-answer-confirmation')).toContainText('Ответ принят.');
+  await expect(page.locator('#gameNotice')).toBeHidden();
+  const after=await page.locator('#gameContent [data-answer]').evaluateAll(nodes=>nodes.map(el=>{
+   const r=el.getBoundingClientRect();return {top:r.top,height:r.height};
+  }));
+  for(let i=0;i<before.length;i++){
+   expect(Math.abs(after[i].top-before[i].top)).toBeLessThanOrEqual(1);
+   expect(Math.abs(after[i].height-before[i].height)).toBeLessThanOrEqual(1);
+  }
+  // Real validation errors remain visible, but are anchored below (never above).
+  await page.evaluate(()=>notice('gameNotice','Проверьте соединение.','error'));
+  const placement=await page.locator('#gameNotice').evaluate(el=>{
+   const r=el.getBoundingClientRect();return {top:r.top,bottom:r.bottom,screen:innerHeight};
+  });
+  expect(placement.bottom).toBeLessThanOrEqual(placement.screen+1);
+  expect(placement.top).toBeGreaterThan(height*.60);
+ }
+});
