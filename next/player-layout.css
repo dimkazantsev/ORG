@@ -599,3 +599,142 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
 }
 /* No top banners for submitted/sending answers even if legacy JS emits them. */
 #gameView #gameNotice:is(:not(.error),.success){display:none!important;}
+
+
+/* QWIZ-PARTY release: single full-height team scene above the fixed bottom bar. */
+.player-compact #gameView .game-card:has(.player-team-building){
+ padding:0!important;overflow:hidden!important;border:0!important;background:transparent!important;
+}
+#gameContent:has(>.player-team-building){display:flex!important;flex:1;min-height:0;padding:0!important;}
+#gameContent>.player-team-building{
+ box-sizing:border-box;position:relative;isolation:isolate;overflow:hidden;
+ width:100%;min-height:100%;height:100%;display:flex;align-items:center;justify-content:center;
+ padding:clamp(22px,5vw,40px)!important;border:0!important;border-radius:24px!important;
+ background:radial-gradient(ellipse at 70% 30%,#dbb8f6a8,transparent 54%),
+ radial-gradient(ellipse at 8% 68%,#d7efffe0,transparent 55%),
+ linear-gradient(145deg,#f6f2ff 0%,#f1e3ff 55%,#efeaff 100%)!important;
+ box-shadow:none!important;
+}
+#gameContent>.player-team-building::before,#gameContent>.player-team-building::after{
+ content:"";position:absolute;pointer-events:none;z-index:-1;border-radius:50%;
+ width:85%;aspect-ratio:1;background:#ffffff40;transform:rotate(-30deg);
+}
+#gameContent>.player-team-building::before{left:-44%;top:-22%}
+#gameContent>.player-team-building::after{right:-54%;bottom:-28%}
+#gameContent .team-building-center{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+ gap:clamp(16px,3dvh,24px);width:100%;max-width:540px;min-height:0;flex:1;
+}
+#gameContent .team-building-center .eyebrow{
+ font-size:clamp(11px,2.8vw,14px);font-weight:800;letter-spacing:.15em;color:#7441c9;
+}
+#gameContent .team-building-glow{
+ position:relative;display:grid;place-items:center;flex:0 0 auto;
+ width:clamp(120px,33vw,196px);height:clamp(120px,33vw,196px);
+ border:0;background:transparent!important;box-shadow:none!important;
+ color:#7c39e6;filter:drop-shadow(0 12px 20px #7e4acc29);
+}
+#gameContent .team-building-glow::before,#gameContent .team-building-glow::after{display:none!important}
+#gameContent .team-building-glow .team-infinity{
+ display:block;font-weight:850;line-height:1;font-size:clamp(134px,33vw,202px);
+ letter-spacing:-.09em;transform:translateX(-.04em);
+ background:linear-gradient(115deg,#682cdb 5%,#a845ef 80%);background-clip:text;-webkit-background-clip:text;
+ -webkit-text-fill-color:transparent;
+}
+#gameContent .team-building-glow svg{
+ width:78%;height:78%;padding:14%;color:#fff;overflow:visible;
+ border-radius:32%;background:linear-gradient(155deg,#e2afff,#8c55e6 60%,#a97af5);
+ box-shadow:inset 0 3px 10px #ffffffb5,0 18px 40px #8650c936;
+}
+#gameContent .team-building-center h1{
+ font-size:clamp(28px,7.4vw,48px)!important;line-height:1.12;color:#231a40;
+ letter-spacing:-.055em;text-wrap:balance;margin:0;
+}
+#gameContent .team-building-center p{
+ margin:0!important;max-width:560px;font-size:clamp(13px,3.6vw,19px)!important;
+ font-weight:500;color:#77678f;line-height:1.55;text-wrap:pretty;
+}
+#gameContent .player-team-building.is-complete{flex-direction:column}
+#gameContent .team-confirm-card{
+ width:100%;display:flex;align-items:center;gap:12px;flex:0 0 auto;
+ padding:13px 16px;border:1px solid #ffffffd9;border-radius:22px;
+ background:#ffffffae;box-shadow:0 9px 32px #7954ad14;
+}
+#gameContent .team-confirm-emoji{width:50px;height:50px;display:grid;place-items:center;background:#eafbf4;border-radius:15px;font-size:26px}
+#gameContent .team-confirm-card div{display:flex;flex-direction:column;text-align:left;gap:4px;min-width:0}
+#gameContent .team-confirm-card small{font-size:10px;letter-spacing:.12em;color:#8464bb;font-weight:800}
+#gameContent .team-confirm-card strong{font-size:20px;color:#28213c;overflow-wrap:anywhere}
+@media (max-height:610px){
+ #gameContent>.player-team-building{padding:12px!important}
+ #gameContent .team-building-center{gap:9px}
+ #gameContent .team-building-glow{height:80px;width:105px}
+ #gameContent .team-building-glow .team-infinity{font-size:105px}
+ #gameContent .team-building-center h1{font-size:25px!important}
+ #gameContent .team-confirm-card{padding:8px}
+}
+
+/* Flag assembly: single unambiguous outlined flag and draggable vertical colour list. */
+#gameContent .player-question-layout:has(.assembly-builder){gap:10px}
+#gameContent .player-question-layout:has(.assembly-builder) .player-prompt h1{
+ font-size:clamp(18px,4.7vw,27px);line-height:1.22;
+}
+#gameContent .assembly-builder{display:grid;gap:12px;min-width:0;width:100%;margin:auto 0;touch-action:pan-y}
+#gameContent .assembly-builder .assembly-preview{
+ box-sizing:border-box;display:flex!important;overflow:hidden;gap:0!important;
+ width:min(100%,430px);height:auto!important;aspect-ratio:3/2;margin:0 auto 4px!important;
+ border:3px solid #575461;border-radius:15px;background:#f6f4fa;box-shadow:0 7px 20px #41364a16;
+}
+#gameContent .assembly-preview.horizontal{flex-direction:column}
+#gameContent .assembly-preview.vertical{flex-direction:row}
+#gameContent .assembly-slot{
+ display:flex;align-items:center;justify-content:center;flex:1 1 0;min-width:0;min-height:0;
+ padding:3px!important;border:0;border-radius:0!important;background:transparent;
+ color:#a9a6b7;font-weight:850;font-size:clamp(14px,3vw,19px);
+ touch-action:manipulation;transition:background-color .1s ease;
+}
+#gameContent .assembly-slot+.assembly-slot{border-left:0;border-top:3px solid #575461}
+#gameContent .assembly-preview.vertical .assembly-slot+.assembly-slot{border-top:0;border-left:3px solid #575461}
+#gameContent .assembly-slot:focus-visible,#gameContent .assembly-color:focus-visible{outline:3px solid #8554d9;outline-offset:-3px}
+#gameContent .assembly-slot.is-filled{color:#20202c}
+#gameContent .assembly-slot-label{
+ padding:4px 8px;border-radius:8px;background:#ffffff9c;font-size:12px;
+}
+#gameContent .assembly-colors{display:grid;gap:9px;max-width:430px;width:100%;margin:0 auto}
+#gameContent .assembly-color{
+ display:flex;align-items:center;gap:14px;min-height:51px;width:100%;padding:8px 12px;
+ border:1px solid #e4dff0;border-radius:16px;background:#fff;
+ box-shadow:0 3px 11px #59478212;cursor:grab;color:#251f38;
+ font-size:clamp(14px,3.5vw,18px);font-weight:780;touch-action:none;user-select:none;
+}
+#gameContent .assembly-color:active{cursor:grabbing}
+#gameContent .assembly-color.is-selected{border:2px solid #8251d5;background:#f4ebff}
+#gameContent .assembly-color[hidden]{display:none!important}
+#gameContent .assembly-swatch{width:37px;height:37px;flex:none;border:1px solid #a9a5b0;border-radius:50%}
+#gameContent .assembly-grip{font-size:27px;margin-left:auto;color:#c6bfd6;line-height:1}
+#gameContent .assembly-hint{font-size:12px;line-height:1.35;color:#7a7288;text-align:center;max-width:430px;margin:0 auto}
+#gameContent .assembly-submit{
+ display:flex;align-items:center;justify-content:center;width:min(100%,430px);min-height:50px;
+ margin:0 auto;border:0;border-radius:15px;background:#713bdd;color:white;font-weight:840;font-size:16px;
+}
+#gameContent .assembly-submit:disabled{background:#d3c0f1;color:#fff;opacity:.8}
+#gameContent .player-answer:has(.assembly-verdict){display:flex;flex-direction:column;align-items:stretch;gap:12px}
+#gameContent .player-answer:has(.assembly-verdict) .correct-flag-art{
+ width:100%;max-width:440px;aspect-ratio:3/2;display:grid;place-items:center;margin:14px auto;
+ border:3px solid #454350;border-radius:13px;overflow:hidden;background:#fff;
+}
+#gameContent .player-answer:has(.assembly-verdict) .correct-flag-art img{
+ width:100%;height:100%;object-fit:fill;
+}
+#gameContent .assembly-verdict{
+ padding:22px 16px;border-radius:16px;background:#f0e9fb;color:#342747;
+ font-weight:850;font-size:clamp(17px,4.5vw,26px);text-align:center;
+}
+#gameContent .assembly-verdict.is-correct{background:#ecf9ef;color:#187448}
+#gameContent .assembly-verdict.is-wrong{background:#fff0f3;color:#a72d50}
+@media (max-height:680px){
+ #gameContent .assembly-builder{gap:6px}
+ #gameContent .assembly-builder .assembly-preview{aspect-ratio:3/1.25;max-width:300px}
+ #gameContent .assembly-color{min-height:42px;padding:5px 9px}
+ #gameContent .assembly-swatch{width:26px;height:26px}
+ #gameContent .assembly-hint{display:none}
+}
