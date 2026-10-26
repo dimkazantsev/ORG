@@ -56,7 +56,17 @@ window.QwizArcade=(()=>{
  }
  function stop(kind){const tr=ui[kind];if(!tr)return;if(tr.interval)clearTimeout(tr.interval);if(tr.clock)clearInterval(tr.clock);if(tr.flushTimer)clearTimeout(tr.flushTimer);if(tr.onClick)tr.root?.removeEventListener('click',tr.onClick);tr.closed=true;ui[kind]=null;}
  async function fetchState(tr){if(tr.closed||tr.fetching||!navigator.onLine)return;tr.fetching=true;const id=tr.key;
-  try{const {data,error}=await tr.client.rpc('qwiz_party_arcade',{p_code:tr.code});if(error)throw error;if(tr.closed||tr.key!==id)return;
+  try{
+   // Abort a stalled snapshot read; otherwise 'fetching' could stay true forever.
+   const ac=new AbortController();
+   const query=tr.client.rpc('qwiz_party_arcade',{p_code:tr.code});
+   const request=typeof query?.abortSignal==='function'?query.abortSignal(ac.signal):query;
+   let timeout;
+   let result;
+   try{result=await Promise.race([request,new Promise((_,reject)=>{
+    timeout=setTimeout(()=>{ac.abort();reject(Error('Сервер не ответил за 9 секунд'));},9000);
+   })]);}finally{clearTimeout(timeout);}
+   const {data,error}=result;if(error)throw error;if(tr.closed||tr.key!==id)return;
    // A repeated mechanic in a later card is a new game, not a continuation
    // of the previous card's taps, question, selection or pending work.
    if(tr.view?.card_position!==undefined&&tr.view.card_position!==data.card_position){
