@@ -10,7 +10,7 @@ test('all resilience code parses and new builds are referenced',()=>{
  }
  const pages=[['index.html','app.js?v=answer-grey-20261027-3'],
   ['index.html','arcade.js?v=idempotent-40p-20261026-3'],
-  ['workspace.html','workspace.js?v=clean-card-titles-20261027-1'],
+  ['workspace.html','workspace.js?v=projector-icons-20261027-1'],
   ['presenter.html','presenter.js?v=sync40-20261026-3']];
  for(const [page,asset] of pages) assert.ok(read(page).includes(asset),page+' missing '+asset);
 });
