@@ -423,3 +423,44 @@ test('Flag choices and the correct flag stay inside their cards without clipping
   }
  }
 });
+
+
+test('Audience countdown warning stays hidden and received-answer counter has breathing room',async({page})=>{
+ for(const [width,height] of [[1280,720],[1366,768],[1920,1080],[768,1024]]){
+  await page.setViewportSize({width,height});
+  await page.evaluate(()=>{
+   ctx.renderKey='';
+   const now=Date.now();
+   render({
+    code:'A1B2C3D4',phase:'question',index:7,total:45,
+    ends_at:new Date(now+7000).toISOString(),duration:40,paused:false,
+    question:{
+     kind:'flag',
+     prompt:'Какой стране принадлежит изображённый государственный флаг, учитывая все особенности его официальной символики?',
+     media_url:'https://dimkazantsev.github.io/ORG/next/assets/flags-world/am.svg',
+     options:['Доминика','Камбоджа','Армения','Науру']
+    },
+    teams:[{id:'one',name:'Команда',answered:0}],players:[],
+    screen_settings:{sound_enabled:false,volume:0}
+   });
+  });
+  await expect(page.locator('.projection-question-only .clock-value strong')).toBeVisible();
+  const warning=page.locator('.projection-question-only .clock-warning');
+  await expect(warning).toBeHidden();
+  await expect(page.locator('#teamAnswerCount')).toContainText('ответов получено');
+  await expect(page.locator('.projection-public-options .projection-option')).toHaveCount(4);
+  await expect.poll(()=>page.evaluate(()=>Number(document.querySelector('.projection-question-only')?.dataset.fittedZoom)),{timeout:12000}).toBeGreaterThan(0);
+  const geometry=await page.evaluate(()=>{
+   const bounds=el=>{const r=el.getBoundingClientRect();return {top:r.top,bottom:r.bottom,left:r.left,right:r.right}};
+   const answerCards=[...document.querySelectorAll('.projection-public-options .projection-option')].map(bounds);
+   const count=bounds(document.getElementById('teamAnswerCount'));
+   const stage=bounds(document.getElementById('projectionMain'));
+   return {answerBottom:Math.max(...answerCards.map(c=>c.bottom)),
+    count,stage,visibleWarning:getComputedStyle(document.querySelector('.clock-warning')).display};
+  });
+  expect(geometry.visibleWarning).toBe('none');
+  expect(geometry.count.top-geometry.answerBottom,'Spacing at '+width+'x'+height).toBeGreaterThanOrEqual(12);
+  expect(geometry.count.bottom,'Bottom counter within stage at '+width+'x'+height).toBeLessThanOrEqual(geometry.stage.bottom+2);
+  expect(geometry.count.top,'Counter above screen edge at '+width+'x'+height).toBeGreaterThan(geometry.stage.top);
+ }
+});
