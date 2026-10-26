@@ -1,6 +1,6 @@
 /* QWIZ-PARTY PWA v1: static shell only; never cache Supabase, RPC or private answers. */
 'use strict';
-const VERSION='qwiz-pwa-shell-20261027-v11';
+const VERSION='qwiz-pwa-shell-20261027-v12';
 const STATIC=VERSION+'-static';
 const PAGES=VERSION+'-pages';
 const SDK='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
@@ -14,7 +14,7 @@ self.addEventListener('install',event=>{
   // Static shell must be complete before an offline install is usable.
   await cache.addAll(SHELL.map(p=>new URL(p,ROOT).href));
   // Only the public JS SDK (never Supabase API data) can be available offline.
-  try{const sdk=await fetch(SDK,{mode:'no-cors'});await cache.put(SDK,sdk);}catch{}
+  try{const sdk=await fetch(SDK,{mode:'no-cors',signal:AbortSignal.timeout(4500)});await cache.put(SDK,sdk);}catch{ /* Optional CDN cache may fail without blocking PWA installation. */ }
   // No skipWaiting: an active game must not swap worker versions mid-round.
  })());
 });
