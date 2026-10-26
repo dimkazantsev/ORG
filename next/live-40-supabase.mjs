@@ -101,4 +101,9 @@ async function fullRun(){
  report('40_answer_acknowledgments',verify);
  if(verify.some(x=>!x.ok))process.exitCode=1;
 }
+// Mandatory preflight: never run this high-concurrency test in a normal classroom.
+const {data:fixture,error:fixtureError}=await client().rpc('qwiz_party_projection',{p_code:ROOM});
+if(fixtureError||fixture?.title!=='QWIZ LOAD 40 · disposable fixture'){
+ throw Error('Refusing live load against a non-test room');
+}
 if(MODE==='public')await publicRun();else await fullRun();
