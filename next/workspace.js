@@ -736,7 +736,7 @@ async function clearFinishedArchive(){
  }finally{
   clearingFinishedArchive=false;
   const button=$('clearFinishedArchive');
-  if(button){button.disabled=false;button.removeAttribute('aria-busy')}
+  if(button){button.disabled=button.dataset.archiveEmpty==='true';button.removeAttribute('aria-busy')}
  }
 }
 async function loadBuild(id){try{const r=await studio('build_get',{id});state.buildId=r.build.id;
@@ -766,18 +766,45 @@ async function saveBuild(){disable('saveBuild',true);msg('buildMessage','Сох�
 function roomRowMarkup(room){
  return '<article class="room-row"><div><div class="question-meta"><span class="chip">'+esc(QwizStage.phaseLabel(room.phase))+'</span><span class="chip lilac">'+esc(room.code)+'</span></div><h3>'+esc(QwizStage.capitalize(room.title))+'</h3><p>'+esc(QwizStage.countLabel(room.players,{one:'участник',few:'участника',many:'участников',other:'участника'}))+' · '+esc(QwizStage.countLabel(room.teams,{one:'команда',few:'команды',many:'команд',other:'команды'}))+'</p></div><div class="room-row-actions"><button class="primary-button" data-room="'+esc(room.code)+'">'+(room.phase==='finished'?'Результаты →':'Управлять →')+'</button><button type="button" class="card-trash" data-delete-room="'+esc(room.id)+'" title="Удалить комнату" aria-label="Удалить комнату '+esc(room.title)+'">'+trashSvg+'</button></div></article>';
 }
-function roomsListMarkup(rooms){
+function roomsListMarkup(rooms,archiveCount=null){
  const current=rooms.filter(room=>room.phase!=='finished');
  const history=rooms.filter(room=>room.phase==='finished');
- return '<div class="active-rooms" aria-label="Текущие комнаты">'+(current.length?current.map(roomRowMarkup).join(''):'<p class="empty rooms-empty-active">Активных комнат пока нет. Выберите сборку и создайте новую игру.</p>')+'</div>'+
- (history.length?'<div class="rooms-history-group"><details class="rooms-history"><summary>История завершённых игр <span class="rooms-history-count">'+history.length+'</span></summary><div class="rooms-history-list">'+history.map(roomRowMarkup).join('')+'</div></details><button type="button" class="clear-archive-button" id="clearFinishedArchive" title="Удалить все завершённые игры" aria-label="Очистить архив завершённых игр">'+trashSvg+'<span>Очистить архив</span></button></div>':'');
+ const countKnown=Number.isInteger(archiveCount)&&archiveCount>=0;
+ const total=countKnown?archiveCount:history.length;
+ const archiveEmpty=countKnown&&total===0;
+ const archiveBusy=clearingFinishedArchive;
+ const summary=history.length?history.map(roomRowMarkup).join(''):
+  '<p class="empty rooms-history-empty">'+(total>0
+   ?'Ранее скрытые завершённые игры по-прежнему находятся в архиве. Очистка удалит и их.'
+   :'Завершённых игр в списке нет.')+'</p>';
+ const remainder=countKnown&&total>history.length?
+  '<p class="rooms-history-note">Показано '+history.length+' из '+total+'. Очистка удалит все завершённые игры, включая скрытые.</p>':'';
+ return '<div class="active-rooms" aria-label="Текущие комнаты">'+
+  (current.length?current.map(roomRowMarkup).join(''):'<p class="empty rooms-empty-active">Активных комнат пока нет. Выберите сборку и создайте новую игру.</p>')+
+  '</div><div class="rooms-history-group"><details class="rooms-history"><summary>История завершённых игр <span class="rooms-history-count">'+
+  total+'</span></summary><div class="rooms-history-list">'+summary+remainder+
+  '</div></details><button type="button" class="clear-archive-button" id="clearFinishedArchive" title="Безвозвратно удалить все завершённые игры" aria-label="Очистить архив завершённых игр" data-archive-empty="'+archiveEmpty+'" '+
+  (archiveEmpty||archiveBusy?'disabled ':'')+(archiveBusy?'aria-busy="true" ':'')+'>'+
+  trashSvg+'<span>Очистить архив</span></button></div>';
 }
+let roomsLoadRevision=0;
 async function loadRooms(){
+ const revision=++roomsLoadRevision;
  try{
-  const list=await rpc('qwiz_host_rooms');
+  // The host list is capped; the archive count must come from the server.
+  // A failed count request must not hide the button or break room management.
+  const [roomResult,countResult]=await Promise.allSettled([
+   rpc('qwiz_host_rooms'),
+   rpc('qwiz_clear_finished_rooms',{p_confirm:false})
+  ]);
+  if(revision!==roomsLoadRevision)return;
+  if(roomResult.status==='rejected')throw roomResult.reason;
+  const list=Array.isArray(roomResult.value)?roomResult.value:[];
+  const raw=countResult.status==='fulfilled'?countResult.value?.count:null;
+  const archiveCount=raw!==null&&Number.isInteger(Number(raw))?Math.max(0,Number(raw)):null;
   state.hostRooms=list;
-  $('hostRoomList').innerHTML=roomsListMarkup(list);
- }catch(e){msg('launchMessage',e.message,true)}
+  $('hostRoomList').innerHTML=roomsListMarkup(list,archiveCount);
+ }catch(e){if(revision===roomsLoadRevision)msg('launchMessage',e.message,true)}
 }
 // Preview the *entire* saved build, not just the currently edited card.
 // In particular, map modes and normal Geography of Russia question modes
