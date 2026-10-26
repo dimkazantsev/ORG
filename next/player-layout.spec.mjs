@@ -388,3 +388,53 @@ test('No sending or acceptance popup appears above mobile answer cards',async({p
   expect(placement.top).toBeGreaterThan(height*.60);
  }
 });
+
+test('Chosen answer has pale grey selected state during send, after acceptance and after a read refresh',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await setup(page);
+ await question(page,{kind:'flag',prompt:'Какой это флаг?',options:['Армения','Италия','Франция','Науру']});
+ await expect(page.locator('#gameContent .option.is-picked')).toHaveCount(0);
+ await page.evaluate(()=>{
+  window.releaseChoice=null;
+  const previous=ctx.client.rpc.bind(ctx.client);
+  ctx.client.rpc=(name,args)=>name==='org_next_answer'
+   ?new Promise(resolve=>{window.releaseChoice=()=>resolve({data:{accepted:true},error:null})})
+   :previous(name,args);
+ });
+ const before=await page.locator('#gameContent [data-answer]').evaluateAll(items=>items.map(el=>el.getBoundingClientRect().height));
+ await page.locator('#gameContent [data-answer="2"]').click();
+ const selected=page.locator('#gameContent [data-answer="2"]');
+ await expect(selected).toHaveClass(/is-picked/);
+ await expect(selected).toHaveAttribute('aria-pressed','true');
+ const rgb=await selected.evaluate(el=>getComputedStyle(el).backgroundColor);
+ expect(rgb).toBe('rgb(238, 240, 243)');
+ await expect(page.locator('#gameContent .option.is-picked')).toHaveCount(1);
+ await expect(page.locator('#gameNotice')).toBeHidden();
+ const during=await page.locator('#gameContent [data-answer]').evaluateAll(items=>items.map(el=>el.getBoundingClientRect().height));
+ expect(during).toEqual(before);
+ await page.evaluate(()=>window.releaseChoice());
+ await expect.poll(()=>page.evaluate(()=>ctx.answerPending)).toBe(false);
+ await expect(page.locator('#gameContent [data-answer="2"]')).toHaveClass(/is-picked/);
+ await expect(page.locator('.player-answer-confirmation')).toContainText('Ответ принят');
+ await page.evaluate(()=>{ctx.gameRenderKey='';renderGame()});
+ await expect(page.locator('#gameContent [data-answer="2"]')).toHaveClass(/is-picked/);
+ await expect(page.locator('#gameNotice')).toBeHidden();
+ const after=await page.locator('#gameContent [data-answer]').evaluateAll(items=>items.map(el=>el.getBoundingClientRect().height));
+ expect(after).toEqual(before);
+ await page.evaluate(()=>{ctx.room.index=1;ctx.room.has_answer=false;ctx.room.ends_at=new Date(Date.now()+60000).toISOString();ctx.gameRenderKey='';renderGame()});
+ await expect(page.locator('#gameContent .option.is-picked')).toHaveCount(0);
+});
+
+test('Legacy sending or saved status cannot create a top answer notification',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await setup(page);
+ await question(page,{kind:'single',prompt:'Выберите ответ',options:['А','Б','В','Г']});
+ for(const phrase of ['Отправляем ответ…','Отправка ответа','Ответ записан','Ответ сохранён','Ответ принят сервером']){
+  await page.evaluate(value=>notice('gameNotice',value,'error'),phrase);
+  await expect(page.locator('#gameNotice')).toBeEmpty();
+  await expect(page.locator('#gameNotice')).toBeHidden();
+ }
+ await page.evaluate(()=>notice('gameNotice','Неверный формат ответа.','error'));
+ await expect(page.locator('#gameNotice')).toContainText('Неверный формат ответа.');
+ await expect(page.locator('#gameNotice')).toBeVisible();
+});
