@@ -299,7 +299,8 @@ function gameRichMarkup(q,locked){
   let classes='option';if(q._phase==='result'&&i===Number(q.correct))classes+=' correct';
   const picked=q._phase==='question'&&Number.isInteger(q._picked)&&q._picked===i;
   if(picked)classes+=' is-picked';
-  return '<button type="button" class="'+classes+'" data-answer="'+i+'" aria-pressed="'+(picked?'true':'false')+'"'+disabled+'><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+flagOptionHtml(option,i)+'</span></button>';
+  const pickedStyle=picked?' style="background-color:#eef0f3!important;border-color:#b9bec8!important;color:#282638!important;"':'';
+  return '<button type="button" class="'+classes+'" data-answer="'+i+'" aria-pressed="'+(picked?'true':'false')+'"'+pickedStyle+disabled+'><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+flagOptionHtml(option,i)+'</span></button>';
  }).join('')+'</div>';
 }
 function gameRichResult(q){
@@ -481,6 +482,13 @@ async function submitAnswer(choice){if(ctx.mode!=='game'||!ctx.room||ctx.room.ph
   const picked=Number(x.dataset.answer)===choice;
   x.classList.toggle('is-picked',picked);
   x.setAttribute('aria-pressed',String(picked));
+  // Inline fallback also covers third-party/old theme CSS that overrides .option.
+  for(const property of ['background-color','border-color','color']){
+   if(picked)x.style.setProperty(property,{
+    'background-color':'#eef0f3','border-color':'#b9bec8',color:'#282638'
+   }[property],'important');
+   else x.style.removeProperty(property);
+  }
   busy(x,true);
  });
  notice('gameNotice','');
