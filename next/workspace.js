@@ -802,19 +802,43 @@ async function launch(){if(launchRequestBusy)return;launchRequestBusy=true;disab
  msg('launchMessage','Комната '+created.code+(created.reused?' уже подготовлена — открываем существующую, без дубликата.':' создана.')+' Вопросов: '+created.total_questions+'. Пригласите участников и затем начните игру.');
  await loadRooms();await selectRoom(created.code);if(audienceWindow&&!audienceWindow.closed){const url=new URL('./presenter.html',location.href);url.searchParams.set('room',created.code);audienceWindow.location.href=url.toString()}}
  catch(e){msg('launchMessage',e.message,true)}finally{launchRequestBusy=false;disable('launchButton',false)}}
+let roomEventTimer=null;
+function scheduleRoomRefresh(){
+ if(roomEventTimer)clearTimeout(roomEventTimer);
+ roomEventTimer=setTimeout(()=>{roomEventTimer=null;if(state.roomCode)refreshLive();},
+  250+Math.floor(Math.random()*450));
+}
 function subscribeRoom(code){if(state.channel){state.db.removeChannel(state.channel);state.channel=null}
+ if(roomEventTimer)clearTimeout(roomEventTimer);
  state.channel=state.db.channel('org-next-'+code,{config:{broadcast:{ack:false}}})
- .on('broadcast',{event:'phase'},()=>refreshLive())
- .on('broadcast',{event:'team'},()=>refreshLive())
- .on('broadcast',{event:'answer'},()=>refreshLive())
- .subscribe(status=>{if(status==='SUBSCRIBED'&&code===state.roomCode&&state.room)refreshLive();});
+ .on('broadcast',{event:'phase'},scheduleRoomRefresh)
+ .on('broadcast',{event:'team'},scheduleRoomRefresh)
+ .subscribe(status=>{
+  if(code!==state.roomCode)return;
+  if(status==='SUBSCRIBED')scheduleRoomRefresh();
+  else if(['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status))scheduleRoomRefresh();
+ });
 }
 async function selectRoom(code){state.roomCode=code;sessionStorage.setItem('qwiz-host-room',code);
  $('liveConsole').hidden=false;subscribeRoom(code);await refreshLive();void loadProjectorPreferences();
  $('liveConsole').scrollIntoView({behavior:'instant',block:'start'});savePosition()}
 async function refreshLive(){if(!state.roomCode)return;if(state.roomBusy){state.roomRefreshQueued=true;return;}state.roomBusy=true;const code=state.roomCode;
- try{const s=await rpc('qwiz_party_state',{p_code:code});if(code!==state.roomCode)return;if(s.server_now)state.clockOffset=Date.parse(s.server_now)-Date.now();state.room=s;renderLive(s);msg('liveMessage','')}
- catch(e){msg('liveMessage',e.message,true)}finally{state.roomBusy=false;if(state.roomRefreshQueued){state.roomRefreshQueued=false;queueMicrotask(refreshLive);}}}
+ try{
+  const controller=new AbortController();
+  const query=state.db.rpc('qwiz_party_state',{p_code:code});
+  const request=typeof query?.abortSignal==='function'?query.abortSignal(controller.signal):query;
+  let timer;
+  let result;
+  try{result=await Promise.race([request,new Promise((_,reject)=>{
+   timer=setTimeout(()=>{controller.abort();reject(Error('Сервер не ответил за 10 секунд'));},10000);
+  })]);}finally{clearTimeout(timer);}
+  if(result?.error)throw Error(result.error.message);
+  const s=result?.data;
+  if(code!==state.roomCode||!s)return;
+  if(s.server_now)state.clockOffset=Date.parse(s.server_now)-Date.now();
+  state.room=s;renderLive(s);msg('liveMessage','');
+ }catch(e){msg('liveMessage',e.message,true)}
+ finally{state.roomBusy=false;if(state.roomRefreshQueued){state.roomRefreshQueued=false;queueMicrotask(refreshLive);}}}
 function renderLive(s){
  const key=s.phase+':'+s.index;if(key!==state.liveKey){state.liveKey=key;if(s.phase==='result')QwizStage.audio.play('reveal');else if(s.phase==='finished')QwizStage.audio.play(s.activity?.sound||'fanfare')}
  $('liveClock').innerHTML=['question','result'].includes(s.phase)?QwizStage.clockMarkup(s,'liveTimer'):'';QwizStage.updateClock(s,state.clockOffset,document,'liveTimer',false);
