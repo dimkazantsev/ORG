@@ -468,7 +468,8 @@ test('Round intro icon follows the actual gameplay mechanic on phone and project
   assert.match(stage,new RegExp(key+":'<"),'Missing round artwork for '+key);
  }
  assert.match(stage,/function roundIconSvg\(key\)/);
- assert.match(phone,/const drawing=QwizStage\.roundIconSvg\(icon/);
+ assert.match(phone,/const drawing=isDino\?/);
+ assert.match(phone,/QwizStage\.roundIconSvg\(icon/);
  assert.match(projector,/const art=QwizStage\.roundIconSvg\(icon\)/);
 });
 test('Lobby symbol and flag artwork have stable, centered visual bounds',()=>{
