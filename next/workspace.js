@@ -886,9 +886,15 @@ let projectorPrefsCode='',projectorPrefs={sound_enabled:true,volume:45,music_ena
 function renderProjectorPreferences(){
  const btn=$('hostProjectorSound'),range=$('hostProjectorVolume');
  if(!btn||!range)return;
- btn.textContent='Звук проектора: '+(projectorPrefs.sound_enabled?'вкл.':'выкл.');
+ const soundLabel=btn.querySelector('.projector-pref-label');
+ if(soundLabel)soundLabel.textContent='Звук проектора: '+(projectorPrefs.sound_enabled?'вкл.':'выкл.');
  btn.setAttribute('aria-pressed',String(!!projectorPrefs.sound_enabled));
- const music=$('hostProjectorMusic');if(music){music.textContent='♫ Музыка на всю игру: '+(projectorPrefs.music_enabled?'вкл.':'выкл.');music.setAttribute('aria-pressed',String(!!projectorPrefs.music_enabled));}
+ const music=$('hostProjectorMusic');
+ if(music){
+  const musicLabel=music.querySelector('.projector-pref-label');
+  if(musicLabel)musicLabel.textContent='Музыка на всю игру: '+(projectorPrefs.music_enabled?'вкл.':'выкл.');
+  music.setAttribute('aria-pressed',String(!!projectorPrefs.music_enabled));
+ }
  range.value=String(projectorPrefs.volume);
  $('hostProjectorVolumeLabel').textContent=projectorPrefs.volume+'%';
 }
