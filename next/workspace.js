@@ -560,7 +560,7 @@ function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{}
   const geo=s.arcade_mode==='russia_map';$('cardModesDetails').open=c.type==='round';
   if(geo)$('cardModesInfo').textContent='8 способов ответа · выберите нужные';
   if(geo){$('cardTopic').value=topicIdByName('География России')||'';
-   $('cardGeoCount').value=s.geo_count||15;$('cardGeoSeconds').value=s.geo_seconds||180;
+   $('cardGeoCount').value=s.geo_count||15;$('cardGeoSeconds').value=s.answer_seconds||s.seconds||10;
    for(const item of all('#cardGeoModes input:not(:disabled)'))item.checked=Array.isArray(s.geo_modes)&&s.geo_modes.includes(item.value);}
  $('cardArcadeSeconds').value=Math.max(30,Math.min(120,Number(s.arcade_seconds)||arcade?.seconds||45));
  $('cardArcadeHelp').textContent=arcade?.help||'';
@@ -642,7 +642,8 @@ function saveCard(event){
   nextSettings.arcade_seconds=Math.max(30,Math.min(120,Number($('cardArcadeSeconds').value)||arcadeGames[s.arcade_mode].seconds));
  if(mapMode){
   nextSettings.geo_count=Math.max(1,Math.min(89,Number($('cardGeoCount').value)||15));
-  nextSettings.geo_seconds=Math.max(45,Math.min(600,Number($('cardGeoSeconds').value)||180));
+  nextSettings.answer_seconds=Math.max(1,Math.min(120,Number($('cardGeoSeconds').value)||10));
+  nextSettings.geo_seconds=nextSettings.geo_count*nextSettings.answer_seconds;
  }
  c.title=cleanCardTitle($('cardTitle').value.trim())||titles[c.type]||'Карточка';
  c.topic_id=c.type==='round'?topicId:(c.topic_id||null);
@@ -671,7 +672,7 @@ function saveGeneralSettings(event){
  Object.assign(buildDefaults,timing);
  for(const c of state.cards){
   if(c.type==='round')c.settings={...buildDefaults,...c.settings,...timing};
-  else if(['rocket','blitz','tug','captain'].includes(c.settings?.arcade_mode))
+  else if(['blitz','tug','captain'].includes(c.settings?.arcade_mode))
    c.settings={...c.settings,bonus_percent:timing.bonus_percent,bonus_lead:timing.bonus_lead,stats_seconds:timing.stats_seconds,lead_seconds:timing.lead_seconds};
  }
  $('generalDialog').close();renderCards();msg('buildMessage','Общие настройки применены. Сохраните сборку, чтобы использовать их в игре.');QwizStage.audio.play('accept');
@@ -1196,7 +1197,7 @@ function wire(){
    if(b.dataset.geo==='russia_map'){
     const c=appendCard('round');if(!c)return;c.title='География России · карта 89 субъектов';c.icon='map';
     c.topic_id=state.topics.find(t=>t.name==='География России')?.id||null;
-    c.settings={...c.settings,arcade_mode:'russia_map',geo_count:15,geo_seconds:180,geo_modes:[]};renderCards();
+    c.settings={...c.settings,arcade_mode:'russia_map',geo_count:15,geo_seconds:150,answer_seconds:10,geo_modes:[]};renderCards();
    }else appendCard(b.dataset.card,b.dataset.arcade||null);
   };
  $('openGamesPalette').onclick=()=>{const panel=$('gamesPalette'),show=panel.hidden;panel.hidden=!show;$('openGamesPalette').setAttribute('aria-expanded',String(show));};
@@ -1205,7 +1206,7 @@ function wire(){
   if(b.dataset.geo==='russia_map'){
    const c=appendCard('round');if(!c)return;c.title='География России · карта 89 субъектов';c.icon='map';
    c.topic_id=state.topics.find(t=>t.name==='География России')?.id||null;
-   c.settings={...c.settings,arcade_mode:'russia_map',geo_count:15,geo_seconds:180,
+   c.settings={...c.settings,arcade_mode:'russia_map',geo_count:15,geo_seconds:150,answer_seconds:10,
     geo_modes:[]};renderCards();
   }else appendCard(b.dataset.card,b.dataset.arcade);
  };
