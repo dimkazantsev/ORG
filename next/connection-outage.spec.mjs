@@ -166,3 +166,26 @@ test('Network returning unlocks answer controls before the next room snapshot',a
  await expect(page.locator('#richTextAnswer')).toBeEnabled();
  await expect(page.locator('#gameNotice')).toBeEmpty();
 });
+
+test('Server-accepted answer remains confirmed when the following room snapshot fails',async({page})=>{
+ await ready(page);
+ await page.evaluate(room=>{
+  room.question={kind:'single',prompt:'Государственный символ?',options:['А','Б','В','Г']};
+  window.serverRoom=room;window.answerWrites=0;window.stateReads=0;
+  ctx.roomCode=room.code;ctx.room=room;showScreen('game');renderGame();
+  ctx.client.rpc=async(name)=>{
+   if(name==='org_next_answer'){window.answerWrites++;return {data:{accepted:true},error:null};}
+   if(name==='qwiz_party_state'){window.stateReads++;throw Error('Temporary snapshot failure');}
+   return {data:null,error:null};
+  };
+ },fixture());
+ await page.evaluate(()=>submitAnswer(1));
+ await expect(page.locator('.player-answer-confirmation')).toContainText('Ответ принят.');
+ await expect(page.locator('#gameNotice')).toBeEmpty();
+ expect(await page.evaluate(()=>window.answerWrites)).toBe(1);
+ expect(await page.evaluate(()=>ctx.room?.has_answer)).toBe(true);
+ // Even an old, out-of-order server read cannot reopen the same answer card.
+ await page.evaluate(()=>dataState({...window.serverRoom,has_answer:false,server_now:new Date().toISOString()}));
+ expect(await page.evaluate(()=>ctx.room?.has_answer)).toBe(true);
+ expect(await page.evaluate(()=>window.answerWrites)).toBe(1);
+});
