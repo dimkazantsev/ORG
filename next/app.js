@@ -400,7 +400,7 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
   const complete=lb.confirmed||lb.captains_ready;
   const checkSvg='<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 32l12 12L51 19" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   el.innerHTML='<section class="player-team-building'+(complete?' is-complete':'')+'" aria-label="'+esc(title)+'">'+
-   (complete&&myTeam?'<div class="team-confirm-card"><span class="team-confirm-emoji" aria-hidden="true">🌲</span><div><small>ВАША КОМАНДА</small><strong>'+esc(myTeam.name)+'</strong></div></div>':'')+
+   (complete&&myTeam?'<div class="team-confirm-card"><span class="team-confirm-emoji" aria-hidden="true">'+QwizStage.icon(myTeam,true)+'</span><div><small>ВАША КОМАНДА</small><strong>'+esc(myTeam.name)+'</strong></div></div>':'')+
    '<div class="team-building-center"><span class="eyebrow">QWIZ-PARTY · КОМАНДЫ</span>'+
    '<div class="team-building-glow" aria-hidden="true">'+(complete?checkSvg:'<span class="team-infinity">∞</span>')+'</div>'+
    '<h1>'+title+'</h1><p>'+desc+'</p></div></section>';
