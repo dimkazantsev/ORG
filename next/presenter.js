@@ -139,7 +139,7 @@ function tone(kind){QwizStage.audio.play(kind==='end'?'timeup':kind)}
 function ranking(rows,key){
  const first=(rows||[]).slice(0,100);
  return '<ol class="projection-ranking">'+first.map((x,i)=>'<li><span class="projection-rank">'+(i+1)+'</span>'+
- '<strong>'+escapeText(x[key]||'Игрок')+'</strong><b>'+Number(x.score||0).toLocaleString('ru-RU')+'</b></li>').join('')+'</ol>';
+ '<strong>'+escapeText(x[key]||'Игрок')+'</strong><b>'+Math.round(Number(x.score||0)).toLocaleString('ru-RU',{maximumFractionDigits:0})+'</b></li>').join('')+'</ol>';
 }
 function questionStats(rows){return QwizStage.questionStats(rows)}
 function automaticRoundStandings(state){
@@ -152,7 +152,7 @@ function automaticRoundStandings(state){
  const displayLimit=window.innerHeight<900?5:8;
  const list=(rows,unit)=>'<ol class="projection-round-leaders">'+rows.slice(0,displayLimit).map((r,i)=>
  '<li><span>'+(i+1)+'</span><strong>'+escapeText(r.nickname||r.name||'Участник')+'</strong><b>'+
- Number(r.score||0).toLocaleString('ru-RU')+'</b></li>').join('')+'</ol>'+
+ Math.round(Number(r.score||0)).toLocaleString('ru-RU',{maximumFractionDigits:0})+'</b></li>').join('')+'</ol>'+
  (rows.length>displayLimit?'<p class="projection-rank-more">Ещё '+(rows.length-displayLimit)+' · полный список доступен участникам</p>':'');
  $('projectionMain').innerHTML='<section class="projection-round-results" aria-label="Результаты завершённого раунда">'+
  '<span class="projection-eyebrow">РАУНД ЗАВЕРШЁН · РЕЗУЛЬТАТЫ</span><h1>Итоги раунда</h1>'+rewardBanner+
@@ -186,7 +186,7 @@ function finalShow(state){
  const list=rows=>rows.length
   ?'<ol class="projection-round-leaders">'+ranked(rows).slice(0,limit).map((r,i)=>
    '<li><span class="projection-medal">'+(i===0?'♛':(Number(r.position)>0?Number(r.position):i+1))+'</span><strong>'+escapeText(r.nickname||r.name||'Участник')+
-   '</strong><b>'+Number(r.score||0).toLocaleString('ru-RU')+'</b></li>').join('')+'</ol>'+
+   '</strong><b>'+Math.round(Number(r.score||0)).toLocaleString('ru-RU',{maximumFractionDigits:0})+'</b></li>').join('')+'</ol>'+
    (rows.length>limit?'<p class="projection-rank-more">Ещё '+(rows.length-limit)+' · полный рейтинг на устройствах игроков</p>':'')
   :'<p class="projection-final-empty">Результаты появятся после первых ответов.</p>';
  $('projectionMain').innerHTML='<section class="projection-finale projection-finale-compact" aria-label="Итоги всей игры">'+
