@@ -740,3 +740,67 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
 }
 
 #gameContent .team-confirm-emoji .habitat-icon{width:41px;height:41px;max-width:100%;display:block}
+
+
+/* Compact flag assembly: question always precedes flag, never overlays it. */
+.player-compact #gameView .game-card:has(.assembly-builder){
+ overflow-y:auto!important;overflow-x:hidden!important;overscroll-behavior:contain;
+ justify-content:flex-start!important;-webkit-overflow-scrolling:touch;
+}
+.player-compact #gameView .player-question-layout:has(.assembly-builder){
+ display:flex!important;flex:none!important;flex-direction:column!important;
+ gap:clamp(5px,1dvh,10px)!important;min-height:0!important;
+}
+.player-compact #gameView .player-prompt:has(+ .player-responses .assembly-builder),
+.player-compact #gameView .player-question-layout:has(.assembly-builder) .player-prompt{
+ display:block!important;position:static!important;z-index:auto!important;
+ flex:0 0 auto!important;margin:0!important;min-height:0!important;
+}
+.player-compact #gameView .player-question-layout:has(.assembly-builder) .player-prompt>h1{
+ display:block!important;position:static!important;margin:0 0 5px!important;
+ font-size:clamp(15px,4.2vw,22px)!important;line-height:1.2!important;
+ max-height:none!important;overflow:visible!important;
+}
+.player-compact #gameView .player-question-layout:has(.assembly-builder) .player-responses{
+ display:flex!important;flex:0 0 auto!important;flex-direction:column!important;
+ justify-content:flex-start!important;min-height:0!important;gap:7px!important;
+}
+.player-compact #gameView .assembly-builder{
+ display:flex!important;flex-direction:column!important;gap:clamp(5px,1.2dvh,10px)!important;
+ margin:0!important;touch-action:pan-y;
+}
+.player-compact #gameView .assembly-builder .assembly-preview{
+ width:min(100%,360px)!important;height:clamp(103px,19dvh,170px)!important;
+ min-height:103px!important;aspect-ratio:auto!important;margin:0 auto!important;
+ border:2px solid #6e647e!important;border-radius:12px!important;
+}
+.player-compact #gameView .assembly-slot{
+ touch-action:none!important;font-size:14px!important;padding:0!important;
+ outline:0!important;min-height:0!important;
+}
+.player-compact #gameView .assembly-slot.is-filled{font-size:0!important}
+.player-compact #gameView .assembly-slot.is-filled::before,
+.player-compact #gameView .assembly-slot.is-filled::after{display:none!important}
+.player-compact #gameView .assembly-colors{gap:6px!important;width:min(100%,360px)!important}
+.player-compact #gameView .assembly-color{
+ min-height:clamp(40px,6dvh,47px)!important;padding:5px 11px!important;
+ border-radius:13px!important;font-size:clamp(13px,3.4vw,16px)!important;
+}
+.player-compact #gameView .assembly-swatch{width:30px!important;height:30px!important}
+.player-compact #gameView .assembly-grip{font-size:21px!important}
+.player-compact #gameView .assembly-hint{font-size:11px;line-height:1.25;margin:0}
+.player-compact #gameView .assembly-submit{
+ flex:0 0 auto!important;min-height:43px!important;margin:2px auto 6px!important;
+ width:min(100%,360px)!important;
+}
+.assembly-drag-ghost{
+ position:fixed!important;left:0;top:0;z-index:99999;display:flex;align-items:center;gap:9px;
+ min-width:124px;min-height:46px;padding:6px 12px;border:1px solid #aa8af0;border-radius:14px;
+ background:#fff;box-shadow:0 13px 26px #6f45aa44;font-size:15px;font-weight:800;color:#31254f;
+}
+.assembly-drag-ghost .assembly-swatch{width:28px;height:28px;border-radius:50%;border:1px solid #aaa}
+.player-compact #gameView .assembly-slot.is-drop-target{box-shadow:inset 0 0 0 3px #7b45e3!important}
+@media (max-height:680px){
+ .player-compact #gameView .assembly-builder .assembly-preview{height:110px!important;min-height:110px!important}
+ .player-compact #gameView .assembly-hint{display:none!important}
+}
