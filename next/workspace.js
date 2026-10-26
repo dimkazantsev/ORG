@@ -21,6 +21,9 @@ const flagModes=[
  ['geo','География и карты',true],
  ['history','История и символика',true]
 ];
+// Align live teacher preview with arcade labels in existing saved rooms.
+const ARCADE_VISIBLE_NAMES={rocket:'Дино-забег',tug:'Тап-баттл',blitz:'Блиц-вопрос',captain:'Мэмори капитанов'};
+const hostArcadeActivity=a=>a?.settings?.arcade_mode&&ARCADE_VISIBLE_NAMES[a.settings.arcade_mode]?{...a,title:ARCADE_VISIBLE_NAMES[a.settings.arcade_mode]}:a;
 const titleKind=id=>flagModes.find(x=>x[0]===id)?.[1]||'Флаги мира';
 const icons={round:'▦',intro:'◉',break:'♫',team_stats:'▥',player_stats:'♙',bonus:'✦',duel:'⇄',finale:'★'};
 const cardSvgPaths={
@@ -844,6 +847,7 @@ async function refreshLive(){if(!state.roomCode)return;if(state.roomBusy){state.
  }catch(e){msg('liveMessage',e.message,true)}
  finally{state.roomBusy=false;if(state.roomRefreshQueued){state.roomRefreshQueued=false;queueMicrotask(refreshLive);}}}
 function renderLive(s){
+ if(s?.activity)s={...s,activity:hostArcadeActivity(s.activity)};
  const key=s.phase+':'+s.index;if(key!==state.liveKey){state.liveKey=key;if(s.phase==='result')QwizStage.audio.play('reveal');else if(s.phase==='finished')QwizStage.audio.play(s.activity?.sound||'fanfare')}
  $('liveClock').innerHTML=['question','result'].includes(s.phase)?QwizStage.clockMarkup(s,'liveTimer'):'';QwizStage.updateClock(s,state.clockOffset,document,'liveTimer',false);
 $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
