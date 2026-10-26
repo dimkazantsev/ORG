@@ -18,7 +18,7 @@
  installButton.type='button';installButton.id='qwizInstallApp';installButton.textContent='Установить приложение';
  installButton.style.cssText='display:none;width:100%;margin-top:12px;padding:11px 16px;border:1px solid #d9c9f5;border-radius:13px;background:#f7f2ff;color:#603bb1;font:700 14px system-ui,sans-serif;cursor:pointer';
  installButton.addEventListener('click',async()=>{
-  if(await window.QwizPWA.install())installButton.hidden=true;
+  if(await window.QwizPWA.install())installButton.style.display='none';
  });
  document.addEventListener('DOMContentLoaded',()=>{
   const entry=document.querySelector('#homeView .entry');
