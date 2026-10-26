@@ -7,6 +7,7 @@ on:
       - 'next/manifest.webmanifest'
       - 'next/pwa-icon.svg'
       - 'next/pwa.test.mjs'
+      - 'next/pwa-browser.spec.mjs'
       - 'next/index.html'
       - 'next/workspace.html'
       - 'next/presenter.html'
@@ -41,3 +42,9 @@ jobs:
               assert (root/'index.html').is_file() if name=='./' else resolved.is_file(), f'Missing offline shell resource: {name}'
           print('Validated static resources and manifest:',json.loads((root/'manifest.webmanifest').read_text())['name'])
           PY
+      - name: Test offline reload in Chromium
+        run: |
+          npm install --no-save @playwright/test@1.56.1
+          npx playwright install chromium --with-deps
+          python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/qwiz-pwa-http.log 2>&1 &
+          npx playwright test next/pwa-browser.spec.mjs --reporter=list --workers=1
