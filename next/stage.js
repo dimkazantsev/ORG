@@ -347,7 +347,7 @@ window.QwizStage=(()=>{
    '<div class="assembly-preview '+(vertical?'vertical':'horizontal')+'" aria-label="Соберите флаг: '+(vertical?'полосы слева направо':'полосы сверху вниз')+'">'+
     options.map((_,i)=>'<button type="button" class="assembly-slot" data-assembly-slot="'+i+'" data-value=""'+(locked?' disabled':'')+' aria-label="Поместить цвет в полосу '+(i+1)+'"><span aria-hidden="true">↓</span></button>').join('')+
    '</div><div class="assembly-colors" aria-label="Цвета для перетаскивания">'+options.map(choice).join('')+'</div>'+
-   '<p class="assembly-hint">Перетащите цвета на флаг или выберите цвет и коснитесь полосы. Можно менять расположение до нажатия «ОК».</p></div>';
+   '<p class="assembly-hint">Перетащите цвет пальцем или мышью на нужную полосу. До нажатия «ОК» можно перемещать цвета.</p></div>';
  }
  function assemblyItems(root,q){
   const slots=[...root.querySelectorAll('[data-assembly-slot]')];
@@ -358,69 +358,105 @@ window.QwizStage=(()=>{
  }
  function hydrateAssembly(root,q){
   if(!q?.flag_assembly)return;
-  const builder=root.querySelector('[data-assembly-builder]');if(!builder||builder.dataset.assemblyLocked==='true')return;
-  const slots=[...builder.querySelectorAll('[data-assembly-slot]')],colors=[...builder.querySelectorAll('[data-assembly-color]')];
-  const submit=root.querySelector('[data-submit-rich]'),swatches=q.flag_assembly.colors||{};
+  const builder=root.querySelector('[data-assembly-builder]');
+  if(!builder||builder.dataset.assemblyLocked==='true')return;
+  const slots=[...builder.querySelectorAll('[data-assembly-slot]')];
+  const colors=[...builder.querySelectorAll('[data-assembly-color]')];
+  const submit=root.querySelector('[data-submit-rich]');
+  const palette=q.flag_assembly.colors||{};
   const state=Array(slots.length).fill(null);
-  let selected=null,dragging=null,pointer=null;
+  let dragging=null,pointer=null,ghost=null;
   const paint=()=>{
    slots.forEach((slot,i)=>{
-    const n=state[i],name=n===null?'':q.options[n],color=swatches[name];
+    const n=state[i],name=n===null?'':q.options[n],hex=palette[name]||'';
     slot.dataset.value=n===null?'':String(n);
-    slot.style.background=n===null?'':(/^#[0-9a-f]{6}$/i.test(color)?color:'');
+    slot.style.background=n===null?'':(/^#[0-9a-f]{6}$/i.test(hex)?hex:'');
     slot.classList.toggle('is-filled',n!==null);
-    slot.innerHTML=n===null?'<span aria-hidden="true">↓</span>':'<span class="assembly-slot-label">'+esc(capitalize(name))+'</span>';
-    slot.setAttribute('aria-label',n===null?'Полоса '+(i+1)+': пусто':'Полоса '+(i+1)+': '+capitalize(name)+'. Коснитесь для замены');
+    slot.textContent=n===null?'↓':'';
+    slot.draggable=n!==null;
+    slot.setAttribute('aria-label',n===null?'Полоса '+(i+1)+': пусто':'Полоса '+(i+1)+': цвет установлен. Перетащите для изменения');
    });
-   colors.forEach((b,i)=>{b.hidden=state.includes(i);b.classList.toggle('is-selected',selected===i)});
+   colors.forEach((b,i)=>{b.hidden=state.includes(i)});
    if(submit)submit.disabled=state.includes(null);
   };
-  const apply=(target,n)=>{
-   if(!Number.isInteger(target)||target<0||target>=slots.length||!Number.isInteger(n)||n<0||n>=colors.length)return;
-   const existing=state.indexOf(n),previous=state[target];
-   if(existing===target)return;
-   if(existing>=0)state[existing]=previous;
-   state[target]=n;selected=null;paint();
+  const place=(target,n)=>{
+   if(!Number.isInteger(target)||target<0||target>=slots.length||
+      !Number.isInteger(n)||n<0||n>=colors.length)return;
+   const current=state.indexOf(n);
+   if(current===target)return;
+   const prev=state[target];
+   if(current>=0)state[current]=prev;
+   state[target]=n;paint();
   };
-  builder.addEventListener('click',event=>{
-   const color=event.target.closest('[data-assembly-color]'),slot=event.target.closest('[data-assembly-slot]');
-   if(color){selected=Number(color.dataset.assemblyColor);paint();return}
-   if(slot){const i=Number(slot.dataset.assemblySlot);
-    if(selected!==null)apply(i,selected);
-    else if(state[i]!==null){selected=state[i];state[i]=null;paint();}
-   }
-  });
+  const sourceIndex=target=>{
+   const color=target.closest('[data-assembly-color]');
+   if(color)return Number(color.dataset.assemblyColor);
+   const slot=target.closest('[data-assembly-slot]');
+   if(slot&&slot.dataset.value!=='')return Number(slot.dataset.value);
+   return null;
+  };
   builder.addEventListener('dragstart',event=>{
-   const item=event.target.closest('[data-assembly-color]');
-   if(!item)return;dragging=Number(item.dataset.assemblyColor);
-   event.dataTransfer.setData('text/plain',String(dragging));event.dataTransfer.effectAllowed='move';
+   const n=sourceIndex(event.target);
+   if(n===null)return;
+   dragging=n;event.dataTransfer.setData('text/plain',String(n));
+   event.dataTransfer.effectAllowed='move';
   });
   builder.addEventListener('dragover',event=>{
-   if(event.target.closest('[data-assembly-slot]')){event.preventDefault();event.dataTransfer.dropEffect='move'}
+   if(event.target.closest('[data-assembly-slot]')){
+    event.preventDefault();event.dataTransfer.dropEffect='move';
+   }
   });
   builder.addEventListener('drop',event=>{
-   const slot=event.target.closest('[data-assembly-slot]');if(!slot)return;event.preventDefault();
-   const value=dragging??Number(event.dataTransfer.getData('text/plain'));apply(Number(slot.dataset.assemblySlot),value);dragging=null;
+   const target=event.target.closest('[data-assembly-slot]');
+   if(!target||dragging===null)return;
+   event.preventDefault();place(Number(target.dataset.assemblySlot),dragging);dragging=null;
   });
-  // Pointer events work on Android/iOS where HTML drag-and-drop is not consistently supported.
+  builder.addEventListener('dragend',()=>{dragging=null});
+  // Drag the chip itself with the finger. A tap alone NEVER teleports a colour.
   builder.addEventListener('pointerdown',event=>{
-   const color=event.target.closest('[data-assembly-color]');
-   if(!color||event.pointerType==='mouse')return;
-   pointer={id:event.pointerId,index:Number(color.dataset.assemblyColor),x:event.clientX,y:event.clientY,moved:false};
+   if(event.pointerType==='mouse')return;
+   const n=sourceIndex(event.target);
+   if(n===null)return;
+   pointer={id:event.pointerId,n,x:event.clientX,y:event.clientY,moved:false};
   },{passive:true});
   builder.addEventListener('pointermove',event=>{
    if(!pointer||event.pointerId!==pointer.id)return;
-   if(Math.hypot(event.clientX-pointer.x,event.clientY-pointer.y)>9){pointer.moved=true;event.preventDefault()}
+   if(Math.hypot(event.clientX-pointer.x,event.clientY-pointer.y)<7&&!pointer.moved)return;
+   event.preventDefault();pointer.moved=true;
+   if(!ghost){
+    ghost=document.createElement('div');ghost.className='assembly-drag-ghost';
+    ghost.innerHTML='<span class="assembly-swatch" style="background:'+
+      esc(palette[q.options[pointer.n]]||'#999')+'"></span>'+esc(capitalize(q.options[pointer.n]));
+    ghost.style.pointerEvents='none';document.body.appendChild(ghost);
+   }
+   ghost.style.transform='translate3d('+(event.clientX-62)+'px,'+(event.clientY-24)+'px,0)';
+   const target=document.elementFromPoint(event.clientX,event.clientY)?.closest('[data-assembly-slot]');
+   slots.forEach(x=>x.classList.toggle('is-drop-target',x===target));
   },{passive:false});
+  const cleanup=()=>{
+   ghost?.remove();ghost=null;pointer=null;
+   slots.forEach(x=>x.classList.remove('is-drop-target'));
+  };
   builder.addEventListener('pointerup',event=>{
    if(!pointer||event.pointerId!==pointer.id)return;
    if(pointer.moved){
-    const target=document.elementFromPoint(event.clientX,event.clientY)?.closest('[data-assembly-slot]');
-    if(target&&builder.contains(target))apply(Number(target.dataset.assemblySlot),pointer.index);
+    const slot=document.elementFromPoint(event.clientX,event.clientY)?.closest('[data-assembly-slot]');
+    if(slot&&builder.contains(slot))place(Number(slot.dataset.assemblySlot),pointer.n);
    }
-   pointer=null;
+   cleanup();
   });
-  builder.addEventListener('pointercancel',()=>{pointer=null});
+  builder.addEventListener('pointercancel',cleanup);
+  // Accessible keyboard alternative; touch remains drag-only.
+  let keyboardColor=null;
+  builder.addEventListener('keydown',event=>{
+   if(event.key!=='Enter'&&event.key!==' ')return;
+   const color=event.target.closest('[data-assembly-color]');
+   const slot=event.target.closest('[data-assembly-slot]');
+   if(color){event.preventDefault();keyboardColor=Number(color.dataset.assemblyColor);return}
+   if(slot&&keyboardColor!==null){
+    event.preventDefault();place(Number(slot.dataset.assemblySlot),keyboardColor);keyboardColor=null;
+   }
+  });
   paint();
  }
  function sourceLinks(answer){
