@@ -29,8 +29,8 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
 .player-compact #gameView .game-name{font-size:14px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .player-compact #gameView .game-sub{font-size:11px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* One acknowledgement stays below the answers; the team/header never changes height. */
-.player-compact #gameView .player-responses>.player-answer-confirmation{display:block;flex:none;box-sizing:border-box;min-height:30px;max-height:44px;overflow:hidden;line-height:1.25;padding:6px 8px;margin:0}
-.player-compact #gameView .player-responses>.player-answer-confirmation:empty{display:block;visibility:hidden}
+.player-compact #gameView .player-responses>.player-answer-confirmation{display:flex;align-items:center;flex:none;box-sizing:border-box;height:30px;min-height:30px;max-height:30px;overflow:hidden;line-height:1.2;padding:4px 8px;margin:0;white-space:nowrap}
+.player-compact #gameView .player-responses>.player-answer-confirmation:empty{display:flex;visibility:hidden}
 /* Error/status toasts are out of normal flex flow, so answers do not resize. */
 .player-compact #gameView .player-layout{position:relative}
 .player-compact #gameView #gameNotice{position:absolute;z-index:10;left:10px;right:10px;top:0;max-height:96px;overflow:auto;box-shadow:0 4px 20px #3e296026;background:#fff;color:var(--ink);pointer-events:none}
