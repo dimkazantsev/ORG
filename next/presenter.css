@@ -1541,3 +1541,24 @@ body:fullscreen .projection-shell{height:100dvh}
 #projectionMain>.lobby-cinematic .lobby-cinema-code{color:#7043c8!important;font-size:clamp(25px,3.8dvh,42px);letter-spacing:.19em}
 #projectionMain>.lobby-cinematic .lobby-cinema-instructions{color:#756a86!important;font-size:clamp(13px,1.9dvh,19px)!important;max-width:780px}
 @media(max-height:640px){#projectionMain>.lobby-cinematic .lobby-cinema-content{gap:4px;padding:9px}#projectionMain>.lobby-cinematic .lobby-cinema-qr{width:clamp(150px,29dvh,230px);height:clamp(150px,29dvh,230px)}}
+
+
+/* 2026-10-27 — audience screen: keep the numeric countdown, remove the
+   redundant "Осталось N сек." line that overlaps long question headings.
+   Reserve a comfortable, stable bottom band for the received-answer count. */
+#projectionMain .projection-question-only .stage-clock .clock-warning{
+ display:none!important;
+}
+#projectionMain>.projection-question-only:not(.is-result){
+ grid-template-rows:clamp(90px,14dvh,154px) minmax(0,1fr) clamp(70px,10dvh,108px);
+}
+#projectionMain>.projection-question-only:not(.is-result)>.projection-response-count{
+ grid-row:3;align-self:center;justify-self:center;
+ line-height:1.3;white-space:nowrap;
+ margin:0!important;padding:0 clamp(12px,2vw,30px);
+}
+@media(max-width:800px){
+ #projectionMain>.projection-question-only:not(.is-result){
+  grid-template-rows:clamp(82px,12dvh,120px) minmax(0,1fr) clamp(62px,9dvh,86px);
+ }
+}
