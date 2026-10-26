@@ -5,7 +5,7 @@ window.QwizArcade=(()=>{
   rocket:{title:'Дино-забег',desc:'Случайно выбранный игрок каждой команды прыгает через препятствия. Одно нажатие — один прыжок. Скорость растёт. Побеждает наибольшая дистанция.',cta:'ПРЫЖОК!'},
   blitz:{title:'Блиц-вопрос',desc:'Захватите право ответить первыми. Команда-победитель получит право проголосовать за усиление следующего раунда.',cta:'ЗАХВАТИТЬ ВОПРОС'},
   tug:{title:'Тап-баттл',desc:'Все участники нажимают кнопку одновременно. Считаются реальные суммарные нажатия всей команды, а не среднее значение на человека.',cta:'ТАП!'},
-  captain:{title:'Мэмори капитанов',desc:'Все капитаны играют одновременно. Открывайте по две плитки и собирайте пары. Быстрейший проходит первым; при ничьей побеждает тот, у кого меньше ходов.',cta:'ОТКРЫТЬ ПЛИТКУ'}
+  captain:{title:'Мэмори капитанов',desc:'Открывайте по две плитки и собирайте пары. Быстрее всех!',cta:'ОТКРЫТЬ ПЛИТКУ'}
  };
  const COLORS=['#9470e2','#b58add','#e6a95d','#76ad83','#ea7f9b','#a78be5','#bb86c8'];
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -41,7 +41,7 @@ window.QwizArcade=(()=>{
     '<g class="dino-leg-b" fill="#353544"><path d="M52 65H61V82H67V89H49V84H52Z"/></g></svg></div>'+
     '<div class="arcade-runner-obstacle" data-runner-obstacle><svg viewBox="0 0 52 86" class="dino-cactus" shape-rendering="crispEdges" aria-hidden="true"><path d="M20 6H31V78H20Z M9 25H18V51H9Z M9 45H26V54H9Z M33 34H43V60H33Z M26 51H43V61H26Z M16 77H36V84H16Z" fill="#4c806c"/></svg></div><div class="arcade-runner-floor"></div><span class="arcade-runner-score" aria-hidden="true">ДИНО · ЗАБЕГ</span></div>';
   if(mode==='tug')return '<div class="arcade-tap-stage" aria-hidden="true"><div class="arcade-tap-glow"></div><span class="arcade-tap-sparks">✧　✦　✧</span></div>';
-  if(mode==='captain')return '<div class="arcade-memory-hero" aria-hidden="true"><div class="memory-stage"><span class="memory-stage-halo"></span><span class="memory-stage-card memory-stage-card-a"><i>◈</i></span><span class="memory-stage-card memory-stage-card-b"><i>✦</i></span><span class="memory-stage-card memory-stage-card-c"><i>◈</i></span><span class="memory-stage-card memory-stage-card-d"><i>✦</i></span></div><span class="memory-hero-caption">Найдите шесть пар раньше соперников</span></div>';
+  if(mode==='captain')return '<div class="arcade-memory-hero" aria-hidden="true"><div class="memory-stage"><span class="memory-stage-halo"></span><span class="memory-stage-card memory-stage-card-a"><i>◈</i></span><span class="memory-stage-card memory-stage-card-b"><i>✦</i></span><span class="memory-stage-card memory-stage-card-c"><i>◈</i></span><span class="memory-stage-card memory-stage-card-d"><i>✦</i></span></div></div>';
   return '<div class="arcade-3d-world arcade-world-blitz" role="img" aria-label="Трёхмерный энергетический кристалл для блиц-вопроса">'+ground+
    '<div class="arcade-3d-object arcade-model-blitz">'+
     '<span class="arcade-blitz-facet facet-left"></span><span class="arcade-blitz-facet facet-back"></span>'+
@@ -57,8 +57,8 @@ window.QwizArcade=(()=>{
  function rootMarkup(mode,kind='player'){const m=META[mode];return '<div class="arcade-shell arcade-'+kind+'" data-arcade-root="'+mode+'">'+
   '<div class="arcade-head"><div><span class="arcade-kicker">QWIZ-PARTY · КОМАНДНОЕ ИСПЫТАНИЕ</span><h2>'+escape(m.title)+'</h2></div><span class="arcade-countdown" data-arcade-clock>—</span></div>'+
   '<p class="arcade-lead">'+escape(m.desc)+'</p><div class="arcade-scene">'+art(mode)+(kind==='player'&&['tug','rocket'].includes(mode)?'<button type="button" class="arcade-tap-btn '+(mode==='tug'?'arcade-tap-center':'arcade-runner-jump-btn')+'" data-arcade-tap disabled>'+escape(m.cta)+'</button>':'')+'</div>'+
-  '<div data-arcade-question hidden></div>'+(mode==='captain'&&kind==='player'?'<div class="arcade-memory-info" data-memory-info></div><div class="arcade-memory-board" data-arcade-memory role="group" aria-label="Поле Memory"></div>':'')+'<div class="arcade-ranks" data-arcade-ranks></div>'+
-  (kind==='player'?(['tug','rocket'].includes(mode)?'':'<button type="button" class="arcade-tap-btn" data-arcade-tap '+(mode==='captain'?'hidden ':'')+'disabled>'+escape(m.cta)+'</button>')+'<span class="arcade-tap-caption" data-arcade-personal>Синхронизация с игровым сервером…</span>':'')+
+  '<div data-arcade-question hidden></div>'+(mode==='captain'&&kind==='player'?'<div class="arcade-memory-info" data-memory-info role="status"></div><div class="arcade-memory-board" data-arcade-memory role="group" aria-label="Поле Мэмори"></div>':'')+'<div class="arcade-ranks" data-arcade-ranks></div>'+
+  (kind==='player'?(['tug','rocket'].includes(mode)?'':(mode==='captain'?'':'<button type="button" class="arcade-tap-btn" data-arcade-tap disabled>'+escape(m.cta)+'</button>'))+(mode==='captain'?'':'<span class="arcade-tap-caption" data-arcade-personal>Синхронизация с игровым сервером…</span>'):'')+
   '<div class="arcade-alert" role="status" aria-live="polite" data-arcade-alert>Подключаем результаты…</div><div class="arcade-badges" data-arcade-badges></div><section class="arcade-vote" data-arcade-vote hidden></section></div>';
  }
  function stop(kind){const tr=ui[kind];if(!tr)return;if(tr.interval)clearTimeout(tr.interval);if(tr.clock)clearInterval(tr.clock);if(tr.flushTimer)clearTimeout(tr.flushTimer);if(tr.onClick)tr.root?.removeEventListener('click',tr.onClick);if(tr.onPointerDown)tr.root?.removeEventListener('pointerdown',tr.onPointerDown);tr.closed=true;ui[kind]=null;}
@@ -103,7 +103,7 @@ window.QwizArcade=(()=>{
   if(v.mode==='captain'&&tr.kind==='player'){
    const board=tr.root.querySelector('[data-arcade-memory]'),info=tr.root.querySelector('[data-memory-info]');
    const m=v.extra||{},enabled=valid&&!!m.captain&&m.completed_ms==null;
-   if(info)info.textContent=!m.captain?'Мэмори: играют капитаны, остальные наблюдают.':m.completed_ms!=null?'Готово за '+(m.completed_ms/1000).toFixed(2)+' сек. · '+m.moves+' ходов.':'Найдено '+(m.pairs||0)+'/6 пар · '+(m.moves||0)+' ходов. Откройте две плитки.';
+   if(info)info.textContent=!m.captain?'Ход капитанов':m.completed_ms!=null?'Готово · '+m.moves+' ходов':'Найдено '+(m.pairs||0)+'/6 пар · '+(m.moves||0)+' ходов';
    if(board){const key=JSON.stringify([m.tiles,m.moves,enabled]);if(tr.memoryKey!==key){
     tr.memoryKey=key;board.innerHTML=(m.tiles||[]).map(tile=>'<button type="button" class="arcade-memory-tile'+(tile.matched?' is-matched':'')+(tile.icon?' is-open':'')+'" data-arcade-tile="'+tile.index+'" '+(!enabled||tile.matched||tile.open?'disabled':'')+' aria-label="'+(tile.icon?'Открытая':'Закрытая')+' плитка '+(tile.index+1)+'"><span class="arcade-memory-tile-inner"><span class="arcade-memory-back">✦</span><span class="arcade-memory-front">'+escape(tile.icon||'')+'</span></span></button>').join('');
    }}
@@ -176,12 +176,17 @@ window.QwizArcade=(()=>{
     if(e.target.closest('[data-arcade-tap]')){
       if(tr.mode!=='tug'||e.detail===0||Date.now()-(tr.lastPointerTapAt||0)>700)tap(tr);
      }
-     const tile=e.target.closest('[data-arcade-tile]');if(tile)flip(tr,Number(tile.dataset.arcadeTile));
+     const tile=e.target.closest('[data-arcade-tile]');if(tile&&Date.now()-(tr.lastTilePointerAt||0)>750)flip(tr,Number(tile.dataset.arcadeTile));
     const opt=e.target.closest('[data-arcade-answer]');if(opt)answer(tr,Number(opt.dataset.arcadeAnswer));
     const boost=e.target.closest('[data-boost-choice]');if(boost)voteBoost(tr,boost.dataset.boostChoice);
    };root.addEventListener('click',tr.onClick);
     tr.onPointerDown=e=>{
      const button=e.target.closest('[data-arcade-tap]');
+     if(tr.mode==='captain'){
+      const tile=e.target.closest('[data-arcade-tile]');
+      if(tile&&!tile.disabled&&e.isPrimary){e.preventDefault();tr.lastTilePointerAt=Date.now();flip(tr,Number(tile.dataset.arcadeTile));}
+      return;
+     }
      if(!button||tr.mode!=='tug'||button.disabled||!e.isPrimary)return;
      e.preventDefault();
      tr.lastPointerTapAt=Date.now();tap(tr);
@@ -291,7 +296,32 @@ window.QwizArcade=(()=>{
   }catch(e){showMessage(tr,e.message||'Действие не принято',true);tr.alertOverride=Date.now()+2600}
   finally{tr.gameBusy=false}
  }
- function flip(tr,index){const v=tr.view;if(!v?.running||!v.extra?.captain||v.extra.completed_ms!=null)return;gameAction(tr,'flip',index);}
+ function flip(tr,index){
+ const v=tr.view;
+ if(!v?.running||!v.extra?.captain||v.extra.completed_ms!=null||!Number.isInteger(index))return;
+ const tile=tr.root?.querySelector('[data-arcade-tile="'+index+'"]');
+ if(!tile||tile.disabled||tile.classList.contains('is-pending'))return;
+ // A visual response is immediate, independently of the server round-trip.
+ tile.classList.add('is-pending');tile.setAttribute('aria-busy','true');
+ if(tr.gameBusy){
+  if(tr.queuedTile==null)tr.queuedTile=index;
+  else {tile.classList.remove('is-pending');tile.removeAttribute('aria-busy')}
+  return;
+ }
+ const run=async()=>{
+  await gameAction(tr,'flip',index);
+  if(tr.closed)return;
+  tile.classList.remove('is-pending');tile.removeAttribute('aria-busy');
+  const next=tr.queuedTile;tr.queuedTile=null;
+  if(Number.isInteger(next)){
+   const queued=tr.root.querySelector('[data-arcade-tile="'+next+'"]');
+   queued?.classList.remove('is-pending');
+   if(queued)queued.removeAttribute('aria-busy');
+   flip(tr,next);
+  }
+ };
+ void run();
+}
  function jump(tr){const v=tr.view;if(!v?.running||!v.extra?.selected||!v.extra?.alive)return;
   const k=v.extra.next_at;if(tr.lastJumpTarget===k||tr.gameBusy)return;tr.lastJumpTarget=k;
   const sprite=tr.root.querySelector('[data-runner-character]');
@@ -308,23 +338,24 @@ window.QwizArcade=(()=>{
  function mountPlayer(el,s,ctx){if(!isArcade(s.activity))return false;activate('player',el,s.code,s.room_id,ctx.client,s.activity.settings.arcade_mode);return true;}
  function mountProjector(el,s,client){if(!isArcade(s.activity))return false;activate('screen',el,s.code,null,client,s.activity.settings.arcade_mode);return true;}
  function mountHost(el,s,client){if(!el)return;if(s.phase==='intermission'&&isArcade(s.activity)){el.hidden=false;activate('host',el,s.code,s.room_id,client,s.activity.settings.arcade_mode)}else{el.hidden=true;stop('host')}}
- const UPGRADES=[['turbo','Ускоритель (архив)',15,'Не влияет на новую игру'],['grip','Хват (архив)',15,'Не влияет на число тапов'],['navigator','Навигатор',20,'+10% к результату захвата блиц-вопроса']];
- function paintWallet(view){wallet.view=view;
+ function paintWallet(view){
+  wallet.view=view;
   const el=document.getElementById('arcadeWalletPanel');if(!el)return;
-  if(!view?.mine){el.hidden=true;return}
-  const mine=view.mine;el.hidden=false;
-  el.innerHTML='<div class="arcade-wallet-title"><span>Командная мастерская</span><span class="arcade-wallet-total">'+Number(mine.credits||0)+' жетонов</span></div>'+
-   '<div class="arcade-store">'+UPGRADES.map(([id,title,price,desc])=>
-     '<button type="button" data-arcade-buy="'+id+'" '+(mine[id]||['turbo','grip'].includes(id)||mine.credits<price||wallet.phase==='intermission'?'disabled':'')+'><strong>'+
-     escape(title)+'</strong><span>'+escape(desc)+'</span><span>'+ (mine[id]?'Приобретено':'Купить · '+price+' жет.')+'</span></button>').join('')+'</div>'+
-    '<div class="arcade-badges">'+(mine.achievements||[]).slice(0,6).map(a=>'<span class="arcade-award">'+escape(a.title)+' · +'+Number(a.credits)+'</span>').join('')+'</div>';
-  if(!el.dataset.arcadeWired){el.dataset.arcadeWired='1';el.addEventListener('click',async e=>{
-    const button=e.target.closest('[data-arcade-buy]');if(!button||wallet.busy)return;
-    wallet.busy=true;button.disabled=true;
-    try{const {error}=await wallet.client.rpc('qwiz_arcade_action',{p_room:wallet.roomId,p_action:'buy',p_upgrade:button.dataset.arcadeBuy});
-     if(error)throw error;wallet.lastFetch=0;await syncWallet({code:wallet.code,room_id:wallet.roomId,phase:wallet.phase},{client:wallet.client});
-    }catch(err){el.insertAdjacentHTML('beforeend','<p class="arcade-alert" data-error="true">'+escape(err.message)+'</p>')}finally{wallet.busy=false}
-   });}
+  const mine=view?.mine;
+  if(!mine){el.hidden=true;return}
+  // Rewards are read-only here. No phantom shop or unused token currency.
+  const earned=[];
+  if(mine.navigator)earned.push({title:'Навигатор',description:'+10% к результату блиц-вопроса',active:true,icon:'◉'});
+  for(const a of (mine.achievements||[]).slice(0,8)){
+   earned.push({title:String(a.title||'Достижение'),description:'Получено в мини-игре',active:false,icon:'✦'});
+  }
+  el.hidden=false;
+  el.innerHTML='<div class="arcade-bonus-header"><h2>Командные бонусы</h2><p>Усиления, полученные в мини-играх. Действуют в следующем раунде.</p></div>'+
+   (earned.length?'<div class="arcade-bonus-list">'+earned.map(b=>
+    '<div class="arcade-bonus-card"><span class="arcade-bonus-icon" aria-hidden="true">'+escape(b.icon)+'</span>'+
+    '<div><strong>'+escape(b.title)+'</strong><span>'+escape(b.description)+'</span></div>'+
+    '<span class="arcade-bonus-state">'+(b.active?'Активен':'Получено')+'</span></div>').join('')+'</div>':
+    '<p class="arcade-bonus-empty">Активных бонусов пока нет. Они появятся после игровых достижений.</p>');
  }
  async function syncWallet(s,ctx){if(!s?.code||!ctx?.client)return;wallet.phase=s.phase;
   if(s.phase==='intermission'&&isArcade(s.activity)){if(ui.player?.view)paintWallet(ui.player.view);return}
