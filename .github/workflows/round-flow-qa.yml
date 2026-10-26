@@ -3,6 +3,8 @@ on:
   push:
     paths:
       - 'next/arcade.js'
+      - 'next/arcade-qa-fixture.html'
+      - 'next/arcade-visual.spec.mjs'
       - 'next/app.js'
       - 'next/presenter.js'
       - 'next/player-layout.css'
