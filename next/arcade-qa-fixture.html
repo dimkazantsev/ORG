@@ -8,6 +8,7 @@
 <script>
 const fake={mode:'captain',running:true,card_position:1,started_at:new Date(Date.now()-4000).toISOString(),ends_at:new Date(Date.now()+60000).toISOString(),server_now:new Date().toISOString(),teams:[{id:'team1',name:'Команда первая',points:0,taps:0,place:1}],mine:{team_id:'team1',player_id:'player1',captain:true,credits:0,achievements:[]},awards:[],extra:{}};
 const accepted=[];
+const batches=new Set();
 window.mountExample=mode=>{
  QwizArcade.stop('player');
  fake.mode=mode;fake.running=true;fake.card_position+=1;
@@ -16,6 +17,14 @@ window.mountExample=mode=>{
  const client={rpc:async(method,params)=>{
   if(method==='qwiz_party_arcade')return {data:{...fake,server_now:new Date().toISOString()},error:null};
   if(method==='qwiz_arcade_play'){accepted.push({action:params.p_action,tile:params.p_tile});if(params.p_action==='flip'){const tile=fake.extra.tiles[params.p_tile];tile.icon='🌈';tile.open=true;}return {data:{ok:true},error:null};}
+  if(method==='qwiz_arcade_tap_once'){
+   if(!batches.has(params.p_batch)){
+    batches.add(params.p_batch);
+    accepted.push({action:'tap',count:params.p_count,batch:params.p_batch});
+    fake.teams[0].taps+=params.p_count;
+   }
+   return {data:{ok:true,duplicate:batches.has(params.p_batch)},error:null};
+  }
   if(method==='qwiz_arcade_action'){accepted.push({action:params.p_action,count:params.p_count});fake.teams[0].taps+=params.p_count;return {data:{ok:true},error:null};}
   return {data:{ok:true},error:null};
  }};
