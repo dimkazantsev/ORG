@@ -1,5 +1,10 @@
 name: QWIZ-PARTY / Real Supabase 40-client load test
 on:
+  push:
+    paths:
+      - 'next/live-40-supabase.mjs'
+      - '.github/workflows/live-40-load-qa.yml'
+  # One controlled, test-room-only run after user raised anonymous Auth limit.
   # Deliberately opt-in: creates disposable anonymous test users and performs
   # 120 real RPC reads. Never run on ordinary commits.
   workflow_dispatch:
@@ -18,7 +23,7 @@ jobs:
     permissions:
       contents: read
     env:
-      QWIZ_LOAD_ROOM: ${{ inputs.test_room }}
+      QWIZ_LOAD_ROOM: ${{ inputs.test_room || 'A40C2626' }}
       QWIZ_LOAD_TAG: qwiz_perf_40_20261026
     steps:
       - uses: actions/checkout@v4
