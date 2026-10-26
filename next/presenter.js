@@ -491,7 +491,16 @@ async function refresh(){
  // Never discard a live phase update that arrives while a slow poll is pending.
  if(ctx.checking){ctx.refreshQueued=true;return;}
  ctx.checking=true;
- try{const sentAt=Date.now();const {data,error}=await ctx.client.rpc('qwiz_party_projection',{p_code:room});if(error)throw Error(error.message);
+ try{
+  const sentAt=Date.now(),controller=new AbortController();
+  const q=ctx.client.rpc('qwiz_party_projection',{p_code:room});
+  const request=typeof q?.abortSignal==='function'?q.abortSignal(controller.signal):q;
+  let timer;
+  let result;
+  try{result=await Promise.race([request,new Promise((_,reject)=>{
+   timer=setTimeout(()=>{controller.abort();reject(Error('Сервер долго не отвечает'));},9500);
+  })]);}finally{clearTimeout(timer);}
+  const {data,error}=result;if(error)throw Error(error.message);
   if(data.server_now)ctx.offset=Date.parse(data.server_now)-(sentAt+Date.now())/2;ctx.last=data;render(data);clearError();
  }catch(e){showError('Связь с игрой прервана. Пробуем восстановить: '+e.message)}
  finally{
@@ -499,11 +508,22 @@ async function refresh(){
   if(ctx.refreshQueued){ctx.refreshQueued=false;queueMicrotask(()=>refresh());}
  }
 }
+let presenterEventTimer=null;
+function scheduleProjectionRefresh(){
+ if(presenterEventTimer)clearTimeout(presenterEventTimer);
+ presenterEventTimer=setTimeout(()=>{presenterEventTimer=null;refresh();},250+Math.floor(Math.random()*350));
+}
 function subscribe(){if(ctx.channel)ctx.client.removeChannel(ctx.channel);
  ctx.channel=ctx.client.channel('org-next-'+room,{config:{broadcast:{ack:false}}});
- for(const event of ['phase','answer','team'])ctx.channel.on('broadcast',{event},()=>refresh());
- ctx.channel.subscribe(status=>{if(status==='SUBSCRIBED'&&ctx.last)refresh();});
- if('BroadcastChannel' in window){ctx.local=new BroadcastChannel('qwiz-projector-'+room);ctx.local.onmessage=()=>refresh()}
+ for(const event of ['phase','team'])ctx.channel.on('broadcast',{event},scheduleProjectionRefresh);
+ ctx.channel.subscribe(status=>{
+  if(status==='SUBSCRIBED')scheduleProjectionRefresh();
+  else if(['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status)){
+   // WebSocket reconnects independently; timer-based HTTP state is the fallback.
+   scheduleProjectionRefresh();
+  }
+ });
+ if('BroadcastChannel' in window){ctx.local=new BroadcastChannel('qwiz-projector-'+room);ctx.local.onmessage=scheduleProjectionRefresh}
 }
 async function init(){
  QwizStage.bindFullscreen($('projectionFullscreen'));
@@ -528,7 +548,7 @@ async function init(){
  setInterval(()=>{if(!document.hidden)refresh()},3000);
  setInterval(()=>{
   const s=ctx.last;if(!s||document.hidden)return;
-  if(['question','result'].includes(s.phase)&&!s.paused){const left=updateProjectorClock(s);if(left===0&&Date.now()-ctx.lastReleaseAttempt>750){ctx.lastReleaseAttempt=Date.now();refresh()}}
+  if(['question','result'].includes(s.phase)&&!s.paused){const left=updateProjectorClock(s);if(left===0&&Date.now()-ctx.lastReleaseAttempt>2600){ctx.lastReleaseAttempt=Date.now();refresh()}}
   if((s.phase==='countdown'||(s.phase==='intermission'&&s.activity?.type==='card_intro'))&&!s.paused){
    const n=seconds(s.ends_at);if($('countdownNumber'))$('countdownNumber').textContent=n;
    if(n===0&&Date.now()-ctx.lastReleaseAttempt>750){ctx.lastReleaseAttempt=Date.now();refresh()}
