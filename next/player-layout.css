@@ -738,3 +738,5 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
  #gameContent .assembly-swatch{width:26px;height:26px}
  #gameContent .assembly-hint{display:none}
 }
+
+#gameContent .team-confirm-emoji .habitat-icon{width:41px;height:41px;max-width:100%;display:block}
