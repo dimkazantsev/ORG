@@ -78,7 +78,7 @@ window.QwizArcade=(()=>{
    // of the previous card's taps, question, selection or pending work.
    if(tr.view?.card_position!==undefined&&tr.view.card_position!==data.card_position){
      tr.pending=0;tr.batch=null;tr.qkey='';tr.alertOverride=0;
-      tr.memoryKey=null;tr.lastJumpTarget=null;tr.gameBusy=false;tr.visualTapCount=0;
+      tr.memoryKey=null;tr.lastJumpTarget=null;tr.gameBusy=false;tr.visualTapCount=0;tr.localTaps=0;
      if(tr.flushTimer){clearTimeout(tr.flushTimer);tr.flushTimer=null;}
    }
    tr.failures=0;tr.view=data;tr.offset=Date.parse(data.server_now)-Date.now();paint(tr);if(tr.kind==='player')paintWallet(data);
@@ -116,7 +116,7 @@ window.QwizArcade=(()=>{
    if(v.mode==='captain')eligible=false;if(v.mode==='rocket')eligible=eligible&&!!v.extra?.selected&&!!v.extra?.alive;
    tap.disabled=!eligible;tap.textContent=META[v.mode].cta;
    const personal=tr.root.querySelector('[data-arcade-personal]');
-    if(personal)personal.textContent=v.mode==='captain'?(v.extra?.captain?'Переворачивайте по две плитки.':'Наблюдайте за вашим капитаном.'):v.mode==='rocket'?(v.extra?.selected?(v.extra.alive?'Вы бегун! Прыгайте перед препятствием.':'Столкновение. Сравниваем результаты.'):'От команды выбран один случайный бегун.'):v.mode==='blitz'&&!claim?(canAnswer?'Ваша команда выиграла захват! Выберите ответ.':'Захват завершён. Смотрите рейтинг.'):'Все игроки нажимают. До 8 нажатий в секунду на человека.';
+    if(personal)personal.textContent=v.mode==='captain'?(v.extra?.captain?'Переворачивайте по две плитки.':'Наблюдайте за вашим капитаном.'):v.mode==='rocket'?(v.extra?.selected?(v.extra.alive?'Вы бегун! Прыгайте перед препятствием.':'Столкновение. Сравниваем результаты.'):'От команды выбран один случайный бегун.'):v.mode==='blitz'&&!claim?(canAnswer?'Ваша команда выиграла захват! Выберите ответ.':'Захват завершён. Смотрите рейтинг.'):(tr.localTaps?'Нажатия: '+tr.localTaps+' · счёт команды обновляется сервером':'Все игроки нажимают. До 8 нажатий в секунду на человека.');
   }
   const badges=tr.root.querySelector('[data-arcade-badges]');if(badges)badges.innerHTML=(v.awards||[]).slice(0,12).map(a=>'<span class="arcade-award">'+escape(a.title)+' · +'+Number(a.credits)+' жет.</span>').join('');
   const vote=v.vote,ballot=tr.root.querySelector('[data-arcade-vote]');
