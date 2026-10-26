@@ -380,6 +380,9 @@ setInterval(paintCaptainTimers,1000);
 function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;const me=s.me;const myTeam=(s.teams||[]).find(t=>t.id===me?.team_id);
  text('playerGameTitle',s.title);text('playerTeamName',s.team_lobby?.mode==='random'&&!s.team_lobby.confirmed?'Команда появится после подтверждения':myTeam?.name||'Команда пока не назначена');$('playerScoreboard').innerHTML=(s.team_lobby?.mode==='random'&&!s.team_lobby.confirmed)?'':teamMarkup(s.teams);
  QwizTeams.playerPanel($('playerTeamPanel'),s);
+ // Random team creation uses one single full-height scene; the legacy header
+ // previously repeated the infinity icon or team-confirmation panel above it.
+ $('playerTeamPanel').hidden=s.phase==='lobby'&&s.team_lobby?.mode==='random';
  const el=$('gameContent');
  const cue=s.phase+':'+s.index;if(cue!==ctx.gameCue){ctx.gameCue=cue;if(s.phase==='result')QwizStage.audio.play('reveal');else if(s.phase==='finished')QwizStage.audio.play(s.activity?.sound||'fanfare');else if(s.phase==='question')QwizStage.audio.play('pop')}
  $('playerTeamProgress').hidden=s.phase!=='question';if(s.phase==='question')QwizStage.progress($('playerTeamProgress'),s.public_stats?.teams||[]);
