@@ -25,7 +25,7 @@ for(const [width,height] of [[320,480],[320,568],[390,844],[768,1024],[667,375],
  for(const mode of ['similar','assemble','multiple','memory','geo','history']){
   const row=rows.find(x=>x.mode===mode),q={kind:row.kind,prompt:row.prompt,options:row.options,media_url:row.solution.media_url,flag_memory:row.solution.flag_memory,flag_assembly:row.solution.flag_assembly,memory_until:new Date(Date.now()-1).toISOString()};
   await question(page,q);await fits(page);
-  await page.evaluate(()=>{ctx.room.has_answer=true;ctx.gameRenderKey='';renderGame();notice('gameNotice','Ответ сохранён.','success')});await fits(page);await expect(page.locator('.player-responses .player-answer-confirmation')).toContainText('Ваш ответ принят.');await expect(page.locator('#playerAccepted')).toHaveCount(0);
+  await page.evaluate(()=>{ctx.room.has_answer=true;ctx.gameRenderKey='';renderGame();notice('gameNotice','Ответ сохранён.','success')});await fits(page);await expect(page.locator('.player-responses .player-answer-confirmation')).toContainText('Ответ принят.');await expect(page.locator('#playerAccepted')).toHaveCount(0);
  }
  await page.mouse.wheel(0,600);expect(await page.evaluate(()=>scrollY)).toBe(0);
  await page.screenshot({path:'visual-artifacts/player-compact-'+width+'x'+height+'.png'});
@@ -319,7 +319,7 @@ test('Answer confirmation remains at bottom without resizing choice buttons or h
    notice('gameNotice','Ответ сохранён.','success');
   });
   await expect(page.locator('.player-responses>.player-answer-confirmation')).toBeVisible();
-  await expect(page.locator('.player-responses>.player-answer-confirmation')).toContainText('Ваш ответ принят.');
+  await expect(page.locator('.player-responses>.player-answer-confirmation')).toContainText('Ответ принят.');
   await expect(page.locator('#playerAccepted')).toHaveCount(0);
   await expect(page.locator('#playerTeamName')).toBeVisible();
   await expect(page.locator('#gameNotice')).toBeHidden();
