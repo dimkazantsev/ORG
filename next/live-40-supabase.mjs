@@ -6,12 +6,12 @@ import {createClient} from '@supabase/supabase-js';
 const ROOM=process.env.QWIZ_LOAD_ROOM;
 const MODE=process.env.QWIZ_LOAD_MODE||'public';
 const TAG=process.env.QWIZ_LOAD_TAG||'qwiz_perf_40_20261026';
-const URL='https://bderfrcfuhnutuoyudje.supabase.co';
+const SUPABASE_URL='https://bderfrcfuhnutuoyudje.supabase.co';
 const source=readFileSync(new URL('./app.js',import.meta.url),'utf8');
 const KEY=source.match(/const KEY_SUPABASE='([^']+)'/)?.[1];
 if(!KEY||!/^[A-F0-9]{8}$/.test(ROOM||'')||!['public','full'].includes(MODE))throw Error('Dedicated fixture, publishable key and run mode required');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-function client(){return createClient(URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}})}
+function client(){return createClient(SUPABASE_URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}})}
 function percentile(arr,p){const a=arr.slice().sort((x,y)=>x-y);return a[Math.max(0,Math.ceil(a.length*p)-1)]??null}
 function report(name,arr){
  const durations=arr.filter(x=>x.ok).map(x=>x.ms);
@@ -29,7 +29,7 @@ async function publicRun(){
  const rounds=[];
  for(let round=0;round<3;round++){
   const batch=await Promise.all(Array.from({length:40},(_,i)=>timed(async()=>{
-   const endpoint=URL+'/rest/v1/rpc/qwiz_party_projection';
+   const endpoint=SUPABASE_URL+'/rest/v1/rpc/qwiz_party_projection';
    const res=await fetch(endpoint,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json','Cache-Control':'no-store'},body:JSON.stringify({p_code:ROOM}),signal:AbortSignal.timeout(11000)});
    const body=await res.json();
    if(!res.ok||body.code!==ROOM)throw Error('HTTP '+res.status+': '+String(body?.message||'wrong room'));
