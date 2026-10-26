@@ -574,3 +574,27 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
 @media (prefers-reduced-motion:reduce){
  .player-compact #gameContent .arcade-scene:has(.arcade-3d-world){transition:none!important}
 }
+
+/* QWIZ-PARTY 2026-10-27: neutral answer selection in the existing light theme.
+   Keep selection through disabled/pending and confirmed stages without shifting layout. */
+#gameView #gameContent .option.is-picked,
+#gameView #gameContent .option.is-picked:disabled,
+#gameView #gameContent .option.is-picked[aria-busy="true"]{
+ background:#eef0f3!important;
+ border-color:#b9bec8!important;
+ color:#282638!important;
+ opacity:1!important;
+ box-shadow:inset 0 0 0 1px #b9bec8!important;
+}
+#gameView #gameContent .option.is-picked .letter{
+ background:#dfe2e8!important;
+ color:#383645!important;
+}
+#gameView #gameContent .rich-choice:has(input:checked){
+ background:#eef0f3!important;
+ border-color:#b9bec8!important;
+ color:#282638!important;
+ box-shadow:inset 0 0 0 1px #b9bec8!important;
+}
+/* No top banners for submitted/sending answers even if legacy JS emits them. */
+#gameView #gameNotice:is(:not(.error),.success){display:none!important;}
