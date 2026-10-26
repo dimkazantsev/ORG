@@ -34,9 +34,25 @@
  window.addEventListener('load',()=>{
   update();
   navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'}).then(reg=>{
-   // Defer updates during active gameplay; never reload an ongoing room.
-   const check=()=>{if(!document.hidden)reg.update().catch(()=>{});};
+   // A previously installed PWA can stay on an old worker indefinitely.
+   // Activate a waiting update at the HOME screen only; NEVER reload a live game.
+   const activateOnHome=()=>{
+    if(!document.getElementById('gameView')?.hidden)return;
+    reg.waiting?.postMessage({type:'SKIP_WAITING'});
+   };
+   activateOnHome();
+   reg.addEventListener('updatefound',()=>{
+    const worker=reg.installing;if(!worker)return;
+    worker.addEventListener('statechange',()=>{
+     if(worker.state==='installed')activateOnHome();
+    });
+   });
+   const check=()=>{
+    if(document.hidden)return;
+    reg.update().then(activateOnHome).catch(()=>{});
+   };
    document.addEventListener('visibilitychange',check);
+   window.addEventListener('pageshow',check);
   }).catch(err=>console.warn('QWIZ-PARTY: offline resources unavailable',err));
  });
 })();
