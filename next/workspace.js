@@ -770,7 +770,7 @@ function roomsListMarkup(rooms){
  const current=rooms.filter(room=>room.phase!=='finished');
  const history=rooms.filter(room=>room.phase==='finished');
  return '<div class="active-rooms" aria-label="Текущие комнаты">'+(current.length?current.map(roomRowMarkup).join(''):'<p class="empty rooms-empty-active">Активных комнат пока нет. Выберите сборку и создайте новую игру.</p>')+'</div>'+
- (history.length?'<details class="rooms-history"><summary>История завершённых игр <span class="rooms-history-count">'+history.length+'</span></summary><button type="button" class="clear-archive-button" id="clearFinishedArchive" title="Удалить все завершённые игры" aria-label="Очистить архив завершённых игр">'+trashSvg+'<span>Очистить архив</span></button><div class="rooms-history-list">'+history.map(roomRowMarkup).join('')+'</div></details>':'');
+ (history.length?'<div class="rooms-history-group"><details class="rooms-history"><summary>История завершённых игр <span class="rooms-history-count">'+history.length+'</span></summary><div class="rooms-history-list">'+history.map(roomRowMarkup).join('')+'</div></details><button type="button" class="clear-archive-button" id="clearFinishedArchive" title="Удалить все завершённые игры" aria-label="Очистить архив завершённых игр">'+trashSvg+'<span>Очистить архив</span></button></div>':'');
 }
 async function loadRooms(){
  try{
