@@ -44,13 +44,14 @@ test('40 isolated browser players recover snapshots after a simulated server out
   const failing=await Promise.all(pages.map(p=>p.evaluate(async()=>{
    window.__failReads=true;
    await refreshRoom(false);
-   return ctx.connectionStale;
+   // One lost room snapshot is not evidence that answer writes are impossible.
+   return !ctx.connectionStale&&ctx.snapshotFailures>=1;
   })));
   expect(failing.every(Boolean)).toBe(true);
   const healed=await Promise.all(pages.map(p=>p.evaluate(async()=>{
    window.__failReads=false;
    await refreshRoom(false);
-   return !ctx.connectionStale&&ctx.room?.code==='ABCDEF12'&&!ctx.refreshPromise;
+   return !ctx.connectionStale&&ctx.snapshotFailures===0&&ctx.room?.code==='ABCDEF12'&&!ctx.refreshPromise;
   })));
   expect(healed.every(Boolean)).toBe(true);
   const count=await Promise.all(pages.map(p=>p.evaluate(()=>window.__readCount)));
@@ -83,6 +84,7 @@ test('Lost answer acknowledgment is reconciled without a duplicate submission',a
   await page.clock.fastForward(9400);
   await expect.poll(()=>page.evaluate(()=>ctx.room?.has_answer)).toBe(true);
   expect(await page.evaluate(()=>window.__writes)).toBe(1);
-  await expect(page.locator('#gameNotice')).toContainText('Ответ подтверждён сервером');
+  await expect(page.locator('.player-answer-confirmation')).toContainText('Ответ принят.');
+  await expect(page.locator('#gameNotice')).toBeHidden();
  }finally{await context.close()}
 });
