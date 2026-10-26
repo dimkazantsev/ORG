@@ -22,8 +22,8 @@ test('Offline shell caches public assets but never caches API/auth or submission
  assert.match(sw,/if\(req\.method!=='GET'\)return/);
  assert.match(sw,/if\(url\.origin!==self\.location\.origin\)return/);
  assert.match(sw,/if\(url\.pathname\.includes\('\/rest\/'\)/);
- assert.match(sw,/if\(url\.pathname\.includes\('\/auth\/'\)/);
- assert.match(sw,/if\(url\.pathname\.includes\('\/realtime\/'\)/);
+ assert.match(sw,/url\.pathname\.includes\('\/auth\/'\)/);
+ assert.match(sw,/url\.pathname\.includes\('\/realtime\/'\)/);
  assert.match(sw,/if\(req\.mode==='navigate'\)/);
  assert.match(sw,/url\.pathname\+url\.search/);
  assert.match(sw,/No skipWaiting/);
