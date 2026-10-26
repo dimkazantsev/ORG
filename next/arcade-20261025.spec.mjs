@@ -135,3 +135,12 @@ test('forty-device arcade load guard: staggered polling, bounded retry and recon
  // versus 25 per second in the previous 1600ms implementation.
  assert.ok(40/4.7<9);
 });
+
+test('arcade snapshot cannot hang forever and leave the player frozen',()=>{
+ const js=read('arcade.js');
+ assert.match(js,/new AbortController\(\)/);
+ assert.match(js,/query\.abortSignal\(ac\.signal\)/);
+ assert.match(js,/Promise\.race\(\[request,new Promise/);
+ assert.match(js,/ac\.abort\(\);reject\(Error\('Сервер не ответил за 9 секунд'\)\);},9000\)/);
+ assert.match(js,/finally\{tr\.fetching=false\}/);
+});
