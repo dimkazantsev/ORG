@@ -26,6 +26,10 @@ test('40 students never broadcast every answer or join through Realtime',()=>{
 test('ambiguous answer acknowledgements are reconciled from server before UI success',()=>{
  const app=read('app.js');
  assert.match(app,/async function sendAnswerOnce/);
+ assert.ok(app.includes("ctx.answerAck={room_id:sentRoom,index:sentIndex}"));
+ assert.ok(app.includes("ctx.answerAck={room_id:s.room_id,index:s.index}"));
+ assert.match(app,/room=\{\.\.\.room,has_answer:true\}/);
+
  assert.match(app,/controller\.abort\(\);reject\(Error\('Подтверждение ответа задерживается/);
  assert.ok(app.includes("if(ctx.room?.has_answer)notice('gameNotice','')"));
  assert.ok(app.includes("done?'Ответ принят.'"));
