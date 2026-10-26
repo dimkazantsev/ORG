@@ -297,7 +297,7 @@ function gameRichMarkup(q,locked){
  '<span class="rich-marker" id="richMarker" hidden>+</span></button><button type="button" class="btn btn-dark rich-send" data-submit-rich'+disabled+'>Подтвердить точку →</button>';
  return '<div class="option-list'+(options.some(option=>typeof option==='string'&&option.length>36)?' has-long-options':'')+'">'+options.map((option,i)=>{
   let classes='option';if(q._phase==='result'&&i===Number(q.correct))classes+=' correct';
-  const picked=q._phase==='question'&&Number(q._picked)===i;
+  const picked=q._phase==='question'&&Number.isInteger(q._picked)&&q._picked===i;
   if(picked)classes+=' is-picked';
   return '<button type="button" class="'+classes+'" data-answer="'+i+'" aria-pressed="'+(picked?'true':'false')+'"'+disabled+'><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+flagOptionHtml(option,i)+'</span></button>';
  }).join('')+'</div>';
