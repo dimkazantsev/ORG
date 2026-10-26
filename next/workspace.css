@@ -1375,3 +1375,47 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 #roomsPage #launchButton{box-sizing:border-box;min-height:56px;height:56px;max-height:56px;align-self:end;white-space:nowrap;padding:0 18px;line-height:1.2;flex-shrink:0}
 @media(max-width:1000px){#roomsPage .launch-fields{grid-template-columns:repeat(2,minmax(0,1fr))}#roomsPage #launchButton{grid-column:1/-1;justify-self:stretch;width:100%}}
 @media(max-width:600px){#roomsPage .launch-fields{grid-template-columns:minmax(0,1fr)}#roomsPage #launchButton{grid-column:1}}
+
+
+/* QWIZ-PARTY: projector preferences use one crisp SVG icon system.
+   Keep icon footprint fixed while text / aria-pressed changes. */
+#liveConsole .projector-prefs>button,
+#liveConsole .projector-shortcut{
+ display:inline-flex;align-items:center;justify-content:center;
+ gap:8px;min-height:44px;white-space:nowrap;line-height:1.25;
+}
+#liveConsole .projector-prefs>button{padding:7px 12px;border-radius:13px}
+#liveConsole .projector-pref-icon{
+ display:inline-grid;place-items:center;flex:0 0 28px;
+ width:28px;height:28px;border-radius:9px;
+ color:#7645ca;background:#f2ebff;
+}
+#liveConsole .projector-pref-icon .ui-icon{
+ display:block;flex:none;width:18px;height:18px;
+ stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;
+ fill:none;
+}
+#liveConsole .projector-pref-label{display:inline-block;min-width:0}
+#hostProjectorSound .pref-sound-slash,
+#hostProjectorMusic[aria-pressed="true"] .pref-music-slash{display:none}
+#hostProjectorSound[aria-pressed="false"] .pref-sound-slash{
+ display:block;stroke:#8550bd;stroke-width:2.4;
+}
+#hostProjectorSound[aria-pressed="false"] .pref-sound-waves{display:none}
+#hostProjectorMusic[aria-pressed="false"] .pref-music-slash{
+ stroke:#8550bd;stroke-width:2.4;
+}
+#liveConsole #hostProjectorMusic[aria-pressed="true"] .projector-pref-icon{
+ background:#d1eddf;color:#1e7754;
+}
+#liveConsole .projector-prefs>button:hover .projector-pref-icon{
+ background:#e7dcfd;
+}
+#liveConsole #hostProjectorMusic[aria-pressed="true"]:hover .projector-pref-icon{
+ background:#bee6d0;
+}
+@media(max-width:600px){
+ #liveConsole .projector-prefs{justify-content:flex-start}
+ #liveConsole .projector-prefs>button{white-space:normal;text-align:left}
+ #liveConsole .projector-pref-icon{flex-basis:28px}
+}
