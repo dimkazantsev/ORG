@@ -38,6 +38,6 @@ jobs:
           entries=re.search(r"const SHELL=\[(.*?)\];",src,re.S).group(1)
           for name in re.findall(r"'([^']+)'",entries):
               resolved=(root/name).resolve()
-              assert resolved.is_file(), f'Missing offline shell resource: {name}'
+              assert (root/'index.html').is_file() if name=='./' else resolved.is_file(), f'Missing offline shell resource: {name}'
           print('Validated static resources and manifest:',json.loads((root/'manifest.webmanifest').read_text())['name'])
           PY
