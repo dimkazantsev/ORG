@@ -1419,3 +1419,34 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
  #liveConsole .projector-prefs>button{white-space:normal;text-align:left}
  #liveConsole .projector-pref-icon{flex-basis:28px}
 }
+
+
+/* Completed history: one quiet, deliberate destructive action.
+   Positioned beside the heading, never inside interactive <summary>. */
+#hostRoomList .rooms-history{position:relative}
+#hostRoomList .rooms-history>summary{padding-right:202px}
+#hostRoomList .clear-archive-button{
+ appearance:none;position:absolute;top:7px;right:12px;z-index:2;
+ display:inline-flex;align-items:center;justify-content:center;gap:9px;
+ min-height:42px;padding:8px 14px;border-radius:12px;
+ border:1px solid #ead4de;background:#fff;color:#9b506c;
+ font:inherit;font-size:12px;font-weight:760;line-height:1.2;
+ cursor:pointer;white-space:nowrap;
+ transition:background .16s ease,border-color .16s ease,box-shadow .16s ease;
+}
+#hostRoomList .clear-archive-button .trash-svg{width:17px;height:17px;flex:0 0 17px;stroke-width:1.85}
+#hostRoomList .clear-archive-button:hover:not(:disabled){
+ border-color:#dda9bd;background:#fff1f6;box-shadow:0 4px 12px #93375210;
+}
+#hostRoomList .clear-archive-button:focus-visible{outline:3px solid #ac83d7;outline-offset:2px}
+#hostRoomList .clear-archive-button:disabled{opacity:.55;cursor:wait}
+@media(max-width:560px){
+ #hostRoomList .rooms-history>summary{padding-right:14px}
+ #hostRoomList .clear-archive-button{
+  position:relative;top:auto;right:auto;margin:0 12px 12px auto;
+  min-height:42px;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ #hostRoomList .clear-archive-button{transition:none}
+}
