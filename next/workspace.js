@@ -22,7 +22,7 @@ const flagModes=[
  ['history','История и символика',true]
 ];
 // Align live teacher preview with arcade labels in existing saved rooms.
-const ARCADE_VISIBLE_NAMES={rocket:'Дино-забег',tug:'Тап-баттл',blitz:'Блиц-вопрос',captain:'Мэмори капитанов'};
+const ARCADE_VISIBLE_NAMES={tug:'Тап-баттл',blitz:'Блиц-вопрос',captain:'Мэмори капитанов'};
 const hostArcadeActivity=a=>a?.settings?.arcade_mode&&ARCADE_VISIBLE_NAMES[a.settings.arcade_mode]?{...a,title:ARCADE_VISIBLE_NAMES[a.settings.arcade_mode]}:a;
 const titleKind=id=>flagModes.find(x=>x[0]===id)?.[1]||'Флаги мира';
 const icons={round:'▦',intro:'◉',break:'♫',team_stats:'▥',player_stats:'♙',bonus:'✦',duel:'⇄',finale:'★'};
@@ -53,7 +53,7 @@ const copySvg='<svg class="copy-svg" viewBox="0 0 24 24" fill="none" stroke="cur
 const trashSvg='<svg class="trash-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 4h4m-7 3 1 13h8l1-13M10 11v6m4-6v6"/></svg>';
 const moveIconLeft='<svg class="move-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m7-7-7 7 7 7"/></svg>';
 const moveIconRight='<svg class="move-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>';
-const legacyArcadeTitles={'Забег с препятствиями':'Дино-забег','Командная тапалка':'Тап-баттл','Дуэль капитанов · Memory':'Мэмори капитанов','Ракетная гонка':'Дино-забег','Перетягивание очков':'Тап-баттл','Дуэль капитанов':'Мэмори капитанов'};
+const legacyArcadeTitles={'Командная тапалка':'Тап-баттл','Дуэль капитанов · Memory':'Мэмори капитанов','Перетягивание очков':'Тап-баттл','Дуэль капитанов':'Мэмори капитанов'};
 // Saved legacy duplicates may contain several appended suffixes. Display
 // the original title, but do not rename user-defined descriptive titles.
 const cleanCardTitle=value=>String(value||'').replace(/(?:\s*[—–-]\s*копия(?:\s*№?\d+)?|\s*\(\s*копия(?:\s*№?\d+)?\s*\))+\s*$/giu,'').trim();
@@ -62,8 +62,7 @@ const gameTitle=c=>cleanCardTitle(arcadeGames[c?.settings?.arcade_mode]?.title&&
 const titles={round:'Раунд вопросов',intro:'Начало игры',break:'Музыкальная пауза',team_stats:'Рейтинг команд',player_stats:'Статистика игроков',bonus:'Бонусная активность',duel:'Дуэль команд',finale:'Финал игры'};
 const buildDefaults={count:5,seconds:30,answer_seconds:10,order:'random',offset:0,team_cap:null,player_cap:null,sound:'fanfare',lead_seconds:5,stats_seconds:7,bonus_percent:70,bonus_lead:15};
 const arcadeGames={
- rocket:{title:'Дино-забег',icon:'arcade_rocket',seconds:45,help:'От каждой команды сервер выбирает одного случайного бегуна. Прыжок одной кнопкой; с ростом дистанции препятствия появляются быстрее. Победа: +25 очков.'},
- blitz:{title:'Блиц-вопрос',icon:'arcade_blitz',seconds:60,help:'7 секунд команды борются за право ответа. После захвата открывается вопрос из банка флагов. Правильный ответ: +80 очков.'},
+ blitz:{title:'Блиц-вопрос',icon:'arcade_blitz',seconds:60,help:'7 секунд команды борются за право ответа. После захвата открывается вопрос из банка флагов. Правильный ответ: +10 очков.'},
  tug:{title:'Тап-баттл',icon:'arcade_tug',seconds:45,help:'Все участники нажимают большую 3D-кнопку. Сервер складывает число нажатий игроков в командный результат. Победа: +15 очков.'},
  captain:{title:'Мэмори капитанов',icon:'arcade_captain',seconds:100,help:'Все капитаны одновременно ищут пары среди 12 плиток. Побеждает завершивший за наименьшее время; при равенстве выигрывает меньшее число ходов. Победа: +15 очков.'}
 };
@@ -476,6 +475,7 @@ function updateCardSelection(){
 }
 function selectCard(index){state.selectedCard=state.cards[index]||null;updateCardSelection()}
 function appendCard(type='round',arcadeMode=null){
+ if(arcadeMode==='rocket')return null;
  if(state.cards.length>=60){msg('buildMessage','Не больше 60 карточек.',true);return null}
  const added=card(type);
  if(arcadeMode&&arcadeGames[arcadeMode]){const meta=arcadeGames[arcadeMode];added.title=meta.title;added.icon=meta.icon;added.settings.arcade_mode=arcadeMode;added.settings.arcade_seconds=meta.seconds;}
@@ -485,8 +485,8 @@ function appendCard(type='round',arcadeMode=null){
  return added;
 }
 function cardDesc(c){const settings=c.settings||{};
- if(settings.arcade_mode==='russia_map')return 'География России · карта · '+(settings.geo_count||15)+' случайных субъектов каждому игроку · '+(settings.geo_seconds||180)+' сек. · индивидуальный прогресс';
-  if(arcadeGames[settings.arcade_mode])return 'Командная мини-игра · '+Math.max(30,Math.min(120,Number(settings.arcade_seconds)||arcadeGames[settings.arcade_mode].seconds))+' секунд · достижения и жетоны';
+ if(settings.arcade_mode==='russia_map')return 'География России · карта · '+(settings.geo_count||15)+' случайных субъектов каждому игроку · '+((settings.geo_count||15)*(settings.answer_seconds||settings.seconds||30))+' сек. · '+(settings.answer_seconds||settings.seconds||30)+' сек. на вопрос';
+  if(arcadeGames[settings.arcade_mode])return 'Командная мини-игра · '+Math.max(30,Math.min(120,Number(settings.arcade_seconds)||arcadeGames[settings.arcade_mode].seconds))+' секунд · командное голосование за усиления';
  if(c.type==='round'){const geography=state.topics.some(t=>t.id===c.topic_id&&t.name==='География России');const selected=geography?(settings.geo_modes||[]).map(m=>({capital:'Административный центр',district:'Федеральный округ'}[m]||m)):(settings.flag_modes||[]).map(titleKind);return (c.topic_id?nameTopic(c.topic_id):'Тема не выбрана')+' · '+(selected.length?selected.join(', '):'Выберите механики перед запуском')+' · '+(settings.count||5)+' вопр. · '+(settings.seconds||30)+' сек. · ответ '+(settings.answer_seconds||10)+' сек.';}
  if(c.type==='intro')return 'Анимированная заставка перед первым раундом';
  if(c.type==='break')return 'Музыкальная пауза между раундами';
@@ -494,7 +494,7 @@ function cardDesc(c){const settings=c.settings||{};
  if(['bonus','duel'].includes(c.type))return 'Механика не выбрана · настройте карточку перед запуском';
  if(c.type==='finale')return 'Итог всей игры: результаты команд и каждого игрока · автоматически';
  return 'Дополнительная активность · настройки в карточке'}
-function renderCards(){ensureFinale();if(!state.cards.includes(state.selectedCard))state.selectedCard=null;$('roundCards').innerHTML=state.cards.map((c,i)=>{
+function renderCards(){state.cards=state.cards.filter(c=>c.settings?.arcade_mode!=='rocket');ensureFinale();if(!state.cards.includes(state.selectedCard))state.selectedCard=null;$('roundCards').innerHTML=state.cards.map((c,i)=>{
  const final=c.type==='finale',emblem=final?'<svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M15 7h18v13c0 13-18 13-18 0V7ZM15 11H7v6c0 7 8 10 12 8M33 11h8v6c0 7-8 10-12 8M24 30v10M16 41h16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':cardIconSvg(c.type,arcadeGames[c.settings?.arcade_mode]?.icon||(c.settings?.arcade_mode==='russia_map'?'map':c.icon));
  return '<article class="round-card'+(c===state.selectedCard?' is-selected':'')+'" data-index="'+i+'" data-type="'+esc(c.type)+'" data-mechanic="'+esc(c.settings?.arcade_mode||'')+'" tabindex="0" role="group" aria-current="'+(c===state.selectedCard?'true':'false')+'" aria-label="'+esc(gameTitle(c))+'. Выбрать позицию вставки; двойное нажатие — настройки" draggable="'+!final+'"><div class="round-card-heading"><span class="round-icon" aria-hidden="true">'+emblem+'</span><span class="small-help">'+(final?'ФИНАЛ ИГРЫ':'КАРТОЧКА '+(i+1).toString().padStart(2,'0'))+'</span></div><h3>'+esc(gameTitle(c))+'</h3><p class="round-sub">'+esc(cardDesc(c))+'</p>'+
  (final?'<div class="finale-card-tags"><span>Команды</span><span>Участники</span><span>3 + 3 вопроса</span></div>':'')+'<div class="round-actions">'+(!final?'<button type="button" data-move="'+i+':-1" aria-label="Раньше" '+(i===0?'disabled':'')+'>'+moveIconLeft+'</button><button type="button" data-move="'+i+':1" aria-label="Позже" '+(i>=state.cards.length-2?'disabled':'')+'>'+moveIconRight+'</button>':'')+'<button type="button" class="round-edit" data-edit-card="'+i+'">'+(final?'Настроить финал':'Настроить')+'</button></div>'+(!final?'<div class="round-card-tools"><button type="button" class="card-copy round-copy" data-duplicate-card="'+i+'" title="Дублировать карточку" aria-label="Дублировать карточку '+esc(c.title)+'">'+copySvg+'</button><button type="button" class="card-trash round-trash" data-delete-card="'+i+'" title="Удалить карточку" aria-label="Удалить карточку '+esc(c.title)+'">'+trashSvg+'</button></div>':'')+'</article>';
@@ -741,7 +741,7 @@ async function clearFinishedArchive(){
 }
 async function loadBuild(id){try{const r=await studio('build_get',{id});state.buildId=r.build.id;
  $('buildTitle').value=r.build.title;
- state.selectedCard=null;state.cards=(r.cards||[]).filter(c=>!['team_stats','player_stats'].includes(c.type)).map(c=>({...c,title:gameTitle(c)})); // Keep legacy blank bonuses visible for deletion.
+ state.selectedCard=null;state.cards=(r.cards||[]).filter(c=>!['team_stats','player_stats'].includes(c.type)&&c.settings?.arcade_mode!=='rocket').map(c=>({...c,title:gameTitle(c)})); // Keep legacy blank bonuses visible for deletion.
  const inferred=state.cards.filter(c=>synchronizeCardTopic(c)).length;
  ensureFinale();$('composer').hidden=false;renderCards();section('builder');savePosition();
  if(inferred)msg('buildMessage','Темы '+inferred+' карточек восстановлены по выбранным механикам. Сохраните сборку, чтобы применить изменения.');
