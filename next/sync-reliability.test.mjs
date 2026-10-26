@@ -35,6 +35,10 @@ test('ambiguous answer acknowledgements are reconciled from server before UI suc
  assert.ok(app.includes("done?'Ответ принят.'"));
  assert.ok(!app.includes("notice('gameNotice','Отправляем ответ"));
  assert.match(app,/function updateConnectionHealth\(connected\)/);
+ assert.ok(app.includes('if(offline)ctx.reconnectRequiresState=true'));
+ assert.ok(app.includes('else if(connected)ctx.reconnectRequiresState=false'));
+ assert.ok(app.includes('if(ctx.reconnectRequiresState)return'));
+
 });
 test('tap batches are server-idempotent and client reuses stable UUID',()=>{
  const sql=read('migrations/20261026_idempotent_arcade_tap_batches.sql');
