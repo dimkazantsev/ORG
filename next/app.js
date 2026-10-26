@@ -299,7 +299,7 @@ function gameRichMarkup(q,locked){
   let classes='option';if(q._phase==='result'&&i===Number(q.correct))classes+=' correct';
   const picked=q._phase==='question'&&Number.isInteger(q._picked)&&q._picked===i;
   if(picked)classes+=' is-picked';
-  const pickedStyle=picked?' style="background-color:#eef0f3!important;border-color:#b9bec8!important;color:#282638!important;"':'';
+  const pickedStyle=picked?' style="background-color:#eef0f3!important;border-color:#b9bec8!important;color:#282638!important;transition:none!important;"':'';
   return '<button type="button" class="'+classes+'" data-answer="'+i+'" aria-pressed="'+(picked?'true':'false')+'"'+pickedStyle+disabled+'><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+flagOptionHtml(option,i)+'</span></button>';
  }).join('')+'</div>';
 }
@@ -489,6 +489,8 @@ async function submitAnswer(choice){if(ctx.mode!=='game'||!ctx.room||ctx.room.ph
    }[property],'important');
    else x.style.removeProperty(property);
   }
+  if(picked)x.style.setProperty('transition','none','important');
+  else x.style.removeProperty('transition');
   busy(x,true);
  });
  notice('gameNotice','');
