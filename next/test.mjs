@@ -1073,7 +1073,7 @@ test('Geography mobile taps confirm immediately and correct region is enlarged',
  assert.match(src,/t\.feedbackUntil=Date\.now\(\)\+5500/);
  assert.match(styles,/\.geo-option-pending/);
  assert.match(styles,/\.geo-region\.geo-correct-answer/);
- assert.match(arcade,/setTimeout\(\(\)=>flush\(tr\),220\)/);
+ assert.match(arcade,/setTimeout\(\(\)=>flush\(tr\),160\)/);
  assert.match(arcade,/data-arcade-tap disabled/);
  const begin=src.indexOf(' function regionViewBox(regionId)');
  const end=src.indexOf(' function revealTarget(t,selector)',begin);
