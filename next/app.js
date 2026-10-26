@@ -285,7 +285,7 @@ function gameRichMarkup(q,locked){
  const kind=q.kind||'single', options=q.options||[], disabled=locked?' disabled':'';
  const select=(values,cls,first='Выберите')=>'<select class="'+cls+'"'+disabled+'><option value="">'+first+'</option>'+
    values.map((v,i)=>'<option value="'+i+'">'+esc(v)+'</option>').join('')+'</select>';
- if(q.flag_assembly)return QwizStage.assemblyMarkup(q,locked)+'<button class="btn btn-dark rich-send" type="button" data-submit-rich'+disabled+'>Отправить собранный флаг →</button>';
+ if(q.flag_assembly)return QwizStage.assemblyMarkup(q,locked)+'<button class="btn btn-dark rich-send assembly-submit" type="button" data-submit-rich disabled>ОК</button>';
  if(kind==='multi')return '<p class="muted-small">Выберите все правильные варианты, затем подтвердите выбор.</p><div class="rich-choices">'+options.map((v,i)=>'<label class="rich-choice"><input type="checkbox" data-multi="'+i+'"'+disabled+'><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+flagOptionHtml(v,i)+'</span></label>').join('')+'</div>'+
   '<button class="btn btn-dark rich-send" type="button" data-submit-rich'+disabled+'>Подтвердить выбранные варианты →</button>';
  if(kind==='match')return '<div class="rich-rows">'+options.map((v,i)=>'<label class="rich-row"><span>'+esc(v)+'</span>'+select(q.match_choices||[],'rich-match','Соответствие')+'</label>').join('')+'</div>'+
@@ -352,7 +352,8 @@ function roundScorePanel(view,title,final=false,endsAt=null){
 }
 function roundIntroMarkup(s){
  const title=s.activity?.title||'Следующий раунд',icon=s.activity?.icon||s.activity?.settings?.queued_icon;
- const drawing=QwizStage.roundIconSvg(icon||'flag');
+ const isDino=/дино.?забег/i.test(title)||s.activity?.settings?.arcade_mode==='rocket';
+ const drawing=isDino?'<svg viewBox="0 0 96 100" fill="none" aria-hidden="true"><path d="M47 13h29v7h7v19H65v11H54v10H44v10H30V57H20V48H12V38h9v9h11V34h10V20h5Z" fill="#753de6"/><circle cx="70" cy="27" r="4" fill="white"/><path d="M41 69v15h-9m20-20v21h11" stroke="#6536c8" stroke-width="8" stroke-linecap="round"/><path d="M14 38l-7-9" stroke="#ac83ed" stroke-width="6" stroke-linecap="round"/></svg>':QwizStage.roundIconSvg(icon||'flag');
  return '<section class="game-empty round-intro" aria-label="Представление раунда"><div class="round-intro-sparks" aria-hidden="true"><i></i><i></i><i></i></div>'+
  '<div class="round-intro-symbol" aria-hidden="true">'+drawing+'</div><div class="eyebrow">СЛЕДУЮЩИЙ РАУНД</div>'+
  '<h1>'+esc(title)+'</h1><p>Подготовьтесь к новому испытанию</p>'+
@@ -396,7 +397,13 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
   else if(lb.mode==='captain'&&!lb.captains_ready){title='Выбираем капитанов';desc='Назначено '+lb.captain_count+' из '+lb.team_count+'. Время с первого выбора: <strong data-captain-elapsed="'+esc(lb.captain_started_at||'')+'">00:00</strong>';}
   else if(lb.mode==='captain'){title=lb.my_captain?'Вы капитан!':'Собираем команды';desc=lb.my_captain?'QR вашей команды появился выше. Покажите его остальным участникам.':'Сканируйте QR одного из капитанов, чтобы присоединиться к команде.';}
   else {title='Идите к своей команде';desc='Ваша команда: '+esc(myTeam?.name||'ожидание распределения')+'. Команды показаны на общем экране.';}
-  el.innerHTML='<section class="player-team-building'+(lb.confirmed||lb.captains_ready?' is-complete':'')+'"><span class="eyebrow">QWIZ-PARTY · КОМАНДЫ</span><div class="team-building-glow" aria-hidden="true"><span>'+(lb.confirmed||lb.captains_ready?'✓':'∞')+'</span></div><h1>'+title+'</h1><p>'+desc+'</p></section>';
+  const complete=lb.confirmed||lb.captains_ready;
+  const checkSvg='<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M14 32l12 12L51 19" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  el.innerHTML='<section class="player-team-building'+(complete?' is-complete':'')+'" aria-label="'+esc(title)+'">'+
+   (complete&&myTeam?'<div class="team-confirm-card"><span class="team-confirm-emoji" aria-hidden="true">🌲</span><div><small>ВАША КОМАНДА</small><strong>'+esc(myTeam.name)+'</strong></div></div>':'')+
+   '<div class="team-building-center"><span class="eyebrow">QWIZ-PARTY · КОМАНДЫ</span>'+
+   '<div class="team-building-glow" aria-hidden="true">'+(complete?checkSvg:'<span class="team-infinity">∞</span>')+'</div>'+
+   '<h1>'+title+'</h1><p>'+desc+'</p></div></section>';
   text('playerStatus',title);return;
  }
  if(s.phase==='lobby'){el.innerHTML='<section class="game-empty game-lobby-wait" aria-label="Ожидание начала игры">'+
@@ -423,7 +430,7 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
      text('playerStatus','Карта России: индивидуальные задания сохраняются на сервере.');return;
    }
    if(window.QwizArcade?.mountPlayer(el,s,ctx)){
-    text('playerStatus','Командное испытание. Действуйте вместе, зарабатывайте достижения и жетоны.');return;
+    text('playerStatus','Командное испытание. Зарабатывайте бонусы для следующего раунда.');return;
   }
    if(s.activity?.type==='round_stats'){
     el.innerHTML=roundScorePanel(s.round_results,'Итоги раунда',false,s.ends_at);text('playerStatus','Итоги раунда · следующий этап автоматически.');return;
@@ -466,13 +473,29 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
    :typeof s.answer?.image_url==='string'&&/^https:\/\//i.test(s.answer.image_url)
      ?'<div class="result-flag-image"><img src="'+esc(s.answer.image_url)+'" alt="Правильный флаг государства" decoding="async"></div>'
      :'<h2>'+esc(s.answer?.text||gameRichResult(question).replace(/^Правильный ответ: /,''))+'</h2>')+
- (question.explanation?'<p>'+esc(question.explanation)+'</p>':'')+'</section>'+personalResults(s):optsMarkup+'<p class="notice player-answer-confirmation'+(done?' success':'')+'" role="status" aria-live="polite">'+(done?'Ответ принят.':time===0?'Приём ответов завершён.':'')+'</p>')+'</div></div>';
+ (question.flag_assembly?'<p class="assembly-verdict" id="assemblyVerdict" role="status">Проверяем ваш ответ…</p>':'')+
+ (question.explanation?'<p>'+esc(question.explanation)+'</p>':'')+'</section>'+(question.flag_assembly?'':personalResults(s)):optsMarkup+'<p class="notice player-answer-confirmation'+(done?' success':'')+'" role="status" aria-live="polite">'+(done?'Ответ принят.':time===0?'Приём ответов завершён.':'')+'</p>')+'</div></div>';
  if(question.flag_memory&&s.phase==='question'){
   const controls=el.querySelector('.option-list');if(controls)controls.setAttribute('data-memory-answer','');
  }
  if(s.phase==='result')el.querySelector('.player-answer')?.insertAdjacentHTML('beforeend',QwizStage.sourceLinks(s.answer));
  QwizStage.updateClock(s,ctx.clockOffset,document,'playerTimer',!s.paused);QwizStage.hydrateIllustrations(el);QwizStage.hydrateAssembly(el,question);
+ if(s.phase==='result'&&question.flag_assembly)void showAssemblyVerdict(s);
  text('playerStatus',s.paused?'Игра приостановлена ведущим. Ожидайте продолжения.':!eligible?(me?.team_id&&Number(me.entry_question)>s.index?'Вы подключились во время игры. Участвуете со следующего вопроса.':!me?.team_id?'Ожидайте распределения в команду.':'Этот раунд не назначен вашей команде или участнику.'):s.phase==='result'?'Результат открыт. Скоро следующий вопрос.':done?'Ответ записан на сервере.':'Ваш ответ ещё не отправлен.');
+}
+async function showAssemblyVerdict(s){
+ const slot=document.getElementById('assemblyVerdict');
+ if(!slot||!ctx.client)return;
+ try{
+  const {data,error}=await ctx.client.rpc('qwiz_my_question_result',{p_room:s.room_id,p_index:s.index});
+  if(error)throw error;
+  if(ctx.room?.room_id!==s.room_id||ctx.room.index!==s.index||ctx.room.phase!=='result'||!slot.isConnected)return;
+  slot.textContent=data?.answered===true?(data.correct?'Ваш ответ правильный':'Ваш ответ неправильный'):'Вы не отправили ответ';
+  slot.classList.toggle('is-correct',data?.correct===true);
+  slot.classList.toggle('is-wrong',data?.answered===true&&data?.correct!==true);
+ }catch{
+  if(slot.isConnected)slot.textContent='Результат участника временно недоступен';
+ }
 }
 async function advance(action){const s=ctx.room;if(!s)return;busy($('host'+({start:'Start',reveal:'Reveal',next:'Next',finish:'Finish'})[action]),true);notice('hostNotice','');
  try{if(action==='finish'&&!confirm('Завершить эту игру?'))return;
@@ -517,7 +540,11 @@ async function submitAnswer(choice){if(ctx.mode!=='game'||!ctx.room||ctx.room.ph
 async function submitRichAnswer(){
  const s=ctx.room,q=s?.question;if(!s||!q||s.phase!=='question'||s.paused||s.has_answer||s.eligible===false||ctx.answerPending)return;if(!navigator.onLine){updateConnectionHealth(false);return}if(ctx.connectionStale)updateConnectionHealth(false);
  const kind=q.kind||'single';let payload={};
- if(kind==='multi'){
+ if(q.flag_assembly){
+  const items=QwizStage.assemblyItems($('gameContent'),q);
+  if(!items){notice('gameNotice','Сначала соберите весь флаг.','error');return}
+  payload={items};
+ }else if(kind==='multi'){
   const indices=qa('#gameContent [data-multi]').filter(x=>x.checked).map(x=>Number(x.dataset.multi));
   if(!indices.length){notice('gameNotice','Отметьте хотя бы один вариант.','error');return}payload={indices};
  }else if(kind==='match'){
