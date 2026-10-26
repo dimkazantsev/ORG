@@ -406,8 +406,7 @@ test('Chosen answer has pale grey selected state during send, after acceptance a
  const selected=page.locator('#gameContent [data-answer="2"]');
  await expect(selected).toHaveClass(/is-picked/);
  await expect(selected).toHaveAttribute('aria-pressed','true');
- const rgb=await selected.evaluate(el=>getComputedStyle(el).backgroundColor);
- expect(rgb).toBe('rgb(238, 240, 243)');
+ await expect.poll(()=>selected.evaluate(el=>getComputedStyle(el).backgroundColor),{timeout:1600}).toBe('rgb(238, 240, 243)');
  await expect(page.locator('#gameContent .option.is-picked')).toHaveCount(1);
  await expect(page.locator('#gameNotice')).toBeHidden();
  const during=await page.locator('#gameContent [data-answer]').evaluateAll(items=>items.map(el=>el.getBoundingClientRect().height));
