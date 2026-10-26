@@ -2,7 +2,7 @@
 // Shared question visuals and audio; scoring and phase transitions stay on the server.
 window.QwizStage=(()=>{
  const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- const fmt=n=>Number(n||0).toLocaleString('ru-RU');
+ const fmt=n=>Math.round(Number(n)||0).toLocaleString('ru-RU',{maximumFractionDigits:0});
  const capitalize=value=>{const text=String(value??'');return text.charAt(0).toLocaleUpperCase('ru-RU')+text.slice(1)};
  const countLabel=(value,forms)=>Number(value||0).toLocaleString('ru-RU')+' '+forms[new Intl.PluralRules('ru').select(Number(value)||0)];
  const phaseLabel=phase=>({lobby:'Ожидание участников',question:'Вопрос',result:'Разбор ответа',finished:'Игра завершена',countdown:'Подготовка',intermission:'Перерыв'})[phase]||'Ожидание данных';
