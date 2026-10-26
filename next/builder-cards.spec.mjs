@@ -526,7 +526,7 @@ test('Archive-clear button fits at mobile width and does not toggle the history 
   section('rooms');
  });
  const archive=page.locator('#hostRoomList .rooms-history');
- const button=archive.locator('#clearFinishedArchive');
+ const button=page.locator('#hostRoomList .rooms-history-group #clearFinishedArchive');
  await expect(button).toBeVisible();
  await expect(archive).not.toHaveAttribute('open','');
  const b=await button.boundingBox(),panel=await archive.boundingBox();
