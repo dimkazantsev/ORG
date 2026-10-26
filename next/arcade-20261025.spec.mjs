@@ -121,3 +121,17 @@ test('room creation SQL avoids PL/pgSQL room_id ambiguity on INSERT and reuse UP
  assert.match(reuseSql,/existing_room\.owner_id=v_owner/);
  assert.match(read('workspace.js'),/rpc\('qwiz_prepare_room'/);
 });
+
+test('forty-device arcade load guard: staggered polling, bounded retry and reconnect',()=>{
+ const js=read('arcade.js');
+ assert.doesNotMatch(js,/setInterval\(\(\)=>fetchState\(tr\),kind==='screen'\?1300:1600\)/);
+ assert.match(js,/tr\.kind==='player'\?4700/);
+ assert.match(js,/Math\.random\(\)\*900/);
+ assert.match(js,/Math\.min\(20000,base\*Math\.pow\(1\.6/);
+ assert.match(js,/window\.addEventListener\('online'/);
+ assert.match(js,/document\.addEventListener\('visibilitychange'/);
+ assert.match(read('index.html'),/arcade\.js\?v=load-shed-40p-20261026/);
+ // 40 active clients, base 4700ms => under nine state reads per second
+ // versus 25 per second in the previous 1600ms implementation.
+ assert.ok(40/4.7<9);
+});
