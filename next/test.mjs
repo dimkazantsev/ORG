@@ -203,7 +203,8 @@ test('Mini-game palette and saved cards use distinct polished vector icons',()=>
  const workspace=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
  const palette=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
  const styles=readFileSync(new URL('./workspace.css',import.meta.url),'utf8');
- for(const mode of ['rocket','blitz','tug','captain']){
+ assert.doesNotMatch(palette,/data-arcade="rocket"/);
+ for(const mode of ['blitz','tug','captain']){
    assert.match(workspace,new RegExp("arcade_"+mode+":'<(?:path|circle|rect)"));
    assert.match(palette,new RegExp('data-arcade="'+mode+'"'));
  }
@@ -468,7 +469,7 @@ test('Round intro icon follows the actual gameplay mechanic on phone and project
   assert.match(stage,new RegExp(key+":'<"),'Missing round artwork for '+key);
  }
  assert.match(stage,/function roundIconSvg\(key\)/);
- assert.match(phone,/const drawing=isDino\?/);
+ assert.match(phone,/const drawing=QwizStage\.roundIconSvg\(icon/);
  assert.match(phone,/QwizStage\.roundIconSvg\(icon/);
  assert.match(projector,/const art=QwizStage\.roundIconSvg\(icon\)/);
 });
@@ -866,7 +867,6 @@ test('Studio game selector keeps full names, uses consistent icons and an access
  const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
  const names=[
   ['data-geo="russia_map"','Карта регионов России'],
-  ['data-arcade="rocket"','Дино-забег'],
   ['data-arcade="blitz"','Блиц-вопрос'],
   ['data-arcade="tug"','Тап-баттл'],
   ['data-arcade="captain"','Дуэль капитанов']
@@ -893,7 +893,7 @@ test('Mini-game buttons keep complete labels and the disclosure uses a separate 
  const html=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
  const styles=readFileSync(new URL('./workspace.css',import.meta.url),'utf8');
  const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
- const games=['Карта регионов России','Дино-забег','Блиц-вопрос','Тап-баттл','Дуэль капитанов'];
+ const games=['Карта регионов России','Блиц-вопрос','Тап-баттл','Дуэль капитанов'];
  for(const label of games)assert.ok(html.includes('>'+label+'</button>'),'Missing game '+label);
  assert.match(host,/const label=b\.textContent\.replace\(\/\\s\+\/g,' '\)\.trim\(\)/);
  assert.match(html,/class="games-chevron-box" aria-hidden="true"/);
@@ -1068,10 +1068,10 @@ test('Geography mobile taps confirm immediately and correct region is enlarged',
  assert.match(src,/function revealTarget\(t,selector\)/);
  assert.match(src,/const focusId=correctId\|\|/);
  assert.match(src,/t\.focusKey=focusKey;t\.zoomBox=focusBox/);
- assert.match(src,/if\(e\.type==='pointercancel'\)return/);
+ assert.match(src,/e\.type==='pointercancel'\|\|!pointer/);
  assert.match(src,/confirm\.textContent='Проверяем…'/);
  assert.match(src,/b\.classList\.add\('geo-option-pending'\)/);
- assert.match(src,/t\.feedbackUntil=Date\.now\(\)\+5500/);
+ assert.match(src,/t\.feedbackUntil=Date\.now\(\)\+Math\.min/);
  assert.match(styles,/\.geo-option-pending/);
  assert.match(styles,/\.geo-region\.geo-correct-answer/);
  assert.match(arcade,/setTimeout\(\(\)=>flush\(tr\),160\)/);
@@ -1139,11 +1139,30 @@ test('October 27 release: real flag assembly, source-scored questions, and no fa
  assert.match(app,/QwizStage\.assemblyItems\(/);
  assert.match(app,/data-submit-rich disabled>ОК/);
  assert.match(app,/qwiz_my_question_result/);
- assert.match(app,/const drawing=isDino\?/);
+ assert.match(app,/const drawing=QwizStage\.roundIconSvg\(icon/);
  assert.match(arcade,/classList\.add\('is-pending'\)/);
  assert.match(arcade,/Командные бонусы/);
  assert.doesNotMatch(arcade,/Командная мастерская|жетонов/);
  assert.match(scorer,/v_points:=case when v_correct then 10 else 0 end;/);
  assert.match(scorer,/set score=score\+10 where id=p\.team_id/);
  assert.match(geo,/v_award:=case when v_hit then 10 else 0 end;/);
+});
+
+
+test('October 27: Dino is unavailable and geography timer is per question',()=>{
+ const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const studio=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ const geo=readFileSync(new URL('./russia-geo.js',import.meta.url),'utf8');
+ const sql=readFileSync(new URL('./migrations/20261027_geo_per_question_timing.sql',import.meta.url),'utf8');
+ const dino=readFileSync(new URL('./migrations/20261027_remove_dino_builder.sql',import.meta.url),'utf8');
+ const scoring=readFileSync(new URL('./migrations/20261027_fix_ambiguous_activity_and_integer_memory_scores.sql',import.meta.url),'utf8');
+ assert.doesNotMatch(studio,/data-arcade="rocket"/);
+ assert.match(host,/if\(arcadeMode==='rocket'\)return null/);
+ assert.match(dino,/Дино-забег удалён из доступных игровых механик/);
+ assert.match(sql,/qwiz_geo_question_seconds/);
+ assert.match(sql,/v_per_question/);
+ assert.match(sql,/p_answer:=NULL/);
+ assert.match(geo,/document\.elementFromPoint\(e\.clientX,e\.clientY\)/);
+ assert.match(scoring,/activity_vote\.room_id=v\.room_id/);
+ assert.doesNotMatch(scoring,/100000::numeric/);
 });
