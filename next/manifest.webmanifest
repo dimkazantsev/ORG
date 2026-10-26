@@ -1,0 +1,20 @@
+{
+  "id": "/ORG/next/",
+  "name": "QWIZ-PARTY — командная викторина",
+  "short_name": "QWIZ-PARTY",
+  "description": "Командная викторина для занятий",
+  "lang": "ru",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#faf9fd",
+  "icons": [
+    {
+      "src": "./pwa-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
