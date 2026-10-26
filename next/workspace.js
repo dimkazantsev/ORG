@@ -69,7 +69,7 @@ const arcadeGames={
 const state={db:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,bankOffset:0,bankPageSize:25,bankRequest:0,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',dragFrom:null,selectedCard:null,clockOffset:0,liveKey:'',lastDeadlineRefresh:0};
 function msg(id,text='',isError=false){const el=$(id);if(!el)return;el.textContent=text;el.classList.toggle('error',!!isError)}
 function disable(id,value){const el=$(id);if(el)el.disabled=value}
-function fmt(x){return Number(x||0).toLocaleString('ru-RU')}
+function fmt(x){return Math.round(Number(x)||0).toLocaleString('ru-RU',{maximumFractionDigits:0})}
 async function rpc(method,args={}){const {data,error}=await state.db.rpc(method,args);if(error)throw new Error(error.message||'Ошибка базы данных');return data}
 async function studio(action,p_input={}){return rpc('qwiz_studio',{p_action:action,p_input})}
 const motionPreference=window.matchMedia('(prefers-reduced-motion: reduce)');
