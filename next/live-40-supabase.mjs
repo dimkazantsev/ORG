@@ -84,6 +84,23 @@ async function fullRun(){
   if(!error&&data?.phase==='question'){started=true;break}
  }
  if(!started){console.error('QUESTION_STAGE_NOT_STARTED: stopping without answer writes');process.exitCode=1;return}
+ // Reconnect simulation: one deliberately aborted HTTP state request per client,
+ // then a fresh authenticated snapshot on the SAME independent session.
+ const offlineCycle=await Promise.all(users.map(u=>timed(async()=>{
+  const {data:session}=await u.client.auth.getSession();
+  if(!session?.session?.access_token)throw Error('auth session was lost');
+  const controller=new AbortController();
+  controller.abort(); // deterministic network interruption; never issue a write
+  try{await fetch(SUPABASE_URL+'/rest/v1/rpc/qwiz_party_state',{
+   method:'POST',headers:{apikey:KEY,Authorization:'Bearer '+session.session.access_token,'Content-Type':'application/json'},
+   body:JSON.stringify({p_code:ROOM}),signal:controller.signal});}
+  catch(e){if(e.name!=='AbortError')throw Error('wrong interruption: '+e.name)}
+  const {data,error}=await u.client.rpc('qwiz_party_state',{p_code:ROOM});
+  if(error||data?.phase!=='question')throw Error('reconnect: '+(error?.message||'wrong phase'));
+  return data?.room_id;
+ })));
+ report('40_abort_and_reconnect_before_answer',offlineCycle);
+ if(offlineCycle.some(x=>!x.ok)){process.exitCode=1;return}
  const roomId=lobby[0]?.value?.room_id;
  if(!/^[0-9a-f-]{36}$/i.test(roomId||''))throw Error('Test room ID not resolved from authenticated state');
  const answers=await Promise.all(users.map((u,i)=>timed(async()=>{
@@ -99,7 +116,17 @@ async function fullRun(){
   return data?.has_answer;
  })));
  report('40_answer_acknowledgments',verify);
- if(verify.some(x=>!x.ok))process.exitCode=1;
+ if(verify.some(x=>!x.ok)){process.exitCode=1;return}
+ // A repeated answer after a successful response must not add points twice.
+ // The unique (room_id,player_id,question_index) DB key is authoritative.
+ const duplicates=await Promise.all(users.map((u,i)=>timed(async()=>{
+  const {data,error}=await u.client.rpc('org_next_answer',{p_room:roomId,p_choice:i%2});
+  if(!error)throw Error('Duplicate answer unexpectedly accepted');
+  if(!/Ответ уже принят/i.test(error.message||''))throw Error('Unexpected repeat response: '+error.message);
+  return true;
+ })));
+ report('40_duplicate_answers_rejected',duplicates);
+ if(duplicates.some(x=>!x.ok))process.exitCode=1;
 }
 // Mandatory preflight: never run this high-concurrency test in a normal classroom.
 const {data:fixture,error:fixtureError}=await client().rpc('qwiz_party_projection',{p_code:ROOM});
