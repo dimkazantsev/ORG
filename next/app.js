@@ -9,7 +9,15 @@ const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt
 const storage={get(k){try{return sessionStorage.getItem('org2:'+k)}catch{return null}},set(k,v){try{sessionStorage.setItem('org2:'+k,v)}catch{}},del(k){try{sessionStorage.removeItem('org2:'+k)}catch{}}};
 const ctx={client:null,role:'player',roomCode:null,room:null,quizzes:[],channel:null,refreshing:false,lastRefresh:0,releaseAttemptAt:0,refreshTimer:null,clock:null,mode:'home',visibleTab:'library',clockOffset:0,gameCue:''};
 function text(id,value){if($(id))$(id).textContent=value==null?'':String(value)}
-function notice(id,value,type=''){const el=$(id);if(!el)return;el.textContent=value||'';el.classList.toggle('error',type==='error');el.classList.toggle('success',type==='success')}
+function notice(id,value,type=''){
+ const el=$(id);if(!el)return;
+ // There must be NO pending/sent/accepted notification above the choices.
+ // The single persistent footer inside #gameContent is the only receipt.
+ const suppress=id==='gameNotice'&&/^(?:отправляем(?:ся)?\s+ответ|отправка\s+ответа|ответ\s+(?:записан|сохран[её]н|принят))/iu.test(String(value||'').trim());
+ el.textContent=suppress?'':(value||'');
+ el.classList.toggle('error',!suppress&&type==='error');
+ el.classList.toggle('success',!suppress&&type==='success');
+}
 function showScreen(name){ctx.mode=name;for(const id of ['home','studio','game'])$(id+'View').hidden=id!==name;window.scrollTo({top:0,behavior:'auto'})}
 function setRole(role){ctx.role=role;storage.set('entry-role',role);for(const [name,id] of [['player','rolePlayer'],['host','roleHost']]){$(id).setAttribute('aria-selected',String(role===name));$(id).tabIndex=role===name?0:-1}$('playerEntry').hidden=role!=='player';$('hostEntry').hidden=role!=='host'}
 function teacherSession(session){
@@ -131,7 +139,7 @@ function updateConnectionHealth(connected){
   delete input.dataset.connectionHold;
  }
 }
-function cleanupRoom(){if(ctx.channel){ctx.client?.removeChannel(ctx.channel);ctx.channel=null}if(ctx.reconnectRetryTimer)clearTimeout(ctx.reconnectRetryTimer);ctx.reconnectRetryTimer=null;ctx.connectionStale=false;ctx.connectionNotice=false;ctx.reconnectRequiresState=false;ctx.reconnectDelay=2000;ctx.answerAck=null;ctx.room=null;ctx.roomCode=null;storage.del('room');renderQrPanels();}
+function cleanupRoom(){if(ctx.channel){ctx.client?.removeChannel(ctx.channel);ctx.channel=null}if(ctx.reconnectRetryTimer)clearTimeout(ctx.reconnectRetryTimer);ctx.reconnectRetryTimer=null;ctx.connectionStale=false;ctx.connectionNotice=false;ctx.reconnectRequiresState=false;ctx.reconnectDelay=2000;ctx.answerAck=null;ctx.pickedAnswer=null;ctx.room=null;ctx.roomCode=null;storage.del('room');renderQrPanels();}
 function connectRoom(code){if(!ctx.client||!code)return;if(ctx.channel&&ctx.channel.topic==='realtime:org-next-'+code)return;if(ctx.channel)ctx.client.removeChannel(ctx.channel);
  ctx.channel=ctx.client.channel('org-next-'+code,{config:{broadcast:{ack:false}}})
  .on('broadcast',{event:'phase'},()=>scheduleRefresh(500))
@@ -289,7 +297,9 @@ function gameRichMarkup(q,locked){
  '<span class="rich-marker" id="richMarker" hidden>+</span></button><button type="button" class="btn btn-dark rich-send" data-submit-rich'+disabled+'>Подтвердить точку →</button>';
  return '<div class="option-list'+(options.some(option=>typeof option==='string'&&option.length>36)?' has-long-options':'')+'">'+options.map((option,i)=>{
   let classes='option';if(q._phase==='result'&&i===Number(q.correct))classes+=' correct';
-  return '<button type="button" class="'+classes+'" data-answer="'+i+'"'+disabled+'><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+flagOptionHtml(option,i)+'</span></button>';
+  const picked=q._phase==='question'&&Number(q._picked)===i;
+  if(picked)classes+=' is-picked';
+  return '<button type="button" class="'+classes+'" data-answer="'+i+'" aria-pressed="'+(picked?'true':'false')+'"'+disabled+'><span class="letter">'+String.fromCharCode(65+i)+'</span><span>'+flagOptionHtml(option,i)+'</span></button>';
  }).join('')+'</div>';
 }
 function gameRichResult(q){
@@ -434,7 +444,9 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  const done=!!s.has_answer;const eligible=s.eligible!==false;const locked=s.phase!=='question'||done||time===0||!eligible||!!s.paused;
  const richKind=question.kind||'single';
  const richLocked=locked;
- let optsMarkup=gameRichMarkup({...question,_phase:s.phase},richLocked);
+ const picked=ctx.pickedAnswer?.room_id===s.room_id&&ctx.pickedAnswer?.index===s.index
+  ?ctx.pickedAnswer.choice:null;
+ let optsMarkup=gameRichMarkup({...question,_phase:s.phase,_picked:picked},richLocked);
  let interactive='';
  if(richKind==='hotspot'&&s.phase==='question'){interactive=optsMarkup.match(/<button type="button" id="richSpot"[\s\S]*?<\/button>/)?.[0]||'';optsMarkup=optsMarkup.replace(interactive,'').replace(/<p class="muted-small">[\s\S]*?<\/p>/,'')}
  const hint=s.phase==='question'?(optsMarkup.match(/^<p class="muted-small">[\s\S]*?<\/p>/)?.[0]||''):'';
@@ -462,7 +474,15 @@ async function advance(action){const s=ctx.room;if(!s)return;busy($('host'+({sta
   await rpc('qwiz_party_control',{p_room:s.room_id,p_action:action});signal('phase');await refreshRoom();if(action==='finish')tab('results');
  }catch(e){notice('hostNotice',e.message,'error')}finally{for(const b of ['hostStart','hostReveal','hostNext','hostFinish'])busy($(b),false)}}
 async function assign(playerId,teamId){if(!ctx.room||ctx.room.phase!=='lobby')return;try{await rpc('org_next_assign',{p_room:ctx.room.room_id,p_player:playerId,p_team:teamId});signal('team');await refreshRoom()}catch(e){notice('hostNotice',e.message,'error')}}
-async function submitAnswer(choice){if(ctx.mode!=='game'||!ctx.room||ctx.room.phase!=='question'||ctx.room.paused||ctx.room.has_answer||ctx.answerPending)return;if(!navigator.onLine){updateConnectionHealth(false);return}if(ctx.connectionStale)updateConnectionHealth(false);ctx.answerPending=true;const buttons=qa('[data-answer]');buttons.forEach(x=>busy(x,true));
+async function submitAnswer(choice){if(ctx.mode!=='game'||!ctx.room||ctx.room.phase!=='question'||ctx.room.paused||ctx.room.has_answer||ctx.answerPending)return;if(!navigator.onLine){updateConnectionHealth(false);return}if(ctx.connectionStale)updateConnectionHealth(false);ctx.answerPending=true;
+ ctx.pickedAnswer={room_id:ctx.room.room_id,index:ctx.room.index,choice};
+ const buttons=qa('#gameContent [data-answer]');
+ buttons.forEach(x=>{
+  const picked=Number(x.dataset.answer)===choice;
+  x.classList.toggle('is-picked',picked);
+  x.setAttribute('aria-pressed',String(picked));
+  busy(x,true);
+ });
  notice('gameNotice','');
  const sentRoom=ctx.room.room_id,sentIndex=ctx.room.index;
  try{
