@@ -35,7 +35,7 @@ test('A 90-minute outage keeps the draft and locks answers until fresh state is 
  await page.context().setOffline(true);
  await expect(page.locator('#richTextAnswer')).toBeDisabled();
  await expect(page.locator('#gameContent [data-submit-rich]')).toBeDisabled();
- await expect(page.locator('#gameNotice')).toContainText('Соединение с комнатой не подтверждено');
+ await expect(page.locator('#gameNotice')).toContainText('Нет интернета.');
  await page.clock.fastForward(90*60*1000);
  await expect(page.locator('#richTextAnswer')).toHaveValue('Москва');
  expect(await page.evaluate(()=>window.stateCalls)).toBe(0);
@@ -66,7 +66,9 @@ test('Failed polls retry with capped backoff rather than a tight request loop',a
   window.firstPoll=refreshRoom(false);
  },fixture());
  await expect.poll(()=>page.evaluate(()=>window.attempts)).toBe(1);
- await expect(page.locator('#richTextAnswer')).toBeDisabled();
+ await expect(page.locator('#richTextAnswer')).toBeEnabled();
+ await expect(page.locator('#gameNotice')).toBeEmpty();
+ expect(await page.evaluate(()=>ctx.connectionStale)).toBe(false);
  await page.clock.fastForward(2100);
  await expect.poll(()=>page.evaluate(()=>window.attempts)).toBe(2);
  await page.clock.fastForward(4100);
@@ -101,7 +103,9 @@ test('A hanging room RPC times out and retries, without accepting a late stale a
  await expect.poll(()=>page.evaluate(()=>ctx.connectionStale)).toBe(true);
  // Queued notifications must not bypass exponential backoff after failure.
  expect(await page.evaluate(()=>window.roomCalls)).toBe(1);
- await expect(page.locator('#richTextAnswer')).toBeDisabled();
+ await expect(page.locator('#richTextAnswer')).toBeEnabled();
+ await expect(page.locator('#gameNotice')).toBeEmpty();
+ expect(await page.evaluate(()=>ctx.connectionStale)).toBe(false);
  await page.clock.fastForward(2100);
  await expect.poll(()=>page.evaluate(()=>window.roomCalls)).toBe(2);
  await expect.poll(()=>page.evaluate(()=>ctx.connectionStale)).toBe(false);
@@ -120,4 +124,45 @@ test('40 virtual players spread background refreshes across a 20-second window',
  for(const offset of offsets){const slot=Math.floor(offset/500);counts.set(slot,(counts.get(slot)||0)+1)}
  expect(Math.max(...counts.values())).toBe(1);
  expect(offsets.reduce((sum,offset)=>sum+Number(offset>=0&&offset<20000),0)).toBe(40);
+});
+
+test('A failed room read cannot block a real answer accepted by the server',async({page})=>{
+ await ready(page);
+ await page.evaluate(room=>{
+  room.question={kind:'single',prompt:'Выберите столицу',options:['Москва','Казань','Томск','Омск']};
+  window.serverRoom=room;
+  ctx.roomCode=room.code;ctx.room=room;showScreen('game');renderGame();
+  window.failedReads=0;window.submitted=0;
+  ctx.client.rpc=async(name)=>{
+   if(name==='qwiz_party_state'){
+    window.failedReads++;
+    if(window.failedReads===1)throw Error('Temporary 503 on snapshot only');
+    return {data:{...window.serverRoom,has_answer:window.submitted>0,server_now:new Date().toISOString()},error:null};
+   }
+   if(name==='org_next_answer'){window.submitted++;return {data:{accepted:true},error:null};}
+   return {data:null,error:null};
+  };
+ },fixture());
+ await page.evaluate(()=>refreshRoom(false));
+ await expect(page.locator('#gameNotice')).toBeEmpty();
+ expect(await page.evaluate(()=>ctx.connectionStale)).toBe(false);
+ await expect(page.locator('[data-answer]').first()).toBeEnabled();
+ await page.locator('[data-answer]').first().click();
+ await expect.poll(()=>page.evaluate(()=>window.submitted)).toBe(1);
+ await expect.poll(()=>page.evaluate(()=>ctx.room?.has_answer)).toBe(true);
+ await expect(page.locator('.player-answer-confirmation')).toContainText('Ответ принят.');
+ await expect(page.locator('#gameNotice')).toBeEmpty();
+});
+
+test('Network returning unlocks answer controls before the next room snapshot',async({page})=>{
+ await ready(page);
+ await page.evaluate(room=>{
+  ctx.roomCode=room.code;ctx.room=room;showScreen('game');renderGame();
+  ctx.client.rpc=async()=>({data:{...room,server_now:new Date().toISOString()},error:null});
+ },fixture());
+ await page.context().setOffline(true);
+ await expect(page.locator('#richTextAnswer')).toBeDisabled();
+ await page.context().setOffline(false);
+ await expect(page.locator('#richTextAnswer')).toBeEnabled();
+ await expect(page.locator('#gameNotice')).toBeEmpty();
 });
