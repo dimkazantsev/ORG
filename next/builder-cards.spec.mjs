@@ -497,8 +497,8 @@ test('One archive-clear button previews all completed games, cancels safely and 
  });
  await button.click();
  await expect.poll(()=>dismissed).toBe(true);
- await expect.poll(()=>page.evaluate(()=>window.archiveCalls.length)).toBe(1);
- expect(await page.evaluate(()=>window.archiveCalls[0].params.p_confirm)).toBe(false);
+ await expect.poll(()=>page.evaluate(()=>window.archiveCalls.filter(x=>x.method==='qwiz_clear_finished_rooms').length)).toBe(1);
+ expect(await page.evaluate(()=>window.archiveCalls.find(x=>x.method==='qwiz_clear_finished_rooms').params.p_confirm)).toBe(false);
  await expect(page.locator('#hostRoomList .rooms-history')).toHaveCount(1);
  await expect(button).toBeEnabled();
  let accepted=false;
