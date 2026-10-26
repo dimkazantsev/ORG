@@ -51,7 +51,11 @@ const trashSvg='<svg class="trash-svg" viewBox="0 0 24 24" fill="none" stroke="c
 const moveIconLeft='<svg class="move-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m7-7-7 7 7 7"/></svg>';
 const moveIconRight='<svg class="move-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>';
 const legacyArcadeTitles={'Забег с препятствиями':'Дино-забег','Командная тапалка':'Тап-баттл','Дуэль капитанов · Memory':'Мэмори капитанов','Ракетная гонка':'Дино-забег','Перетягивание очков':'Тап-баттл','Дуэль капитанов':'Мэмори капитанов'};
-const gameTitle=c=>arcadeGames[c?.settings?.arcade_mode]?.title&&legacyArcadeTitles[c.title]?arcadeGames[c.settings.arcade_mode].title:c.title;
+// Saved legacy duplicates may contain several appended suffixes. Display
+// the original title, but do not rename user-defined descriptive titles.
+const cleanCardTitle=value=>String(value||'').replace(/(?:\s*[—–-]\s*копия(?:\s*№?\d+)?|\s*\(\s*копия(?:\s*№?\d+)?\s*\))+\s*$/giu,'').trim();
+const gameTitle=c=>cleanCardTitle(arcadeGames[c?.settings?.arcade_mode]?.title&&legacyArcadeTitles[c.title]
+ ?arcadeGames[c.settings.arcade_mode].title:c.title)||titles[c?.type]||'Карточка';
 const titles={round:'Раунд вопросов',intro:'Начало игры',break:'Музыкальная пауза',team_stats:'Рейтинг команд',player_stats:'Статистика игроков',bonus:'Бонусная активность',duel:'Дуэль команд',finale:'Финал игры'};
 const buildDefaults={count:5,seconds:30,answer_seconds:10,order:'random',offset:0,team_cap:null,player_cap:null,sound:'fanfare',lead_seconds:5,stats_seconds:7,bonus_percent:70,bonus_lead:15};
 const arcadeGames={
@@ -465,7 +469,7 @@ function updateCardSelection(){
  const hint=$('insertAfterHint');
  if(hint)hint.textContent=selected<0?'Новые карточки добавляются перед финалом':
   selected===state.cards.length-1?'Следующая карточка — перед финалом':
-  'Следующая карточка — после «'+state.cards[selected].title+'»';
+  'Следующая карточка — после «'+gameTitle(state.cards[selected])+'»';
 }
 function selectCard(index){state.selectedCard=state.cards[index]||null;updateCardSelection()}
 function appendCard(type='round',arcadeMode=null){
@@ -503,7 +507,7 @@ function duplicateCard(index){
  // and all mode arrays must remain independent from the original.
  const clone=JSON.parse(JSON.stringify(original));
  delete clone.id; // A duplicate must not retain the original database card identity.
- clone.title=(original.title||titles[original.type]||'Карточка')+' — копия';
+ clone.title=gameTitle(original); // Duplicate without appending 'копия' or a counter.
  state.cards.splice(index+1,0,clone);
  renderCards();
  msg('buildMessage','Создана копия карточки «'+original.title+'» сразу после оригинала. Сохраните сборку, чтобы применить изменения.');
@@ -546,7 +550,7 @@ function syncCardModePanels(){
  select.required=card.type==='round'&&!mapMode;
 }
 function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{};
- $('cardTitle').value=c.title;$('cardTopic').value=c.topic_id||cardMechanicTopic(c)||'';$('cardIcon').value=c.icon||'▦';
+ $('cardTitle').value=gameTitle(c);$('cardTopic').value=c.topic_id||cardMechanicTopic(c)||'';$('cardIcon').value=c.icon||'▦';
  $('cardCount').value=s.count||5;$('cardSeconds').value=s.seconds||30;$('cardAnswerSeconds').value=s.answer_seconds||10;
  $('cardRoundSettings').hidden=c.type!=='round';$('cardFinalePreview').hidden=c.type!=='finale';
  const arcade=arcadeGames[s.arcade_mode];$('cardArcadeSettings').hidden=!arcade;
@@ -637,7 +641,7 @@ function saveCard(event){
   nextSettings.geo_count=Math.max(1,Math.min(89,Number($('cardGeoCount').value)||15));
   nextSettings.geo_seconds=Math.max(45,Math.min(600,Number($('cardGeoSeconds').value)||180));
  }
- c.title=$('cardTitle').value.trim();
+ c.title=cleanCardTitle($('cardTitle').value.trim())||titles[c.type]||'Карточка';
  c.topic_id=c.type==='round'?topicId:(c.topic_id||null);
  c.icon=$('cardIcon').value||icons[c.type]||'▦';
  c.settings=nextSettings;
@@ -693,7 +697,7 @@ async function deleteRoom(id){
 }
 async function loadBuild(id){try{const r=await studio('build_get',{id});state.buildId=r.build.id;
  $('buildTitle').value=r.build.title;
- state.selectedCard=null;state.cards=(r.cards||[]).filter(c=>!['team_stats','player_stats'].includes(c.type)); // Keep legacy blank bonuses visible for deletion.
+ state.selectedCard=null;state.cards=(r.cards||[]).filter(c=>!['team_stats','player_stats'].includes(c.type)).map(c=>({...c,title:gameTitle(c)})); // Keep legacy blank bonuses visible for deletion.
  const inferred=state.cards.filter(c=>synchronizeCardTopic(c)).length;
  ensureFinale();$('composer').hidden=false;renderCards();section('builder');savePosition();
  if(inferred)msg('buildMessage','Темы '+inferred+' карточек восстановлены по выбранным механикам. Сохраните сборку, чтобы применить изменения.');
@@ -746,7 +750,7 @@ const launchModeNames={
 };
 function describeLaunchCard(c){
  const settings=c.settings||{},mode=settings.arcade_mode||'';
- const title=c.title||titles[c.type]||'Карточка';
+ const title=gameTitle(c);
  if(c.type==='finale')return {title,description:'Финал всей игры и общая статистика'};
  if(['team_stats','player_stats'].includes(c.type))return {title,description:'Устаревшая карточка рейтинга. Откройте редактор и сохраните сборку, чтобы исключить её.',invalid:true};
  if(mode==='russia_map'){
