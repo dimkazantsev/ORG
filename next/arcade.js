@@ -41,11 +41,13 @@ window.QwizArcade=(()=>{
     '<div class="arcade-runner-obstacle" data-runner-obstacle><svg viewBox="0 0 52 86" class="dino-cactus" shape-rendering="crispEdges" aria-hidden="true"><path d="M20 6H31V78H20Z M9 25H18V51H9Z M9 45H26V54H9Z M33 34H43V60H33Z M26 51H43V61H26Z M16 77H36V84H16Z" fill="#4c806c"/></svg></div><div class="arcade-runner-floor"></div><span class="arcade-runner-score" aria-hidden="true">ДИНО · ЗАБЕГ</span></div>';
   if(mode==='tug')return '<div class="arcade-tap-stage" aria-hidden="true"><div class="arcade-tap-glow"></div><span class="arcade-tap-sparks">✧　✦　✧</span></div>';
   if(mode==='captain')return '<div class="arcade-memory-hero" aria-hidden="true"><div class="memory-stage"><span class="memory-stage-halo"></span><span class="memory-stage-card memory-stage-card-a"><i>◈</i></span><span class="memory-stage-card memory-stage-card-b"><i>✦</i></span><span class="memory-stage-card memory-stage-card-c"><i>◈</i></span><span class="memory-stage-card memory-stage-card-d"><i>✦</i></span></div></div>';
-  return '<div class="arcade-3d-world arcade-world-blitz" role="img" aria-label="Трёхмерный энергетический кристалл для блиц-вопроса">'+ground+
-   '<div class="arcade-3d-object arcade-model-blitz">'+
-    '<span class="arcade-blitz-facet facet-left"></span><span class="arcade-blitz-facet facet-back"></span>'+
-    '<span class="arcade-blitz-facet facet-right"></span><span class="arcade-blitz-bolt">ϟ</span>'+
-   '</div><span class="arcade-blitz-ring ring-a"></span><span class="arcade-blitz-ring ring-b"></span></div>';
+  return '<div class="consensus-hero" role="img" aria-label="Участники команды голосуют, капитан принимает решение">'+
+    '<span class="consensus-hero-aura"></span>'+
+    '<span class="consensus-hero-card consensus-hero-card-left"><b>A</b><i></i><i></i></span>'+
+    '<span class="consensus-hero-card consensus-hero-card-center"><b>✓</b><i></i><i></i></span>'+
+    '<span class="consensus-hero-card consensus-hero-card-right"><b>C</b><i></i><i></i></span>'+
+    '<span class="consensus-hero-stars" aria-hidden="true">✦　✧　✦</span>'+
+    '<span class="consensus-hero-label">ОДИН ВОПРОС · ОБЩЕЕ РЕШЕНИЕ</span></div>';
  }
  function rankMarkup(v){
   if(v?.mode==='blitz'){
