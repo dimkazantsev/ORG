@@ -144,3 +144,21 @@ test('arcade snapshot cannot hang forever and leave the player frozen',()=>{
  assert.match(js,/ac\.abort\(\);reject\(Error\('Сервер не ответил за 9 секунд'\)\);},9000\)/);
  assert.match(js,/finally\{tr\.fetching=false\}/);
 });
+
+
+test('Captain Memory is responsive: 640ms server window, immediate local flip and two queued taps',()=>{
+ const js=read('arcade.js'),css=read('arcade.css');
+ const sql=read('migrations/20261027_captain_memory_fast_flip.sql');
+ assert.match(sql,/640 milliseconds/);
+ assert.doesNotMatch(sql,/1900 milliseconds/);
+ assert.match(sql,/'icon',m\.deck->p_tile->>'icon'/);
+ assert.match(sql,/'retry_ms'/);
+ assert.match(js,/tile\.classList\.add\('is-open','is-pending'\)/);
+ assert.match(js,/mem\.next\.push\(index\)/);
+ assert.match(js,/memoryStage\(tr\)/);
+ assert.match(js,/board\.children\.length!==12/);
+ assert.doesNotMatch(js,/board\.innerHTML=\(m\.tiles\|\|\[\]\)\.map/);
+ assert.doesNotMatch(js,/Все капитаны одновременно ищут пары\. Учитываются время и ходы\./);
+ assert.match(css,/transition:transform 105ms/);
+ assert.match(css,/\.arcade-memory-tile\.is-queued/);
+});
