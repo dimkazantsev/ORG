@@ -10,7 +10,7 @@ test('all resilience code parses and new builds are referenced',()=>{
  }
  const pages=[['index.html','app.js?v=consensus-fix-20261027-1'],
   ['index.html','arcade.js?v=mobile-40-20261028-1'],
-  ['workspace.html','workspace.js?v=geo-full-question-20261028-1'],
+  ['workspace.html','workspace.js?v=team-lab-recovery-20261028-3'],
   ['presenter.html','presenter.js?v=mobile-40-20261028-1'],
   ['workspace.html','card-sandbox.js?v=geo-full-question-20261028-1'],
   ['workspace.html','card-geo-preview.js?v=geo-full-question-20261028-1']];
