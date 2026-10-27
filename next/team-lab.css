@@ -176,3 +176,20 @@
  .team-lab-demo-timeline>div{padding:12px 3px}
 }
 @media(max-width:380px){.team-lab-rules{grid-template-columns:minmax(0,1fr)}}
+
+/* Voting stage integrated into the live card simulation. */
+#teamLab .team-lab-sandbox-votes{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0;
+}
+#teamLab .team-lab-sandbox-votes>div{
+ border:1px solid #e3d4f3;background:#faf6ff;border-radius:10px;
+ display:flex;justify-content:space-between;align-items:center;gap:9px;
+ padding:12px;min-width:0;font-size:12px;color:#705580;overflow-wrap:anywhere;
+}
+#teamLab .team-lab-sandbox-votes strong{
+ font-size:15px;color:#7144b2;font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+#teamLab .team-lab-strategies button{display:grid;gap:6px;text-align:left;min-width:0}
+#teamLab .team-lab-strategies button strong{font-size:13px}
+#teamLab .team-lab-strategies button small{font-size:11px;color:#826b91;line-height:1.4}
+@media(max-width:680px){#teamLab .team-lab-sandbox-votes{grid-template-columns:minmax(0,1fr)}}
