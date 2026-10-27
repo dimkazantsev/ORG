@@ -142,7 +142,7 @@ function createOption(value,label){const n=document.createElement('option');n.va
 function fillSelect(select,options,placeholder,selected=''){select.replaceChildren();if(placeholder!==null)select.add(createOption('',placeholder));for(const [value,title]of options)select.add(createOption(value,title));select.value=selected}
 function nameTopic(id){return state.topics.find(t=>t.id===id)?.name||'Все темы'}
 async function overview(){
- const d=await studio('overview');state.topics=d.topics||[];state.builds=d.builds||[];
+ const d=await studio('overview');state.topics=d.topics||[];state.builds=d.builds||[];window.QwizTeamLab?.refreshBuilds();
  updateSelectors();configureBankModes();renderTopics();renderBuilds();await loadQuestions();
 }
 function updateSelectors(){
