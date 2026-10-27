@@ -42,7 +42,7 @@ window.QwizTeamLab=(()=>{
   if(builds.some(b=>String(b.id)===previous))select.value=previous;
   else if(builds.length)select.value=String(builds[0].id);
   select.disabled=!!run||!builds.length;
-  start.disabled=!!run||busy||!builds.length;
+  start.disabled=busy||!builds.length;
   retry.hidden=!!builds.length;
   if(!run&&!busy){
    if(builds.length)setMessage('Сборка доступна. Запустите тест: 3 игрока против 3 виртуальных соперников.');
