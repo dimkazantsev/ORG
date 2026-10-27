@@ -12,21 +12,6 @@ for(const [width,height] of [[390,844],[1280,720]]){
   await expect(page.locator('.arcade-memory-tile').first()).toHaveClass(/is-open/);
   expect(await page.evaluate(()=>document.documentElement.scrollWidth-window.innerWidth)).toBeLessThanOrEqual(2);
  });
- test('Runner puts one-finger jump in the arena on '+width+'px',async({page})=>{
-  await page.setViewportSize({width,height});
-  await page.goto(URL);
-  await page.evaluate(()=>window.mountExample('rocket'));
-  await expect(page.locator('.arcade-runner-obstacle')).toBeVisible();
-  const button=page.locator('.arcade-runner-jump-btn');
-  await expect(button).toBeEnabled();
-  const bounds=await button.boundingBox(),scene=await page.locator('.arcade-scene').boundingBox();
-  expect(bounds.x).toBeGreaterThanOrEqual(scene.x);
-  expect(bounds.x+bounds.width).toBeLessThanOrEqual(scene.x+scene.width+2);
-  expect(bounds.y+bounds.height).toBeLessThanOrEqual(scene.y+scene.height+2);
-  await button.click();
-  await expect.poll(()=>page.evaluate(()=>window.accepted.some(x=>x.action==='jump'))).toBe(true);
-  expect(await page.evaluate(()=>document.documentElement.scrollWidth-window.innerWidth)).toBeLessThanOrEqual(2);
- });
  test('Every participant taps the central three-dimensional button at '+width+'px',async({page})=>{
   await page.setViewportSize({width,height});
   await page.goto(URL);
@@ -54,24 +39,6 @@ test('A repeated Memory card resets the old deck instead of showing previous rev
 });
 
 
-test('Dino runner uses a crisp pixel dinosaur and cactus rather than the old rounded mascot',async({page})=>{
- await page.setViewportSize({width:390,height:844});
- await page.goto(URL);
- await page.evaluate(()=>window.mountExample('rocket'));
- await expect(page.locator('.arcade-head h2')).toHaveText('Дино-забег');
- await expect(page.locator('.dino-pixel')).toBeVisible();
- await expect(page.locator('.dino-cactus')).toBeVisible();
- await expect(page.locator('.runner-head')).toHaveCount(0);
- const art=await page.locator('.arcade-runner-world').evaluate(el=>{
-  const r=el.getBoundingClientRect(),d=el.querySelector('.dino-pixel').getBoundingClientRect();
-  return {width:r.width,height:r.height,pixel:d.width,shape:el.querySelector('.dino-pixel').getAttribute('shape-rendering'),background:getComputedStyle(el).backgroundImage};
- });
- expect(art.shape).toBe('crispEdges');
- expect(art.pixel).toBeGreaterThan(60);
- expect(art.width).toBeGreaterThan(280);
- expect(art.background).toContain('linear-gradient');
-});
-
 test('Tap-battle counts first pointerdown instantly without double click and batches rapidly',async({page})=>{
  await page.setViewportSize({width:390,height:844});
  await page.goto(URL);
@@ -97,17 +64,17 @@ test('Tap-battle counts first pointerdown instantly without double click and bat
  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
 });
 
-test('Legacy saved rocket and tug names are normalized before player, projector and teacher render',async({page})=>{
+test('Removed Dino stays absent, while active team games have matching names on every screen',async({page})=>{
  await page.goto(URL);
  const values=await page.evaluate(async()=>{
   // Fixture embeds arcade.js only; other files are inspected by this test as source
   // to ensure three entry points agree on canonical saved-card labels.
   const paths=['app.js','presenter.js','workspace.js'];
   const texts=await Promise.all(paths.map(async p=>(await fetch('./'+p)).text()));
-  return texts.map(x=>({rocket:x.includes("rocket:'Дино-забег'"),
-   tug:x.includes("tug:'Тап-баттл'"),captain:x.includes("captain:'Мэмори капитанов'"),
+  return texts.map(x=>({rocketRemoved:!x.includes("rocket:'Дино-забег'"),
+   tug:x.includes("tug:'Тап-баттл'"),blitz:x.includes("blitz:'Блиц-консенсус'"),captain:x.includes("captain:'Мэмори капитанов'"),
    normalizes:/ArcadeActivity\(/.test(x)}));
  });
  expect(values).toHaveLength(3);
- for(const check of values)expect(check).toEqual({rocket:true,tug:true,captain:true,normalizes:true});
+ for(const check of values)expect(check).toEqual({rocketRemoved:true,tug:true,blitz:true,captain:true,normalizes:true});
 });
