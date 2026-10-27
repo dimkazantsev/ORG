@@ -50,6 +50,7 @@ function cardIconSvg(type,glyph=null){
  return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'+(cardSvgPaths[key]||cardSvgPaths.round)+'</svg>';
 }
 const copySvg='<svg class="copy-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg>';
+const playCardSvg='<svg class="play-card-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4Z" fill="currentColor" stroke="none"/></svg>';
 const trashSvg='<svg class="trash-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 4h4m-7 3 1 13h8l1-13M10 11v6m4-6v6"/></svg>';
 const moveIconLeft='<svg class="move-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5m7-7-7 7 7 7"/></svg>';
 const moveIconRight='<svg class="move-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>';
@@ -497,8 +498,44 @@ function cardDesc(c){const settings=c.settings||{};
 function renderCards(){state.cards=state.cards.filter(c=>c.settings?.arcade_mode!=='rocket');ensureFinale();if(!state.cards.includes(state.selectedCard))state.selectedCard=null;$('roundCards').innerHTML=state.cards.map((c,i)=>{
  const final=c.type==='finale',emblem=final?'<svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M15 7h18v13c0 13-18 13-18 0V7ZM15 11H7v6c0 7 8 10 12 8M33 11h8v6c0 7-8 10-12 8M24 30v10M16 41h16" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>':cardIconSvg(c.type,arcadeGames[c.settings?.arcade_mode]?.icon||(c.settings?.arcade_mode==='russia_map'?'map':c.icon));
  return '<article class="round-card'+(c===state.selectedCard?' is-selected':'')+'" data-index="'+i+'" data-type="'+esc(c.type)+'" data-mechanic="'+esc(c.settings?.arcade_mode||'')+'" tabindex="0" role="group" aria-current="'+(c===state.selectedCard?'true':'false')+'" aria-label="'+esc(gameTitle(c))+'. Выбрать позицию вставки; двойное нажатие — настройки" draggable="'+!final+'"><div class="round-card-heading"><span class="round-icon" aria-hidden="true">'+emblem+'</span><span class="small-help">'+(final?'ФИНАЛ ИГРЫ':'КАРТОЧКА '+(i+1).toString().padStart(2,'0'))+'</span></div><h3>'+esc(gameTitle(c))+'</h3><p class="round-sub">'+esc(cardDesc(c))+'</p>'+
- (final?'<div class="finale-card-tags"><span>Команды</span><span>Участники</span><span>3 + 3 вопроса</span></div>':'')+'<div class="round-actions">'+(!final?'<button type="button" data-move="'+i+':-1" aria-label="Раньше" '+(i===0?'disabled':'')+'>'+moveIconLeft+'</button><button type="button" data-move="'+i+':1" aria-label="Позже" '+(i>=state.cards.length-2?'disabled':'')+'>'+moveIconRight+'</button>':'')+'<button type="button" class="round-edit" data-edit-card="'+i+'">'+(final?'Настроить финал':'Настроить')+'</button></div>'+(!final?'<div class="round-card-tools"><button type="button" class="card-copy round-copy" data-duplicate-card="'+i+'" title="Дублировать карточку" aria-label="Дублировать карточку '+esc(c.title)+'">'+copySvg+'</button><button type="button" class="card-trash round-trash" data-delete-card="'+i+'" title="Удалить карточку" aria-label="Удалить карточку '+esc(c.title)+'">'+trashSvg+'</button></div>':'')+'</article>';
+ (final?'<div class="finale-card-tags"><span>Команды</span><span>Участники</span><span>3 + 3 вопроса</span></div>':'')+'<div class="round-actions">'+(!final?'<button type="button" data-move="'+i+':-1" aria-label="Раньше" '+(i===0?'disabled':'')+'>'+moveIconLeft+'</button><button type="button" data-move="'+i+':1" aria-label="Позже" '+(i>=state.cards.length-2?'disabled':'')+'>'+moveIconRight+'</button>':'')+'<button type="button" class="round-edit" data-edit-card="'+i+'">'+(final?'Настроить финал':'Настроить')+'</button></div>'+'<div class="round-card-tools"><button type="button" class="card-play round-play" data-play-card="'+i+'" title="Проверить карточку в тестовом режиме" aria-label="Проверить карточку '+esc(gameTitle(c))+' в тестовом режиме">'+playCardSvg+'</button>'+(final?'':'<button type="button" class="card-copy round-copy" data-duplicate-card="'+i+'" title="Дублировать карточку" aria-label="Дублировать карточку '+esc(c.title)+'">'+copySvg+'</button><button type="button" class="card-trash round-trash" data-delete-card="'+i+'" title="Удалить карточку" aria-label="Удалить карточку '+esc(c.title)+'">'+trashSvg+'</button>')+'</div>'+'</article>';
  }).join('');updateCardSelection();}
+
+// This preview never creates a room or modifies a score. Question reads happen once per open.
+async function loadSandboxQuestions(card){
+ const settings=card.settings||{},topic=state.topics.find(t=>t.id===card.topic_id)?.name||'';
+ if(!card.topic_id)throw Error('Сначала выберите тему в настройках карточки.');
+ const requested=Math.min(100,Math.max(1,Number(settings.count)||5));
+ const modes=topic==='Флаги мира'?(settings.flag_modes||[]):topic==='География России'?(settings.geo_modes||[]):[];
+ const selected=[...new Set(modes.filter(Boolean))];
+ const order=settings.order==='reverse'?'newest':'oldest';
+ const load=async mode=>{
+  const params={search:'',sort:order,offset:Math.max(0,Number(settings.offset)||0),
+   limit:Math.min(100,Math.max(5,Math.ceil(requested/Math.max(1,selected.length))+3))};
+  const response=topic==='География России'
+   ?await rpc('qwiz_geo_questions',{p_search:'',p_mode:mode,p_sort:order,p_offset:params.offset,p_limit:params.limit})
+   :await studio('questions',{...params,topic_id:card.topic_id,kind:topic==='Флаги мира'?'flag':'',mode});
+  return (response?.items||[]).filter(q=>topic!=='Флаги мира'||q.tags?.includes('fw:published'));
+ };
+ // Read at most three selected mechanics concurrently; never poll as the host navigates.
+ const chunks=selected.length?[]:[await load('')];
+ if(selected.length)for(let i=0;i<selected.length;i+=3){
+  const batch=await Promise.all(selected.slice(i,i+3).map(mode=>load(mode)));
+  chunks.push(...batch);
+ }
+ const seen=new Set(),mixed=[],length=Math.max(0,...chunks.map(c=>c.length));
+ for(let i=0;i<length;i++)for(const group of chunks){
+  const q=group[i];if(q&&q.id&&!seen.has(q.id)){seen.add(q.id);mixed.push(q)}
+ }
+ if(settings.order==='random')for(let i=mixed.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[mixed[i],mixed[j]]=[mixed[j],mixed[i]]}
+ return mixed.slice(0,requested);
+}
+function playCardPreview(index){
+ const c=state.cards[index];if(!c)return;
+ const topic=state.topics.find(t=>t.id===c.topic_id)?.name||'';
+ window.QwizCardSandbox?.open({card:{...c,title:gameTitle(c)},topic,
+  loadQuestions:loadSandboxQuestions,loadMap:()=>window.QwizGeo.loadMap()});
+}
 function duplicateCard(index){
  const original=state.cards[index];
  if(!original||original.type==='finale')return;
@@ -1248,6 +1285,7 @@ function wire(){
  let lastCardTap=null;
  $('roundCards').onclick=e=>{
   if(e.target.closest('button,a,input,select,textarea'))lastCardTap=null;
+  const play=e.target.closest('[data-play-card]');if(play){playCardPreview(Number(play.dataset.playCard));return}
   const edit=e.target.closest('[data-edit-card]');if(edit){editCard(Number(edit.dataset.editCard));return}
   const copy=e.target.closest('[data-duplicate-card]');if(copy){duplicateCard(Number(copy.dataset.duplicateCard));return}
   const del=e.target.closest('[data-delete-card]');if(del){const i=Number(del.dataset.deleteCard),c=state.cards[i];if(c&&confirm('Удалить раунд «'+c.title+'» из сборки? Для сохранения изменений нажмите «Сохранить сборку».')){if(state.selectedCard===c)state.selectedCard=null;state.cards.splice(i,1);renderCards();msg('buildMessage','Раунд удалён из конструктора. Сохраните сборку, чтобы применить изменения.')}return}

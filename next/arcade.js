@@ -634,5 +634,5 @@ window.QwizArcade=(()=>{
  // An interrupted mobile connection must not require a page reload.
  window.addEventListener('online',()=>{for(const tr of Object.values(ui)){if(tr&&!tr.closed){fetchState(tr);if(tr.batch&&!tr.sending)flush(tr);}}});
  document.addEventListener('visibilitychange',()=>{if(!document.hidden){for(const tr of Object.values(ui)){if(tr&&!tr.closed)fetchState(tr);}}});
- return {isArcade,mountPlayer,mountProjector,mountHost,syncWallet,stop};
+ return {isArcade,mountPlayer,mountProjector,mountHost,syncWallet,stop,previewArt:art};
 })();
