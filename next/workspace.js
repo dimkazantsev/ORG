@@ -928,7 +928,7 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  QwizStage.iconLabel($('liveStart'),s.phase==='finished'?'Повторить игру':'Начать',s.phase==='finished'?'refresh':'play');
  $('liveStart').setAttribute('aria-label',s.phase==='finished'?'Создать новую сессию той же игры, сохранив историю':'Начать текущую игру');
  $('livePause').hidden=false;$('livePause').disabled=!['countdown','question','result','intermission'].includes(s.phase);QwizStage.iconLabel($('livePause'),s.paused?'Продолжить':'Пауза',s.paused?'play':'pause');$('livePause').setAttribute('aria-pressed',String(!!s.paused));
- $('liveNext').hidden=false;$('liveNext').disabled=!!s.paused||!['question','result','intermission'].includes(s.phase);const geoPlaying=s.phase==='intermission'&&s.activity?.settings?.arcade_mode==='russia_map';
+ $('liveNext').hidden=false;$('liveNext').disabled=!['countdown','question','result','intermission'].includes(s.phase);const geoPlaying=s.phase==='intermission'&&s.activity?.settings?.arcade_mode==='russia_map';
  const introPlaying=s.phase==='intermission'&&s.activity?.type==='card_intro';
  QwizStage.iconLabel($('liveNext'),geoPlaying?'Следующий вопрос':introPlaying?'Запустить испытание':'Далее','forward');$('liveReveal').hidden=true;$('liveFinish').hidden=false;$('liveFinish').disabled=['lobby','finished'].includes(s.phase);
  $('liveConsole').classList.toggle('is-finished',s.phase==='finished');
