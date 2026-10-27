@@ -1,21 +1,43 @@
 'use strict';
 const teamUI={key:'',dragged:null,busy:false};
 function roomReadiness(s){
- const issues=s.setup_issues||[],waiting=Number(s.unassigned_count)||0,ready=!issues.length&&(s.total>0||s.has_geo_round===true);
- $('roomReadiness').hidden=s.phase!=='lobby';
- $('roomReadinessTitle').textContent=ready?(s.total>0?'Вопросы готовы · '+s.total:'Карта России готова · 89 субъектов'): 'Комната создана · вопросы ещё не готовы';
- $('roomReadinessText').textContent=issues.length?issues.map(x=>x.title+': '+x.reason).join('. '):waiting?'Ожидают распределения: '+waiting+'. Назначьте им команды перед началом.':'Можно собирать команды и начинать игру.';
- $('addRoomQuestions').hidden=ready;$('refreshRoomContent').hidden=s.phase!=='lobby';
- // Completed sessions can always be replayed; readiness only guards a NEW lobby start.
- // The prior readiness code silently disabled the renamed “Повторить игру” button.
- const replay=s.phase==='finished';
- const lobby=s.team_lobby;
- const formed=!lobby||(lobby.mode==='random'&&lobby.confirmed)||(lobby.mode==='captain'&&lobby.captains_ready);
+ const issues=Array.isArray(s.setup_issues)?s.setup_issues:[];
+ const waiting=Math.max(0,Number(s.unassigned_count)||0);
+ // A room with mini-games and no regular question rounds is fully playable.
+ // Use the server-derived timeline flag, never the number of ordinary questions alone.
+ const hasQuestions=Number(s.total)>0,hasGeography=s.has_geo_round===true;
+ const hasArcade=s.has_arcade_round===true;
+ const ready=issues.length===0&&(hasQuestions||hasGeography||hasArcade);
+ const replay=s.phase==='finished',lobby=s.team_lobby;
+ const formed=!lobby||(lobby.mode==='random'&&lobby.confirmed)||
+  (lobby.mode==='captain'&&lobby.captains_ready);
  const hasPlayers=(s.players||[]).length>0;
- $('liveStart').disabled=!replay&&(teamUI.busy||s.phase!=='lobby'||!ready||waiting>0||!formed||(!!lobby&&!hasPlayers));
- $('liveStart').title=replay?'Создать новую игровую комнату с теми же заданиями. История результатов сохранится.':
-  !ready?'Добавьте вопросы или картографический раунд в сборку':waiting?'Распределите ожидающих участников':!formed?'Сначала завершите формирование команд':'';
+ const canStart=s.phase==='lobby'&&ready&&hasPlayers&&waiting===0&&formed&&!teamUI.busy;
+ const missing=issues.length?issues.map(x=>x.title+': '+x.reason).join('. '):
+  !ready?'Добавьте настроенную мини-игру или вопросы в сборку и обновите комнату.':
+  !hasPlayers?'Для начала игры нужен хотя бы один подключённый участник. Пригласите его по QR-коду.':
+  waiting>0?'Распределите ожидающих участников по командам: '+waiting+'.':
+  !formed?'Подтвердите составы команд или завершите выбор капитанов.':
+  teamUI.busy?'Применяем настройки команд…':'Все условия выполнены. Можно запускать игру.';
+ $('roomReadiness').hidden=s.phase!=='lobby';
+ $('roomReadinessTitle').textContent=!ready?'Комната создана · подготовка не завершена':
+  hasQuestions?'Вопросы готовы · '+s.total:
+  hasArcade&&hasGeography?'Мини-игры и карта России готовы':
+  hasArcade?'Мини-игры готовы · обычные вопросы не требуются':
+  'Карта России готова · 89 субъектов';
+ $('roomReadinessText').textContent=missing;
+ $('addRoomQuestions').hidden=ready;
+ $('refreshRoomContent').hidden=s.phase!=='lobby'||ready;
+ $('liveStart').disabled=!(replay||canStart);
+ const hint=replay?'Создать новую игровую комнату. Результаты завершённой игры сохранятся.':
+  canStart?'Начать текущую игру':missing;
+ $('liveStart').title=hint;
+ if(s.phase==='lobby'){
+  $('liveControlsHint').textContent=canStart?
+   'Комнаты и команды готовы — можно начинать.':missing;
+ }
 }
+
 function teamMember(p,s){
  const movable=!teamUI.busy&&((s.phase==='lobby'&&(!s.team_lobby||s.team_lobby.mode==='random'&&!s.team_lobby.confirmed))||(s.phase!=='finished'&&!p.team_id&&!s.team_lobby));
  return '<div class="team-member" data-player-id="'+esc(p.id)+'" draggable="'+movable+'">'+QwizTeams.avatar(p.avatar)+'<div class="team-member-name">'+esc(p.name)+(p.group?'<small>'+esc(p.group)+'</small>':'')+'</div>'+
