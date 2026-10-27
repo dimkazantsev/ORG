@@ -103,3 +103,8 @@
  .team-lab-next{width:100%}
 }
 @media(prefers-reduced-motion:reduce){.team-lab-big-tap:active{transform:none}}
+
+/* Distinct recovery affordance for missing/offline simulator data. */
+.team-lab .team-lab-retry{min-height:46px;white-space:nowrap;border:1px solid #d9c6ef;color:#64439a;background:#faf6ff;font-size:12px;font-weight:800}
+.team-lab .team-lab-retry:hover:not(:disabled){background:#f0e7fb}
+.team-lab [hidden]{display:none!important}
