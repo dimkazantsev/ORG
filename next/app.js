@@ -404,7 +404,7 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
   el.innerHTML='<section class="player-team-building'+(complete?' is-complete':'')+'" aria-label="'+esc(title)+'">'+
    (complete&&myTeam?'<div class="team-confirm-card"><span class="team-confirm-emoji" aria-hidden="true">'+QwizStage.icon(myTeam,true)+'</span><div><small>ВАША КОМАНДА</small><strong>'+esc(myTeam.name)+'</strong></div></div>':'')+
    '<div class="team-building-center"><span class="eyebrow">QWIZ-PARTY · КОМАНДЫ</span>'+
-   '<div class="team-building-glow" aria-hidden="true">'+(complete?checkSvg:'<span class="team-infinity">∞</span>')+'</div>'+
+   '<div class="team-building-glow" aria-hidden="true">'+(complete?checkSvg:'<svg class="team-infinity-svg" viewBox="0 0 240 146" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="infinityLavender" x1="24" y1="0" x2="220" y2="150"><stop stop-color="#7c3ee6"/><stop offset="1" stop-color="#a34af4"/></linearGradient></defs><path d="M120 74C97 39 75 24 51 24 23 24 12 48 12 73c0 30 15 48 42 48 28 0 50-27 66-47Zm0 0c24-34 47-50 69-50 27 0 40 20 40 47 0 29-17 50-42 50-27 0-48-22-67-47Z" stroke="url(#infinityLavender)" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/></svg>')+'</div>'+
    '<h1>'+title+'</h1><p>'+desc+'</p></div></section>';
   text('playerStatus',title);return;
  }
