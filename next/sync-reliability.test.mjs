@@ -9,7 +9,7 @@ test('all resilience code parses and new builds are referenced',()=>{
   assert.doesNotThrow(()=>new Script(read(name),{filename:name}));
  }
  const pages=[['index.html','app.js?v=geo-control-20261027-6'],
-  ['index.html','arcade.js?v=geo-control-20261027-6'],
+  ['index.html','arcade.js?v=memory-fast-20261027-1'],
   ['workspace.html','workspace.js?v=geo-control-20261027-6'],
   ['presenter.html','presenter.js?v=geo-control-20261027-6']];
  for(const [page,asset] of pages) assert.ok(read(page).includes(asset),page+' missing '+asset);
