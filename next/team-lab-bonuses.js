@@ -70,7 +70,7 @@ window.QwizBonusExplorer=(()=>{
   }else if(trial.stage==='option'){
    const arr=effects.filter(e=>e.tone===(trial.strategy==='support'?'positive':'negative'));
    panel.innerHTML=head+'<h4>Большинство определило маршрут: '+(trial.strategy==='support'?'усиление':'штраф')+'</h4>'+
-    '<p class="team-lab-demo-detail">Теперь выбирается конкретный эффект. Нужно минимум 2 совпадающих голоса из 3.</p>'+
+    '<p class="team-lab-demo-detail">Голоса за стратегию «'+(trial.strategy==='support'?'усилить себя':'ослабить соперника')+'»: '+trial.strategyVotes.filter(v=>v===trial.strategy).length+'/3. Теперь выбирается конкретный эффект; снова требуется минимум 2 из 3.</p>'+
     '<div class="team-lab-demo-options">'+arr.map(e=>'<button type="button" data-demo-option="'+e.id+'"><strong>'+
        html(e.title)+' · '+html(e.value)+'</strong><small>'+html(e.detail)+'</small></button>').join('')+'</div>'+votesBlock();
   }else{
