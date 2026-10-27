@@ -439,7 +439,7 @@ window.QwizArcade=(()=>{
   try{const {error}=await tr.client.rpc('qwiz_vote_boost',{p_room:tr.roomId,p_choice:choice});
    if(error)throw error;await fetchState(tr)
   }catch(e){showMessage(tr,e.message||'Голос не принят',true);tr.alertOverride=Date.now()+5000}
-  finally{tr.voteBusy=false}
+  finally{tr.voteBusy=false;if(!tr.closed&&tr.view)paint(tr)}
  }
  function animateTap(tr){
   const scene=tr.root.querySelector('.arcade-scene'),button=tr.root.querySelector('[data-arcade-tap]');
