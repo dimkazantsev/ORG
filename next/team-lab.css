@@ -1,0 +1,76 @@
+/* QWIZ-PARTY / isolated two-team test lab */
+.team-lab{margin:24px 0 4px;padding:clamp(15px,2.5vw,26px);border:1px solid #e1d5ef;border-radius:22px;background:linear-gradient(145deg,#faf7ff,#fff 65%);color:#35284e}
+.team-lab [hidden],.team-lab[hidden]{display:none!important}
+.team-lab-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:12px}
+.team-lab-head h3{font-size:clamp(20px,2.3vw,27px);margin:9px 0;color:#36254c}
+.team-lab-head p{color:#776a89;font-size:13px;line-height:1.65;max-width:690px}
+.team-lab-isolation{border-radius:11px;padding:9px 12px;background:#f2eafb;border:1px solid #e3d4f4;font-size:11px;font-weight:800;color:#6944ab}
+.team-lab-controls{display:flex;align-items:flex-end;gap:11px;flex-wrap:wrap;margin:18px 0 10px}
+.team-lab-controls label{display:grid;gap:6px;flex:1 1 260px;font-size:12px;color:#645377;font-weight:850}
+.team-lab-controls select,.team-lab-override select{width:100%;min-height:46px;min-width:0;padding:10px 12px;border:1px solid #e1d7ef;border-radius:12px;color:#382853;background:white}
+.team-lab button{font-family:inherit;cursor:pointer}
+.team-lab button:disabled{opacity:.48;cursor:default}
+.team-lab button:focus-visible,.team-lab select:focus-visible{outline:3px solid #9660e5;outline-offset:2px}
+.team-lab-primary,.team-lab-next{border:0;border-radius:12px;padding:11px 18px;min-height:46px;background:linear-gradient(135deg,#9260e7,#713ccb);color:white;font-size:13px;font-weight:850;box-shadow:0 5px 15px #7142bc29}
+.team-lab-primary:hover:not(:disabled),.team-lab-next:hover:not(:disabled){background:#6234ae}
+.team-lab-message{font-size:12px;line-height:1.6;color:#72628b;margin:8px 0 15px}
+.team-lab-message.error{color:#ad3b64}
+.team-lab-idle{padding:30px 14px;background:#fff;border:1px dashed #d4c1e8;border-radius:16px;color:#7d6c8c;text-align:center;font-size:13px}
+.team-lab-duel{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:9px;align-items:stretch;margin:0 0 15px}
+.team-lab-team{min-width:0;border:1px solid #e4d8f3;background:linear-gradient(135deg,#f7efff,#fff);border-radius:16px;padding:clamp(12px,2vw,21px)}
+.team-lab-team.is-bot{background:linear-gradient(135deg,#f0f4ff,#fff);border-color:#dce3f4}
+.team-lab-side{font-size:10px;letter-spacing:.06em;color:#7849bb;font-weight:850}
+.is-bot .team-lab-side{color:#526fa8}
+.team-lab-team h4{font-size:clamp(15px,2vw,20px);line-height:1.3;margin:12px 0 5px}
+.team-lab-team p{font-size:11px;color:#827393;line-height:1.4;min-height:31px;margin:0 0 8px}
+.team-lab-vs-mark{font-size:11px;color:#897399}
+.team-lab-score{font-size:clamp(33px,5vw,52px);font-weight:900;font-variant-numeric:tabular-nums;color:#7243c4}
+.is-bot .team-lab-score{color:#536fb1}
+.team-lab-versus{align-self:center;display:grid;place-items:center;width:39px;height:39px;border-radius:50%;background:#fff;border:1px solid #e0d2ed;color:#8a5bd0;font-size:12px;font-weight:900}
+.team-lab-stage-head,.team-lab-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0}
+.team-lab-stage-head{border-top:1px solid #ebdff5;color:#6e4a9c;font-size:12px}
+.team-lab-stage-head span,.team-lab-bottom span{color:#9585a3;font-size:11px}
+.team-lab-stage-body{min-width:0;padding:clamp(14px,2.5vw,23px);border-radius:17px;background:#fff;border:1px solid #eadff2}
+.team-lab-eyebrow{color:#8253c7;font-size:10px;font-weight:850;letter-spacing:.08em}
+.team-lab-prompt h4{font-size:clamp(19px,2.4vw,26px);color:#392751;margin:9px 0 16px;line-height:1.34;overflow-wrap:anywhere}
+.team-lab-prompt p,.team-lab-help{font-size:12px;line-height:1.6;color:#7e6c8c}
+.team-lab-clues,.team-lab-strategies,.team-lab-blitz{display:flex;flex-wrap:wrap;gap:9px;margin:12px 0}
+.team-lab-clues span{padding:10px;border-radius:10px;background:#f6efff;color:#624288;border:1px solid #e6d9f1;font-size:12px}
+.team-lab-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:15px 0}
+.team-lab-answer{display:flex;align-items:center;gap:12px;min-width:0;min-height:62px;padding:11px 13px;background:#fff;border:1.5px solid #e3d8ef;border-radius:13px;color:#423053;text-align:left;font-size:13px;font-weight:750}
+.team-lab-answer:hover:not(:disabled){background:#fbf6ff;border-color:#ac82df}
+.team-lab-answer.is-picked{background:#eae9ee;border-color:#b8b5c1;color:#342d3c}
+.team-lab-answer.is-correct{background:#e5f8eb;border-color:#70bd92;color:#19603b}
+.team-lab-answer.is-wrong{background:#ffebf0;border-color:#db98ac;color:#923a55}
+.team-lab-letter{flex:0 0 34px;height:34px;border-radius:10px;background:#f2e8ff;color:#7747bc;display:grid;place-items:center;font-weight:900}
+.team-lab-option{min-width:0;display:grid;gap:5px;overflow-wrap:anywhere}
+.team-lab-flag,.team-lab-figure{display:block;width:auto;max-width:100%;max-height:145px;object-fit:contain;border-radius:4px}
+.team-lab-figure{max-height:205px;margin:13px auto}
+.team-lab-stripes{display:flex;overflow:hidden;width:min(160px,100%);height:75px;border-radius:5px}
+.team-lab-stripes span{flex:1}
+.team-lab-feedback{background:#f3ecff;border:1px solid #e2d3f2;color:#684791;border-radius:12px;padding:12px 15px;font-size:12px;line-height:1.6}
+.team-lab-arcade-scores{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:11px;margin:13px 0}
+.team-lab-arcade-scores>div{background:#faf6ff;border:1px solid #e5d8f3;border-radius:14px;padding:17px;text-align:center}
+.team-lab-arcade-scores b{display:block;color:#7443c1;font-size:34px;font-variant-numeric:tabular-nums}
+.team-lab-arcade-scores small{font-size:11px;color:#80718f}
+.team-lab-big-tap{display:block;width:min(290px,90%);aspect-ratio:2/1;margin:15px auto;border:0;border-radius:65px;color:#fff;background:radial-gradient(circle at 30% 20%,#c9aeff,#8951dd 65%,#6030a6);font-size:clamp(19px,3vw,26px);font-weight:900;box-shadow:inset 0 -11px 20px #54269b50,0 9px 24px #7144b934;touch-action:manipulation}
+.team-lab-big-tap:active{transform:scale(.96)}
+.team-lab-override{display:grid;gap:7px;font-size:12px;color:#70588a;font-weight:800;margin:13px 0}
+.team-lab-strategies button,.team-lab-blitz button{min-height:44px;padding:10px 15px;border:1px solid #dbcaf0;border-radius:11px;background:#f8f1ff;color:#7042af;font-size:12px;font-weight:850}
+.team-lab-strategies button:hover,.team-lab-blitz button.is-picked{background:#e6d5ff;border-color:#ac83e4}
+.team-lab-history-panel{border-top:1px solid #e8dced;padding-top:12px}
+.team-lab-history-panel summary{cursor:pointer;font-size:12px;color:#6f489e;font-weight:850}
+.team-lab-history-panel ol{padding-left:20px;font-size:12px;color:#756487;line-height:1.65}
+.team-lab-completed{text-align:center;padding:30px 10px;color:#6d5293}
+@media(max-width:660px){
+ .team-lab{border-radius:16px;padding:13px}
+ .team-lab-controls label{flex-basis:100%}
+ .team-lab-duel{gap:5px}
+ .team-lab-versus{width:28px;height:28px;font-size:9px}
+ .team-lab-team{padding:12px 8px;border-radius:12px}
+ .team-lab-team h4{font-size:13px}.team-lab-side{font-size:9px}.team-lab-team p{font-size:10px}
+ .team-lab-options{grid-template-columns:minmax(0,1fr)}
+ .team-lab-bottom span{display:none}
+ .team-lab-next{width:100%}
+}
+@media(prefers-reduced-motion:reduce){.team-lab-big-tap:active{transform:none}}
