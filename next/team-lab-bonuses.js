@@ -128,10 +128,11 @@ window.QwizBonusExplorer=(()=>{
  function init(){
   if(initialised||!byId('teamLabBonusExplorer'))return;
   initialised=true;
-  const catalog=byId('teamLabBonusCatalog');
-  catalog.innerHTML=effects.map(e=>'<article class="team-lab-catalog-card '+(e.tone==='positive'?'is-positive':'is-negative')+'">'+
+  const cardHtml=e=>'<article class="team-lab-catalog-card '+(e.tone==='positive'?'is-positive':'is-negative')+'">'+
     '<div class="team-lab-catalog-title"><strong>'+html(e.title)+'</strong><b>'+html(e.value)+'</b></div>'+
-    '<p>'+html(e.detail)+'</p></article>').join('');
+    '<p>'+html(e.detail)+'</p></article>';
+  byId('teamLabBonusPositive').innerHTML=effects.filter(e=>e.tone==='positive').map(cardHtml).join('');
+  byId('teamLabBonusNegative').innerHTML=effects.filter(e=>e.tone==='negative').map(cardHtml).join('');
   const root=byId('teamLabBonusExplorer');
   root.addEventListener('click',event=>{
    const button=event.target.closest('button');if(!button)return;
