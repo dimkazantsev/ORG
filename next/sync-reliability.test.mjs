@@ -5,14 +5,21 @@ import assert from 'node:assert/strict';
 const read=name=>readFileSync(new URL(name,import.meta.url),'utf8');
 
 test('all resilience code parses and new builds are referenced',()=>{
- for(const name of ['app.js','arcade.js','presenter.js','workspace.js']){
+ for(const name of ['app.js','arcade.js','presenter.js','workspace.js','card-sandbox.js']){
   assert.doesNotThrow(()=>new Script(read(name),{filename:name}));
  }
  const pages=[['index.html','app.js?v=consensus-fix-20261027-1'],
   ['index.html','arcade.js?v=mobile-40-20261028-1'],
-  ['workspace.html','workspace.js?v=mobile-40-20261028-1'],
-  ['presenter.html','presenter.js?v=mobile-40-20261028-1']];
+  ['workspace.html','workspace.js?v=card-play-sandbox-20261028-1'],
+  ['presenter.html','presenter.js?v=mobile-40-20261028-1'],
+  ['workspace.html','card-sandbox.js?v=card-play-sandbox-20261028-1']];
  for(const [page,asset] of pages) assert.ok(read(page).includes(asset),page+' missing '+asset);
+});
+test('teacher card sandbox uses read-only question retrieval without writing gameplay state',()=>{
+ const sandbox=read('card-sandbox.js');
+ assert.doesNotMatch(sandbox,/\.rpc\s*\(/);
+ assert.doesNotMatch(sandbox,/qwiz_party_control|qwiz_prepare_room|qwiz_arcade_action|qwiz_vote_boost/);
+ assert.match(sandbox,/data-card-step/);
 });
 test('40 students never broadcast every answer or join through Realtime',()=>{
  const app=read('app.js');
