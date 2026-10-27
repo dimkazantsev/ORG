@@ -513,3 +513,60 @@ test('captain Memory flips instantly and buffers the next two touches during mis
  expect(await page.locator('#memoryFastFixture .arcade-alert').textContent()).not.toContain('Все капитаны одновременно');
  await page.evaluate(()=>{QwizArcade.stop('player');document.getElementById('memoryFastFixture').remove()});
 });
+
+
+test('Blitz Consensus: all players vote, captain decides with team tally, projector sees progress',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.waitForFunction(()=>typeof QwizArcade==='object'&&typeof QwizArcade.mountPlayer==='function');
+ await page.evaluate(()=>{
+  const el=document.createElement('section');el.id='consensusQaFixture';document.body.appendChild(el);
+  const end=new Date(Date.now()+60000).toISOString();
+  window.__consensusQa={stage:'voting',votes:[],end,choice:null,final:null};
+  const client={rpc:async(name,args)=>{
+   if(name==='qwiz_consensus_vote'){
+    window.__consensusQa.votes.push({...args});
+    if(args.p_phase==='vote')window.__consensusQa.choice=args.p_choice;
+    else window.__consensusQa.final=args.p_choice;
+    return {error:null,data:{ok:true}};
+   }
+   if(name==='qwiz_party_arcade'){
+    const state=window.__consensusQa;
+    return {error:null,data:{
+      mode:'blitz',running:true,card_position:0,server_now:new Date().toISOString(),
+      started_at:new Date(Date.now()-8000).toISOString(),ends_at:state.end,
+      teams:[{id:'T1',name:'Неукротимые',points:0,place:1}],mine:{team_id:'T1'},
+      question:{prompt:'Какой стране принадлежит флаг?',options:['Япония','Судан','Кипр','Зимбабве'],correct:null},
+      consensus:{stage:state.stage,vote_ends_at:state.end,ends_at:state.end,team_progress:[{team_id:'T1',name:'Неукротимые',votes:2,members:3,submitted:!!state.final}],
+       my_team_id:'T1',my_choice:state.choice,final_choice:state.final,
+       captain:state.stage==='captain',my_team_count:2,
+       my_team_votes:[{choice:1,votes:2},{choice:2,votes:0}]},
+      awards:[]
+    }};
+   }
+   return {error:null,data:null};
+  }};
+  window.__consensusQa.client=client;
+  QwizArcade.mountPlayer(el,{
+    code:'A1B2C3D4',room_id:'00000000-0000-4000-8000-000000000001',
+    activity:{settings:{arcade_mode:'blitz'}}},{client});
+ });
+ await expect(page.locator('#consensusQaFixture .consensus-option')).toHaveCount(4);
+ await expect(page.locator('#consensusQaFixture .consensus-question')).toContainText('ГОЛОСОВАНИЕ КОМАНДЫ');
+ await page.locator('#consensusQaFixture [data-consensus-choice="1"]').click();
+ await expect.poll(()=>page.evaluate(()=>window.__consensusQa.votes.length)).toBe(1);
+ expect(await page.evaluate(()=>window.__consensusQa.votes[0].p_phase)).toBe('vote');
+ await page.evaluate(()=>{
+  QwizArcade.stop('player');
+  window.__consensusQa.stage='captain';
+  const el=document.getElementById('consensusQaFixture');
+  QwizArcade.mountPlayer(el,{code:'A1B2C3D4',
+   room_id:'00000000-0000-4000-8000-000000000001',
+   activity:{settings:{arcade_mode:'blitz'}}},{client:window.__consensusQa.client});
+ });
+ await expect(page.locator('#consensusQaFixture .consensus-question')).toContainText('РЕШЕНИЕ КАПИТАНА');
+ await expect(page.locator('#consensusQaFixture .consensus-votes').first()).toBeVisible();
+ await page.locator('#consensusQaFixture [data-consensus-choice="1"]').click();
+ await expect.poll(()=>page.evaluate(()=>window.__consensusQa.votes.length)).toBe(2);
+ expect(await page.evaluate(()=>window.__consensusQa.votes[1].p_phase)).toBe('final');
+ await page.evaluate(()=>{QwizArcade.stop('player');document.getElementById('consensusQaFixture').remove()});
+});
