@@ -1868,3 +1868,5 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 @media(prefers-reduced-motion:reduce){
  #cardPlayScreen .card-play-map path{transition:none}
 }
+
+#cardPlayScreen .card-play-map path.is-wrong{fill:#e48496!important;stroke:#fff!important;outline:none!important}
