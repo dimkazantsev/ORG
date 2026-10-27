@@ -64,6 +64,23 @@ test('Tap battle: 40 rapid actions keep the same mounted button and do not reach
  await expect(tap).toHaveAttribute('data-same-element','yes');
  await expect(page.locator('.team-lab-arcade-scores b').first()).toHaveText('120');
 });
+test('Moderator can skip unanswered questions and unfinished arcade stages then go back safely',async({page})=>{
+ await start(page);
+ await expect(page.locator('#teamLabNext')).toBeEnabled();
+ await page.locator('#teamLabNext').click();
+ await expect(page.locator('#teamLabStatus')).toContainText('Этап 2 / 3');
+ await expect(page.locator('#teamLabTeacherScore')).toHaveText('0');
+ await page.locator('#teamLabNext').click();
+ await expect(page.locator('#teamLabStatus')).toContainText('Этап 3 / 3');
+ await expect(page.locator('#teamLabHistory')).toContainText('Мини-игра пропущена');
+ await page.locator('#teamLabPrev').click();
+ await page.locator('#teamLabPrev').click();
+ await expect(page.locator('#teamLabStatus')).toContainText('Этап 1 / 3');
+ await expect(page.locator('[data-lab-submit]')).toBeDisabled();
+ await expect(page.locator('#teamLabTeacherScore')).toHaveText('0');
+ await answer(page);
+ await expect(page.locator('#teamLabTeacherScore')).toHaveText('30');
+});
 test('Simulator reveals and applies support bonus at following real question',async({page})=>{
  await start(page);await answer(page);await page.locator('#teamLabNext').click();
  await page.locator('#teamLabForceBonus').check();
