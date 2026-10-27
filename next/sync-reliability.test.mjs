@@ -8,10 +8,10 @@ test('all resilience code parses and new builds are referenced',()=>{
  for(const name of ['app.js','arcade.js','presenter.js','workspace.js']){
   assert.doesNotThrow(()=>new Script(read(name),{filename:name}));
  }
- const pages=[['index.html','app.js?v=geo-votes-20261027-4'],
-  ['index.html','arcade.js?v=geo-votes-20261027-4'],
-  ['workspace.html','workspace.js?v=geo-votes-20261027-4'],
-  ['presenter.html','presenter.js?v=geo-votes-20261027-4']];
+ const pages=[['index.html','app.js?v=geo-control-20261027-5'],
+  ['index.html','arcade.js?v=geo-control-20261027-5'],
+  ['workspace.html','workspace.js?v=geo-control-20261027-5'],
+  ['presenter.html','presenter.js?v=geo-control-20261027-5']];
  for(const [page,asset] of pages) assert.ok(read(page).includes(asset),page+' missing '+asset);
 });
 test('40 students never broadcast every answer or join through Realtime',()=>{
