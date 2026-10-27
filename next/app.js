@@ -344,8 +344,8 @@ function roundScorePanel(view,title,final=false,endsAt=null){
  const myIndex=players.findIndex(x=>x.id===myId),teamIndex=rows.findIndex(x=>x.id===myTeamId);
  const team=teamIndex>=0?rows[teamIndex]:null,individual=myIndex>=0?players[myIndex]:null;
  const highlight=individual||team?'<div class="round-self-summary" aria-label="Ваши результаты">'+
-  (team?'<div><span>ВАША КОМАНДА · '+(teamIndex+1)+' МЕСТО</span><strong>'+fmtScore(arcade?team.metric:team.score)+'</strong><small>'+esc(arcade?metricUnit:'баллов за вопросы')+'</small></div>':'')+
-  (individual?'<div><span>ВАШ РЕЗУЛЬТАТ · '+(myIndex+1)+' МЕСТО</span><strong>'+fmtScore(arcade?individual.metric:individual.score)+'</strong><small>'+esc(arcade?metricUnit:'баллов за вопросы')+'</small></div>':'')+
+  (team?'<div><span>ВАША КОМАНДА · '+(teamIndex+1)+' МЕСТО</span><strong>'+(arcade?fmtMetric(team.metric):fmtScore(team.score))+'</strong><small>'+esc(arcade?metricUnit:'баллов за вопросы')+'</small></div>':'')+
+  (individual?'<div><span>ВАШ РЕЗУЛЬТАТ · '+(myIndex+1)+' МЕСТО</span><strong>'+(arcade?fmtMetric(individual.metric):fmtScore(individual.score))+'</strong><small>'+esc(arcade?metricUnit:'баллов за вопросы')+'</small></div>':'')+
   '</div>':'';
  const rewardBanner=reward?'<div class="round-reward-banner"><strong>Выбран командный бонус · '+esc(reward.title)+'</strong>'+
   '<p>Команда: '+esc(reward.target)+'. Эффект действует в следующем раунде.</p></div>':'';
