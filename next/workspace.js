@@ -748,23 +748,54 @@ async function loadBuild(id){try{const r=await studio('build_get',{id});state.bu
  ensureFinale();$('composer').hidden=false;renderCards();section('builder');savePosition();
  if(inferred)msg('buildMessage','Темы '+inferred+' карточек восстановлены по выбранным механикам. Сохраните сборку, чтобы применить изменения.');
  }catch(e){msg('buildMessage',e.message,true)}}
-async function saveBuild(){disable('saveBuild',true);msg('buildMessage','Сохранение…');
- try{ensureFinale();if(!state.cards.some(c=>c.type==='round'))throw Error('Добавьте хотя бы один раунд вопросов.');
- for(const c of state.cards){
-  if(c.type!=='round')continue;
-  synchronizeCardTopic(c);
-  const modes=c.settings||{},flags=Array.isArray(modes.flag_modes)&&modes.flag_modes.length>0;
-  const geo=Array.isArray(modes.geo_modes)&&modes.geo_modes.length>0;
-  const topic=state.topics.find(t=>t.id===c.topic_id);
-  if((flags||geo)&&!topic)throw Error('В карточке «'+c.title+'» выбраны механики без темы. Откройте настройки.');
-  if(modes.arcade_mode==='russia_map'&&topic?.name!=='География России')throw Error('Для карты России требуется тема «География России».');
-  if(!modes.arcade_mode&&((flags&&topic?.name!=='Флаги мира')||(geo&&topic?.name!=='География России')))
-   throw Error('Механики карточки «'+c.title+'» не соответствуют теме. Откройте настройки карточки.');
- }
- const result=await studio('build_save',{id:state.buildId||undefined,title:$('buildTitle').value.trim(),
-  cards:state.cards});state.buildId=result.id;
- await overview();savePosition();msg('buildMessage','Сборка сохранена. Её можно запустить с любого вашего устройства.');}
- catch(e){msg('buildMessage',e.message,true)}finally{disable('saveBuild',false)}}
+function validBuildActivity(card){
+ if(card?.type==='round'&&card?.settings?.arcade_mode!=='russia_map')return true;
+ if((card?.type==='round'||card?.type==='bonus'||card?.type==='duel')&&
+  ['blitz','captain','tug','russia_map'].includes(card?.settings?.arcade_mode))return true;
+ return false;
+}
+function buildSaveNotice(text='',isError=false){
+ msg('buildMessage',text,isError);
+ const el=$('buildSaveNotice');
+ if(!el)return;
+ el.textContent=text;el.hidden=!text;
+ el.classList.toggle('error',!!isError);
+ el.setAttribute('role',isError?'alert':'status');
+}
+async function saveBuild(){
+ if($('saveBuild')?.disabled)return;
+ disable('saveBuild',true);
+ buildSaveNotice('Сохранение сборки…');
+ try{
+  ensureFinale();
+  if(!state.cards.some(validBuildActivity)){
+   throw Error('Добавьте хотя бы одну настроенную игру или раунд вопросов.');
+  }
+  for(const c of state.cards){
+   if(c.type!=='round')continue;
+   synchronizeCardTopic(c);
+   const modes=c.settings||{},flags=Array.isArray(modes.flag_modes)&&modes.flag_modes.length>0;
+   const geo=Array.isArray(modes.geo_modes)&&modes.geo_modes.length>0;
+   const topic=state.topics.find(t=>t.id===c.topic_id);
+   if((flags||geo)&&!topic)throw Error('В карточке «'+c.title+'» выбраны механики без темы. Откройте настройки.');
+   if(modes.arcade_mode==='russia_map'&&topic?.name!=='География России')throw Error('Для карты России требуется тема «География России».');
+   if(!modes.arcade_mode&&((flags&&topic?.name!=='Флаги мира')||(geo&&topic?.name!=='География России')))
+    throw Error('Механики карточки «'+c.title+'» не соответствуют теме. Откройте настройки карточки.');
+  }
+  const title=$('buildTitle').value.trim();
+  if(title.length<2)throw Error('Укажите название сборки (не менее 2 символов).');
+  const result=await studio('build_save',{id:state.buildId||undefined,title,cards:state.cards});
+  if(!result?.id)throw Error('Сервер не подтвердил сохранение. Повторите попытку.');
+  state.buildId=result.id;
+  savePosition();
+  buildSaveNotice('Сборка сохранена. Игры можно запускать без обычных раундов вопросов.');
+  try{await overview();}
+  catch(e){console.warn('Build saved; refreshing overview failed:',e);
+   buildSaveNotice('Сборка сохранена, но список сборок не обновился. Обновите страницу.');}
+ }catch(e){
+  buildSaveNotice(e?.message||'Не удалось сохранить сборку.',true);
+ }finally{disable('saveBuild',false)}
+}
 function roomRowMarkup(room){
  return '<article class="room-row"><div><div class="question-meta"><span class="chip">'+esc(QwizStage.phaseLabel(room.phase))+'</span><span class="chip lilac">'+esc(room.code)+'</span></div><h3>'+esc(QwizStage.capitalize(room.title))+'</h3><p>'+esc(QwizStage.countLabel(room.players,{one:'участник',few:'участника',many:'участников',other:'участника'}))+' · '+esc(QwizStage.countLabel(room.teams,{one:'команда',few:'команды',many:'команд',other:'команды'}))+'</p></div><div class="room-row-actions"><button class="primary-button" data-room="'+esc(room.code)+'">'+(room.phase==='finished'?'Результаты →':'Управлять →')+'</button><button type="button" class="card-trash" data-delete-room="'+esc(room.id)+'" title="Удалить комнату" aria-label="Удалить комнату '+esc(room.title)+'">'+trashSvg+'</button></div></article>';
 }
