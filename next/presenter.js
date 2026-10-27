@@ -554,7 +554,8 @@ async function init(){
  if(!window.supabase?.createClient){showError('Не удалось подключиться к игре');return}
  ctx.client=window.supabase.createClient(SUPABASE_URL,KEY);
  subscribe();await refresh();
- setInterval(()=>{if(!document.hidden)refresh()},3000);
+ // Realtime phase broadcasts remain immediate; HTTP is a staggered recovery fallback.
+  setInterval(()=>{if(!document.hidden&&navigator.onLine)refresh()},4500);
  setInterval(()=>{
   const s=ctx.last;if(!s||document.hidden)return;
   if(['question','result'].includes(s.phase)&&!s.paused){const left=updateProjectorClock(s);if(left===0&&Date.now()-ctx.lastReleaseAttempt>2600){ctx.lastReleaseAttempt=Date.now();refresh()}}
