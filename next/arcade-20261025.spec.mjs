@@ -162,3 +162,33 @@ test('Captain Memory is responsive: 640ms server window, immediate local flip an
  assert.match(css,/transition:transform 105ms/);
  assert.match(css,/\.arcade-memory-tile\.is-queued/);
 });
+
+
+test('Blitz Consensus replaces tap capture, uses protected voting and one ten-point team decision',()=>{
+ const front=read('arcade.js');
+ const sql=read('migrations/20261027_blitz_consensus_core.sql');
+ const integrated=read('migrations/20261027_blitz_consensus_integrations.sql');
+ const css=read('arcade.css');
+ assert.match(front,/title:'Блиц-консенсус'/);
+ assert.match(front,/qwiz_consensus_vote/);
+ assert.match(front,/ЭТАП 1 \/ 2 · ГОЛОСОВАНИЕ КОМАНДЫ/);
+ assert.match(front,/ЭТАП 2 \/ 2 · РЕШЕНИЕ КАПИТАНА/);
+ assert.match(front,/function renderConsensus\(/);
+ assert.match(front,/my_team_votes/);
+ assert.doesNotMatch(front,/Право ответа сейчас у другой команды/);
+ assert.match(sql,/CREATE TABLE IF NOT EXISTS public\.qwiz_consensus_votes/);
+ assert.match(sql,/CREATE TABLE IF NOT EXISTS public\.qwiz_consensus_decisions/);
+ assert.match(sql,/ALTER TABLE public\.qwiz_consensus_votes ENABLE ROW LEVEL SECURITY/);
+ assert.match(sql,/ALTER TABLE public\.qwiz_consensus_decisions ENABLE ROW LEVEL SECURITY/);
+ assert.match(sql,/p_phase='vote'/);
+ assert.match(sql,/p_phase='final'/);
+ assert.match(sql,/captain IS DISTINCT FROM p\.id/);
+ assert.match(sql,/GROUP BY v\.choice ORDER BY count\(\*\) DESC,min\(v\.updated_at\)/);
+ assert.match(integrated,/SET score=score\+10/);
+ assert.match(integrated,/IF best_team IS NOT NULL THEN/);
+ assert.match(integrated,/blitz_consensus/);
+ assert.match(integrated,/qwiz_consensus_state\(r\.id,v\.card_position\)/);
+ assert.match(integrated,/IF v\.mode='blitz' and p_action IN \('tap','answer'\)/);
+ assert.match(css,/consensus-progress-track/);
+ assert.match(css,/consensus-option.is-chosen/);
+});
