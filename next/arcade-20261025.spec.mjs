@@ -125,7 +125,10 @@ test('room creation SQL avoids PL/pgSQL room_id ambiguity on INSERT and reuse UP
 test('forty-device arcade load guard: staggered polling, bounded retry and reconnect',()=>{
  const js=read('arcade.js');
  assert.doesNotMatch(js,/setInterval\(\(\)=>fetchState\(tr\),kind==='screen'\?1300:1600\)/);
- assert.match(js,/tr\.kind==='player'\?4700/);
+ const intervals=js.match(/tr\.kind==='player'\?(\d+):tr\.kind==='screen'\?(\d+):(\d+)/);
+ assert.ok(intervals,'Arcade needs independent player, screen and host poll periods');
+ const [,playerPeriod,screenPeriod,hostPeriod]=intervals;
+ assert.ok(Number(playerPeriod)>=4700&&Number(screenPeriod)>=3000&&Number(hostPeriod)>=4700);
  assert.match(js,/Math\.random\(\)\*900/);
  assert.match(js,/Math\.min\(20000,base\*Math\.pow\(1\.6/);
  assert.match(js,/window\.addEventListener\('online'/);
