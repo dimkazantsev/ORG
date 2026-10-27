@@ -809,3 +809,49 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
 #gameContent .team-building-glow:has(.team-infinity-svg){width:clamp(160px,50vw,270px)!important;height:clamp(110px,25dvh,176px)!important;background:none!important;filter:none!important;box-shadow:none!important;overflow:visible!important;}
 #gameContent .team-building-glow .team-infinity-svg{width:100%!important;height:100%!important;padding:0!important;background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;filter:none!important;overflow:visible!important;transform:none!important;animation:none!important;}
 #gameContent .team-building-glow:has(.team-infinity-svg)::before,#gameContent .team-building-glow:has(.team-infinity-svg)::after{display:none!important;}
+
+/* Mobile assembly screen: text stays above the flag, and the whole activity
+   scrolls inside the content viewport rather than underneath the bottom bar. */
+.player-compact #gameView #gameContent.game-card:has(.assembly-builder){
+ display:block!important;overflow-y:auto!important;overflow-x:hidden!important;
+ padding:10px 14px max(22px,env(safe-area-inset-bottom))!important;
+ scroll-padding-bottom:30px!important;overscroll-behavior:contain;
+}
+.player-compact #gameView #gameContent .player-question-top:has(+ .player-question-layout .assembly-builder){
+ display:flex!important;position:relative!important;z-index:1;min-height:35px!important;
+ justify-content:space-between!important;margin:0 0 8px!important;
+}
+.player-compact #gameView #gameContent .player-question-layout:has(.assembly-builder){
+ display:flex!important;position:static!important;width:100%!important;
+ flex-direction:column!important;gap:10px!important;margin:0!important;
+ transform:none!important;overflow:visible!important;
+}
+.player-compact #gameView #gameContent .player-question-layout:has(.assembly-builder) .player-prompt{
+ display:block!important;position:static!important;float:none!important;
+ margin:0!important;padding:0!important;min-height:auto!important;
+ transform:none!important;overflow:visible!important;
+}
+.player-compact #gameView #gameContent .player-question-layout:has(.assembly-builder) .player-prompt h1{
+ display:block!important;position:static!important;z-index:1!important;
+ margin:0 0 8px!important;line-height:1.32!important;
+ text-wrap:pretty;word-break:normal!important;overflow-wrap:break-word!important;
+}
+.player-compact #gameView #gameContent .player-question-layout:has(.assembly-builder) .player-responses{
+ display:flex!important;position:static!important;flex-direction:column!important;
+ gap:9px!important;margin:0!important;padding:0!important;
+ transform:none!important;overflow:visible!important;
+}
+.player-compact #gameView #gameContent .assembly-builder .assembly-preview{
+ flex:0 0 auto!important;position:relative!important;z-index:0!important;
+ margin:2px auto 8px!important;max-width:100%;overflow:hidden!important;
+}
+.player-compact #gameView #gameContent .assembly-colors{flex:0 0 auto!important}
+.player-compact #gameView #gameContent .assembly-submit{position:relative!important;margin:2px auto 12px!important}
+.player-compact #gameView #gameContent .assembly-slot.is-filled{
+ color:transparent!important;font-size:0!important;text-shadow:none!important;
+}
+.player-compact #gameView #gameContent .assembly-slot.is-filled>*{display:none!important}
+.round-results-page.is-arcade .round-performance{font-variant-numeric:tabular-nums;white-space:nowrap}
+.round-results-page.is-arcade .round-performance small{font-size:.7em;color:#797089}
+.round-results-page .round-results-note{font-size:12px;line-height:1.45;color:#706781;margin:0}
+.round-results-page .round-self-summary strong{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
