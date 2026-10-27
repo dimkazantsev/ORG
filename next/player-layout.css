@@ -804,3 +804,8 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
  .player-compact #gameView .assembly-builder .assembly-preview{height:110px!important;min-height:110px!important}
  .player-compact #gameView .assembly-hint{display:none!important}
 }
+
+/* Crisp single SVG symbol: override legacy glowing typography and overlays. */
+#gameContent .team-building-glow:has(.team-infinity-svg){width:clamp(160px,50vw,270px)!important;height:clamp(110px,25dvh,176px)!important;background:none!important;filter:none!important;box-shadow:none!important;overflow:visible!important;}
+#gameContent .team-building-glow .team-infinity-svg{width:100%!important;height:100%!important;padding:0!important;background:none!important;border:0!important;border-radius:0!important;box-shadow:none!important;filter:none!important;overflow:visible!important;transform:none!important;animation:none!important;}
+#gameContent .team-building-glow:has(.team-infinity-svg)::before,#gameContent .team-building-glow:has(.team-infinity-svg)::after{display:none!important;}
