@@ -995,3 +995,126 @@
 @media(prefers-reduced-motion:reduce){
  #gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-memory-tile-inner{transition:none!important;will-change:auto}
 }
+
+
+/* Blitz Consensus — replaces tap-to-capture with synchronized team decisions. */
+.arcade-shell[data-arcade-root="blitz"]{max-width:1200px;margin-inline:auto;gap:clamp(10px,1.5dvh,18px);}
+.arcade-shell[data-arcade-root="blitz"] .arcade-head h2{
+ font-size:clamp(25px,4vw,45px);font-weight:850;letter-spacing:-.05em;color:#291c4b;
+}
+.arcade-shell[data-arcade-root="blitz"] .arcade-countdown{
+ background:linear-gradient(145deg,#f5eeff,#eaddff);border:1px solid #e4d2ff;
+ padding:10px 14px;border-radius:16px;color:#7743d8;font-weight:850;
+ font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.arcade-shell[data-arcade-root="blitz"] .arcade-lead{color:#716784;font-size:clamp(12px,1.8vw,16px);line-height:1.5}
+.arcade-shell[data-arcade-root="blitz"] .arcade-scene{
+ height:clamp(85px,16dvh,185px)!important;min-height:0!important;
+ overflow:hidden;border-radius:22px;
+ background:linear-gradient(125deg,#dfd5ff,#f3eaff,#d2ecff);
+}
+.arcade-shell[data-arcade-root="blitz"] .arcade-3d-world{height:100%;min-height:0!important}
+.arcade-shell[data-arcade-root="blitz"] [data-arcade-question]{min-width:0}
+.arcade-shell[data-arcade-root="blitz"] .consensus-question{
+ display:flex;flex-direction:column;gap:clamp(9px,1.4dvh,16px);
+ padding:clamp(15px,2.5vw,29px);border:1px solid #e9defb;
+ background:linear-gradient(156deg,#fff,#fcfaff 75%,#f6f0ff);
+ box-shadow:0 9px 30px #6f4fb313;border-radius:23px;min-width:0;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-phase{
+ display:flex;align-items:center;justify-content:space-between;
+ gap:8px;flex-wrap:wrap;color:#8359d2;font-size:clamp(10px,2.6vw,14px);
+ font-weight:840;letter-spacing:.055em;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-phase strong{
+ background:#eee6ff;border-radius:13px;padding:7px 11px;
+ color:#7143ce;font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-question h3{
+ margin:0;font-weight:850;font-size:clamp(21px,3.4vw,34px);
+ color:#281e43;line-height:1.25;letter-spacing:-.035em;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-flag{
+ display:block;width:min(100%,300px);max-height:155px;object-fit:contain;
+ border-radius:9px;align-self:center;
+ box-shadow:0 3px 15px #37295723;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-options{
+ display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(8px,1.2vw,14px)
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-option{
+ min-height:clamp(58px,7dvh,85px);min-width:0;
+ display:flex;align-items:center;gap:clamp(8px,1vw,15px);
+ border:1.5px solid #e5def1;background:#fff;color:#312644;
+ text-align:left;border-radius:17px;box-shadow:0 3px 10px #8664aa0c;
+ font:inherit;font-weight:760;font-size:clamp(13px,1.65vw,19px);
+ padding:11px 14px;cursor:pointer;touch-action:manipulation;
+ transition:background .12s,border-color .12s,transform .12s;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-option:disabled{opacity:1;cursor:default}
+.arcade-shell[data-arcade-root="blitz"] .consensus-option:active:not(:disabled){transform:scale(.987)}
+.arcade-shell[data-arcade-root="blitz"] .consensus-option:hover:not(:disabled){border-color:#b69bed;background:#faf7ff}
+.arcade-shell[data-arcade-root="blitz"] .consensus-option.is-chosen{
+ border:2px solid #8450de;background:linear-gradient(135deg,#f2e9ff,#fff);
+ box-shadow:0 3px 14px #7048bc1c;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-option.is-correct{
+ background:#edfcf2;border-color:#50b886;color:#217448;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-letter{
+ flex:0 0 auto;width:35px;height:35px;border-radius:11px;
+ display:grid;place-items:center;color:#794bcc;background:#efe6ff;font-weight:850;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-option img{max-width:93px;max-height:56px;object-fit:contain}
+.arcade-shell[data-arcade-root="blitz"] .consensus-option>span:not(.consensus-selected){overflow-wrap:anywhere}
+.arcade-shell[data-arcade-root="blitz"] .consensus-votes{
+ margin-left:auto;white-space:nowrap;color:#7545cf;
+ background:#f0e9ff;padding:6px 8px;border-radius:10px;
+ font-size:clamp(12px,1.4vw,16px);font-variant-numeric:tabular-nums;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-selected{margin-left:auto;color:#6b35c8;font-size:21px}
+.arcade-shell[data-arcade-root="blitz"] .consensus-caption,
+.arcade-shell[data-arcade-root="blitz"] .consensus-detail{
+ margin:0;color:#706682;font-size:clamp(12px,1.6vw,16px);line-height:1.5;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-correct{
+ background:#edfaef;color:#23774a;border:1px solid #bce6cb;
+ padding:13px 17px;border-radius:13px;font-weight:820;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-wait{
+ padding:26px;text-align:center;border-radius:23px;
+ background:linear-gradient(135deg,#fff,#f0eaff);color:#342051;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-wait strong{display:block;font-size:clamp(19px,3vw,27px);margin:13px 0}
+.arcade-shell[data-arcade-root="blitz"] .consensus-progress{
+ display:flex;flex-direction:column;gap:12px;
+ padding:clamp(14px,2vw,24px);border:1px solid #e8dff7;
+ border-radius:20px;background:linear-gradient(120deg,#fff,#f7f1ff);
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-progress-row{
+ display:grid;grid-template-columns:minmax(95px,1fr) minmax(75px,2fr) auto;
+ align-items:center;gap:9px;
+ font-size:clamp(13px,1.4vw,17px);color:#392a53;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-progress-row strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.arcade-shell[data-arcade-root="blitz"] .consensus-progress-track{height:11px;border-radius:99px;background:#e6d9fb;overflow:hidden}
+.arcade-shell[data-arcade-root="blitz"] .consensus-progress-track>span{
+ display:block;height:100%;background:linear-gradient(90deg,#8551e8,#b68af6);
+ border-radius:inherit;transition:width .32s ease;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-progress-row em{
+ grid-column:1/-1;font-style:normal;font-size:12px;color:#678a62;
+}
+.arcade-shell[data-arcade-root="blitz"] .arcade-alert:not([data-error="true"]){display:none!important}
+.arcade-shell[data-arcade-root="blitz"] .arcade-badges{display:none!important}
+@media(max-width:620px){
+ .arcade-shell[data-arcade-root="blitz"] .consensus-options{grid-template-columns:1fr}
+ .arcade-shell[data-arcade-root="blitz"] .consensus-option{min-height:55px}
+ .arcade-shell[data-arcade-root="blitz"] .arcade-scene{height:clamp(60px,11dvh,95px)!important}
+ .arcade-shell[data-arcade-root="blitz"] .consensus-question{padding:14px}
+ .arcade-shell[data-arcade-root="blitz"] .consensus-progress-row{grid-template-columns:minmax(70px,1fr) 2fr auto}
+}
+@media(prefers-reduced-motion:reduce){
+ .arcade-shell[data-arcade-root="blitz"] .consensus-option,
+ .arcade-shell[data-arcade-root="blitz"] .consensus-progress-track>span{transition:none}
+}
