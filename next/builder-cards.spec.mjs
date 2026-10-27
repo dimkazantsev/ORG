@@ -511,7 +511,9 @@ test('One archive-clear button previews all completed games, cancels safely and 
  await button.click();
  await expect.poll(()=>accepted).toBe(true);
  await expect.poll(()=>page.evaluate(()=>window.archiveCalls.some(x=>x.params?.p_confirm===true))).toBe(true);
- await expect(page.locator('#hostRoomList .rooms-history')).toHaveCount(0);
+ await expect(page.locator('#hostRoomList .rooms-history .room-row')).toHaveCount(0);
+ await expect(page.locator('#hostRoomList .rooms-history-count')).toHaveText('0');
+ await expect(page.locator('#clearFinishedArchive')).toBeDisabled();
  await expect(page.locator('#hostRoomList .active-rooms .room-row')).toHaveCount(1);
  await expect(page.locator('#hostRoomList .active-rooms')).toContainText('Открытая игра');
  await expect(page.locator('#launchMessage')).toContainText('30');
