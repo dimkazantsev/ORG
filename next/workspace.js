@@ -485,7 +485,7 @@ function appendCard(type='round',arcadeMode=null){
  return added;
 }
 function cardDesc(c){const settings=c.settings||{};
- if(settings.arcade_mode==='russia_map')return 'География России · карта · '+(settings.geo_count||15)+' случайных субъектов каждому игроку · '+((settings.geo_count||15)*(settings.answer_seconds||settings.seconds||30))+' сек. · '+(settings.answer_seconds||settings.seconds||30)+' сек. на вопрос';
+ if(settings.arcade_mode==='russia_map')return 'География России · карта · '+(settings.geo_count||15)+' случайных субъектов каждому игроку · '+((settings.geo_count||15)*((settings.seconds||30)+(settings.answer_seconds||10)))+' сек. · '+(settings.seconds||30)+' сек. на вопрос · '+(settings.answer_seconds||10)+' сек. на ответ';
   if(arcadeGames[settings.arcade_mode])return 'Командная мини-игра · '+Math.max(30,Math.min(120,Number(settings.arcade_seconds)||arcadeGames[settings.arcade_mode].seconds))+' секунд · командное голосование за усиления';
  if(c.type==='round'){const geography=state.topics.some(t=>t.id===c.topic_id&&t.name==='География России');const selected=geography?(settings.geo_modes||[]).map(m=>({capital:'Административный центр',district:'Федеральный округ'}[m]||m)):(settings.flag_modes||[]).map(titleKind);return (c.topic_id?nameTopic(c.topic_id):'Тема не выбрана')+' · '+(selected.length?selected.join(', '):'Выберите механики перед запуском')+' · '+(settings.count||5)+' вопр. · '+(settings.seconds||30)+' сек. · ответ '+(settings.answer_seconds||10)+' сек.';}
  if(c.type==='intro')return 'Анимированная заставка перед первым раундом';
@@ -560,7 +560,7 @@ function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{}
   const geo=s.arcade_mode==='russia_map';$('cardModesDetails').open=c.type==='round';
   if(geo)$('cardModesInfo').textContent='8 способов ответа · выберите нужные';
   if(geo){$('cardTopic').value=topicIdByName('География России')||'';
-   $('cardGeoCount').value=s.geo_count||15;$('cardGeoSeconds').value=s.answer_seconds||s.seconds||10;
+   $('cardGeoCount').value=s.geo_count||15;$('cardGeoSeconds').value=s.seconds||30;
    for(const item of all('#cardGeoModes input:not(:disabled)'))item.checked=Array.isArray(s.geo_modes)&&s.geo_modes.includes(item.value);}
  $('cardArcadeSeconds').value=Math.max(30,Math.min(120,Number(s.arcade_seconds)||arcade?.seconds||45));
  $('cardArcadeHelp').textContent=arcade?.help||'';
@@ -642,8 +642,9 @@ function saveCard(event){
   nextSettings.arcade_seconds=Math.max(30,Math.min(120,Number($('cardArcadeSeconds').value)||arcadeGames[s.arcade_mode].seconds));
  if(mapMode){
   nextSettings.geo_count=Math.max(1,Math.min(89,Number($('cardGeoCount').value)||15));
-  nextSettings.answer_seconds=Math.max(1,Math.min(120,Number($('cardGeoSeconds').value)||10));
-  nextSettings.geo_seconds=nextSettings.geo_count*nextSettings.answer_seconds;
+  nextSettings.seconds=Math.max(1,Math.min(120,Number($('cardSeconds').value)||30));
+  nextSettings.answer_seconds=Math.max(1,Math.min(30,Number($('cardAnswerSeconds').value)||10));
+  nextSettings.geo_seconds=nextSettings.geo_count*(nextSettings.seconds+nextSettings.answer_seconds);
  }
  c.title=cleanCardTitle($('cardTitle').value.trim())||titles[c.type]||'Карточка';
  c.topic_id=c.type==='round'?topicId:(c.topic_id||null);
@@ -929,7 +930,7 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  $('livePause').hidden=false;$('livePause').disabled=!['countdown','question','result','intermission'].includes(s.phase);QwizStage.iconLabel($('livePause'),s.paused?'Продолжить':'Пауза',s.paused?'play':'pause');$('livePause').setAttribute('aria-pressed',String(!!s.paused));
  $('liveNext').hidden=false;$('liveNext').disabled=!!s.paused||!['question','result','intermission'].includes(s.phase);const geoPlaying=s.phase==='intermission'&&s.activity?.settings?.arcade_mode==='russia_map';
  const introPlaying=s.phase==='intermission'&&s.activity?.type==='card_intro';
- QwizStage.iconLabel($('liveNext'),geoPlaying?'Показать итоги':introPlaying?'Запустить испытание':'Далее','forward');$('liveReveal').hidden=true;$('liveFinish').hidden=false;$('liveFinish').disabled=['lobby','finished'].includes(s.phase);
+ QwizStage.iconLabel($('liveNext'),geoPlaying?'Следующий вопрос':introPlaying?'Запустить испытание':'Далее','forward');$('liveReveal').hidden=true;$('liveFinish').hidden=false;$('liveFinish').disabled=['lobby','finished'].includes(s.phase);
  $('liveConsole').classList.toggle('is-finished',s.phase==='finished');
  $('liveControlsHint').textContent=s.phase==='finished'?
    'Начните новую сессию той же сборки. Предыдущая игра и результаты сохранятся.':
