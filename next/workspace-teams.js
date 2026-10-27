@@ -70,12 +70,19 @@ function renderTeamManager(s){
  $('teamPool').hidden=!pending.length;
  $('teamPool').innerHTML='<h4>Ожидают команду · '+pending.length+'</h4><div class="team-members">'+pending.map(p=>teamMember(p,s)).join('')+'</div>';
  const captains=new Map((lobby?.captains||[]).map(x=>[x.team_id,x.player_id]));
+ // Legacy random rooms use the earliest joining member as the arcade delegate.
+ if(s.team_mode==='random')for(const t of teams){
+  if(captains.has(t.id))continue;
+  // Host room snapshot already orders players by joined_at (qwiz_state_activity).
+  const eligible=players.filter(p=>p.team_id===t.id);
+  if(eligible[0])captains.set(t.id,eligible[0].id);
+ }
  const effectMap=new Map((s.team_effects||lobby?.effects_history||[]).reduce((a,e)=>{a.set(e.team_id,[...(a.get(e.team_id)||[]),e]);return a;},new Map()));
  $('teamGrid').innerHTML=teams.map(t=>{
    const members=players.filter(p=>p.team_id===t.id),effects=effectMap.get(t.id)||[];
    return '<article class="team-card" data-drop-team="'+esc(t.id)+'"><div class="team-card-head">'+QwizStage.icon(t,true)+
     '<div><h4>'+esc(t.name)+'</h4><small>'+members.length+' '+(members.length===1?'участник':'участников')+'</small></div></div>'+
-    (captains.get(t.id)?'<div class="team-captain-tag">★ Капитан: '+esc(players.find(p=>p.id===captains.get(t.id))?.name||'Назначен')+'</div>':'')+
+    (captains.get(t.id)?'<div class="team-captain-tag">★ '+(s.team_mode==='random'?'Капитан (первый по входу): ':'Капитан: ')+esc(players.find(p=>p.id===captains.get(t.id))?.name||'Назначен')+'</div>':'')+
     (effects.length?'<div class="team-effects-history"><strong>Бонусы и штрафы</strong>'+effects.map(x=>{
       const labels={headstart:'Фора',teamwork:'Командный рывок',momentum:'Импульс',fog:'Туман',storm:'Шторм',drain:'Потеря очков'};
       const penalty=['fog','storm','drain'].includes(x.choice);
@@ -95,6 +102,13 @@ async function teamAction(action,input={}){
 }
 function teamDropClear(){teamUI.dragged=null;all('.is-drop-target,.is-dragging').forEach(el=>el.classList.remove('is-drop-target','is-dragging'));}
 window.addEventListener('DOMContentLoaded',()=>{
+ window.QwizTeamLab?.init({
+  builds:()=>state.builds,
+  build:id=>studio('build_get',{id}),
+  questions:card=>loadSandboxQuestions(card),
+  catalog:()=>rpc('qwiz_geo_catalog'),
+  map:()=>window.QwizGeo.loadMap()
+ });
  $('manageTeams').onclick=()=>{$('teamManager').scrollIntoView({behavior:motionPreference.matches?'instant':'smooth',block:'start'});$('teamManagerHeading').focus({preventScroll:true});};
 
  $('teamSettings').onsubmit=e=>{e.preventDefault();if(e.target.reportValidity())teamAction('settings',{count:Number($('teamCount').value),mode:$('teamMode').value});};
