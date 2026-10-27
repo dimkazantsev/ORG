@@ -79,7 +79,10 @@ test('Tug game is tappable offline and results are shown on the next manual phas
  await page.locator('[data-card-step="1"]').click();
  const button=page.locator('[data-card-tap]');
  await expect(button).toBeEnabled();
+ await expect(page.locator('#cardPlayScreen .arcade-tap-stage')).toHaveCount(1);
+ await button.evaluate(n=>{n.dataset.sandboxTapIdentity='retained';});
  for(let j=0;j<7;j++)await button.click();
+ await expect(button).toHaveAttribute('data-sandbox-tap-identity','retained');
  await expect(page.locator('.card-play-tap-art strong')).toHaveText('7');
  await page.locator('#cardPlayNext').click();
  await expect(page.locator('#cardPlayScreen')).toContainText('7');
@@ -94,10 +97,27 @@ test('Captain memory simulator lets the teacher flip a tile without network call
  await page.locator('[data-play-card="'+i+'"]').click();
  await page.locator('#cardPlayNext').click();
  await expect(page.locator('.card-play-memory button')).toHaveCount(12);
+ await expect(page.locator('#cardPlayScreen .arcade-memory-hero')).toHaveCount(1);
  await page.locator('[data-card-flip="0"]').click();
  await expect(page.locator('[data-card-flip="0"]')).toHaveClass(/is-open/);
  await page.locator('[data-card-flip="1"]').click();
  await expect(page.locator('#cardPlayScreen')).toContainText('1 попыток');
+});
+
+
+test('Blitz card renders the actual 3D consensus graphic and allows both local voting phases',async({page})=>{
+ await page.evaluate(()=>appendCard('bonus','blitz'));
+ const i=await page.evaluate(()=>state.cards.findIndex(x=>x.settings?.arcade_mode==='blitz'));
+ await page.locator('[data-play-card="'+i+'"]').click();
+ await page.locator('#cardPlayNext').click();
+ await expect(page.locator('#cardPlayScreen .consensus-hero')).toHaveCount(1);
+ await page.locator('[data-card-vote="player:2"]').click();
+ await expect(page.locator('[data-card-vote="player:2"]')).toHaveClass(/is-picked/);
+ await page.locator('#cardPlayNext').click();
+ await page.locator('[data-card-vote="captain:1"]').click();
+ await expect(page.locator('[data-card-vote="captain:1"]')).toHaveClass(/is-picked/);
+ await page.locator('#cardPlayNext').click();
+ await expect(page.locator('#cardPlayScreen')).toContainText('Голос участника: C. Капитан: B.');
 });
 
 test('Map sandbox renders real region SVG and allows confirm/answer without backend writes',async({page})=>{
