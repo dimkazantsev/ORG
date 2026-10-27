@@ -60,6 +60,8 @@ test('Missing sandbox JS shows a recoverable error, never an endless loading opt
  await page.route('**/team-lab.js*',route=>route.abort('failed'));
  await page.goto('http://127.0.0.1:8080/next/workspace.html',{waitUntil:'load'});
  await expect(page.locator('#workspaceLoading')).toBeHidden();
+ // The earlier navigation resets section visibility; open Conducting before checking visual visibility.
+ await page.locator('[data-section="rooms"]').click();
  await expect(page.locator('#teamLabBuild option')).toHaveText('Модуль теста недоступен');
  await expect(page.locator('#teamLabStart')).toBeDisabled();
  await expect(page.locator('#teamLabRetry')).toBeVisible();
