@@ -1204,3 +1204,31 @@ test('Arcade-only room readiness aligns with server authorization and does not r
  assert.match(js,/Mini-игры|Мини-игры готовы/);
  assert.match(html,/id="liveStart"/);
 });
+
+
+
+test('Consensus regression: SQL alias never collides with arcade-run record',()=>{
+ const sql=readFileSync(new URL('./migrations/20261027_fix_consensus_vote_alias_collision.sql',import.meta.url),'utf8');
+ assert.match(sql,/SELECT cv\.choice INTO mine_choice FROM public\.qwiz_consensus_votes cv/);
+ assert.doesNotMatch(sql,/SELECT v\.choice INTO mine_choice/);
+ assert.match(sql,/SELECT count\(\*\) INTO votes_count FROM public\.qwiz_consensus_votes cv/);
+ assert.match(sql,/v\.started_at/);
+});
+
+test('Legacy blitz intros are canonical and stats never reuse previous round card state',()=>{
+ const intro=readFileSync(new URL('./migrations/20261027_fix_consensus_saved_intro_name.sql',import.meta.url),'utf8');
+ const app=readFileSync(new URL('./app.js',import.meta.url),'utf8');
+ const stage=readFileSync(new URL('./stage.js',import.meta.url),'utf8');
+ const css=readFileSync(new URL('./player-layout.css',import.meta.url),'utf8');
+ assert.match(intro,/game='blitz' THEN RETURN 'Блиц-консенсус'/);
+ assert.match(app,/queued_settings\?\.arcade_mode/);
+ assert.match(app,/const title=ARCADE_VISIBLE_NAMES\[mode\]/);
+ assert.match(app,/const icon=mode==='blitz'\?'arcade_consensus'/);
+ assert.match(stage,/key==='arcade_consensus'/);
+ assert.match(app,/s\.activity\?\.settings\?\.round_card/);
+ assert.match(app,/s\.round_results\?\.mode/);
+ assert.match(app,/view\?\.mode==='blitz'\?/);
+ assert.match(app,/view\?\.mode==='captain'\?/);
+ assert.match(css,/\.round-results-next\{[\s\S]*?position:relative!important/);
+ assert.match(css,/overflow-y:auto!important/);
+});
