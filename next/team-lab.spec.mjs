@@ -97,7 +97,8 @@ test('Without a future ordinary question no fake bonus stage is offered',async({
  await page.evaluate(()=>{
   studio=async()=>({build:{id:'build-1'},cards:[{type:'bonus',title:'Тап-баттл',settings:{arcade_mode:'tug'}}]});
  });
- await start(page);
+ await page.locator('#teamLabStart').click();
+ await expect(page.locator('#teamLabStatus')).toContainText('Этап 1 / 1');
  await page.locator('#teamLabForceBonus').check();
  await page.locator('#teamLabWinner').selectOption('0');
  await page.locator('[data-lab-resolve]').click();
