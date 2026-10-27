@@ -279,7 +279,7 @@ test('All builder card types keep their settings, form fields, and dialog contro
   await page.locator('#cardDialog [data-close]').first().click();
  }
  await page.evaluate(()=>{
-  state.cards[1].settings.arcade_mode='rocket';
+  state.cards[1].settings.arcade_mode='captain';
   editCard(1);
  });
  await expect(page.locator('#cardArcadeSettings')).toBeVisible();
@@ -488,7 +488,7 @@ test('One archive-clear button previews all completed games, cancels safely and 
  await expect(button).toBeVisible();
  await expect(button).toHaveText('Очистить архив');
  await expect(button.locator('svg.trash-svg')).toHaveCount(1);
- await expect(page.locator('#hostRoomList .rooms-history-count')).toHaveText('2');
+ await expect(page.locator('#hostRoomList .rooms-history-count')).toHaveText('30');
  let dismissed=false;
  page.once('dialog',async dialog=>{
   expect(dialog.message()).toContain('30');
@@ -533,4 +533,53 @@ test('Archive-clear button fits at mobile width and does not toggle the history 
  expect(b.x).toBeGreaterThanOrEqual(panel.x-1);
  expect(b.x+b.width).toBeLessThanOrEqual(panel.x+panel.width+1);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
+});
+
+
+
+test('Saving an arcade-only build with Memory and Blitz Consensus does not require a question round',async({page})=>{
+ await page.evaluate(()=>{
+  window.__buildSaveRequests=[];
+  state.buildId=null;
+  state.cards=[
+   card('intro'),
+   {...card('bonus'),title:'Мэмори капитанов',settings:{...card('bonus').settings,arcade_mode:'captain',arcade_seconds:30}},
+   {...card('bonus'),title:'Блиц-консенсус',settings:{...card('bonus').settings,arcade_mode:'blitz',arcade_seconds:60}},
+   card('finale')
+  ];
+  $('buildTitle').value='ОРГ';
+  renderCards();
+  studio=async(action,input)=>{
+   window.__buildSaveRequests.push({action,input});
+   if(action==='build_save')return {id:'12345678-1234-4123-8123-123456789abc',cards:4};
+   throw Error('Unexpected operation '+action);
+  };
+  overview=async()=>{};
+ });
+ await page.locator('#saveBuild').click();
+ await expect.poll(()=>page.evaluate(()=>window.__buildSaveRequests.filter(x=>x.action==='build_save').length)).toBe(1);
+ const actual=await page.evaluate(()=>window.__buildSaveRequests[0].input);
+ expect(actual.title).toBe('ОРГ');
+ expect(actual.cards.map(c=>c.type)).toEqual(['intro','bonus','bonus','finale']);
+ expect(actual.cards.map(c=>c.settings.arcade_mode).filter(Boolean)).toEqual(['captain','blitz']);
+ await expect(page.locator('#buildSaveNotice')).toBeVisible();
+ await expect(page.locator('#buildSaveNotice')).toContainText('Сборка сохранена');
+ await expect(page.locator('#saveBuild')).toBeEnabled();
+ expect(await page.evaluate(()=>state.buildId)).toBe('12345678-1234-4123-8123-123456789abc');
+});
+
+test('Build save errors appear alongside the editor controls without erasing arcade cards',async({page})=>{
+ await page.evaluate(()=>{
+  state.cards=[card('intro'),card('finale')];
+  $('buildTitle').value='ОРГ';
+  renderCards();
+  window.__failedBuildRpc=false;
+  studio=async()=>{window.__failedBuildRpc=true;throw Error('RPC must not run for invalid build')};
+ });
+ await page.locator('#saveBuild').click();
+ await expect(page.locator('#buildSaveNotice')).toBeVisible();
+ await expect(page.locator('#buildSaveNotice')).toContainText('Добавьте хотя бы одну настроенную игру');
+ expect(await page.evaluate(()=>window.__failedBuildRpc)).toBe(false);
+ await expect(page.locator('#roundCards .round-card')).toHaveCount(2);
+ await expect(page.locator('#saveBuild')).toBeEnabled();
 });
