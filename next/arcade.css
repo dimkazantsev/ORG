@@ -858,3 +858,25 @@
  cursor:default;opacity:.7;
 }
 #arcadeWalletPanel .arcade-bonus-list{margin-top:12px}
+
+/* The ballot is the primary interactive view at the end of a mini-game. */
+#gameContent .arcade-player.is-boost-voting{
+ position:relative;overflow-y:auto!important;max-height:100%;overscroll-behavior:contain;
+}
+#gameContent .arcade-player.is-boost-voting .arcade-vote{
+ display:flex;flex-direction:column;position:relative!important;
+ margin:8px 0 0!important;max-height:none!important;min-height:0;
+ padding:clamp(13px,4vw,24px)!important;border:1px solid #cdb7f0!important;
+ border-radius:20px;background:linear-gradient(150deg,#fff,#f1e8ff)!important;
+ box-shadow:0 8px 24px #7148a41a!important;
+}
+#gameContent .arcade-player.is-boost-voting .arcade-vote-title{margin:0 0 11px}
+#gameContent .arcade-player.is-boost-voting .arcade-boost-grid{display:grid;gap:9px}
+#gameContent .arcade-player.is-boost-voting .arcade-boost-grid button{
+ min-height:56px;touch-action:manipulation;
+}
+#arcadeWalletPanel .arcade-bonus-history{margin-top:9px;border-top:1px solid #ece4f8;padding-top:9px}
+#arcadeWalletPanel .arcade-bonus-history>summary{
+ cursor:pointer;padding:10px 4px;color:#7653b6;font-weight:780;
+}
+#arcadeWalletPanel .arcade-bonus-history .arcade-bonus-list{padding-top:10px}
