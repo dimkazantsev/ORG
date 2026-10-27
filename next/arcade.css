@@ -1118,3 +1118,62 @@
  .arcade-shell[data-arcade-root="blitz"] .consensus-option,
  .arcade-shell[data-arcade-root="blitz"] .consensus-progress-track>span{transition:none}
 }
+
+
+/* Consensus identity: three ballot cards rather than the retired blitz crystal. */
+.arcade-shell[data-arcade-root="blitz"] .consensus-hero{
+ position:relative;isolation:isolate;display:grid;place-items:center;
+ width:100%;height:100%;overflow:hidden;
+ background:radial-gradient(ellipse at 50% 40%,#f9efffff,#e2d6ff 65%,#e1eaff 100%);
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-hero-aura{
+ position:absolute;width:240px;height:140px;left:50%;top:20%;
+ transform:translateX(-50%);border-radius:50%;
+ background:radial-gradient(ellipse,#996ff87c 0%,#caaff62b 55%,transparent 75%);
+ filter:blur(12px);pointer-events:none;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-hero-card{
+ position:absolute;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+ width:clamp(59px,7.2vw,104px);height:clamp(70px,9vw,115px);border-radius:15px;
+ border:1px solid #ffffffa8;
+ background:linear-gradient(140deg,#fdf9ff,#d6c3fd);
+ box-shadow:0 11px 22px #5b368f2a,inset 0 2px 5px #fff;
+ transform-origin:50% 80%;top:13%;z-index:1;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-hero-card b{
+ display:grid;place-items:center;border-radius:10px;
+ width:clamp(27px,3.4vw,39px);height:clamp(27px,3.4vw,39px);
+ background:#ad8bea;color:#fff;font-size:clamp(17px,2.5vw,24px);font-weight:900;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-hero-card i{
+ display:block;width:45%;height:5px;background:#bda6e7;border-radius:8px;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-hero-card i:last-child{width:30%}
+.arcade-shell[data-arcade-root="blitz"] .consensus-hero-card-left{
+ left:calc(50% - clamp(90px,10vw,135px));transform:rotate(-16deg);
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-hero-card-center{
+ left:50%;transform:translateX(-50%);z-index:3;
+ background:linear-gradient(145deg,#a374f5,#753ede);border-color:#cfb3ff;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-hero-card-center b{background:#ffffffec;color:#7542df}
+.arcade-shell[data-arcade-root="blitz"] .consensus-hero-card-center i{background:#d6bbff}
+.arcade-shell[data-arcade-root="blitz"] .consensus-hero-card-right{
+ right:calc(50% - clamp(90px,10vw,135px));transform:rotate(16deg);
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-hero-stars{
+ position:absolute;color:#9d70e9;left:50%;top:12%;transform:translateX(-50%);
+ font-size:clamp(12px,1.8vw,18px);z-index:0;white-space:nowrap;
+}
+.arcade-shell[data-arcade-root="blitz"] .consensus-hero-label{
+ position:absolute;bottom:7px;left:0;right:0;text-align:center;
+ color:#7954bb;letter-spacing:.12em;font-size:clamp(9px,1.2vw,12px);font-weight:850;
+}
+@media(max-width:620px){
+ .arcade-shell[data-arcade-root="blitz"] .consensus-hero-card{top:4%;width:48px;height:59px;gap:4px;border-radius:10px}
+ .arcade-shell[data-arcade-root="blitz"] .consensus-hero-card b{height:21px;width:21px;font-size:14px;border-radius:6px}
+ .arcade-shell[data-arcade-root="blitz"] .consensus-hero-card i{height:3px}
+ .arcade-shell[data-arcade-root="blitz"] .consensus-hero-card-left{left:calc(50% - 63px)}
+ .arcade-shell[data-arcade-root="blitz"] .consensus-hero-card-right{right:calc(50% - 63px)}
+ .arcade-shell[data-arcade-root="blitz"] .consensus-hero-label{bottom:3px;letter-spacing:.08em}
+}
