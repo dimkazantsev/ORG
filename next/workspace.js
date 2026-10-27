@@ -23,7 +23,7 @@ const flagModes=[
 ];
 // Align live teacher preview with arcade labels in existing saved rooms.
 const ARCADE_VISIBLE_NAMES={tug:'Тап-баттл',blitz:'Блиц-консенсус',captain:'Мэмори капитанов'};
-const hostArcadeActivity=a=>a?.settings?.arcade_mode&&ARCADE_VISIBLE_NAMES[a.settings.arcade_mode]?{...a,title:ARCADE_VISIBLE_NAMES[a.settings.arcade_mode]}:a;
+const hostArcadeActivity=a=>{const mode=a?.settings?.arcade_mode||a?.settings?.queued_settings?.arcade_mode;return mode&&ARCADE_VISIBLE_NAMES[mode]?{...a,title:ARCADE_VISIBLE_NAMES[mode],icon:mode==='blitz'?'arcade_consensus':a.icon}:a};
 const titleKind=id=>flagModes.find(x=>x[0]===id)?.[1]||'Флаги мира';
 const icons={round:'▦',intro:'◉',break:'♫',team_stats:'▥',player_stats:'♙',bonus:'✦',duel:'⇄',finale:'★'};
 const cardSvgPaths={
