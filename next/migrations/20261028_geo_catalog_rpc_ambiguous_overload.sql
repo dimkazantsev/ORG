@@ -1,47 +1,47 @@
--- QWIZ-PARTY: avoid PostgREST PGRST203 on rpc('qwiz_geo_catalog', {}).
--- The full 89-subject teacher catalog uses qwiz_geo_catalog().
--- The paginated/search variant must require all three named arguments:
--- defaults make it ALSO match {}, so PostgREST cannot select the 0-arg RPC.
--- Preserve the existing function's OID, permissions and returned JSON shape.
+-- QWIZ-PARTY / PostgREST PGRST203 fix.
+-- Two RPC overloads matched {}: () and (p_search,p_offset,p_limit) WITH DEFAULTS.
+-- PostgreSQL disallows removing existing defaults by CREATE OR REPLACE (42P13).
+-- Rename the existing pagination function (preserving its OID, grants,
+-- definition and any database dependencies), then provide an explicit,
+-- 3-required-arguments compatibility RPC with the original name.
+do $rename$
+begin
+ if to_regprocedure('public.qwiz_geo_catalog_page(text,integer,integer)') is null then
+  if to_regprocedure('public.qwiz_geo_catalog(text,integer,integer)') is null then
+   raise exception 'Missing existing paginated geography catalog';
+  end if;
+  alter function public.qwiz_geo_catalog(text,integer,integer)
+   rename to qwiz_geo_catalog_page;
+ end if;
+end $rename$;
+
+-- Full 3-parameter callers keep their familiar endpoint. This function
+-- deliberately has NO argument defaults; the no-argument RPC is unique.
 create or replace function public.qwiz_geo_catalog(
-  p_search text,
-  p_offset integer,
-  p_limit integer
+ p_search text, p_offset integer, p_limit integer
 )
 returns jsonb
-language sql stable security definer set search_path='' as $function$
- select jsonb_build_object(
-  'total',(select count(*) from public.qwiz_geo_regions r
-   where r.name ilike '%'||left(coalesce(p_search,''),90)||'%'
-    or r.capital ilike '%'||left(coalesce(p_search,''),90)||'%'),
-  'items',(select coalesce(jsonb_agg(to_jsonb(s) order by s.name),'[]'::jsonb) from
-   (select r.id,r.name,r.capital,r.fd,r.kind,r.flag,cardinality(r.neighbors) as neighbor_count
-    from public.qwiz_geo_regions r
-    where r.name ilike '%'||left(coalesce(p_search,''),90)||'%'
-     or r.capital ilike '%'||left(coalesce(p_search,''),90)||'%'
-    order by r.name
-    offset greatest(0,least(coalesce(p_offset,0),100))
-    limit greatest(1,least(coalesce(p_limit,25),89))) s));
-$function$;
+language sql stable security invoker set search_path='' as $compat$
+ select public.qwiz_geo_catalog_page(p_search,p_offset,p_limit)
+$compat$;
+revoke all on function public.qwiz_geo_catalog(text,integer,integer)
+ from public,anon,authenticated;
+grant execute on function public.qwiz_geo_catalog(text,integer,integer)
+ to authenticated;
 
--- Fail the migration if ambiguous no-argument candidates are reintroduced.
+-- Assert required signatures and absence of overloaded default parameters.
 do $check$
-declare
- count_defaults integer;
- count_noargs integer;
+declare defaults_count integer;zero_count integer;
 begin
- select count(*) into count_defaults
+ select count(*) into defaults_count
  from pg_proc p join pg_namespace n on n.oid=p.pronamespace
  where n.nspname='public' and p.proname='qwiz_geo_catalog'
   and p.pronargs>0 and p.pronargdefaults>0;
- select count(*) into count_noargs
+ select count(*) into zero_count
  from pg_proc p join pg_namespace n on n.oid=p.pronamespace
  where n.nspname='public' and p.proname='qwiz_geo_catalog' and p.pronargs=0;
- if count_defaults<>0 or count_noargs<>1 then
-  raise exception 'Ambiguous qwiz_geo_catalog RPC signatures: defaults %, zero-arg %',
-   count_defaults,count_noargs;
+ if defaults_count<>0 or zero_count<>1 then
+  raise exception 'Ambiguous geography RPC: defaulted %, no-argument %',defaults_count,zero_count;
  end if;
 end $check$;
-
--- PostgREST can briefly retain the old argument-default metadata in its schema cache.
 notify pgrst, 'reload schema';
