@@ -83,7 +83,7 @@ test('Finished arcade boost ballot stays entirely visible and accepts a vote at 
     ends_at:new Date(now-1000).toISOString(),
     mine:{team_id:'team-a',captain:false},
     teams:[{id:'team-a',name:'Несгибаемые',points:8,place:1}],
-    awards:[],vote:{winner_team:'team-a',can_vote:true,open:true,stage:'strategy',strategy:null,
+    awards:[],vote:{winner_team:'team-a',can_vote:true,open:true,stage:'strategy',strategy:null,target_name:'Соперники',
       vote_ends_at:new Date(now+30000).toISOString(),counts:{},my_choice:null}};
    window.boostVoteFixture=view;
    const client={rpc:async(name,args)=>{if(name==='qwiz_vote_boost')window.voteChoiceFixture=args.p_choice;
