@@ -424,14 +424,14 @@ window.QwizArcade=(()=>{
    }
   // Spread room state reads: 40 devices no longer hit the same RPC 25 times/sec.
   // Actions still refresh immediately. Transient failures back off, preserving the last view.
-  const poll=()=>{if(tr.closed)return;const base=tr.view?.mode==='blitz'?(tr.kind==='player'?2400:3300):tr.view?.vote?.open?(tr.kind==='player'?2400:3200):tr.kind==='player'?5200:tr.kind==='screen'?4000:6000;
+  const poll=()=>{if(tr.closed)return;const base=tr.view?.mode==='blitz'?(tr.kind==='player'?2400:3300):tr.view?.vote?.open?(tr.kind==='player'?2400:3200):tr.kind==='player'?6200:tr.kind==='screen'?4800:7000;
    const retry=Math.min(20000,base*Math.pow(1.6,Math.min(tr.failures||0,4)));
    tr.interval=setTimeout(async()=>{if(tr.closed)return;
     if(navigator.onLine&&document.visibilityState!=='hidden')await fetchState(tr);
     poll();
    },retry+Math.floor(Math.random()*900));};
   fetchState(tr);poll();
-  tr.clock=setInterval(()=>tick(tr),250);
+  tr.clock=setInterval(()=>tick(tr),mode==='rocket'?250:500);
  }
  async function voteBoost(tr,choice){
   if(tr.closed||tr.voteBusy||!tr.roomId||!ALL_VOTES.some(x=>x[0]===choice))return;
