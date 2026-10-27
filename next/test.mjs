@@ -401,11 +401,11 @@ test('Replay remains enabled in finished state after the team readiness check',(
  const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
  const page=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
  assert.match(teams,/const replay=s\.phase==='finished'/);
- assert.match(teams,/!replay&&/);
+ assert.match(teams,/\$\('liveStart'\)\.disabled=!\(replay\|\|canStart\)/);
  assert.match(host,/QwizStage\.iconLabel\(\$\('liveStart'\)/);
  assert.match(host,/qwiz_repeat_finished_room/);
  assert.match(page,/id="liveControlsHint"/);
- assert.match(page,/workspace-teams\.js\?v=unified-lobby-20261026/);
+ assert.match(page,/workspace-teams\.js\?v=arcade-ready-20261027-1/);
 });
 test('3D avatars render in team roster, profile and new optional gallery',()=>{
  const src=readFileSync(new URL('./teams.js',import.meta.url),'utf8');
