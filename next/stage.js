@@ -195,6 +195,14 @@ window.QwizStage=(()=>{
   finale:'<path d="M7 4h10v7c0 7-10 7-10 0V4ZM7 7H3v3c0 3 3 5 6 5m8-8h4v3c0 3-3 5-6 5m-3 2v4m-4 0h8"/>'
  };
  function roundIconSvg(key){
+  if(key==='arcade_consensus')return '<svg class="round-art-svg round-consensus-svg" viewBox="0 0 160 130" fill="none" aria-hidden="true">'+
+   '<defs><linearGradient id="consensusIntroCard" x1="12" y1="5" x2="147" y2="125" gradientUnits="userSpaceOnUse"><stop stop-color="#b18af6"/><stop offset="1" stop-color="#713bcf"/></linearGradient></defs>'+
+   '<rect x="16" y="22" width="61" height="83" rx="13" transform="rotate(-13 16 22)" fill="#e6d6ff" stroke="#8f62db" stroke-width="3"/>'+
+   '<rect x="88" y="12" width="61" height="83" rx="13" transform="rotate(12 88 12)" fill="#e6d6ff" stroke="#8f62db" stroke-width="3"/>'+
+   '<rect x="51" y="18" width="59" height="91" rx="13" fill="url(#consensusIntroCard)" stroke="#d8c0ff" stroke-width="3"/>'+
+   '<path d="m65 62 11 11 22-27" stroke="#fff" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>'+
+   '<path d="M63 88h36" stroke="#e6d8ff" stroke-width="4" stroke-linecap="round"/></svg>';
+
   // A sculpted, layered waving pennant instead of the primitive outline.
   if(key==='flag'||key==='round')return '<svg class="round-art-svg round-flag-sculpture" viewBox="0 0 240 160" fill="none" aria-hidden="true">'+
    '<defs><linearGradient id="qwizFlagMaterial" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#C8B0FF"/><stop offset=".28" stop-color="#8D5BE8"/><stop offset=".63" stop-color="#6A38C8"/><stop offset="1" stop-color="#A985F3"/></linearGradient>'+
