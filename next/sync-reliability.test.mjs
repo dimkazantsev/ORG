@@ -10,7 +10,7 @@ test('all resilience code parses and new builds are referenced',()=>{
  }
  const pages=[['index.html','app.js?v=blitz-consensus-20261027-2'],
   ['index.html','arcade.js?v=blitz-consensus-20261027-2'],
-  ['workspace.html','workspace.js?v=blitz-consensus-20261027-1'],
+  ['workspace.html','workspace.js?v=arcade-build-save-20261027-1'],
   ['presenter.html','presenter.js?v=blitz-consensus-20261027-1']];
  for(const [page,asset] of pages) assert.ok(read(page).includes(asset),page+' missing '+asset);
 });
