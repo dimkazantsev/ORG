@@ -855,3 +855,85 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
 .round-results-page.is-arcade .round-performance small{font-size:.7em;color:#797089}
 .round-results-page .round-results-note{font-size:12px;line-height:1.45;color:#706781;margin:0}
 .round-results-page .round-self-summary strong{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+
+
+/* 2026-10-27: keep short round summaries inside the phone viewport.
+   Text and countdown are in normal flow, never overlaid on a result row. */
+.player-compact #gameView #gameContent.game-card:has(> .round-results-page){
+ display:flex!important;flex-direction:column!important;min-height:0!important;
+ overflow:hidden!important;padding:0!important;box-sizing:border-box!important;
+}
+.player-compact #gameView #gameContent>.round-results-page{
+ box-sizing:border-box!important;position:relative!important;display:flex!important;
+ flex:1 1 auto!important;flex-direction:column!important;
+ width:100%!important;height:100%!important;min-height:0!important;
+ max-height:100%!important;margin:0!important;gap:clamp(8px,1.5dvh,14px)!important;
+ overflow-x:hidden!important;overflow-y:auto!important;
+ -webkit-overflow-scrolling:touch;
+ padding:clamp(16px,3dvh,27px) clamp(13px,4vw,20px)
+   calc(35px + env(safe-area-inset-bottom))!important;
+ border:0!important;border-radius:inherit!important;
+ scroll-padding-bottom:calc(28px + env(safe-area-inset-bottom));
+}
+.player-compact #gameView .round-results-grid{
+ display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+ flex:0 0 auto!important;gap:clamp(10px,2dvh,17px)!important;
+ min-width:0!important;min-height:0!important;align-items:start!important;
+}
+.player-compact #gameView .round-results-grid>section{
+ box-sizing:border-box!important;width:100%!important;min-width:0!important;
+ height:auto!important;min-height:0!important;max-height:none!important;
+ padding:clamp(13px,3vw,19px)!important;
+}
+.player-compact #gameView .round-score-list li{
+ grid-template-columns:clamp(27px,7vw,34px) minmax(0,1fr) auto!important;
+ align-items:center!important;min-width:0!important;gap:clamp(6px,2vw,11px)!important;
+ padding-block:10px!important;
+}
+.player-compact #gameView .round-score-list li strong{
+ white-space:normal!important;overflow:visible!important;
+ word-break:normal!important;overflow-wrap:anywhere!important;
+ min-width:0!important;line-height:1.2!important;
+}
+.player-compact #gameView .round-score-list li b{
+ min-width:0!important;max-width:45vw;
+ display:inline-flex!important;flex-wrap:wrap!important;align-items:baseline;
+ justify-content:flex-end;text-align:right;gap:2px 5px;
+ white-space:normal!important;font-variant-numeric:tabular-nums!important;
+ font-size:clamp(16px,4.1vw,23px)!important;line-height:1.2!important;
+}
+.player-compact #gameView .round-score-list li b small{
+ display:inline!important;font-size:clamp(10px,2.7vw,13px)!important;
+ font-weight:650;line-height:1.25;
+}
+.player-compact #gameView .round-results-note{
+ margin:0!important;font-size:clamp(12px,3vw,14px)!important;
+ line-height:1.5!important;flex:0 0 auto!important;
+ overflow-wrap:anywhere;
+}
+.player-compact #gameView .round-results-next{
+ position:relative!important;inset:auto!important;transform:none!important;
+ display:block!important;flex:0 0 auto!important;min-height:22px!important;
+ width:100%;margin:clamp(5px,1.5dvh,12px) 0 12px!important;
+ padding:5px 0!important;text-align:center!important;
+ line-height:1.4!important;font-size:clamp(13px,3.5vw,18px)!important;
+ z-index:0!important;clear:both!important;
+}
+.player-compact #gameView .round-self-summary{
+ flex:0 0 auto!important;min-width:0!important;
+}
+.player-compact #gameView .round-self-summary>div{
+ min-width:0!important;overflow:hidden!important;
+}
+.player-compact #gameView .round-self-summary strong{
+ font-size:clamp(26px,7.5vw,42px)!important;
+ line-height:1.12!important;overflow-wrap:anywhere;
+}
+@media(max-height:720px){
+ .player-compact #gameView #gameContent>.round-results-page{
+  padding-top:12px!important;gap:8px!important;
+ }
+ .player-compact #gameView .round-results-page>h1{
+  font-size:clamp(27px,7vw,38px)!important;
+ }
+}
