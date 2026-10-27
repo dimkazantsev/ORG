@@ -14,7 +14,7 @@ window.QwizCardSandbox=(()=>{
  function shuffle(values){const arr=values.slice();for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]]}return arr}
  function resetRound(){
   if(!session)return;
-  session.picks=new Map();session.mapPicks=new Map();session.taps=0;session.blitzVote=null;session.captainVote=null;
+  session.picks=new Map();session.mapPicks=new Map();session.geoPicks=new Map();session.taps=0;session.blitzVote=null;session.captainVote=null;
   session.faces=shuffle(['◆','✦','☼','●','▲','♣','◆','✦','☼','●','▲','♣']);
   session.faceUp=[];session.matched=[];session.moves=0;
  }
@@ -22,9 +22,8 @@ window.QwizCardSandbox=(()=>{
  function stages(s){
   const c=s.card,settings=c.settings||{},mode=settings.arcade_mode;
   if(mode==='russia_map'){
-   const limit=cap(settings.geo_count||15,1,89),modes=(settings.geo_modes||[]).filter(x=>names[x]);
    const steps=[{kind:'intro',label:'Заставка'}];
-   for(let i=0;i<limit;i++){steps.push({kind:'map',i,mode:modes[i%modes.length]||'locate',label:'Карта '+(i+1)});steps.push({kind:'map-answer',i,mode:modes[i%modes.length]||'locate',label:'Ответ '+(i+1)})}
+   s.geoQuestions.forEach((q,i)=>{steps.push({kind:'geo-question',i,label:'Вопрос '+(i+1)});steps.push({kind:'geo-answer',i,label:'Ответ '+(i+1)})});
    steps.push({kind:'summary',label:'Итоги'});return steps;
   }
   if(isArcade(s)){
@@ -86,21 +85,55 @@ window.QwizCardSandbox=(()=>{
    '</div>';
  }
  function mapHtml(s,step,reveal){
-  const regions=s.mapRegions;if(!regions.length)return '<div class="card-play-note">Геометрия карты не загрузилась. Проверьте источник карты в настройках.</div>';
-  const target=regions[(step.i*13+7)%regions.length],selected=s.mapPicks.get(step.i);
-  const mode=step.mode;const locationTask=mode==='locate';
-  const supported=['locate','identify','silhouette'].includes(mode);
-  const prompt=mode==='locate'?'Найдите на карте: '+target.name:mode==='identify'?'Как называется выделенный субъект?':mode==='silhouette'?'Назовите субъект по контуру':names[mode]||'География России';
-  const rect=mode==='silhouette'?target.box.join(' '):'0 0 1120 480';
-  const paths=(mode==='silhouette'?[target]:regions).map(g=>'<path d="'+esc(g.path)+'" data-card-region="'+esc(g.id)+'" class="'+(String(g.id)===String(target.id)&&reveal?' is-right':String(g.id)===String(selected)&&!reveal?' is-selected':String(g.id)===String(target.id)&&mode==='identify'?' is-focused':'')+'" aria-label="'+esc(g.name)+'" tabindex="'+(reveal?'-1':'0')+'" role="button"/>').join('');
-  return '<div class="card-play-question"><div class="card-play-overline">КАРТА · ЗАДАНИЕ '+(step.i+1)+' · '+esc(names[mode]||mode)+'</div><h3>'+esc(prompt)+'</h3>'+
-    (!supported?'<p class="card-play-note">Для этого режима необходимы вопросы сервера. Здесь проверяются переключение экранов и отрисовка карты, а не правильность географического ответа.</p>':'')+
-    '<div class="card-play-map-wrap"><svg class="card-play-map" viewBox="'+rect+'" role="group" aria-label="Карта субъектов России">'+paths+'</svg></div>'+
-    (selected&&!reveal?'<p class="card-play-map-choice">Вы выбрали: '+esc(regions.find(x=>String(x.id)===String(selected))?.name||'субъект')+'</p>':'')+
-    (!reveal&&s.view==='player'?'<button type="button" data-card-confirm class="card-play-confirm" '+(!selected?'disabled':'')+'>Подтвердить выбор</button>':'')+
-    (reveal?'<div class="card-play-reveal"><strong>Целевой субъект: '+esc(target.name)+'</strong><p>Проверка ответа демонстрационная, очки не начисляются.</p></div>':'')+
-    '</div>';
+  const q=s.geoQuestions[step.i],regions=s.mapRegions;
+  if(!q)return '<p class="card-play-note">Географический вопрос не загружен. Проверьте справочник.</p>';
+  if(!regions.length)return '<p class="card-play-note">Карта недоступна. Проверьте источник геометрии.</p>';
+  const region=regions.find(x=>String(x.id)===String(q.region));
+  const selectedMap=s.mapPicks.get(step.i),selectedOption=s.geoPicks.get(step.i);
+  const selected=q.mode==='locate'?selectedMap:selectedOption;
+  const success=selected!=null&&String(selected)===String(q.correctId);
+  const targetBox=region?.box||[0,0,1120,480];
+  const image=q.flag&&/^[\w.-]{1,140}$/u.test(q.flag)
+   ?'<div class="card-play-geo-media"><img alt="Флаг субъекта России" src="https://raw.githubusercontent.com/russian-flags/regions/3c411c7b305c678c49798cc610538c66108adbde/assets/'+encodeURIComponent(q.flag)+'/index.svg" loading="lazy" decoding="async"></div>':'';
+  const outlines=q.silhouette&&region?[region]:regions;
+  const paths=outlines.map(g=>{
+   const id=String(g.id),correct=reveal&&id===String(q.region);
+   const isChosen=!reveal&&q.mode==='locate'&&id===String(selectedMap);
+   const isFocused=!reveal&&q.focus!=null&&id===String(q.focus);
+   const style=correct?' is-right':isChosen?' is-selected':isFocused?' is-focused':'';
+   const active=q.mode==='locate'&&!reveal&&s.view==='player';
+   return '<path class="'+style+'" d="'+esc(g.path)+'"'+
+    (active?' data-card-region="'+esc(id)+'" role="button" tabindex="0" aria-label="'+esc(g.name)+'" aria-pressed="'+(isChosen?'true':'false')+'"':' aria-hidden="true"')+'/>';
+  }).join('');
+  const map=q.showMap?'<div class="card-play-map-wrap"><svg class="card-play-map" viewBox="'+
+   (q.silhouette?targetBox.join(' '):'0 0 1120 480')+
+   '" preserveAspectRatio="xMidYMid meet" role="'+(q.mode==='locate'&&!reveal?'group':'img')+
+   '" aria-label="Карта 89 субъектов России"><g>'+paths+'</g></svg></div>':'';
+  const options=q.options?.length?'<div class="card-play-answers">'+q.options.map((o,i)=>{
+   const picked=String(selectedOption)===String(o.id),right=String(q.correctId)===String(o.id);
+   const style=reveal?(right?' is-correct':picked?' is-wrong':''):picked?' is-picked':'';
+   return '<button type="button" class="card-play-answer'+style+'" data-card-geo-choice="'+step.i+':'+esc(o.id)+
+    '" aria-pressed="'+picked+'" '+(reveal||s.view==='audience'?'disabled':'')+'>'+
+    '<span class="card-play-letter">'+String.fromCharCode(65+i)+'</span><span class="card-play-choice">'+esc(o.text)+'</span>'+
+    (reveal&&right?'<span class="card-play-mark">✓</span>':'')+'</button>';
+  }).join('')+'</div>':'';
+  const clues=q.clues?.length?'<div class="card-play-geo-clues">'+q.clues.map(t=>'<span>'+esc(t)+'</span>').join('')+'</div>':'';
+  const revealHtml=reveal?'<div class="card-play-reveal" role="status"><strong>'+
+   (selected==null?'Правильный ответ':success?'Верно!':'Неверно. Правильный ответ')+': '+esc(q.correctText)+
+   '</strong><p>'+esc(q.explanation)+(selected==null?' Ответ не был выбран.':'')+'</p></div>':'';
+  return '<section class="card-play-question card-play-geography"><div class="card-play-overline">ГЕОГРАФИЯ РОССИИ · '+
+   esc(names[q.mode]||q.mode)+' · ВОПРОС '+(step.i+1)+' ИЗ '+s.geoQuestions.length+'</div>'+
+   '<h3>'+esc(q.prompt)+'</h3>'+clues+image+map+options+
+   (selectedMap&&!reveal&&q.mode==='locate'?'<p class="card-play-map-choice" role="status">Выбрано: '+
+      esc(regions.find(g=>String(g.id)===String(selectedMap))?.name||'Субъект')+'</p>':'')+
+   (!reveal&&q.mode==='locate'&&s.view==='player'?
+      '<button type="button" class="card-play-confirm" data-card-confirm '+(!selectedMap?'disabled':'')+'>Подтвердить выбор</button>':'')+
+   (!reveal&&q.mode!=='locate'?'<p class="card-play-note">'+(s.view==='audience'?
+      'Экран аудитории: демонстрация вопроса без выбора ответа.':
+      'Выберите ответ. Для проверки перейдите к следующему этапу.')+'</p>':'')+
+   revealHtml+'</section>';
  }
+
  function memoryHtml(s){
   return '<div class="card-play-memory">'+s.faces.map((symbol,i)=>'<button type="button" data-card-flip="'+i+'" class="'+(s.matched.includes(i)?' is-matched':s.faceUp.includes(i)?' is-open':'')+'" aria-label="Плитка '+(i+1)+'">'+
     (s.matched.includes(i)||s.faceUp.includes(i)?esc(symbol):'✦')+'</button>').join('')+'</div>'+
@@ -151,8 +184,8 @@ window.QwizCardSandbox=(()=>{
   switch(step.kind){
    case 'question':return questionHtml(s,step,false);
    case 'answer':return questionHtml(s,step,true);
-   case 'map':return mapHtml(s,step,false);
-   case 'map-answer':return mapHtml(s,step,true);
+   case 'geo-question':return mapHtml(s,step,false);
+   case 'geo-answer':return mapHtml(s,step,true);
    case 'arcade':case 'vote':case 'captain-vote':return arcadeHtml(s,step.kind);
    case 'arcade-result':case 'summary':case 'bonus':return summaryHtml(s,step.kind);
    case 'generic':return genericHtml(s);
@@ -184,11 +217,11 @@ window.QwizCardSandbox=(()=>{
   const dialog=el('cardPlayDialog');if(dialog?.open)dialog.close();
   if(el('cardPlayScreen'))el('cardPlayScreen').replaceChildren();
  }
- async function open({card,topic,loadQuestions,loadMap}){
+ async function open({card,topic,loadQuestions,loadMap,loadCatalog}){
   const dialog=el('cardPlayDialog');if(!dialog)return;
   if(dialog.open)dialog.close();
   const token=++seq;
-  session={card:JSON.parse(JSON.stringify(card)),topic:String(topic||''),view:'player',step:0,questions:[],mapRegions:[],optionOrder:new WeakMap(),loading:false,error:''};
+  session={card:JSON.parse(JSON.stringify(card)),topic:String(topic||''),view:'player',step:0,questions:[],geoQuestions:[],mapRegions:[],optionOrder:new WeakMap(),loading:false,error:''};
   resetRound();
   const s=session;
   const mode=s.card.settings?.arcade_mode;
@@ -199,9 +232,15 @@ window.QwizCardSandbox=(()=>{
   if(!needsData)return;
   try{
    if(mode==='russia_map'){
-    s.mapRegions=await loadMap();
+    // Two independent read-only sources are fetched once when the preview opens.
+    // All eight question modes are generated from the verified catalog and real SVG paths.
+    const [mapRegions,catalog]=await Promise.all([loadMap(),loadCatalog()]);
+    if(token!==seq||session!==s)return;
+    s.mapRegions=mapRegions;
+    s.geoQuestions=window.QwizCardGeoPreview.build({card:s.card,catalog,geometry:mapRegions});
    }else{
     const questions=await loadQuestions(s.card);
+    if(token!==seq||session!==s)return;
     s.questions=(Array.isArray(questions)?questions:[]).map(q=>({...q,options:Array.isArray(q.options)?q.options:[]}));
     if(!s.questions.length)s.error='Для выбранной темы и механик вопросы не найдены. Сначала добавьте или опубликуйте вопросы.';
    }
@@ -232,6 +271,9 @@ window.QwizCardSandbox=(()=>{
    if(button.hasAttribute('data-card-region')){
     const svg=button.closest('svg');if(svg)return; // region SVG paths are handled below
    }
+   if(button.hasAttribute('data-card-geo-choice')){
+    const pair=button.dataset.cardGeoChoice.split(':');s.geoPicks.set(Number(pair[0]),pair.slice(1).join(':'));paint();return;
+   }
    if(button.hasAttribute('data-card-confirm')){s.step=Math.min(s.step+1,stages(s).length-1);paint();return}
    if(button.hasAttribute('data-card-tap')){s.taps+=1;const count=el('cardPlayScreen')?.querySelector('.card-play-tap-art strong');if(count)count.textContent=String(s.taps);return}
    if(button.hasAttribute('data-card-vote')){const [kind,num]=button.dataset.cardVote.split(':');if(kind==='captain')s.captainVote=Number(num);else s.blitzVote=Number(num);paint();return}
@@ -246,7 +288,7 @@ window.QwizCardSandbox=(()=>{
   });
   dialog.addEventListener('click',e=>{
    const path=e.target.closest('[data-card-region]');if(!path||!session||session.view!=='player')return;
-   const current=stages(session)[session.step];if(current?.kind!=='map')return;
+   const current=stages(session)[session.step];if(current?.kind!=='geo-question'||session.geoQuestions[current.i]?.mode!=='locate')return;
    session.mapPicks.set(current.i,path.dataset.cardRegion);paint();
   });
   dialog.addEventListener('keydown',e=>{
