@@ -255,7 +255,7 @@ test('Penalty is capped by target score and reversible using Back',async({page})
  await page.locator('#teamLabPrev').click();
  await expect(page.locator('[data-lab-boost="drain"]')).toBeVisible();
  await page.locator('[data-lab-boost="fog"]').click();
- await expect(page.locator('#teamLabHistory')).toContainText('Туман −5');
+ await expect(page.locator('#teamLabHistory')).toContainText('Туман соперника −5');
 });
 test('Without a future ordinary question no fake bonus stage is offered',async({page})=>{
  await page.evaluate(()=>{
