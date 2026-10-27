@@ -1166,3 +1166,26 @@ test('October 27: Dino is unavailable and geography timer is per question',()=>{
  assert.match(scoring,/activity_vote\.room_id=v\.room_id/);
  assert.doesNotMatch(scoring,/100000::numeric/);
 });
+
+
+test('Arcade-only builds save and compile without a standard question round',()=>{
+ const editor=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
+ const html=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ const migration=readFileSync(new URL('./migrations/20261027_arcade_only_build_compile_and_launch.sql',import.meta.url),'utf8');
+ const helper=editor.match(/function validBuildActivity\(card\)\{[\s\S]*?\n\}/)?.[0];
+ assert.ok(helper,'Arcade build validation helper exists');
+ const canPlay=runInNewContext(helper+';validBuildActivity',Object.create(null));
+ const card=(type,arcade_mode)=>({type,settings:{arcade_mode}});
+ assert.equal([card('intro'),card('bonus','captain'),card('bonus','blitz'),card('finale')].some(canPlay),true);
+ assert.equal([card('intro'),card('finale')].some(canPlay),false);
+ assert.equal([card('intro'),card('bonus','rocket'),card('finale')].some(canPlay),false);
+ assert.equal([card('round'),card('finale')].some(canPlay),true);
+ assert.match(editor,/if\(!state\.cards\.some\(validBuildActivity\)\)/);
+ assert.doesNotMatch(editor,/if\(!state\.cards\.some\(c=>c\.type==='round'\)\)/);
+ assert.match(editor,/buildSaveNotice\('Сборка сохранена/);
+ assert.match(html,/id="buildSaveNotice"/);
+ assert.match(migration,/jsonb_array_elements\(v_timeline\)/);
+ assert.match(migration,/('blitz','captain','tug','russia_map')/);
+ assert.match(migration,/public\.qwiz_check_room_start/);
+ assert.match(migration,/public\.qwiz_compile_build/);
+});
