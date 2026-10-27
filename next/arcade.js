@@ -118,7 +118,7 @@ window.QwizArcade=(()=>{
   const el=tr.root.querySelector('[data-memory-info]');if(!el)return;
   const cards=tr.root.querySelectorAll('[data-arcade-memory] .is-matched').length;
   const pairs=Math.max(Number(m?.pairs)||0,Math.floor(cards/2));
-  const moves=(Number(m?.moves)||0)+(tr.memory?.localMoves||0);
+  const moves=Math.max(Number(m?.moves)||0,Number(tr.memory?.localMoves)||0);
   el.textContent=m?.captain===false?'Играет капитан вашей команды':
    m?.completed_ms!=null?'Все 6 пар найдены · '+moves+' ходов':
     'Найдено '+pairs+'/6 пар · '+moves+' ходов';
@@ -224,6 +224,7 @@ window.QwizArcade=(()=>{
    if(runId===mem.runId){
     mem.processing=false;
     if(!tr.closed){
+     memoryStage(tr);
      if(mem.requests.length)void processMemory(tr);
      else void fetchState(tr);
     }
