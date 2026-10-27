@@ -171,7 +171,8 @@ window.QwizTeamLab=(()=>{
   if(!run)return;
   const e=active();if(!e){$('teamLabStageBody').innerHTML='<p class="team-lab-completed">Тест завершён. Посмотрите итоговый счёт и историю. Для нового эксперимента нажмите «Запустить заново».</p>';$('teamLabNext').disabled=true;$('teamLabStatus').textContent='Финиш';stats();return}
   $('teamLabStatus').textContent='Этап '+(run.index+1)+' / '+run.events.length+' · '+(e.kind==='arcade'?'Мини-игра':'Вопрос');
-  $('teamLabNext').disabled=(e.kind==='question'&&!run.submitted)||(e.kind==='arcade'&&!run.arcadeResult)||run.phase==='bonus';
+  // Teacher owns navigation: unanswered questions and unfinished mini-games may be skipped.
+  $('teamLabNext').disabled=run.phase==='bonus';
   $('teamLabPrev').disabled=!run.moments?.length;
   $('teamLabNext').textContent=run.index===run.events.length-1?'К итогам →':'Следующий вопрос / этап →';
   $('teamLabStageBody').innerHTML=run.phase==='bonus'?bonusBody():e.kind==='arcade'?arcadeBody(e):questionBody(e);
@@ -234,8 +235,11 @@ window.QwizTeamLab=(()=>{
  function next(){
   if(!run)return;
   const e=active();if(!e)return;
-  if(e.kind==='question'&&!run.submitted)return;
-  if(e.kind==='arcade'&&!run.arcadeResult)return;
+  if((e.kind==='question'&&!run.submitted)||(e.kind==='arcade'&&!run.arcadeResult)){
+   remember();log((e.kind==='question'?'Вопрос пропущен: ':'Мини-игра пропущена: ')+
+    (e.title||'Без названия')+'. Баллы не начислялись.');
+   run.index++;run.phase='play';resetActivity(active());draw();return;
+  }
   if(e.kind==='arcade'&&run.arcadeResult.canBoost&&!run.arcadeResult.boostDone){
    remember();run.phase='bonus';run.arcadeResult.boostDone=true;
    // Bot votes randomly, including choice of sabotage/support, without fake network requests.
