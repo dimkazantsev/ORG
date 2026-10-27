@@ -56,6 +56,35 @@
 .team-lab-big-tap{display:block;width:min(290px,90%);aspect-ratio:2/1;margin:15px auto;border:0;border-radius:65px;color:#fff;background:radial-gradient(circle at 30% 20%,#c9aeff,#8951dd 65%,#6030a6);font-size:clamp(19px,3vw,26px);font-weight:900;box-shadow:inset 0 -11px 20px #54269b50,0 9px 24px #7144b934;touch-action:manipulation}
 .team-lab-big-tap:active{transform:scale(.96)}
 .team-lab-override{display:grid;gap:7px;font-size:12px;color:#70588a;font-weight:800;margin:13px 0}
+
+/* Opt-in appears only inside an active simulation. Defeat the global
+   label{display:grid} / input{width:100%} rules inherited from workspace.css. */
+#teamLab .team-lab-sandbox-toggle{
+ display:flex;flex-flow:row nowrap;align-items:flex-start;justify-content:flex-start;
+ gap:12px;width:fit-content;max-width:100%;min-height:46px;margin:0 0 15px;
+ padding:12px 14px;border:1px solid #ded0ef;border-radius:12px;
+ background:#f9f5ff;color:#634588;font-size:12px;font-weight:750;
+ line-height:1.45;cursor:pointer;
+}
+#teamLab .team-lab-sandbox-toggle>input[type="checkbox"]{
+ appearance:auto;display:block;flex:0 0 19px;
+ width:19px!important;min-width:19px!important;max-width:19px!important;
+ height:19px!important;min-height:19px;max-height:19px;
+ margin:0;padding:0;border-radius:5px;accent-color:#7b49c6;
+ cursor:pointer;box-shadow:none;
+}
+#teamLab .team-lab-sandbox-toggle>span{display:block;min-width:0;overflow-wrap:anywhere}
+#teamLab .team-lab-sandbox-toggle small{font:inherit;color:#907caa}
+#teamLab .team-lab-sandbox-toggle:has(input:checked){
+ background:#f0e7ff;border-color:#be9de8;
+}
+#teamLab .team-lab-sandbox-toggle:focus-within{
+ outline:2px solid #8752d5;outline-offset:3px;
+}
+@media(max-width:660px){
+ #teamLab .team-lab-sandbox-toggle{width:100%;align-items:flex-start}
+}
+
 .team-lab-strategies button,.team-lab-blitz button{min-height:44px;padding:10px 15px;border:1px solid #dbcaf0;border-radius:11px;background:#f8f1ff;color:#7042af;font-size:12px;font-weight:850}
 .team-lab-strategies button:hover,.team-lab-blitz button.is-picked{background:#e6d5ff;border-color:#ac83e4}
 .team-lab-history-panel{border-top:1px solid #e8dced;padding-top:12px}
