@@ -1463,3 +1463,17 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 @media(prefers-reduced-motion:reduce){
  #hostRoomList .clear-archive-button{transition:none}
 }
+
+/* Build save status belongs to the visible editor header, not below every card. */
+.build-save-notice{
+ margin:8px 0 16px;padding:12px 16px;border:1px solid #cfe5d7;
+ background:linear-gradient(135deg,#f2fff6,#ffffff);
+ color:#256744;font-weight:750;font-size:14px;line-height:1.45;border-radius:15px;
+ box-shadow:0 4px 17px #7d57c115;
+}
+.build-save-notice[hidden]{display:none!important}
+.build-save-notice.error{
+ border-color:#f1b8c9;background:linear-gradient(135deg,#fff2f5,#fff);
+ color:#9b254b;
+}
+#saveBuild:disabled{cursor:progress;opacity:.72}
