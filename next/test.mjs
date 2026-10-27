@@ -1140,7 +1140,7 @@ test('October 27 release: real flag assembly, source-scored questions, and no fa
  assert.match(app,/data-submit-rich disabled>ОК/);
  assert.match(app,/qwiz_my_question_result/);
  assert.match(app,/const drawing=QwizStage\.roundIconSvg\(icon/);
- assert.match(arcade,/classList\.add\('is-pending'\)/);
+ assert.match(arcade,/classList\.add\('is-open','is-pending'\)/);
  assert.match(arcade,/Командные бонусы/);
  assert.doesNotMatch(arcade,/Командная мастерская|жетонов/);
  assert.match(scorer,/v_points:=case when v_correct then 10 else 0 end;/);
