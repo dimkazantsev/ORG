@@ -99,8 +99,9 @@ window.QwizCardSandbox=(()=>{
   const paths=outlines.map(g=>{
    const id=String(g.id),correct=reveal&&id===String(q.region);
    const isChosen=!reveal&&q.mode==='locate'&&id===String(selectedMap);
+   const isWrong=reveal&&q.mode==='locate'&&selectedMap&&id===String(selectedMap)&&id!==String(q.region);
    const isFocused=!reveal&&q.focus!=null&&id===String(q.focus);
-   const style=correct?' is-right':isChosen?' is-selected':isFocused?' is-focused':'';
+   const style=correct?' is-right':isWrong?' is-wrong':isChosen?' is-selected':isFocused?' is-focused':'';
    const active=q.mode==='locate'&&!reveal&&s.view==='player';
    return '<path class="'+style+'" d="'+esc(g.path)+'"'+
     (active?' data-card-region="'+esc(id)+'" role="button" tabindex="0" aria-label="'+esc(g.name)+'" aria-pressed="'+(isChosen?'true':'false')+'"':' aria-hidden="true"')+'/>';
@@ -197,6 +198,8 @@ window.QwizCardSandbox=(()=>{
   const dialog=el('cardPlayDialog');if(!dialog?.open)return;
   const steps=stages(s);s.step=cap(s.step,0,steps.length-1);
   const current=steps[s.step];
+  const visibleStep=s.step+':'+s.view;
+  const changed=s.visibleStep!==visibleStep;s.visibleStep=visibleStep;
   el('cardPlayTitle').textContent=s.card.title||'Проверка карточки';
   el('cardPlayMeta').textContent='Этап '+(s.step+1)+' из '+steps.length+' · '+(s.topic||'Конструктор');
   el('cardPlaySafety').textContent=s.loading?'Загружаем данные для локальной проверки…':s.error?
@@ -210,6 +213,7 @@ window.QwizCardSandbox=(()=>{
   el('cardPlayScreen').classList.toggle('is-audience',s.view==='audience');
   el('cardPlayScreen').classList.toggle('is-player',s.view==='player');
   el('cardPlayScreen').innerHTML=scene(s,current);
+  if(changed){const scroll=el('cardPlayScreen')?.parentElement;if(scroll)scroll.scrollTop=0}
   el('cardPlaySteps').querySelector('.is-current')?.scrollIntoView({block:'nearest',inline:'nearest'});
  }
  function close(){
