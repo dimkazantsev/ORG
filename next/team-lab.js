@@ -9,7 +9,7 @@ window.QwizTeamLab=(()=>{
  const sample=a=>a[Math.floor(Math.random()*a.length)];
  const shuffle=a=>{const out=a.slice();for(let i=out.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]]}return out};
  const modes={tug:'Тап-баттл',captain:'Мэмори капитанов',blitz:'Блиц-консенсус'};
- const effects={headstart:['Фора +12',12],teamwork:['Командный рывок',9],momentum:['Импульс +15%',null],fog:['Туман −5',-5],storm:['Шторм −8',-8],drain:['Потеря −12',-12]};
+ const effects={headstart:['Фора +12',12],teamwork:['Командный рывок',9],momentum:['Импульс +15%',null],fog:['Туман соперника −5',-5],storm:['Штормовой заслон −8',-8],drain:['Энергетический отток −12',-12]};
  let adapter=null,run=null,busy=false,serial=0,initialized=false,reloading=false,loadErrorText='';
  const team=i=>run.teams[i];
  const label=(k)=>effects[k]?.[0]||k;
@@ -94,22 +94,22 @@ window.QwizTeamLab=(()=>{
  }
  async function eventsFor(cards,callbacks){
   const events=[],warnings=[];
-  for(const card of cards){
+  for(const [cardIndex,card] of cards.entries()){
    if(!card||['intro','break','finale','team_stats','player_stats'].includes(card.type))continue;
    const mode=card.settings?.arcade_mode;
    if(modes[mode]){
-    events.push({kind:'arcade',mode,title:card.title||modes[mode],settings:card.settings||{}});
+    events.push({kind:'arcade',mode,title:card.title||modes[mode],settings:card.settings||{},cardIndex});
    }else if(mode==='russia_map'){
     if(!run.geoCatalog){run.geoCatalog=await callbacks.catalog();run.geoMap=await callbacks.map()}
     const geo=window.QwizCardGeoPreview.build({card,catalog:run.geoCatalog,geometry:run.geoMap});
-    for(const g of geo)events.push(geoQuestions(g,card));
+    for(const g of geo)events.push({...geoQuestions(g,card),cardIndex});
    }else if(card.type==='round'){
     if(!card.topic_id){warnings.push('Карточка «'+(card.title||'Раунд')+'» не имеет темы');continue}
     const questions=await callbacks.questions(card);
     let skipped=0;
     for(const [index,q] of (questions||[]).entries()){
      const item=readQuestion(q,card,index);
-     if(item)events.push(item);else skipped++;
+     if(item)events.push({...item,cardIndex});else skipped++;
     }
     if(skipped)warnings.push('«'+(card.title||'Раунд')+'»: '+skipped+' сложных/неполных заданий не моделируются (порядок, сборка, память или отсутствует ключ)');
    }
@@ -120,7 +120,7 @@ window.QwizTeamLab=(()=>{
  function resetActivity(event){
   run.answer=new Set();run.submitted=false;run.feedback='';run.arcadeResult=null;
   run.taps=[0,0];run.matches=[0,0];run.blitzChoices=[null,null];
-  run.pendingVote=null;run.strategy=null;run.boost=null;
+  run.pendingVote=null;run.strategy=null;run.boost=null;run.strategyVotes=[];run.optionVotes=[];
   if(event?.kind==='question'&&run.pendingEffect){
    const effect=run.pendingEffect;run.pendingEffect=null;
    const t=team(effect.target),before=t.score;
@@ -234,13 +234,27 @@ window.QwizTeamLab=(()=>{
   if(![0,1].includes(winner))winner=0;
   const reward=e.mode==='blitz'?10:15;
   team(winner).score+=reward;
-  const settings=e.settings||{},minimum=25,lead=Math.max(0,Number.isFinite(Number(settings.bonus_lead))&&settings.bonus_lead!==undefined?Number(settings.bonus_lead):15);
-  const enough=points[winner]>=minimum&&points[winner]-points[1-winner]>=lead;
+  const settings=e.settings||{};
+  const lead=Math.max(0,Math.min(200,Number.isFinite(Number(settings.bonus_lead))&&settings.bonus_lead!==undefined?Number(settings.bonus_lead):15));
+  const participation=Math.max(50,Math.min(100,Number.isFinite(Number(settings.bonus_percent))?Number(settings.bonus_percent):70));
+  const activated=e.mode==='tug'?((winner===0?run.taps[0]:run.taps[1])>0?3:0):
+    e.mode==='captain'?((winner===0?run.matches[0]:run.matches[1])>0?1:0):
+    e.mode==='blitz'?((winner===0?run.blitzChoices[0]:run.blitzChoices[1])!=null?1:0):0;
+  // Mirrors live qwiz_bonus_eligible: point >=1, delegate/team participation,
+  // normal gap except blitz and a separately following ordinary round.
+  const enough=points[winner]>=1&&(e.mode==='blitz'?points[winner]>=points[1-winner]:points[winner]-points[1-winner]>=lead)&&
+    (['captain','blitz'].includes(e.mode)?activated>=1:activated*100>=participation*3);
   const overridden=$('teamLabForceBonus')?.checked===true;
-  const hasNextQuestion=run.events.slice(run.index+1).some(event=>event.kind==='question');
-  const canBoost=hasNextQuestion&&(enough||overridden)&&(e.mode!=='tug'||points[winner]>0||overridden);
-  run.arcadeResult={winner,points,canBoost};
-  run.feedback=team(winner).name+' побеждает (локальная модель), +'+reward+' очков. '+(canBoost?(overridden&&!enough?'Тестовый обход порога включён.':'Условие дополнительного эффекта выполнено.'):'Дополнительный эффект не выдан: требуется следующий вопрос, результат от 25 и отрыв ≥'+lead+'.');
+  const hasNextQuestion=run.events.slice(run.index+1).some(event=>event.kind==='question'&&
+    (e.cardIndex===undefined||event.cardIndex===undefined||event.cardIndex>e.cardIndex));
+  const canBoost=hasNextQuestion&&(enough||overridden);
+  run.arcadeResult={winner,points,canBoost,eligible:enough,participation,lead,activated,hasNextQuestion};
+  run.feedback=team(winner).name+' побеждает (локальная модель), +'+reward+' очков. '+
+    (canBoost?(overridden&&!enough?'Только в симуляции сняты условия допуска.':'Условия допуска выполнены; команда может голосовать.') :
+    'Бонус недоступен: '+(!hasNextQuestion?'после этой мини-игры нет следующего обычного раунда вопросов.':
+    points[winner]<1?'результат меньше 1 игрового балла.':
+    activated===0||e.mode==='tug'&&activated*100<participation*3?'не выполнен порог активности команды.':
+    'разница результатов меньше '+lead+' очков.'));
   log(run.feedback);
   draw();
  }
