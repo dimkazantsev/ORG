@@ -73,8 +73,8 @@ function renderTeamManager(s){
  // Legacy random rooms use the earliest joining member as the arcade delegate.
  if(s.team_mode==='random')for(const t of teams){
   if(captains.has(t.id))continue;
-  const eligible=players.filter(p=>p.team_id===t.id).sort((a,b)=>
-   String(a.joined_at||'').localeCompare(String(b.joined_at||''))||String(a.id).localeCompare(String(b.id)));
+  // Host room snapshot already orders players by joined_at (qwiz_state_activity).
+  const eligible=players.filter(p=>p.team_id===t.id);
   if(eligible[0])captains.set(t.id,eligible[0].id);
  }
  const effectMap=new Map((s.team_effects||lobby?.effects_history||[]).reduce((a,e)=>{a.set(e.team_id,[...(a.get(e.team_id)||[]),e]);return a;},new Map()));
