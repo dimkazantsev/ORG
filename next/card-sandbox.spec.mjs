@@ -1,6 +1,7 @@
 import {test,expect} from '@playwright/test';
 
 test.beforeEach(async({page})=>{
+ page.on('pageerror',e=>console.error('QWIZ CARD PREVIEW JS ERROR:',e.stack||e.message));
  await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({
   status:200,contentType:'application/javascript',
   body:'window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}})}})};'
