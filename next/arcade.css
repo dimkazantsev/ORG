@@ -1177,3 +1177,63 @@
  .arcade-shell[data-arcade-root="blitz"] .consensus-hero-card-right{right:calc(50% - 63px)}
  .arcade-shell[data-arcade-root="blitz"] .consensus-hero-label{bottom:3px;letter-spacing:.08em}
 }
+
+
+/* 2026-10-27: consensus uses one scrollable mobile scene, never a bottom-overlaid prompt. */
+@media(max-width:650px){
+ .player-compact #gameView #gameContent.game-card:has([data-arcade-root="blitz"]){
+  box-sizing:border-box!important;display:block!important;
+  overflow-x:hidden!important;overflow-y:auto!important;
+  -webkit-overflow-scrolling:touch;
+  padding:6px 6px calc(22px + env(safe-area-inset-bottom))!important;
+ }
+ .player-compact #gameContent .arcade-shell.arcade-player[data-arcade-root="blitz"]{
+  box-sizing:border-box;display:flex;flex-direction:column;
+  gap:clamp(8px,1.2dvh,13px);width:100%;min-width:0;height:auto;
+  padding:clamp(10px,3vw,16px);margin:0 auto;
+  background:linear-gradient(180deg,#fff,#fbf9ff);
+  border:1px solid #ece5f6;border-radius:22px;
+ }
+ .player-compact #gameContent .arcade-shell[data-arcade-root="blitz"] .arcade-head{
+  min-width:0;align-items:flex-start;gap:8px;
+ }
+ .player-compact #gameContent .arcade-shell[data-arcade-root="blitz"] .arcade-head h2{
+  font-size:clamp(22px,6vw,29px)!important;line-height:1.14!important;
+  white-space:normal;overflow-wrap:anywhere;
+ }
+ .player-compact #gameContent .arcade-shell[data-arcade-root="blitz"] .arcade-countdown{
+  min-width:66px;min-height:44px;display:grid;place-items:center;
+  font-size:clamp(15px,4vw,19px);padding:7px 10px;
+ }
+ .player-compact #gameContent .arcade-shell[data-arcade-root="blitz"] .arcade-scene{
+  flex:0 0 auto;height:clamp(64px,11dvh,105px)!important;
+  margin:0!important;min-height:0!important;
+ }
+ .player-compact #gameContent .arcade-shell[data-arcade-root="blitz"] [data-arcade-question]{
+  min-width:0;flex:0 0 auto;
+ }
+ .player-compact #gameContent .arcade-shell[data-arcade-root="blitz"] .consensus-question{
+  box-sizing:border-box;width:100%;min-width:0;max-height:none;
+  overflow:visible!important;gap:9px;padding:clamp(12px,3vw,17px);
+ }
+ .player-compact #gameContent .arcade-shell[data-arcade-root="blitz"] .consensus-question h3{
+  font-size:clamp(19px,5.1vw,25px);line-height:1.22;margin:0;
+ }
+ .player-compact #gameContent .arcade-shell[data-arcade-root="blitz"] .consensus-options{
+  display:grid;grid-template-columns:minmax(0,1fr);gap:8px;
+ }
+ .player-compact #gameContent .arcade-shell[data-arcade-root="blitz"] .consensus-option{
+  min-width:0;min-height:54px;padding:9px 11px;
+  font-size:clamp(13px,3.6vw,16px);gap:9px;
+ }
+ .player-compact #gameContent .arcade-shell[data-arcade-root="blitz"] .consensus-flag{
+  height:auto;max-height:125px;
+ }
+ .player-compact #gameContent .arcade-shell[data-arcade-root="blitz"] .consensus-progress{
+  gap:9px;margin:0;padding:11px;flex:0 0 auto;
+ }
+ .player-compact #gameContent .arcade-shell[data-arcade-root="blitz"] [data-arcade-alert][data-error="true"]{
+  font-size:12px;line-height:1.4;overflow-wrap:anywhere;
+  margin:0;padding:9px 11px;
+ }
+}
