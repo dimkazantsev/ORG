@@ -82,7 +82,7 @@ function renderTeamManager(s){
    const members=players.filter(p=>p.team_id===t.id),effects=effectMap.get(t.id)||[];
    return '<article class="team-card" data-drop-team="'+esc(t.id)+'"><div class="team-card-head">'+QwizStage.icon(t,true)+
     '<div><h4>'+esc(t.name)+'</h4><small>'+members.length+' '+(members.length===1?'участник':'участников')+'</small></div></div>'+
-    (captains.get(t.id)?'<div class="team-captain-tag">★ '+(s.team_mode==='random'?'Капитан (первый по входу): ':'Капитан: ')+'+esc(players.find(p=>p.id===captains.get(t.id))?.name||'Назначен')+'</div>':'')+
+    (captains.get(t.id)?'<div class="team-captain-tag">★ '+(s.team_mode==='random'?'Капитан (первый по входу): ':'Капитан: ')+esc(players.find(p=>p.id===captains.get(t.id))?.name||'Назначен')+'</div>':'')+
     (effects.length?'<div class="team-effects-history"><strong>Бонусы и штрафы</strong>'+effects.map(x=>{
       const labels={headstart:'Фора',teamwork:'Командный рывок',momentum:'Импульс',fog:'Туман',storm:'Шторм',drain:'Потеря очков'};
       const penalty=['fog','storm','drain'].includes(x.choice);
