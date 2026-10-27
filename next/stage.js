@@ -418,6 +418,7 @@ window.QwizStage=(()=>{
    const n=sourceIndex(event.target);
    if(n===null)return;
    pointer={id:event.pointerId,n,x:event.clientX,y:event.clientY,moved:false};
+   try{builder.setPointerCapture(event.pointerId)}catch{}
   },{passive:true});
   builder.addEventListener('pointermove',event=>{
    if(!pointer||event.pointerId!==pointer.id)return;
