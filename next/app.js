@@ -8,7 +8,7 @@ const qa=(selector,root=document)=>[...root.querySelectorAll(selector)];
 const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 // Canonical names for legacy saved arcade cards and all player intro screens.
 const ARCADE_VISIBLE_NAMES={tug:'Тап-баттл',blitz:'Блиц-консенсус',captain:'Мэмори капитанов'};
-const playerArcadeActivity=a=>a?.settings?.arcade_mode&&ARCADE_VISIBLE_NAMES[a.settings.arcade_mode]?{...a,title:ARCADE_VISIBLE_NAMES[a.settings.arcade_mode]}:a;
+const playerArcadeActivity=a=>{const mode=a?.settings?.arcade_mode||a?.settings?.queued_settings?.arcade_mode;return mode&&ARCADE_VISIBLE_NAMES[mode]?{...a,title:ARCADE_VISIBLE_NAMES[mode],icon:mode==='blitz'?'arcade_consensus':a.icon}:a};
 const storage={get(k){try{return sessionStorage.getItem('org2:'+k)}catch{return null}},set(k,v){try{sessionStorage.setItem('org2:'+k,v)}catch{}},del(k){try{sessionStorage.removeItem('org2:'+k)}catch{}}};
 const ctx={client:null,role:'player',roomCode:null,room:null,quizzes:[],channel:null,refreshing:false,lastRefresh:0,releaseAttemptAt:0,refreshTimer:null,clock:null,mode:'home',visibleTab:'library',clockOffset:0,gameCue:''};
 function text(id,value){if($(id))$(id).textContent=value==null?'':String(value)}
@@ -353,14 +353,16 @@ function roundScorePanel(view,title,final=false,endsAt=null){
   '<div class="round-results-orbit" aria-hidden="true">✦</div>'+
   '<span class="eyebrow">'+(final?'ИГРА ЗАВЕРШЕНА':'РАУНД ЗАВЕРШЁН')+'</span>'+
   '<h1>'+esc(title||'Результаты')+'</h1>'+highlight+
-  (arcade?'<p class="round-results-note">Показатели мини-игры отделены от баллов за вопросы. В «Блиц-консенсусе» правильный итоговый ответ приносит команде 10 баллов, а личное голосование оценивается отдельно (0 или 10). Команда-победитель голосует за усиление.</p>':'')+
+  (view?.mode==='blitz'?'<p class="round-results-note">За правильный итоговый ответ команда получает 10 баллов. Личный ответ участника оценивается отдельно (0 или 10). Победитель выбирает усиление.</p>':view?.mode==='captain'?'<p class="round-results-note">Мэмори капитанов: показаны результаты поиска пар. Это не баллы за вопросы.</p>':view?.mode==='tug'?'<p class="round-results-note">Тап-баттл: показаны нажатия, а не баллы за вопросы.</p>':'')+
   rewardBanner+'<div class="round-results-grid"><section><h2>Команды</h2>'+rowset(rows,true)+'</section>'+
   '<section><h2>Участники</h2>'+rowset(players,false)+'</section></div>'+
   (!final?'<p class="round-results-next" id="playerNextStatus" role="status">'+
     (endsAt&&remaining(endsAt)>0?'Следующая карточка через <strong id="playerResultCountdown">'+remaining(endsAt)+'</strong> сек.':'Ожидаем перехода от сервера…')+'</p>':'')+'</section>';
 }
 function roundIntroMarkup(s){
- const title=s.activity?.title||'Следующий раунд',icon=s.activity?.icon||s.activity?.settings?.queued_icon;
+ const mode=s.activity?.settings?.arcade_mode||s.activity?.settings?.queued_settings?.arcade_mode;
+ const title=ARCADE_VISIBLE_NAMES[mode]||s.activity?.title||'Следующий раунд';
+ const icon=mode==='blitz'?'arcade_consensus':(s.activity?.icon||s.activity?.settings?.queued_icon);
  const drawing=QwizStage.roundIconSvg(icon||'flag');
  return '<section class="game-empty round-intro" aria-label="Представление раунда"><div class="round-intro-sparks" aria-hidden="true"><i></i><i></i><i></i></div>'+
  '<div class="round-intro-symbol" aria-hidden="true">'+drawing+'</div><div class="eyebrow">СЛЕДУЮЩИЙ РАУНД</div>'+
@@ -395,7 +397,7 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  const cue=s.phase+':'+s.index;if(cue!==ctx.gameCue){ctx.gameCue=cue;if(s.phase==='result')QwizStage.audio.play('reveal');else if(s.phase==='finished')QwizStage.audio.play(s.activity?.sound||'fanfare');else if(s.phase==='question')QwizStage.audio.play('pop')}
  $('playerTeamProgress').hidden=s.phase!=='question';if(s.phase==='question')QwizStage.progress($('playerTeamProgress'),s.public_stats?.teams||[]);
  window.QwizArcade?.syncWallet(s,ctx);
- const renderKey=[s.code,s.index,s.phase,s.activity?.title,s.activity?.settings?.arcade_mode,s.has_answer,s.eligible,s.total,s.question?.kind,s.question?.prompt,s.paused,me?.team_id,s.team_lobby?.mode,s.team_lobby?.team_count,s.team_lobby?.confirmed,s.team_lobby?.captain_count,s.team_lobby?.captains_ready,s.team_lobby?.my_captain].join(':');
+ const renderKey=[s.code,s.index,s.phase,s.activity?.title,s.activity?.settings?.arcade_mode,s.activity?.settings?.queued_settings?.arcade_mode,s.activity?.settings?.round_card,s.activity?.settings?.queued_kind,s.activity?.icon,s.round_results?.mode,s.has_answer,s.eligible,s.total,s.question?.kind,s.question?.prompt,s.paused,me?.team_id,s.team_lobby?.mode,s.team_lobby?.team_count,s.team_lobby?.confirmed,s.team_lobby?.captain_count,s.team_lobby?.captains_ready,s.team_lobby?.my_captain].join(':');
  if(ctx.gameRenderKey===renderKey)return;
  ctx.gameRenderKey=renderKey;
  if((!s.has_answer||s.phase!=='question')&&$('gameNotice').classList.contains('success'))notice('gameNotice','');
