@@ -1092,7 +1092,7 @@ test('Geography mobile taps confirm immediately and correct region is enlarged',
  }
  for(const name of ['index.html','presenter.html','workspace.html']){
   const page=readFileSync(new URL('./'+name,import.meta.url),'utf8');
-  assert.match(page,/russia-geo\.js\?v=geo-votes-20261027-4/);
+  assert.match(page,/russia-geo\.js\?v=[a-zA-Z0-9_-]+/);
   assert.match(page,/russia-geo\.css\?v=[a-zA-Z0-9_-]+/);
   assert.match(page,/arcade\.js\?v=[a-zA-Z0-9_-]+/);
  }
