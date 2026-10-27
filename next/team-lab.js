@@ -21,7 +21,7 @@ window.QwizTeamLab=(()=>{
  function close(){
   run=null;$('teamLabStage').hidden=true;$('teamLabIdle').hidden=false;
   $('teamLabStop').hidden=true;$('teamLabNext').hidden=true;
-  $('teamLabNext').disabled=true;$('teamLabStatus').textContent='Модуль остановлен';
+  $('teamLabNext').disabled=true;$('teamLabPrev').disabled=true;$('teamLabStatus').textContent='Модуль остановлен';
   setMessage('Тест остановлен. Настоящая комната не изменена.');
  }
  function refreshBuilds(){
@@ -172,6 +172,7 @@ window.QwizTeamLab=(()=>{
   const e=active();if(!e){$('teamLabStageBody').innerHTML='<p class="team-lab-completed">Тест завершён. Посмотрите итоговый счёт и историю. Для нового эксперимента нажмите «Запустить заново».</p>';$('teamLabNext').disabled=true;$('teamLabStatus').textContent='Финиш';stats();return}
   $('teamLabStatus').textContent='Этап '+(run.index+1)+' / '+run.events.length+' · '+(e.kind==='arcade'?'Мини-игра':'Вопрос');
   $('teamLabNext').disabled=(e.kind==='question'&&!run.submitted)||(e.kind==='arcade'&&!run.arcadeResult)||run.phase==='bonus';
+  $('teamLabPrev').disabled=!run.moments?.length;
   $('teamLabNext').textContent=run.index===run.events.length-1?'К итогам →':'Следующий вопрос / этап →';
   $('teamLabStageBody').innerHTML=run.phase==='bonus'?bonusBody():e.kind==='arcade'?arcadeBody(e):questionBody(e);
   stats();
@@ -203,12 +204,31 @@ window.QwizTeamLab=(()=>{
   if(![0,1].includes(winner))winner=0;
   const reward=e.mode==='blitz'?10:15;
   team(winner).score+=reward;
-  const settings=e.settings||{},minimum=25,lead=Math.max(0,Number(settings.bonus_lead)??15)||15;
+  const settings=e.settings||{},minimum=25,lead=Math.max(0,Number.isFinite(Number(settings.bonus_lead))&&settings.bonus_lead!==undefined?Number(settings.bonus_lead):15);
   const enough=points[winner]>=minimum&&points[winner]-points[1-winner]>=lead;
-  const canBoost=enough&&(e.mode!=='tug'||points[winner]>0);
+  const overridden=$('teamLabForceBonus')?.checked===true;
+  const hasNextQuestion=run.events.slice(run.index+1).some(event=>event.kind==='question');
+  const canBoost=hasNextQuestion&&(enough||overridden)&&(e.mode!=='tug'||points[winner]>0||overridden);
   run.arcadeResult={winner,points,canBoost};
-  run.feedback=team(winner).name+' побеждает (локальная модель), +'+reward+' очков. '+(canBoost?'Условие дополнительного эффекта выполнено.':'Дополнительный эффект не выдан: нужен результат от 25 и отрыв ≥'+lead+'.');
+  run.feedback=team(winner).name+' побеждает (локальная модель), +'+reward+' очков. '+(canBoost?(overridden&&!enough?'Тестовый обход порога включён.':'Условие дополнительного эффекта выполнено.'):'Дополнительный эффект не выдан: требуется следующий вопрос, результат от 25 и отрыв ≥'+lead+'.');
   log(run.feedback);
+  draw();
+ }
+ function remember(){
+  if(!run)return;
+  run.moments.push({index:run.index,phase:run.phase,scores:run.teams.map(t=>t.score),
+   log:run.log.slice(),pendingEffect:run.pendingEffect?{...run.pendingEffect}:null,
+   answer:[...run.answer],submitted:run.submitted,feedback:run.feedback,
+   taps:run.taps.slice(),matches:run.matches.slice(),blitzChoices:run.blitzChoices.slice(),
+   arcadeResult:run.arcadeResult?{...run.arcadeResult}:null,strategy:run.strategy});
+ }
+ function previous(){
+  if(!run?.moments.length)return;
+  const x=run.moments.pop();
+  run.index=x.index;run.phase=x.phase;run.log=x.log;run.pendingEffect=x.pendingEffect;
+  run.teams.forEach((t,i)=>t.score=x.scores[i]);run.answer=new Set(x.answer);
+  run.submitted=x.submitted;run.feedback=x.feedback;run.taps=x.taps;run.matches=x.matches;
+  run.blitzChoices=x.blitzChoices;run.arcadeResult=x.arcadeResult;run.strategy=x.strategy;
   draw();
  }
  function next(){
@@ -217,7 +237,7 @@ window.QwizTeamLab=(()=>{
   if(e.kind==='question'&&!run.submitted)return;
   if(e.kind==='arcade'&&!run.arcadeResult)return;
   if(e.kind==='arcade'&&run.arcadeResult.canBoost&&!run.arcadeResult.boostDone){
-   run.phase='bonus';run.arcadeResult.boostDone=true;
+   remember();run.phase='bonus';run.arcadeResult.boostDone=true;
    // Bot votes randomly, including choice of sabotage/support, without fake network requests.
    if(run.arcadeResult.winner===1){
     run.strategy=sample(['support','sabotage']);
@@ -227,12 +247,12 @@ window.QwizTeamLab=(()=>{
    }
    draw();return;
   }
-  run.index++;run.phase='play';resetActivity(active());draw();
+  remember();run.index++;run.phase='play';resetActivity(active());draw();
  }
  function setEffect(key){
   const result=run.arcadeResult;if(!result||!effects[key])return;
   const winner=result.winner,penalty=['fog','storm','drain'].includes(key);
-  run.pendingEffect={target:penalty?1-winner:winner,key};
+  remember();run.pendingEffect={target:penalty?1-winner:winner,key};
   log(team(winner).name+' выбирает '+label(key)+' → '+team(run.pendingEffect.target).name+'. Эффект ожидает следующий вопрос.');
   run.phase='play';
   run.index++;resetActivity(active());draw();
@@ -276,7 +296,7 @@ window.QwizTeamLab=(()=>{
    const result=await adapter.build(id);
    if(token!==serial)return;
    const cards=(result.cards||[]).filter(Boolean);
-   run={events:[],index:0,phase:'play',log:[],geoCatalog:null,geoMap:null,
+   run={events:[],index:0,phase:'play',log:[],moments:[],geoCatalog:null,geoMap:null,
     pendingEffect:null,teams:[{name:'Команда преподавателя',members:3,score:0},{name:'Случайная команда',members:3,score:0}]};
    const compiled=await eventsFor(cards,adapter);
    if(token!==serial)return;
@@ -293,6 +313,7 @@ window.QwizTeamLab=(()=>{
   const root=$('teamLab');if(!root)return;
   $('teamLabStart').addEventListener('click',start);
   $('teamLabNext').addEventListener('click',next);
+  $('teamLabPrev').addEventListener('click',previous);
   $('teamLabStop').addEventListener('click',()=>{serial++;close();refreshBuilds()});
   $('teamLabStageBody').addEventListener('click',handle);
   refreshBuilds();
