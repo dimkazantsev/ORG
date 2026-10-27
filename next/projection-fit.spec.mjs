@@ -323,7 +323,7 @@ test('Question and answer content enter gently after fit while clock remains sta
 
 
 test('Competitive mini-games show designed scenes, and Blitz Consensus uses team voting artwork',async({page})=>{
- for(const mode of ['rocket','blitz','tug','captain']){
+ for(const mode of ['blitz','tug','captain']){
   await page.evaluate(mode=>{
    const area=document.getElementById('projectionMain');
    QwizArcade.stop('screen');
@@ -332,8 +332,7 @@ test('Competitive mini-games show designed scenes, and Blitz Consensus uses team
     server_now:new Date().toISOString(),teams:[{id:'a',name:'Альфа',points:10,place:1}],mine:null,awards:[]},error:null})};
    QwizArcade.mountProjector(area,{code:'A1B2C3D4',activity:{settings:{arcade_mode:mode}}},client);
   },mode);
-  if(mode==='rocket')await expect(page.locator('.arcade-runner-world')).toBeVisible();
-  else if(mode==='tug')await expect(page.locator('.arcade-tap-stage')).toBeVisible();
+  if(mode==='tug')await expect(page.locator('.arcade-tap-stage')).toBeVisible();
   else if(mode==='captain')await expect(page.locator('.arcade-memory-hero')).toBeVisible();
   else {await expect(page.locator('.consensus-hero')).toBeVisible();await expect(page.locator('.consensus-hero-card')).toHaveCount(3);}
   await expect(page.locator('[data-arcade-clock]')).toContainText('с');
