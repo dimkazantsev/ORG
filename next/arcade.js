@@ -60,7 +60,7 @@ window.QwizArcade=(()=>{
   (kind==='player'?(['tug','rocket'].includes(mode)?'':(mode==='captain'?'':'<button type="button" class="arcade-tap-btn" data-arcade-tap disabled>'+escape(m.cta)+'</button>'))+(mode==='captain'?'':'<span class="arcade-tap-caption" data-arcade-personal>Синхронизация с игровым сервером…</span>'):'')+
   '<div class="arcade-alert" role="status" aria-live="polite" data-arcade-alert>Подключаем результаты…</div><div class="arcade-badges" data-arcade-badges></div><section class="arcade-vote" data-arcade-vote hidden></section></div>';
  }
- function stop(kind){const tr=ui[kind];if(!tr)return;if(tr.interval)clearTimeout(tr.interval);if(tr.clock)clearInterval(tr.clock);if(tr.flushTimer)clearTimeout(tr.flushTimer);if(tr.onClick)tr.root?.removeEventListener('click',tr.onClick);if(tr.onPointerDown)tr.root?.removeEventListener('pointerdown',tr.onPointerDown);tr.closed=true;ui[kind]=null;}
+ function stop(kind){const tr=ui[kind];if(!tr)return;if(tr.interval)clearTimeout(tr.interval);if(tr.clock)clearInterval(tr.clock);if(tr.flushTimer)clearTimeout(tr.flushTimer);if(tr.onClick)tr.root?.removeEventListener('click',tr.onClick);if(tr.onPointerDown)tr.root?.removeEventListener('pointerdown',tr.onPointerDown);if(tr.memory)tr.memory.runId+=1;tr.closed=true;ui[kind]=null;}
  async function fetchState(tr){if(tr.closed||tr.fetching||!navigator.onLine)return;tr.fetching=true;const id=tr.key;
   try{
    // Abort a stalled snapshot read; otherwise 'fetching' could stay true forever.
@@ -77,7 +77,7 @@ window.QwizArcade=(()=>{
    // of the previous card's taps, question, selection or pending work.
    if(tr.view?.card_position!==undefined&&tr.view.card_position!==data.card_position){
      tr.pending=0;tr.batch=null;tr.qkey='';tr.alertOverride=0;
-      tr.memoryKey=null;tr.lastJumpTarget=null;tr.gameBusy=false;tr.visualTapCount=0;tr.localTaps=0;
+      tr.memoryKey=null;if(tr.memory)tr.memory.runId+=1;tr.memory=null;tr.lastJumpTarget=null;tr.gameBusy=false;tr.visualTapCount=0;tr.localTaps=0;
      if(tr.flushTimer){clearTimeout(tr.flushTimer);tr.flushTimer=null;}
    }
    tr.failures=0;tr.view=data;tr.offset=Date.parse(data.server_now)-Date.now();paint(tr);if(tr.kind==='player')paintWallet(data);
@@ -90,6 +90,146 @@ window.QwizArcade=(()=>{
   return '<article class="arcade-question"><span class="arcade-kicker">ДОПОЛНИТЕЛЬНЫЙ ВОПРОС</span><h3>'+escape(q.prompt)+'</h3>'+figure+'<div class="arcade-choices">'+images+'</div>'+
   (shown?'<div class="arcade-reveal">Верный ответ: '+String.fromCharCode(65+Number(q.correct))+'</div>':'')+'</article>';
  }
+ // Memory: the 12 DOM buttons are stable throughout a round. Never rebuild them
+ // after each RPC: removing/recreating nodes was swallowing rapid touches.
+ function memoryTile(tr,index){
+  return tr.root?.querySelector('[data-arcade-memory] [data-arcade-tile="'+index+'"]');
+ }
+ function memoryFace(tr,index,icon,matched=false){
+  const el=memoryTile(tr,index);if(!el)return;
+  el.classList.add('is-open');el.classList.remove('is-pending','is-queued');
+  el.classList.toggle('is-matched',!!matched);
+  el.querySelector('.arcade-memory-front').textContent=icon||'·';
+  el.dataset.icon=icon||'';
+  el.disabled=true;
+  el.setAttribute('aria-label','Открытая плитка '+(index+1));
+  el.removeAttribute('aria-busy');
+ }
+ function memoryClosed(tr,index){
+  const el=memoryTile(tr,index);
+  if(!el||el.classList.contains('is-matched'))return;
+  el.classList.remove('is-open','is-pending','is-queued');
+  el.querySelector('.arcade-memory-front').textContent='';
+  el.dataset.icon='';
+  el.disabled=false;el.removeAttribute('aria-busy');
+  el.setAttribute('aria-label','Закрытая плитка '+(index+1));
+ }
+ function memoryStatus(tr,m){
+  const el=tr.root.querySelector('[data-memory-info]');if(!el)return;
+  const cards=tr.root.querySelectorAll('[data-arcade-memory] .is-matched').length;
+  const pairs=Math.max(Number(m?.pairs)||0,Math.floor(cards/2));
+  const moves=(Number(m?.moves)||0)+(tr.memory?.localMoves||0);
+  el.textContent=m?.captain===false?'Играет капитан вашей команды':
+   m?.completed_ms!=null?'Все 6 пар найдены · '+moves+' ходов':
+    'Найдено '+pairs+'/6 пар · '+moves+' ходов';
+ }
+ function paintMemory(tr,m,valid){
+  const board=tr.root.querySelector('[data-arcade-memory]');if(!board)return;
+  const serverTiles=Array.isArray(m.tiles)?m.tiles:[];
+  if(serverTiles.length!==12)return;
+  const mem=tr.memory||(tr.memory={processing:false,requests:[],next:[],visible:[],localMoves:0,holdUntil:0,runId:0});
+  const enabled=valid&&!!m.captain&&m.completed_ms==null;
+  if(board.children.length!==12){
+   board.innerHTML=serverTiles.map(tile=>'<button type="button" class="arcade-memory-tile" data-arcade-tile="'+tile.index+
+    '" aria-label="Закрытая плитка '+(tile.index+1)+'"><span class="arcade-memory-tile-inner">'+
+    '<span class="arcade-memory-back">✦</span><span class="arcade-memory-front"></span></span></button>').join('');
+  }
+  // A background snapshot may predate acknowledged flips; do not rewind local animation.
+  const syncing=mem.processing||mem.requests.length>0||mem.visible.length>0||
+   mem.next.length>0||Date.now()<mem.holdUntil;
+  if(!syncing){
+   for(const tile of serverTiles){
+    const el=memoryTile(tr,tile.index);if(!el)continue;
+    if(tile.matched||tile.icon)memoryFace(tr,tile.index,tile.icon,!!tile.matched);
+    else memoryClosed(tr,tile.index);
+    el.disabled=!enabled||!!tile.matched||!!tile.open;
+   }
+   mem.localMoves=0;
+  }
+  if(!enabled){
+   board.querySelectorAll('[data-arcade-tile]').forEach(el=>{el.disabled=true;});
+  }
+  memoryStatus(tr,m);
+ }
+ function memoryStage(tr){
+  const mem=tr.memory;
+  if(!mem||tr.closed)return;
+  while(mem.visible.length<2&&mem.next.length){
+   const index=mem.next.shift();
+   const tile=memoryTile(tr,index);
+   if(!tile||tile.classList.contains('is-matched'))continue;
+   tile.classList.remove('is-queued');tile.classList.add('is-open','is-pending');
+   tile.querySelector('.arcade-memory-front').textContent='·';
+   tile.setAttribute('aria-busy','true');
+   mem.visible.push(index);mem.requests.push(index);
+  }
+ }
+ async function processMemory(tr){
+  const mem=tr.memory;if(!mem||mem.processing||tr.closed)return;
+  mem.processing=true;const runId=mem.runId;
+  try{
+   while(mem.requests.length&&!tr.closed&&runId===mem.runId){
+    const index=mem.requests.shift();
+    let answer=null;
+    for(let attempt=0;attempt<3;attempt++){
+     const {data,error}=await tr.client.rpc('qwiz_arcade_play',
+       {p_room:tr.roomId,p_action:'flip',p_tile:index});
+     if(error)throw error;
+     if(tr.closed||runId!==mem.runId)return;
+     if(data?.wait){
+      const delay=Math.min(720,Math.max(80,Number(data.retry_ms)||190));
+      await new Promise(resolve=>setTimeout(resolve,delay+30));
+      continue;
+     }
+     answer=data;break;
+    }
+    if(!answer?.ok){
+     memoryClosed(tr,index);
+     mem.visible=mem.visible.filter(x=>x!==index);
+     if(answer?.completed)break;
+     continue;
+    }
+    memoryFace(tr,index,answer.icon);
+    if(Object.hasOwn(answer,'match')){
+     const first=mem.visible.find(x=>x!==index);
+     if(Number.isInteger(first)&&answer.first_icon)
+      memoryFace(tr,first,answer.first_icon,!!answer.match);
+     if(answer.match){
+      memoryFace(tr,index,answer.icon,true);
+      mem.localMoves+=1;
+      mem.visible=[];mem.holdUntil=Date.now()+850;
+      memoryStage(tr);
+      memoryStatus(tr,tr.view?.extra||{});
+      if(answer.completed){showMessage(tr,'Мэмори пройдена. Все пары найдены.');break;}
+     }else{
+      mem.localMoves+=1;memoryStatus(tr,tr.view?.extra||{});
+      // The server holds a mismatched pair for just 640ms (was 1900ms).
+      // Queue later touches immediately, then start the next pair in order.
+      await new Promise(resolve=>setTimeout(resolve,Math.max(130,Number(answer.hide_ms)||640)));
+      if(tr.closed||runId!==mem.runId)return;
+      for(const old of mem.visible)memoryClosed(tr,old);
+      mem.visible=[];mem.holdUntil=Date.now()+650;
+      memoryStage(tr);
+     }
+    }
+   }
+  }catch(error){
+   if(!tr.closed&&runId===mem.runId){
+    showMessage(tr,error.message||'Не удалось открыть плитку. Повторите нажатие.',true);
+    tr.alertOverride=Date.now()+2200;
+    for(const index of [...mem.visible,...mem.next])memoryClosed(tr,index);
+    mem.visible=[];mem.requests=[];mem.next=[];mem.localMoves=0;mem.holdUntil=0;
+   }
+  }finally{
+   if(runId===mem.runId){
+    mem.processing=false;
+    if(!tr.closed){
+     if(mem.requests.length)void processMemory(tr);
+     else void fetchState(tr);
+    }
+   }
+  }
+ }
  function paint(tr){const v=tr.view;if(!v?.mode||tr.closed)return;const now=currentTime(tr),capture=Date.parse(v.capture_until||'')||0,end=Date.parse(v.ends_at||'')||0;
   const valid=v.running&&now<end,claim=v.mode==='blitz'&&now<capture;
   const list=tr.root.querySelector('[data-arcade-ranks]');if(list)list.innerHTML=rankMarkup(v);
@@ -99,14 +239,7 @@ window.QwizArcade=(()=>{
   if(qroot){const qkey=v.question?JSON.stringify([v.question.prompt,v.answered_at,v.blitz_attempts,canAnswer,v.question.correct]):'';
    if(tr.qkey!==qkey){tr.qkey=qkey;qroot.hidden=!v.question;qroot.innerHTML=v.question?promptMarkup(v.question,tr.kind==='player'&&canAnswer,v.question.correct!==null&&v.question.correct!==undefined):'';}
   }
-  if(v.mode==='captain'&&tr.kind==='player'){
-   const board=tr.root.querySelector('[data-arcade-memory]'),info=tr.root.querySelector('[data-memory-info]');
-   const m=v.extra||{},enabled=valid&&!!m.captain&&m.completed_ms==null;
-   if(info)info.textContent=!m.captain?'Ход капитанов':m.completed_ms!=null?'Готово · '+m.moves+' ходов':'Найдено '+(m.pairs||0)+'/6 пар · '+(m.moves||0)+' ходов';
-   if(board){const key=JSON.stringify([m.tiles,m.moves,enabled]);if(tr.memoryKey!==key){
-    tr.memoryKey=key;board.innerHTML=(m.tiles||[]).map(tile=>'<button type="button" class="arcade-memory-tile'+(tile.matched?' is-matched':'')+(tile.icon?' is-open':'')+'" data-arcade-tile="'+tile.index+'" '+(!enabled||tile.matched||tile.open?'disabled':'')+' aria-label="'+(tile.icon?'Открытая':'Закрытая')+' плитка '+(tile.index+1)+'"><span class="arcade-memory-tile-inner"><span class="arcade-memory-back">✦</span><span class="arcade-memory-front">'+escape(tile.icon||'')+'</span></span></button>').join('');
-   }}
-  }
+  if(v.mode==='captain'&&tr.kind==='player')paintMemory(tr,v.extra||{},valid);
   if(v.mode==='rocket'){const run=v.extra||{},figure=tr.root.querySelector('[data-runner-character]');
    if(figure)figure.classList.toggle('runner-eliminated',!!run.selected&&!run.alive);
    const obstacle=tr.root.querySelector('[data-runner-obstacle]');if(obstacle)obstacle.hidden=!run.next_at||!!run.selected&&!run.alive;}
@@ -152,7 +285,7 @@ window.QwizArcade=(()=>{
   const status=v.awarded_at?'Результат зафиксирован. Награды зачислены.':
    !v.running?'Соревнование завершено.':
    v.mode==='blitz'?(claim?'Борьба за право ответа.':v.answer_correct===true?'Правильный ответ! Блиц завершён.':v.blitz_eligible_team===null?'Попытки закончились.':canAnswer?'Ваш ход! Ответьте на блиц-вопрос.':'Право ответа у команды '+escape((v.teams||[]).find(t=>t.id===v.blitz_eligible_team)?.name||'лидера')+'.') :
-   v.mode==='captain'?'Все капитаны одновременно ищут пары. Учитываются время и ходы.':
+   v.mode==='captain'?'':
    !valid?'Время вышло. Ведущий продолжит игру.':'Идёт командная битва! Показатели обновляются автоматически.';
   if(!tr.alertOverride||Date.now()>tr.alertOverride)showMessage(tr,status);
   tick(tr);
@@ -175,7 +308,7 @@ window.QwizArcade=(()=>{
     if(e.target.closest('[data-arcade-tap]')){
       if(tr.mode!=='tug'||e.detail===0||Date.now()-(tr.lastPointerTapAt||0)>700)tap(tr);
      }
-     const tile=e.target.closest('[data-arcade-tile]');if(tile&&Date.now()-(tr.lastTilePointerAt||0)>750)flip(tr,Number(tile.dataset.arcadeTile));
+     const tile=e.target.closest('[data-arcade-tile]');if(tile&&e.detail===0)flip(tr,Number(tile.dataset.arcadeTile));
     const opt=e.target.closest('[data-arcade-answer]');if(opt)answer(tr,Number(opt.dataset.arcadeAnswer));
     const boost=e.target.closest('[data-boost-choice]');if(boost)voteBoost(tr,boost.dataset.boostChoice);
    };root.addEventListener('click',tr.onClick);
@@ -183,7 +316,7 @@ window.QwizArcade=(()=>{
      const button=e.target.closest('[data-arcade-tap]');
      if(tr.mode==='captain'){
       const tile=e.target.closest('[data-arcade-tile]');
-      if(tile&&!tile.disabled&&e.isPrimary){e.preventDefault();tr.lastTilePointerAt=Date.now();flip(tr,Number(tile.dataset.arcadeTile));}
+      if(tile&&!tile.disabled&&e.isPrimary){e.preventDefault();flip(tr,Number(tile.dataset.arcadeTile));}
       return;
      }
      if(!button||tr.mode!=='tug'||button.disabled||!e.isPrimary)return;
@@ -296,31 +429,27 @@ window.QwizArcade=(()=>{
   finally{tr.gameBusy=false}
  }
  function flip(tr,index){
- const v=tr.view;
- if(!v?.running||!v.extra?.captain||v.extra.completed_ms!=null||!Number.isInteger(index))return;
- const tile=tr.root?.querySelector('[data-arcade-tile="'+index+'"]');
- if(!tile||tile.disabled||tile.classList.contains('is-pending'))return;
- // A visual response is immediate, independently of the server round-trip.
- tile.classList.add('is-pending');tile.setAttribute('aria-busy','true');
- if(tr.gameBusy){
-  if(tr.queuedTile==null)tr.queuedTile=index;
-  else {tile.classList.remove('is-pending');tile.removeAttribute('aria-busy')}
-  return;
- }
- const run=async()=>{
-  await gameAction(tr,'flip',index);
-  if(tr.closed)return;
-  tile.classList.remove('is-pending');tile.removeAttribute('aria-busy');
-  const next=tr.queuedTile;tr.queuedTile=null;
-  if(Number.isInteger(next)){
-   const queued=tr.root.querySelector('[data-arcade-tile="'+next+'"]');
-   queued?.classList.remove('is-pending');
-   if(queued)queued.removeAttribute('aria-busy');
-   flip(tr,next);
+  const v=tr.view,m=v?.extra;
+  if(tr.closed||!v?.running||!m?.captain||m.completed_ms!=null||
+     !Number.isInteger(index)||index<0||index>=12)return;
+  const tile=memoryTile(tr,index);if(!tile||tile.disabled||
+    tile.classList.contains('is-open')||tile.classList.contains('is-matched')||
+    tile.classList.contains('is-queued'))return;
+  const mem=tr.memory||(tr.memory={processing:false,requests:[],next:[],visible:[],localMoves:0,holdUntil:0,runId:0});
+  tile.disabled=true;
+  // Immediate touch feedback; the actual hidden face comes from the server.
+  if(mem.visible.length>=2){
+   if(mem.next.length>=2){tile.disabled=false;return;}
+   mem.next.push(index);tile.classList.add('is-queued');
+   tile.setAttribute('aria-label','Плитка '+(index+1)+' в очереди');
+   return;
   }
- };
- void run();
-}
+  mem.visible.push(index);mem.requests.push(index);
+  tile.classList.add('is-open','is-pending');
+  tile.querySelector('.arcade-memory-front').textContent='·';
+  tile.setAttribute('aria-busy','true');
+  void processMemory(tr);
+ }
  function jump(tr){const v=tr.view;if(!v?.running||!v.extra?.selected||!v.extra?.alive)return;
   const k=v.extra.next_at;if(tr.lastJumpTarget===k||tr.gameBusy)return;tr.lastJumpTarget=k;
   const sprite=tr.root.querySelector('[data-runner-character]');
