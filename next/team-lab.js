@@ -208,13 +208,28 @@ window.QwizTeamLab=(()=>{
  }
  function draw(){
   if(!run)return;
-  const e=active();if(!e){$('teamLabStageBody').innerHTML='<p class="team-lab-completed">Тест завершён. Посмотрите итоговый счёт и историю. Для нового эксперимента нажмите «Запустить заново».</p>';$('teamLabNext').disabled=true;$('teamLabStatus').textContent='Финиш';stats();return}
+  const e=active();if(!e){
+   $('teamLabStageBody').innerHTML='<p class="team-lab-completed">Тест завершён. Можно проверить бонусы и штрафы в лаборатории выше, увидеть расчёт и применить его к тестовому счёту. Для нового эксперимента нажмите «Запустить тест».</p>';
+   $('teamLabNext').disabled=true;$('teamLabPrev').disabled=!run.moments.length;
+   $('teamLabStatus').textContent='Финиш';
+   $('teamLabBonusCheck').textContent='Это конец сборки: игровой бонус на следующем раунде уже невозможен. Лаборатория эффектов выше позволяет отдельно увидеть голосование и последствия.';
+   stats();return;
+  }
   $('teamLabStatus').textContent='Этап '+(run.index+1)+' / '+run.events.length+' · '+(e.kind==='arcade'?'Мини-игра':'Вопрос');
   // Teacher owns navigation: unanswered questions and unfinished mini-games may be skipped.
   $('teamLabNext').disabled=run.phase==='bonus';
   $('teamLabPrev').disabled=!run.moments?.length;
   $('teamLabNext').textContent=run.index===run.events.length-1?'К итогам →':'Следующий вопрос / этап →';
   $('teamLabStageBody').innerHTML=run.phase==='bonus'?bonusBody():e.kind==='arcade'?arcadeBody(e):questionBody(e);
+  const banner=$('teamLabBonusCheck');
+  if(banner){
+   const count=run.events.filter(x=>x.kind==='arcade').length;
+   banner.textContent=!count?'В этой сборке нет мини-игр: автоматических бонусных голосований не будет. Для изучения всех эффектов воспользуйтесь лабораторией выше.':
+    run.phase==='bonus'?'Идёт голосование команды-победителя: нужно большинство по стратегии и конкретному эффекту.':
+    e.kind==='arcade'?'Чтобы заработать бонус: завершите мини-игру, выполните условия режима, затем пройдите оба этапа голосования.':
+    run.pendingEffect?'Ожидает следующего обычного раунда: '+label(run.pendingEffect.key):
+    'В сборке '+count+' мини-игр. Бонусы открываются по условиям серверной механики. Лаборатория выше доступна в любое время.';
+  }
   stats();
  }
  function submitAnswer(){
@@ -383,9 +398,20 @@ window.QwizTeamLab=(()=>{
   $('teamLabPrev').addEventListener('click',previous);
   $('teamLabStop').addEventListener('click',()=>{serial++;close();refreshBuilds()});
   $('teamLabStageBody').addEventListener('click',handle);
+  window.QwizBonusExplorer?.init();
   refreshBuilds();
+ }
+ function applyDemoEffect({key,target}){
+  if(!run)return {ok:false,message:'Сначала запустите сохранённую сборку, чтобы менять именно тестовый счёт.'};
+  if(!Object.prototype.hasOwnProperty.call(effects,key)||![0,1].includes(target))return {ok:false,message:'Неизвестный эффект.'};
+  const before=team(target).score,members=team(target).members;
+  const delta=window.QwizBonusExplorer?.calc(key,before,members);
+  if(!Number.isFinite(delta))return {ok:false,message:'Формула эффекта недоступна.'};
+  team(target).score=Math.max(0,before+delta);
+  log('ДЕМОНСТРАЦИЯ (не игровой раунд): '+team(target).name+' · '+label(key)+' · '+(delta>0?'+':'')+delta+' очков · '+before+' → '+team(target).score);
+  stats();return {ok:true,before,delta,after:team(target).score};
  }
  function snapshot(){return run?{index:run.index,phase:run.phase,scores:run.teams.map(t=>t.score),length:run.events.length,
   pending:run.pendingEffect?.key||null,log:run.log.slice(),kind:active()?.kind,answered:run.submitted}:null}
- return Object.freeze({init,refreshBuilds,loadError,snapshot});
+ return Object.freeze({init,refreshBuilds,loadError,snapshot,applyDemoEffect});
 })();
