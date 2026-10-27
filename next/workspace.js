@@ -947,10 +947,13 @@ async function refreshLive(){if(!state.roomCode)return;if(state.roomBusy){state.
   state.room=s;renderLive(s);msg('liveMessage','');
  }catch(e){msg('liveMessage',e.message,true)}
  finally{state.roomBusy=false;if(state.roomRefreshQueued){state.roomRefreshQueued=false;queueMicrotask(refreshLive);}}}
+function updateLiveMarkup(id,html){const node=$(id);if(node.__qwizMarkup===html)return;node.innerHTML=html;node.__qwizMarkup=html;}
 function renderLive(s){
  if(s?.activity)s={...s,activity:hostArcadeActivity(s.activity)};
  const key=s.phase+':'+s.index;if(key!==state.liveKey){state.liveKey=key;if(s.phase==='result')QwizStage.audio.play('reveal');else if(s.phase==='finished')QwizStage.audio.play(s.activity?.sound||'fanfare')}
- $('liveClock').innerHTML=['question','result'].includes(s.phase)?QwizStage.clockMarkup(s,'liveTimer'):'';QwizStage.updateClock(s,state.clockOffset,document,'liveTimer',false);
+ const liveClockOn=['question','result'].includes(s.phase),clockKey=liveClockOn?[s.code,s.phase,s.index,s.ends_at,s.paused].join(':'):'';
+ if(state.liveClockKey!==clockKey){$('liveClock').innerHTML=liveClockOn?QwizStage.clockMarkup(s,'liveTimer'):'';state.liveClockKey=clockKey;}
+ if(liveClockOn)QwizStage.updateClock(s,state.clockOffset,document,'liveTimer',false);
 $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
  $('livePlayers').textContent=(s.players||[]).length;$('liveTeams').textContent=(s.teams||[]).length;
  $('livePhase').textContent=QwizStage.phaseLabel(s.phase);
@@ -973,17 +976,17 @@ $('activeRoomName').textContent=s.title;$('activeRoomCode').textContent=s.code;
   s.question?s.question.prompt+' · '+(s.index+1)+' / '+s.total:
   s.phase==='finished'?'Игра завершена. Итоги на экране аудитории.':'Ожидание начала игры.';
  const boosts=new Map((s.public_stats?.teams||[]).map(t=>[t.id,t.boost]));
- $('liveRanking').innerHTML=(s.teams||[]).slice().sort((a,b)=>b.score-a.score).map((t,i)=>{
+ updateLiveMarkup('liveRanking',(s.teams||[]).slice().sort((a,b)=>b.score-a.score).map((t,i)=>{
   const effects=(s.team_effects||s.team_lobby?.effects_history||[]).filter(x=>x.team_id===t.id);
   return '<div class="live-line"><span>'+(i+1)+'. '+esc(t.name)+
    (boosts.get(t.id)?'<b class="team-boost-chip" title="Активный бонус текущего раунда">✦ '+esc(boosts.get(t.id).title)+'</b>':'')+
    (effects.length?'<small class="team-effects-history">'+effects.map(x=>esc(x.choice)+' ('+(Number(x.points_awarded)>=0?'+':'')+Number(x.points_awarded)+')').join(' · ')+'</small>':'')+
    '</span><strong>'+esc(t.score)+'</strong></div>';
- }).join('');
+ }).join(''));
  const stats=s.public_stats||{};const latest=(stats.question_stats||[]).at(-1);const completed=Math.max(0,s.index+1);
  $('liveRoundStats').textContent='Вопрос '+completed+' / '+s.total+' · Ответов '+(s.answers_count||0)+(latest?' · Верных '+latest.correct+'/'+latest.answered:'')+(s.paused?' · Игра на паузе':'');
- $('liveRoster').innerHTML=(s.players||[]).map(p=>'<div class="live-line"><span>'+esc(p.name)+'</span><small>'+
- esc(s.teams.find(t=>t.id===p.team_id)?.name||'Ожидает распределения')+'</small></div>').join('');renderTeamManager(s);window.QwizArcade?.mountHost($('arcadeHostPanel'),s,state.db);
+ updateLiveMarkup('liveRoster',(s.players||[]).map(p=>'<div class="live-line"><span>'+esc(p.name)+'</span><small>'+
+ esc(s.teams.find(t=>t.id===p.team_id)?.name||'Ожидает распределения')+'</small></div>').join(''));renderTeamManager(s);window.QwizArcade?.mountHost($('arcadeHostPanel'),s,state.db);
  void updateModeratorSlides(s);
 }
 let moderatorDeckKey='',moderatorDeckBusy=false;
@@ -1025,9 +1028,9 @@ async function updateProjectorPreferences(update){
 }
 let moderatorDeckRefreshAt=0;
 async function updateModeratorLiveStats(s){
- const host=$('moderatorSlides');if(!host||s.phase!=='intermission')return;
+ const host=$('moderatorSlides');if(!host||document.hidden||s.phase!=='intermission')return;
  const target=host.querySelector('.moderator-slide.is-current .moderator-slide-live');
- if(!target||Date.now()-moderatorDeckRefreshAt<3500)return;
+ if(!target||Date.now()-moderatorDeckRefreshAt<5500)return;
  moderatorDeckRefreshAt=Date.now();
  const mode=s.activity?.settings?.arcade_mode||'';
  try{
@@ -1320,7 +1323,7 @@ async function init(){
    else if(['bank','builder','rooms','insights'].includes(hash))section(hash);
    restoringView=false;savePosition();
   }
-  state.roomTimer=setInterval(()=>{if(state.roomCode&&!document.hidden)refreshLive()},3000);
+  state.roomTimer=setInterval(()=>{if(state.roomCode&&!document.hidden&&navigator.onLine)refreshLive()},4500);
   setInterval(()=>{if(!state.room||document.hidden)return;const s=state.room;if(['question','result'].includes(s.phase)&&!s.paused){const left=QwizStage.updateClock(s,state.clockOffset,document,'liveTimer');if(left===0&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}}else if(s.phase==='countdown'&&!s.paused&&Date.parse(s.ends_at)<=Date.now()+state.clockOffset&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}},250);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.roomCode)refreshLive()});
   window.addEventListener('online',()=>{if(state.roomCode)refreshLive()});
