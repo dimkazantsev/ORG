@@ -182,7 +182,10 @@ window.QwizTeamLab=(()=>{
   const v=run.arcadeResult;if(!v)return '';
   const bot=v.winner===1,winner=team(v.winner);
   const names=k=>k==='support'?'Усилить себя':k==='sabotage'?'Ослабить соперника':label(k);
-  const tally=(votes,keys)=>'<div class="team-lab-sandbox-votes">'+keys.map(k=>
+  const tally=(votes,keys)=>'<div class="team-lab-sandbox-votes">'+
+   (run.strategy&&run.strategyVotes.length?
+    '<div class="team-lab-strategy-summary">Голоса за стратегию '+esc(run.strategy==='support'?'усилить себя':'ослабить соперника')+
+     ' <strong>'+run.strategyVotes.filter(v=>v===run.strategy).length+'/3</strong></div>':'')+keys.map(k=>
    '<div>'+esc(names(k))+' <strong>'+votes.filter(x=>x===k).length+'/3</strong></div>').join('')+'</div>';
   const info='<p class="team-lab-help">Большинство: минимум 2 из 3 одинаковых голосов. В настоящей комнате голосует только команда-победитель.</p>';
   if(!run.strategy)return '<div class="team-lab-prompt"><span class="team-lab-eyebrow">БОНУС · ЭТАП 1 / 2</span><h4>Усилить себя или ослабить соперника?</h4>'+
