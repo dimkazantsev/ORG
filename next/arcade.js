@@ -137,7 +137,7 @@ window.QwizArcade=(()=>{
     ballot.className='arcade-vote '+(strategyStage?'arcade-vote-strategy ':'arcade-vote-effects ')+(vote.strategy==='sabotage'?'is-harm':'is-boost');
     ballot.innerHTML='<div class="arcade-vote-title"><span>'+subtitle+' · 🏆 '+escape(champion?.name||'Лидеры')+'</span>'+
       '<strong>'+escape(title)+'</strong>'+
-      '<p>'+(strategyStage?'Победившая команда выбирает: зелёный путь усиливает себя, красный накладывает штраф на соперника.':'Выберите конкретный бонус или штраф. Он применяется в следующем раунде.')+' Нажмите вариант, голосование решается большинством. До 15 секунд на два этапа. '+(vote.target_name?'Соперник: '+escape(vote.target_name)+'. ':'')+'Осталось '+remaining+' сек.</p></div>'+
+      '<p>'+(strategyStage?'Победившая команда выбирает: зелёный путь усиливает себя, красный накладывает штраф на соперника.':'Выберите конкретный бонус или штраф. Он применяется в следующем раунде.')+' Нажмите вариант, голосование решается большинством. Решение принимается в два этапа. '+(vote.target_name?'Соперник: '+escape(vote.target_name)+'. ':'')+'Осталось '+remaining+' сек.</p></div>'+
       (selections.length?'<div class="arcade-boost-grid">'+selections.map(([id,caption,description])=>
         '<button type="button" data-boost-choice="'+id+'" '+(!canChoose||tr.voteBusy?'disabled':'')+
         ' data-vote-tone="'+(id==='sabotage'||HINDRANCES.some(item=>item[0]===id)?'harm':'boost')+'"'+
@@ -194,7 +194,7 @@ window.QwizArcade=(()=>{
    }
   // Spread room state reads: 40 devices no longer hit the same RPC 25 times/sec.
   // Actions still refresh immediately. Transient failures back off, preserving the last view.
-  const poll=()=>{if(tr.closed)return;const base=tr.kind==='player'?4700:tr.kind==='screen'?3500:5500;
+  const poll=()=>{if(tr.closed)return;const base=tr.view?.vote?.open?(tr.kind==='player'?1500:2200):tr.kind==='player'?4700:tr.kind==='screen'?3500:5500;
    const retry=Math.min(20000,base*Math.pow(1.6,Math.min(tr.failures||0,4)));
    tr.interval=setTimeout(async()=>{if(tr.closed)return;
     if(navigator.onLine&&document.visibilityState!=='hidden')await fetchState(tr);
@@ -372,7 +372,7 @@ window.QwizArcade=(()=>{
   }
   el.innerHTML='<div class="arcade-bonus-header"><h2>Командные бонусы</h2>'+
    '<p>После победы команда голосует за стратегию и конкретное усиление следующего раунда. Достижения не заменяют голосование.</p></div>'+
-   ballot+(cards?'<div class="arcade-bonus-list">'+cards+'</div>':'');
+   ballot+(cards?'<details class="arcade-bonus-history"><summary>История достижений и эффектов · '+effects.length+'</summary><div class="arcade-bonus-list">'+cards+'</div></details>':'<p class="arcade-bonus-empty">Пока нет активных усилений.</p>');
   if(!el.dataset.voteBound){
    el.dataset.voteBound='true';
    el.addEventListener('click',async event=>{
