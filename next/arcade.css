@@ -880,3 +880,118 @@
  cursor:pointer;padding:10px 4px;color:#7653b6;font-weight:780;
 }
 #arcadeWalletPanel .arcade-bonus-history .arcade-bonus-list{padding-top:10px}
+
+
+/* Captain Memory 2026-10-27: reference-matched compact phone view.
+   A single 4x3 grid remains mounted; visual feedback happens at pointerdown. */
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"]{
+ box-sizing:border-box;display:flex;flex-direction:column;
+ gap:clamp(8px,1.2dvh,14px);width:100%;max-width:520px;
+ margin-inline:auto;min-width:0;padding:clamp(10px,2.3dvw,18px) clamp(10px,3vw,18px);
+ background:linear-gradient(180deg,#fff 0%,#fff 90%,#fcfbff 100%);
+ border:1px solid #eee9f4;border-radius:23px;
+ box-shadow:0 8px 28px #63518b0d;
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-head{
+ display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+ margin:0;min-height:0;
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-kicker{
+ display:block;margin-bottom:4px;color:#7862a6;
+ font-size:clamp(9px,2.55vw,12px);font-weight:850;letter-spacing:.075em;
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-head h2{
+ margin:0;font-size:clamp(22px,5.6vw,31px);font-weight:850;
+ line-height:1.13;letter-spacing:-.045em;color:#231a39;
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-countdown{
+ display:flex;justify-content:center;align-items:center;
+ min-width:70px;min-height:48px;flex:0 0 auto;padding:8px 10px;
+ background:linear-gradient(150deg,#f6f0ff,#e9deff);
+ color:#7446c4;border:1px solid #e8daf8;
+ box-shadow:0 3px 10px #8c62bd13;
+ border-radius:17px;font-size:clamp(15px,4vw,21px);font-weight:850;
+ font-variant-numeric:tabular-nums;white-space:nowrap;
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-lead{
+ margin:0;color:#756c85;line-height:1.42;font-size:clamp(12px,3.2vw,15px);
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-scene{
+ box-sizing:border-box;flex:0 0 auto;min-height:0!important;
+ height:clamp(78px,14dvh,118px)!important;margin:1px 0 5px!important;
+ border-radius:19px!important;border:1px solid #e5d7f7!important;
+ background:radial-gradient(ellipse at 55% 35%,#fceaff,#eee3ff 72%)!important;
+ overflow:hidden;box-shadow:inset 0 3px 12px #ffffff99;
+ pointer-events:none;
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-memory-hero{
+ height:100%;min-height:0!important;max-height:none!important;display:flex;align-items:center;justify-content:center;
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .memory-stage{
+ width:100%;max-height:inherit!important;transform:scale(.72)!important;
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-memory-info{
+ margin:6px 0 4px;text-align:center;font-size:clamp(14px,3.4vw,17px);
+ font-weight:820;color:#393048;letter-spacing:-.015em;
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-memory-board{
+ display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;
+ width:100%!important;max-width:440px;gap:clamp(7px,2vw,11px)!important;
+ margin:0 auto 8px!important;padding:2px 0 12px;
+ align-items:stretch;touch-action:manipulation;
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-memory-tile{
+ display:block;min-width:0;min-height:0!important;aspect-ratio:1;
+ width:100%;height:auto;border:0;padding:0;
+ -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+ border-radius:clamp(10px,3.3vw,17px);outline-offset:3px;
+ cursor:pointer;user-select:none;overflow:visible;contain:layout style;
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-memory-tile-inner{
+ transition:transform 105ms cubic-bezier(.25,.8,.25,1)!important;
+ will-change:transform;
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-memory-back{
+ background:linear-gradient(155deg,#a98aff 0%,#8648eb 54%,#6232cc 100%);
+ border:2px solid #dac7ff;border-radius:inherit;
+ box-shadow:0 5px 0 #492394,0 8px 15px #6834b346,inset 0 3px 6px #ffffff55;
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-memory-front{
+ border-radius:inherit;
+ background:linear-gradient(155deg,#fff,#e9dbff);
+ border:2px solid #b99bed;box-shadow:0 5px 0 #a083c7,0 8px 14px #7249a325;
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-memory-tile.is-pending{
+ transform:none;outline:2px solid #a98beb;
+ filter:none;
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-memory-tile.is-pending .arcade-memory-front{
+ background:linear-gradient(150deg,#f7f0ff,#e8d9fb);
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-memory-tile.is-queued{
+ transform:scale(.96);filter:brightness(1.13);
+ outline:3px solid #b394fb;
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-memory-tile.is-queued .arcade-memory-back{
+ background:linear-gradient(155deg,#ccaaff,#9d62f4);
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-memory-tile.is-matched .arcade-memory-front{
+ background:linear-gradient(150deg,#e9fff2,#c3f3d6);
+ border-color:#53aa82;
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-alert:not([data-error="true"]),
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-ranks,
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-badges{
+ display:none!important;
+}
+#gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-alert[data-error="true"]{
+ margin-top:5px;font-size:12px;
+}
+@media(max-height:700px){
+ #gameContent .arcade-shell.arcade-player[data-arcade-root="captain"]{gap:7px;padding:9px 11px}
+ #gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-scene{height:80px!important}
+ #gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-memory-board{max-width:350px;gap:6px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #gameContent .arcade-shell.arcade-player[data-arcade-root="captain"] .arcade-memory-tile-inner{transition:none!important;will-change:auto}
+}
