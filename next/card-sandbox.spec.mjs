@@ -1,7 +1,11 @@
 import {test,expect} from '@playwright/test';
 
+const previewJsErrors=new WeakMap();
 test.beforeEach(async({page})=>{
- page.on('pageerror',e=>console.error('QWIZ CARD PREVIEW JS ERROR:',e.stack||e.message));
+ const errors=[];
+ previewJsErrors.set(page,errors);
+ page.on('pageerror',e=>{errors.push(e.message);console.error('QWIZ CARD PREVIEW JS ERROR:',e.stack||e.message)});
+
  await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({
   status:200,contentType:'application/javascript',
   body:'window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}})}})};'
@@ -9,6 +13,10 @@ test.beforeEach(async({page})=>{
  await page.goto('http://127.0.0.1:8080/next/workspace.html',{waitUntil:'load'});
  await expect(page.locator('#workspaceLoading')).toBeHidden();
  await page.evaluate(()=>{document.querySelector('#builderPage').hidden=false;newBuild()});
+});
+
+test.afterEach(async({page})=>{
+ expect(previewJsErrors.get(page)||[], 'Card preview must not throw browser runtime errors').toEqual([]);
 });
 
 test('Each builder card, including finale, has its own beautiful accessible Play control',async({page})=>{
