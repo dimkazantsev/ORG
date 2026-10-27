@@ -332,7 +332,12 @@ function questionScene(state){
   // The clock and round heading are permanent screen coordinates: NEVER zoom
   // the question scene itself. Fit only its content viewport on overflow.
   if(scene.matches('.projection-question-only')){
-   scene.style.zoom='1';scene.style.flexShrink='0';
+   scene.style.zoom='1';
+   if(window.matchMedia('(max-width:700px)').matches){
+    const flow=scene.querySelector('.projection-question-flow');
+    if(flow){flow.style.zoom='1';flow.style.transform='none';}
+    scene.dataset.fittedZoom='1';return;
+   }scene.style.flexShrink='0';
    scene.style.maxHeight='100%';scene.style.height='100%';
    scene.style.width='100%';scene.style.marginTop='0';scene.style.marginBottom='0';
    const viewport=scene.querySelector('.projection-question-viewport');
