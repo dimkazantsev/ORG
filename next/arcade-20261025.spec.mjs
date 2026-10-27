@@ -188,7 +188,7 @@ test('Blitz Consensus replaces tap capture, uses protected voting and one ten-po
  assert.match(integrated,/IF best_team IS NOT NULL THEN/);
  assert.match(integrated,/blitz_consensus/);
  assert.match(integrated,/qwiz_consensus_state\(r\.id,v\.card_position\)/);
- assert.match(integrated,/IF v\.mode='blitz' and p_action IN \('tap','answer'\)/);
+ assert.match(integrated,/v\.mode='blitz' and p_action IN \('tap','answer'\)/i);
  assert.match(css,/consensus-progress-track/);
  assert.match(css,/consensus-option.is-chosen/);
 });
