@@ -867,7 +867,7 @@ test('Studio game selector keeps full names, uses consistent icons and an access
  const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
  const names=[
   ['data-geo="russia_map"','Карта регионов России'],
-  ['data-arcade="blitz"','Блиц-вопрос'],
+  ['data-arcade="blitz"','Блиц-консенсус'],
   ['data-arcade="tug"','Тап-баттл'],
   ['data-arcade="captain"','Дуэль капитанов']
  ];
@@ -893,7 +893,7 @@ test('Mini-game buttons keep complete labels and the disclosure uses a separate 
  const html=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
  const styles=readFileSync(new URL('./workspace.css',import.meta.url),'utf8');
  const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
- const games=['Карта регионов России','Блиц-вопрос','Тап-баттл','Дуэль капитанов'];
+ const games=['Карта регионов России','Блиц-консенсус','Тап-баттл','Дуэль капитанов'];
  for(const label of games)assert.ok(html.includes('>'+label+'</button>'),'Missing game '+label);
  assert.match(host,/const label=b\.textContent\.replace\(\/\\s\+\/g,' '\)\.trim\(\)/);
  assert.match(html,/class="games-chevron-box" aria-hidden="true"/);
