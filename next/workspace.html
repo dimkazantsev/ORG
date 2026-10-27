@@ -27,11 +27,41 @@
 <aside class="nav"><div class="nav-title">Библиотека</div>
 <button type="button" data-section="bank" class="nav-link selected"><span class="nav-symbol"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"></path></svg></span> Вопросы <span class="nav-count" id="navQuestionCount">0</span></button>
 <button type="button" data-section="builder" class="nav-link"><span class="nav-symbol"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 10 5-10 5L2 8l10-5ZM2 12l10 5 10-5M2 16l10 5 10-5"></path></svg></span> Сборки и раунды</button>
+<button type="button" data-section="bonuses" class="nav-link"><span class="nav-symbol" aria-hidden="true">✦</span> Бонусы и штрафы</button>
 <div class="nav-title nav-title-game">Игра и результаты</div>
 <button type="button" data-section="rooms" class="nav-link"><span class="nav-symbol"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="m8 4 12 8-12 8V4Z"></path></svg></span> Проведение</button>
 <button type="button" data-section="insights" class="nav-link"><span class="nav-symbol"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20V10M12 20V4M20 20v-7"></path></svg></span> Аналитика</button>
 <div class="nav-end"><details class="studio-help"><summary>Как провести игру</summary><p>Сохраните сборку, создайте комнату и откройте пульт на телефоне или планшете.</p></details><button type="button" id="showPublicScreen" class="nav-project"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h18v13H3zM8 21h8M12 17v4"></path></svg><span>Экран аудитории</span><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M7 7h10v10"></path></svg></button></div></aside>
 <main class="content" id="mainContent">
+<section class="page" id="bonusesPage" hidden><div class="page-head"><div><span class="eyebrow">ПРАВИЛА И ЭФФЕКТЫ</span><h1>Бонусы и штрафы</h1><p>Все шесть действующих эффектов, условия получения и интерактивная проверка выбора. Архивные механики не отображаются.</p></div></div><section id="teamLabBonusExplorer" class="team-lab-bonuses" aria-labelledby="teamLabBonusHeading">
+ <div class="team-lab-bonuses-heading">
+  <div><span class="eyebrow">ДЕЙСТВУЮЩИЕ ЭФФЕКТЫ · 6</span>
+    <h3 id="teamLabBonusHeading">Бонусы и штрафы команд</h3>
+    <p>Два голосования: сначала команда-победитель выбирает усилить себя или ослабить соперника, затем большинством выбирает конкретный эффект.</p></div>
+  <button type="button" class="team-lab-primary" data-bonus-start>Проверить голосование и последствия</button>
+ </div>
+ <div class="team-lab-rules" aria-label="Условия получения бонуса">
+  <span><strong>1.</strong> Победить в мини-игре</span>
+  <span><strong>2.</strong> Выполнить условия режима</span>
+  <span><strong>3.</strong> Получить большинство на двух голосованиях</span>
+  <span><strong>4.</strong> Применить в следующем обычном раунде</span>
+ </div>
+ <div class="team-lab-catalog-groups">
+  <div><h4 class="team-lab-effect-group-title is-positive">Усиления своей команды</h4><div id="teamLabBonusPositive" class="team-lab-bonus-catalog"></div></div><div><h4 class="team-lab-effect-group-title is-negative">Штрафы сопернику</h4><div id="teamLabBonusNegative" class="team-lab-bonus-catalog"></div></div>
+ </div>
+ <details class="team-lab-eligibility">
+  <summary>Когда в настоящей игре доступно голосование за бонус?</summary>
+  <p>В серверной версии нужна победа и хотя бы 1 игровой балл в мини-игре. Для «Тап-баттла» участвуют минимум 70% команды (если настройка раунда не изменена) и выполняется отрыв от соперника — обычно от 15 очков. Для «Мэмори капитанов» достаточно участия капитана при необходимом отрыве. В «Блиц-консенсусе» действует отдельное сравнение результатов делегатов. Также необходим следующий обычный раунд с вопросами и большинство голосов за стратегию и за конкретный эффект. Окно голосования на сервере составляет от 18 до 24 секунд в зависимости от результата игры.</p>
+ </details>
+ <div class="team-lab-demo-controls">
+  <label>Кто выиграл мини-игру?
+   <select id="teamLabBonusWinner"><option value="0">Команда преподавателя · 3 одинаковых голоса</option><option value="1">Случайная команда · 3 независимых голоса</option></select>
+  </label>
+  <button type="button" class="team-lab-primary" data-bonus-start>Начать голосование</button>
+ </div>
+ <div id="teamLabBonusDemo" class="team-lab-demo" hidden></div>
+ <p id="teamLabBonusFeedback" class="team-lab-demo-help" role="status">Лаборатория доступна даже после финиша. До запуска теста показываются расчёты; для изменения тестового счёта запустите сборку. Никаких записей на сервере.</p>
+</section></section>
 <section class="page" id="bankPage">
  <div class="page-head"><div><span class="eyebrow">ВАША КОЛЛЕКЦИЯ</span><h1 id="bankHeading">Все вопросы</h1><p id="bankDescription">Все темы и игровые задания в одной библиотеке. Выберите тему для фильтрации.</p></div><button class="primary-button" id="newQuestion"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg> Создать вопрос</button></div>
  <div class="filter-panel"><label class="search-label">Поиск по вопросам<span class="search-field"><svg class="ui-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"></circle><path d="m16 16 5 5"></path></svg><input id="bankSearch" type="search" placeholder="Название, тема или слово из вопроса…" autocomplete="off" aria-keyshortcuts="/"><kbd aria-hidden="true">/</kbd></span></label>
@@ -112,35 +142,7 @@
    <button type="button" class="secondary-button" id="teamLabStop" hidden>Остановить</button>
  </div>
  <p id="teamLabMessage" class="team-lab-message" role="status">Загружаем сохранённые игры преподавателя…</p>
- <section id="teamLabBonusExplorer" class="team-lab-bonuses" aria-labelledby="teamLabBonusHeading">
- <div class="team-lab-bonuses-heading">
-  <div><span class="eyebrow">ДЕЙСТВУЮЩИЕ ЭФФЕКТЫ · 6</span>
-    <h3 id="teamLabBonusHeading">Бонусы и штрафы команд</h3>
-    <p>Два голосования: сначала команда-победитель выбирает усилить себя или ослабить соперника, затем большинством выбирает конкретный эффект.</p></div>
-  <button type="button" class="team-lab-primary" data-bonus-start>Проверить голосование и последствия</button>
- </div>
- <div class="team-lab-rules" aria-label="Условия получения бонуса">
-  <span><strong>1.</strong> Победить в мини-игре</span>
-  <span><strong>2.</strong> Выполнить условия режима</span>
-  <span><strong>3.</strong> Получить большинство на двух голосованиях</span>
-  <span><strong>4.</strong> Применить в следующем обычном раунде</span>
- </div>
- <div class="team-lab-catalog-groups">
-  <div><h4 class="team-lab-effect-group-title is-positive">Усиления своей команды</h4><div id="teamLabBonusPositive" class="team-lab-bonus-catalog"></div></div><div><h4 class="team-lab-effect-group-title is-negative">Штрафы сопернику</h4><div id="teamLabBonusNegative" class="team-lab-bonus-catalog"></div></div>
- </div>
- <details class="team-lab-eligibility">
-  <summary>Когда в настоящей игре доступно голосование за бонус?</summary>
-  <p>В серверной версии нужна победа и хотя бы 1 игровой балл в мини-игре. Для «Тап-баттла» участвуют минимум 70% команды (если настройка раунда не изменена) и выполняется отрыв от соперника — обычно от 15 очков. Для «Мэмори капитанов» достаточно участия капитана при необходимом отрыве. В «Блиц-консенсусе» действует отдельное сравнение результатов делегатов. Также необходим следующий обычный раунд с вопросами и большинство голосов за стратегию и за конкретный эффект. Окно голосования на сервере составляет от 18 до 24 секунд в зависимости от результата игры.</p>
- </details>
- <div class="team-lab-demo-controls">
-  <label>Кто выиграл мини-игру?
-   <select id="teamLabBonusWinner"><option value="0">Команда преподавателя · 3 одинаковых голоса</option><option value="1">Случайная команда · 3 независимых голоса</option></select>
-  </label>
-  <button type="button" class="team-lab-primary" data-bonus-start>Начать голосование</button>
- </div>
- <div id="teamLabBonusDemo" class="team-lab-demo" hidden></div>
- <p id="teamLabBonusFeedback" class="team-lab-demo-help" role="status">Лаборатория доступна даже после финиша. До запуска теста показываются расчёты; для изменения тестового счёта запустите сборку. Никаких записей на сервере.</p>
-</section>
+ 
 <div id="teamLabIdle" class="team-lab-idle">Командный эксперимент начнётся здесь. Управляйте ответами и вручную переходите к следующему вопросу.</div>
  <div id="teamLabStage" hidden>
   <label class="team-lab-override team-lab-sandbox-toggle"><input type="checkbox" id="teamLabForceBonus"><span>Разрешить тестирование бонусов без достижения порога <small>(только симуляция)</small></span></label>
