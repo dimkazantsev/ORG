@@ -109,7 +109,7 @@ function savePosition(){
 }
 function readPosition(){
  try{const x=JSON.parse(sessionStorage.getItem(resumeKey)||'null');
-  return x&&['bank','builder','rooms','insights'].includes(x.section)?x:null
+  return x&&['bank','builder','rooms','insights','bonuses'].includes(x.section)?x:null
  }catch{return null}
 }
 async function restorePosition(last=readPosition()){
