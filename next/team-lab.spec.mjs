@@ -34,6 +34,31 @@ async function answer(page){
  await page.locator('[data-lab-submit]').click();
  await expect(page.locator('#teamLabTeacherScore')).toHaveText('30');
 }
+for(const width of [320,390,768,1440]){
+ test('Bonus override checkbox stays inline with caption at '+width+'px',async({page})=>{
+  await page.setViewportSize({width,height:780});
+  await expect(page.locator('#teamLabForceBonus')).toBeHidden();
+  await start(page);
+  const label=page.locator('#teamLab .team-lab-sandbox-toggle');
+  await expect(label).toBeVisible();
+  const geometry=await label.evaluate(node=>{
+   const input=node.querySelector('input[type="checkbox"]'),text=node.querySelector('span');
+   const a=input.getBoundingClientRect(),b=text.getBoundingClientRect(),outer=node.getBoundingClientRect();
+   return {inputWidth:a.width,textWidth:b.width,sideBySide:a.right+6<=b.left,
+    aligned:Math.abs(a.top-b.top)<10,
+    fits:a.left>=outer.left&&b.right<=outer.right,
+    boxHeight:outer.height};
+  });
+  expect(geometry.inputWidth).toBeGreaterThanOrEqual(17);
+  expect(geometry.inputWidth).toBeLessThanOrEqual(21);
+  expect(geometry.sideBySide).toBe(true);
+  expect(geometry.aligned).toBe(true);
+  expect(geometry.fits).toBe(true);
+  await page.locator('#teamLabForceBonus').check();
+  await expect(page.locator('#teamLabForceBonus')).toBeChecked();
+  await page.screenshot({path:'visual-artifacts/team-lab-checkbox-'+width+'.png',fullPage:true});
+ });
+}
 test('Simulator appears below team cards and loads chosen saved build without a room join',async({page})=>{
  await expect(page.locator('#teamLab')).toBeVisible();
  const below=await page.evaluate(()=>document.querySelector('#teamLab').compareDocumentPosition(document.querySelector('#teamManager'))&Node.DOCUMENT_POSITION_PRECEDING);
