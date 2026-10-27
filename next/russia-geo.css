@@ -233,3 +233,28 @@
  fill:#eb8596!important;stroke:#ffffff!important;stroke-width:.8!important;filter:none!important}
 .geo-map-svg path.geo-region:focus{outline:none}
 .geo-map-svg path.geo-region:focus-visible{stroke:#7140c7!important;stroke-width:1.6!important}
+
+
+/* Native region rendering: SVG shapes use fill-only selection and no focus boxes.
+   Preserve thin geographic boundaries and keyboard focus through a fill shift. */
+.geo-game .geo-map-frame,
+.geo-game .geo-map-svg,
+.geo-game .geo-map-svg path.geo-region{
+ outline:none!important;box-shadow:none!important;
+}
+.geo-game .geo-map-svg path.geo-region:focus,
+.geo-game .geo-map-svg path.geo-region:focus-visible{
+ outline:none!important;box-shadow:none!important;
+}
+.geo-game .geo-map-svg path.geo-region:focus-visible{
+ fill:#b492e9!important;stroke:#fff!important;stroke-width:.8!important;
+}
+.geo-game .geo-map-svg path.geo-region.geo-selected:focus-visible{
+ fill:#9c74e4!important;
+}
+.geo-game .geo-map-svg path.geo-region.geo-correct-answer:focus-visible{
+ fill:#39b66b!important;
+}
+.geo-game .geo-map-frame .geo-map-svg path.geo-region{
+ filter:none!important;-webkit-tap-highlight-color:transparent;
+}
