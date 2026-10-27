@@ -77,7 +77,7 @@ test('Finished arcade boost ballot stays entirely visible and accepts a vote at 
   await page.evaluate(()=>{
    showScreen('game');
    const now=Date.now();
-   const view={code:'ABCDEF12',mode:'rocket',running:false,
+   const view={code:'ABCDEF12',mode:'tug',running:false,
     server_now:new Date(now).toISOString(),
     started_at:new Date(now-13000).toISOString(),
     ends_at:new Date(now-1000).toISOString(),
@@ -96,7 +96,7 @@ test('Finished arcade boost ballot stays entirely visible and accepts a vote at 
    }};
    QwizArcade.mountPlayer(document.querySelector('#gameContent'),{
      code:'ABCDEF12',room_id:'00000000-0000-4000-8000-000000000091',
-     activity:{settings:{arcade_mode:'rocket'}}}, {client});
+     activity:{settings:{arcade_mode:'tug'}}}, {client});
   });
   await expect(page.locator('.arcade-player.is-boost-voting')).toBeVisible();
   await expect(page.locator('[data-boost-choice]')).toHaveCount(2);
@@ -168,7 +168,7 @@ test('Two-stage penalty vote opens a red majority choice then lets players choos
    const vote={winner_team:'team-a',can_vote:true,open:true,
     stage:'strategy',strategy:null,counts:{},my_choice:null,
     target_name:'Команда-соперник',vote_ends_at:new Date(now+14000).toISOString()};
-   window.penaltyFixture={code:'ABCDEF12',mode:'rocket',running:false,
+   window.penaltyFixture={code:'ABCDEF12',mode:'tug',running:false,
     server_now:new Date(now).toISOString(),started_at:new Date(now-12000).toISOString(),
     ends_at:new Date(now-1000).toISOString(),mine:{team_id:'team-a'},
     teams:[{id:'team-a',name:'Лидеры',points:90,place:1},
@@ -187,7 +187,7 @@ test('Two-stage penalty vote opens a red majority choice then lets players choos
    }};
    QwizArcade.mountPlayer(document.querySelector('#gameContent'),{
     code:'ABCDEF12',room_id:'00000000-0000-4000-8000-000000000091',
-    activity:{settings:{arcade_mode:'rocket'}}},{client});
+    activity:{settings:{arcade_mode:'tug'}}},{client});
   });
   await expect(page.locator('[data-boost-choice]')).toHaveCount(2);
   await expect(page.locator('[data-boost-choice="sabotage"]')).toBeVisible();
@@ -245,16 +245,16 @@ test('Centered lobby constellation is visible without Play and the signal captio
 });
 
 
-test('3D arcade world gets a playable portrait-height viewport, without hiding the tap control',async({page})=>{
+test('Tug mini-game gets a playable portrait-height viewport, without hiding the tap control',async({page})=>{
  await page.setViewportSize({width:390,height:844});await setup(page);await question(page,{prompt:'Тест мини-игры',options:['1','2']});
  await page.evaluate(()=>{
-  window.arcadeFixture={mode:'rocket',running:true,server_now:new Date().toISOString(),
+  window.arcadeFixture={mode:'tug',running:true,server_now:new Date().toISOString(),
    ends_at:new Date(Date.now()+45000).toISOString(),teams:[{id:'t',name:'Исследователи',points:5,place:1}],
    mine:{team_id:'t',credits:0},awards:[]};
-  ctx.room.phase='intermission';ctx.room.activity={title:'Ракетная гонка',
-   settings:{arcade_mode:'rocket'}};ctx.gameRenderKey='';renderGame();
+  ctx.room.phase='intermission';ctx.room.activity={title:'Тап-баттл',
+   settings:{arcade_mode:'tug'}};ctx.gameRenderKey='';renderGame();
  });
- const scene=page.locator('.arcade-player .arcade-scene:has(.arcade-runner-world)');
+ const scene=page.locator('.arcade-player .arcade-scene:has(.arcade-tap-stage)');
  await expect(scene).toBeVisible();
  await expect.poll(()=>scene.evaluate(el=>el.getBoundingClientRect().height)).toBeGreaterThanOrEqual(118);
  await expect(page.locator('[data-arcade-tap]')).toBeInViewport();
