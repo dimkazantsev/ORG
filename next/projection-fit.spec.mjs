@@ -464,3 +464,52 @@ test('Audience countdown warning stays hidden and received-answer counter has br
   expect(geometry.count.top,'Counter above screen edge at '+width+'x'+height).toBeGreaterThan(geometry.stage.top);
  }
 });
+
+
+test('captain Memory flips instantly and buffers the next two touches during mismatch',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.evaluate(()=>{
+  const holder=document.createElement('section');holder.id='memoryFastFixture';
+  holder.style.cssText='width:390px;max-width:100%;';
+  document.body.appendChild(holder);
+  window.__memoryFlipRequests=[];
+  const start=Date.now();
+  const client={rpc:async(name,args)=>{
+   if(name==='qwiz_party_arcade')return {error:null,data:{
+    code:'A1B2C3D4',mode:'captain',card_position:0,room_id:'00000000-0000-4000-8000-000000000001',
+    running:true,server_now:new Date().toISOString(),
+    started_at:new Date(start).toISOString(),ends_at:new Date(start+70000).toISOString(),
+    teams:[{id:'team',name:'Неукротимые',points:0,place:1}],mine:{team_id:'team'},
+    awards:[],extra:{captain:true,moves:0,pairs:0,completed_ms:null,
+     tiles:Array.from({length:12},(_,index)=>({index,icon:null,matched:false,open:false}))}
+   }};
+   if(name==='qwiz_arcade_play'){
+    window.__memoryFlipRequests.push(args.p_tile);
+    await new Promise(resolve=>setTimeout(resolve,145));
+    const n=window.__memoryFlipRequests.length;
+    return {error:null,data:n%2===1?{ok:true,first:args.p_tile,icon:'🌈'}:
+     {ok:true,match:n===4,icon:'🌈',first_icon:'🌈',hide_ms:640,completed:false}};
+   }
+   return {data:null,error:null};
+  }};
+  QwizArcade.mountPlayer(holder,{
+   code:'A1B2C3D4',room_id:'00000000-0000-4000-8000-000000000001',
+   activity:{settings:{arcade_mode:'captain'}}
+  },{client});
+ });
+ await expect(page.locator('#memoryFastFixture [data-arcade-tile]')).toHaveCount(12);
+ const flags=await page.evaluate(()=>{
+  const nodes=[...document.querySelectorAll('#memoryFastFixture [data-arcade-tile]')];
+  for(const i of [0,1,2,3])
+   nodes[i].dispatchEvent(new PointerEvent('pointerdown',{
+    bubbles:true,cancelable:true,pointerId:i+1,isPrimary:true,pointerType:'touch'}));
+  return nodes.slice(0,4).map(el=>({open:el.classList.contains('is-open'),
+   queued:el.classList.contains('is-queued')}));
+ });
+ expect(flags[0].open).toBe(true);expect(flags[1].open).toBe(true);
+ expect(flags[2].queued).toBe(true);expect(flags[3].queued).toBe(true);
+ await expect.poll(()=>page.evaluate(()=>window.__memoryFlipRequests.length),{timeout:5000}).toBe(4);
+ expect(await page.locator('#memoryFastFixture .arcade-memory-board [data-arcade-tile]').count()).toBe(12);
+ expect(await page.locator('#memoryFastFixture .arcade-alert').textContent()).not.toContain('Все капитаны одновременно');
+ await page.evaluate(()=>{QwizArcade.stop('player');document.getElementById('memoryFastFixture').remove()});
+});
