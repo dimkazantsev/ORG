@@ -330,25 +330,34 @@ function personalResults(s,final=false){
  (final&&stats.length?QwizStage.questionStats(stats):'')+'</section>';
 }
 function roundScorePanel(view,title,final=false,endsAt=null){
- const rows=(view?.teams||[]),players=(view?.players||[]),reward=view?.reward||null;
- const rewardBanner=reward?'<div class="round-reward-banner is-'+(reward.tone==='harm'?'harm':'boost')+
- '"><strong>'+(reward.tone==='harm'?'Красный манёвр':'Зелёный маршрут')+' · '+esc(reward.title)+'</strong>'+
- '<p>'+(reward.tone==='harm'?'Ограничение команде: ':'Усиление команды: ')+esc(reward.target)+
- '. Эффект применяется в следующем раунде.</p></div>':'';
- const render=(a,isTeam)=>a.length?'<ol class="round-score-list">'+a.map((x,i)=>'<li><span class="round-rank">'+(i+1)+'</span><strong>'+esc(x.nickname||x.name||'Участник')+'</strong><b>'+Math.round(Number(x.score||0)).toLocaleString('ru-RU',{maximumFractionDigits:0})+'</b></li>').join('')+'</ol>':'<p class="small-help">Результаты ещё обрабатываются сервером</p>';
+ const rows=view?.teams||[],players=view?.players||[],reward=view?.reward||null;
+ const arcade=['tug','rocket','captain','blitz'].includes(view?.mode);
+ const metricUnit=String(view?.metric_unit||'результат');
+ const fmtScore=x=>Number(x||0).toLocaleString('ru-RU',{maximumFractionDigits:0});
+ const fmtMetric=x=>Number(x||0).toLocaleString('ru-RU',{notation:'compact',maximumFractionDigits:1});
+ const value=x=>arcade?'<span class="round-performance">'+fmtMetric(x.metric)+' <small>'+esc(metricUnit)+'</small></span>':
+  '<span class="round-question-points">'+fmtScore(x.score)+' <small>баллов</small></span>';
+ const rowset=a=>a.length?'<ol class="round-score-list">'+a.map((x,i)=>
+  '<li><span class="round-rank">'+(i+1)+'</span><strong>'+esc(x.nickname||x.name||'Участник')+'</strong><b>'+value(x)+'</b></li>').join('')+
+  '</ol>':'<p class="small-help">Результаты обрабатываются сервером</p>';
  const myId=ctx.room?.me?.id,myTeamId=ctx.room?.me?.team_id;
  const myIndex=players.findIndex(x=>x.id===myId),teamIndex=rows.findIndex(x=>x.id===myTeamId);
- const individual=myIndex>=0?players[myIndex]:null,team=teamIndex>=0?rows[teamIndex]:null;
+ const team=teamIndex>=0?rows[teamIndex]:null,individual=myIndex>=0?players[myIndex]:null;
  const highlight=individual||team?'<div class="round-self-summary" aria-label="Ваши результаты">'+
-  (team?'<div><span>ВАША КОМАНДА · '+(teamIndex+1)+' МЕСТО</span><strong>'+Math.round(Number(team.score||0)).toLocaleString('ru-RU',{maximumFractionDigits:0})+'</strong><small>'+esc(view?.team_unit||'баллы')+'</small></div>':'')+
-  (individual?'<div><span>ВАШ РЕЗУЛЬТАТ · '+(myIndex+1)+' МЕСТО</span><strong>'+Math.round(Number(individual.score||0)).toLocaleString('ru-RU',{maximumFractionDigits:0})+'</strong><small>'+esc(view?.player_unit||'баллы')+'</small></div>':'')+
- '</div>':'';
- return '<section class="round-results-page'+(final?' is-final':'')+'"><div class="round-results-orbit" aria-hidden="true">✦</div>'+
- '<span class="eyebrow">'+(final?'ИГРА ЗАВЕРШЕНА':'РАУНД ЗАВЕРШЁН')+'</span>'+
- '<h1>'+esc(title||'Результаты')+'</h1>'+highlight+rewardBanner+
- '<div class="round-results-grid"><section><h2>Команды</h2>'+render(rows,true)+'</section>'+
- '<section><h2>Участники</h2>'+render(players,false)+'</section></div>'+
- (!final?'<p class="round-results-next" id="playerNextStatus" role="status">'+(endsAt&&remaining(endsAt)>0?'Следующая карточка через <strong id="playerResultCountdown">'+remaining(endsAt)+'</strong> сек.':'Ожидаем перехода от сервера…')+'</p>':'')+'</section>';
+  (team?'<div><span>ВАША КОМАНДА · '+(teamIndex+1)+' МЕСТО</span><strong>'+fmtScore(arcade?team.metric:team.score)+'</strong><small>'+esc(arcade?metricUnit:'баллов за вопросы')+'</small></div>':'')+
+  (individual?'<div><span>ВАШ РЕЗУЛЬТАТ · '+(myIndex+1)+' МЕСТО</span><strong>'+fmtScore(arcade?individual.metric:individual.score)+'</strong><small>'+esc(arcade?metricUnit:'баллов за вопросы')+'</small></div>':'')+
+  '</div>':'';
+ const rewardBanner=reward?'<div class="round-reward-banner"><strong>Выбран командный бонус · '+esc(reward.title)+'</strong>'+
+  '<p>Команда: '+esc(reward.target)+'. Эффект действует в следующем раунде.</p></div>':'';
+ return '<section class="round-results-page'+(arcade?' is-arcade':'')+(final?' is-final':'')+'">'+
+  '<div class="round-results-orbit" aria-hidden="true">✦</div>'+
+  '<span class="eyebrow">'+(final?'ИГРА ЗАВЕРШЕНА':'РАУНД ЗАВЕРШЁН')+'</span>'+
+  '<h1>'+esc(title||'Результаты')+'</h1>'+highlight+
+  (arcade?'<p class="round-results-note">Показаны показатели мини-игры, а не очки за вопросы. Победа приносит достижение и возможность проголосовать за бонус.</p>':'')+
+  rewardBanner+'<div class="round-results-grid"><section><h2>Команды</h2>'+rowset(rows)+'</section>'+
+  '<section><h2>Участники</h2>'+rowset(players)+'</section></div>'+
+  (!final?'<p class="round-results-next" id="playerNextStatus" role="status">'+
+    (endsAt&&remaining(endsAt)>0?'Следующая карточка через <strong id="playerResultCountdown">'+remaining(endsAt)+'</strong> сек.':'Ожидаем перехода от сервера…')+'</p>':'')+'</section>';
 }
 function roundIntroMarkup(s){
  const title=s.activity?.title||'Следующий раунд',icon=s.activity?.icon||s.activity?.settings?.queued_icon;
