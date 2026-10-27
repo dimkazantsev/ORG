@@ -106,24 +106,24 @@ window.QwizCardSandbox=(()=>{
     (s.matched.includes(i)||s.faceUp.includes(i)?esc(symbol):'✦')+'</button>').join('')+'</div>'+
     '<p class="card-play-note">'+s.matched.length/2+' из 6 пар · '+s.moves+' попыток. Найдите все пары, не обращаясь к серверу.</p>';
  }
+
  function arcadeHtml(s,kind){
   const mode=s.card.settings.arcade_mode;
-  if(mode==='tug')return '<div class="card-play-arcade"><div class="card-play-tap-art"><span>✦</span><strong>'+s.taps+'</strong><small>нажатий в тесте</small></div>'+
-     '<button class="card-play-tap" type="button" data-card-tap>ТАП!</button><p>Нажимайте столько раз, сколько нужно. Это счётчик одного тестового игрока, не командный результат.</p></div>';
-  if(mode==='captain')return '<div class="card-play-arcade"><p>Откройте по две плитки и соберите 6 пар.</p>'+memoryHtml(s)+'</div>';
+  const originalArt=window.QwizArcade?.previewArt?.(mode)||'';
+  if(mode==='tug')return '<div class="card-play-arcade">'+
+    '<div class="arcade-shell arcade-player card-play-arcade-shell" data-arcade-root="tug"><div class="arcade-scene">'+originalArt+
+    '<button class="arcade-tap-btn arcade-tap-center" type="button" data-card-tap>ТАП!</button></div></div>'+
+    '<div class="card-play-tap-art"><span>✦</span><strong>'+s.taps+'</strong><small>нажатий в тесте</small></div>'+
+    '<p>Нажимайте сколько угодно раз. Это локальный счетчик одного игрока, не командный результат.</p></div>';
+  if(mode==='captain')return '<div class="card-play-arcade"><div class="arcade-shell arcade-player card-play-arcade-shell" data-arcade-root="captain"><div class="arcade-scene">'+originalArt+
+    '</div></div><p>Откройте по две плитки и соберите 6 пар.</p>'+memoryHtml(s)+'</div>';
   const options=['A','B','C','D'];
-  const captain=kind==='captain-vote';const chosen=captain?s.captainVote:s.blitzVote;
-  return '<div class="card-play-question"><div class="card-play-overline">'+(captain?'РЕШЕНИЕ КАПИТАНА':'ГОЛОС УЧАСТНИКА')+'</div>'+
-   '<h3>'+(captain?'Капитан выбирает окончательный ответ команды':'Тестирование выбора варианта участником')+'</h3>'+
-   '<p class="card-play-note">В реальном Блиц-консенсусе вопрос и варианты выдаёт сервер. Здесь проверяются только этапы и управление голосованием; варианты A–D — обозначения, а не реальные вопросы.</p>'+
-   '<div class="card-play-answers">'+options.map((v,i)=>'<button type="button" data-card-vote="'+(captain?'captain':'player')+':'+i+'" class="card-play-answer'+(chosen===i?' is-picked':'')+'" aria-pressed="'+(chosen===i)+'" '+(s.view==='audience'?'disabled':'')+'><span class="card-play-letter">'+v+'</span><span class="card-play-choice">Выбрать '+v+'</span></button>').join('')+'</div></div>';
- }
- function introHtml(s){
-  const mode=s.card.settings?.arcade_mode,meta={russia_map:'Карта России',tug:'Тап-баттл',blitz:'Блиц-консенсус',captain:'Мэмори капитанов'};
-  const title=s.card.title||'Новый этап';
-  return '<div class="card-play-intro"><div class="card-play-orb" aria-hidden="true">'+icon(mode==='russia_map'?'flag':mode?'play':'sparkles')+'</div>'+
-    '<span class="card-play-overline">QWIZ-PARTY · '+esc(mode&&meta[mode]||s.topic||'КВИЗ')+'</span><h3>'+esc(title)+'</h3>'+
-    '<p>'+esc(mode==='russia_map'?'У каждого участника индивидуальные задания на карте.':s.card.type==='finale'?'Показываются финальные результаты игры.':isArcade(s)?'Командное испытание начинается с заставки.':'Стартовая анимация и объявление темы.')+'</p></div>';
+  const captain=kind==='captain-vote',chosen=captain?s.captainVote:s.blitzVote;
+  return '<div class="card-play-question"><div class="card-play-arcade-blitz-hero arcade-shell" data-arcade-root="blitz"><div class="arcade-scene">'+originalArt+'</div></div>'+
+    '<div class="card-play-overline">'+(captain?'РЕШЕНИЕ КАПИТАНА':'ГОЛОС УЧАСТНИКА')+'</div>'+
+    '<h3>'+(captain?'Капитан выбирает окончательный ответ команды':'Тестирование выбора варианта участником')+'</h3>'+
+    '<p class="card-play-note">В реальном Блиц-консенсусе вопрос и варианты выдаёт сервер. Здесь проверяются только этапы и управление голосованием; варианты A–D — обозначения, а не реальные вопросы.</p>'+
+    '<div class="card-play-answers">'+options.map((v,i)=>'<button type="button" data-card-vote="'+(captain?'captain':'player')+':'+i+'" class="card-play-answer'+(chosen===i?' is-picked':'')+'" aria-pressed="'+(chosen===i)+'" '+(s.view==='audience'?'disabled':'')+'><span class="card-play-letter">'+v+'</span><span class="card-play-choice">Выбрать '+v+'</span></button>').join('')+'</div></div>';
  }
  function summaryHtml(s,kind){
   const mode=s.card.settings?.arcade_mode;
@@ -225,7 +225,7 @@ window.QwizCardSandbox=(()=>{
     const svg=button.closest('svg');if(svg)return; // region SVG paths are handled below
    }
    if(button.hasAttribute('data-card-confirm')){s.step=Math.min(s.step+1,stages(s).length-1);paint();return}
-   if(button.hasAttribute('data-card-tap')){s.taps+=1;paint();return}
+   if(button.hasAttribute('data-card-tap')){s.taps+=1;const count=el('cardPlayScreen')?.querySelector('.card-play-tap-art strong');if(count)count.textContent=String(s.taps);return}
    if(button.hasAttribute('data-card-vote')){const [kind,num]=button.dataset.cardVote.split(':');if(kind==='captain')s.captainVote=Number(num);else s.blitzVote=Number(num);paint();return}
    if(button.hasAttribute('data-card-flip')){
     const index=Number(button.dataset.cardFlip);
