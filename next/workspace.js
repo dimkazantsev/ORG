@@ -534,7 +534,8 @@ function playCardPreview(index){
  const c=state.cards[index];if(!c)return;
  const topic=state.topics.find(t=>t.id===c.topic_id)?.name||'';
  window.QwizCardSandbox?.open({card:{...c,title:gameTitle(c)},topic,
-  loadQuestions:loadSandboxQuestions,loadMap:()=>window.QwizGeo.loadMap()});
+  loadQuestions:loadSandboxQuestions,loadMap:()=>window.QwizGeo.loadMap(),
+  loadCatalog:()=>rpc('qwiz_geo_catalog')});
 }
 function duplicateCard(index){
  const original=state.cards[index];

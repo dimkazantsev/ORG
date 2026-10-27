@@ -5,14 +5,15 @@ import assert from 'node:assert/strict';
 const read=name=>readFileSync(new URL(name,import.meta.url),'utf8');
 
 test('all resilience code parses and new builds are referenced',()=>{
- for(const name of ['app.js','arcade.js','presenter.js','workspace.js','card-sandbox.js']){
+ for(const name of ['app.js','arcade.js','presenter.js','workspace.js','card-sandbox.js','card-geo-preview.js']){
   assert.doesNotThrow(()=>new Script(read(name),{filename:name}));
  }
  const pages=[['index.html','app.js?v=consensus-fix-20261027-1'],
   ['index.html','arcade.js?v=mobile-40-20261028-1'],
-  ['workspace.html','workspace.js?v=card-play-sandbox-20261028-1'],
+  ['workspace.html','workspace.js?v=geo-full-question-20261028-1'],
   ['presenter.html','presenter.js?v=mobile-40-20261028-1'],
-  ['workspace.html','card-sandbox.js?v=card-play-sandbox-20261028-1']];
+  ['workspace.html','card-sandbox.js?v=geo-full-question-20261028-1'],
+  ['workspace.html','card-geo-preview.js?v=geo-full-question-20261028-1']];
  for(const [page,asset] of pages) assert.ok(read(page).includes(asset),page+' missing '+asset);
 });
 test('teacher card sandbox uses read-only question retrieval without writing gameplay state',()=>{
@@ -20,6 +21,12 @@ test('teacher card sandbox uses read-only question retrieval without writing gam
  assert.doesNotMatch(sandbox,/\.rpc\s*\(/);
  assert.doesNotMatch(sandbox,/qwiz_party_control|qwiz_prepare_room|qwiz_arcade_action|qwiz_vote_boost/);
  assert.match(sandbox,/data-card-step/);
+});
+test('geography test mode never reads player state or writes server-side answers',()=>{
+ const js=read('card-geo-preview.js');
+ assert.doesNotMatch(js,/\.rpc\s*\(|qwiz_geo_play|qwiz_prepare_room|qwiz_arcade_action/);
+ assert.ok(js.includes('regions.length!==89'));
+ assert.ok(js.includes('correctId:correct.id'));
 });
 test('40 students never broadcast every answer or join through Realtime',()=>{
  const app=read('app.js');

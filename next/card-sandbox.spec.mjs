@@ -129,22 +129,71 @@ test('Blitz card renders the actual 3D consensus graphic and allows both local v
  await expect(page.locator('#cardPlayScreen')).toContainText('Голос участника: C. Капитан: B.');
 });
 
-test('Map sandbox renders real region SVG and allows confirm/answer without backend writes',async({page})=>{
+test('All eight geography mechanics display actual catalog-sourced interactive questions with answer reveal',async({page})=>{
  await page.evaluate(()=>{
-  const dialogCard={type:'round',title:'Карта России',settings:{arcade_mode:'russia_map',geo_count:2,geo_modes:['locate','identify']}};
-  window.QwizCardSandbox.open({card:dialogCard,topic:'География России',
-   loadQuestions:async()=>[],
-   loadMap:async()=>Array.from({length:20},(_,i)=>({id:String(i),name:'Регион '+i,
-    path:'M'+(i*35)+' 10h30v30h-30Z',box:[i*35,10,30,30]}))});
+  window.geoCatalogFixture=Array.from({length:89},(_,i)=>({
+   id:String(i),name:'Регион '+i,capital:'Центр '+i,
+   district:'Округ '+(i%8),region_type:'Область',
+   flag:'test-'+i,neighbors:[String((i+1)%89),String((i+88)%89)]
+  }));
+  window.geoGeometryFixture=Array.from({length:89},(_,i)=>({
+   id:String(i),name:'Регион '+i,
+   path:'M'+((i%18)*57)+' '+(Math.floor(i/18)*82)+'h50v70h-50Z',
+   box:[(i%18)*57,Math.floor(i/18)*82,50,70]
+  }));
+  window.geoPreviewReadCount=0;
+  window.QwizCardSandbox.open({
+   card:{type:'round',title:'География России',settings:{
+    arcade_mode:'russia_map',geo_count:8,
+    geo_modes:['locate','identify','capital','flag','silhouette','neighbour','detective','district']
+   }},
+   topic:'География России',
+   loadQuestions:async()=>{throw Error('Unexpected normal-bank load')},
+   loadMap:async()=>{window.geoPreviewReadCount++;return window.geoGeometryFixture},
+   loadCatalog:async()=>{window.geoPreviewReadCount++;return window.geoCatalogFixture}
+  });
  });
- await expect(page.locator('#cardPlaySteps button')).toHaveCount(6);
- await page.locator('[data-card-step="1"]').click();
- await expect(page.locator('[data-card-region]')).toHaveCount(20);
- await page.locator('[data-card-region="4"]').click({force:true});
- await expect(page.locator('.card-play-map-choice')).toContainText('Регион 4');
- await page.locator('[data-card-confirm]').click();
- await expect(page.locator('#cardPlayMeta')).toContainText('Этап 3 из 6');
- await expect(page.locator('.card-play-map path.is-right')).toHaveCount(1);
+ await expect(page.locator('#cardPlaySteps button')).toHaveCount(18);
+ await expect.poll(()=>page.evaluate(()=>window.geoPreviewReadCount)).toBe(2);
+ for(let idx=0;idx<8;idx++){
+  const step=1+idx*2;
+  await page.locator('[data-card-step="'+step+'"]').click();
+  await expect(page.locator('.card-play-geography h3')).not.toBeEmpty();
+  if(idx===0){
+   await expect(page.locator('.card-play-map path[data-card-region]')).toHaveCount(89);
+   const first=page.locator('.card-play-map path[data-card-region]').first();
+   await first.focus();
+   const outline=await first.evaluate(e=>getComputedStyle(e).outlineStyle);
+   expect(outline).toBe('none');
+   await first.click({force:true});
+   await expect(page.locator('[data-card-confirm]')).toBeEnabled();
+   await page.locator('[data-card-confirm]').click();
+  }else{
+   await expect(page.locator('.card-play-answer')).toHaveCount(4);
+   await page.locator('.card-play-answer').first().click();
+   await page.locator('#cardPlayNext').click();
+  }
+  await expect(page.locator('.card-play-reveal')).toBeVisible();
+  if(idx>0){
+   await expect(page.locator('.card-play-answer.is-correct')).toHaveCount(1);
+   const options=await page.locator('.card-play-answer .card-play-choice').allTextContents();
+   expect(new Set(options).size).toBe(4);
+  }else await expect(page.locator('.card-play-map path.is-right')).toHaveCount(1);
+ }
+ await expect.poll(()=>page.evaluate(()=>window.geoPreviewReadCount)).toBe(2);
+ await expect(page.locator('#cardPlaySafety')).toContainText('без комнаты');
+});
+
+test('Geography preview does not fabricate a question when catalog is inaccessible',async({page})=>{
+ await page.evaluate(()=>QwizCardSandbox.open({
+  card:{type:'round',title:'Субъекты',settings:{arcade_mode:'russia_map',geo_count:1,geo_modes:['capital']}},
+  topic:'География России',loadMap:async()=>[],
+  loadCatalog:async()=>{throw Error('Справочник недоступен')},
+  loadQuestions:async()=>[]
+ }));
+ await expect(page.locator('#cardPlaySafety')).toContainText('Справочник недоступен');
+ await expect(page.locator('#cardPlaySteps button')).toHaveCount(2);
+ await expect(page.locator('[data-card-geo-choice]')).toHaveCount(0);
 });
 
 test('Closing during a slow data read cannot revive the old card or overwrite a new session',async({page})=>{
