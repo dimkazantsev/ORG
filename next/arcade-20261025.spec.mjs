@@ -181,7 +181,7 @@ test('Blitz Consensus replaces tap capture, uses protected voting and one ten-po
  assert.match(sql,/ALTER TABLE public\.qwiz_consensus_votes ENABLE ROW LEVEL SECURITY/);
  assert.match(sql,/ALTER TABLE public\.qwiz_consensus_decisions ENABLE ROW LEVEL SECURITY/);
  assert.match(sql,/p_phase='vote'/);
- assert.match(sql,/p_phase='final'/);
+ assert.match(sql,/p_phase NOT IN \('vote','final'\)/);
  assert.match(sql,/captain IS DISTINCT FROM p\.id/);
  assert.match(sql,/GROUP BY v\.choice ORDER BY count\(\*\) DESC,min\(v\.updated_at\)/);
  assert.match(integrated,/SET score=score\+10/);
