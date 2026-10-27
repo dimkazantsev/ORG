@@ -22,7 +22,7 @@ const flagModes=[
  ['history','История и символика',true]
 ];
 // Align live teacher preview with arcade labels in existing saved rooms.
-const ARCADE_VISIBLE_NAMES={tug:'Тап-баттл',blitz:'Блиц-вопрос',captain:'Мэмори капитанов'};
+const ARCADE_VISIBLE_NAMES={tug:'Тап-баттл',blitz:'Блиц-консенсус',captain:'Мэмори капитанов'};
 const hostArcadeActivity=a=>a?.settings?.arcade_mode&&ARCADE_VISIBLE_NAMES[a.settings.arcade_mode]?{...a,title:ARCADE_VISIBLE_NAMES[a.settings.arcade_mode]}:a;
 const titleKind=id=>flagModes.find(x=>x[0]===id)?.[1]||'Флаги мира';
 const icons={round:'▦',intro:'◉',break:'♫',team_stats:'▥',player_stats:'♙',bonus:'✦',duel:'⇄',finale:'★'};
@@ -62,7 +62,7 @@ const gameTitle=c=>cleanCardTitle(arcadeGames[c?.settings?.arcade_mode]?.title&&
 const titles={round:'Раунд вопросов',intro:'Начало игры',break:'Музыкальная пауза',team_stats:'Рейтинг команд',player_stats:'Статистика игроков',bonus:'Бонусная активность',duel:'Дуэль команд',finale:'Финал игры'};
 const buildDefaults={count:5,seconds:30,answer_seconds:10,order:'random',offset:0,team_cap:null,player_cap:null,sound:'fanfare',lead_seconds:5,stats_seconds:7,bonus_percent:70,bonus_lead:15};
 const arcadeGames={
- blitz:{title:'Блиц-вопрос',icon:'arcade_blitz',seconds:60,help:'7 секунд команды борются за право ответа. После захвата открывается вопрос из банка флагов. Правильный ответ: +10 очков.'},
+ blitz:{title:'Блиц-консенсус',icon:'arcade_blitz',seconds:60,help:'Участники голосуют за ответ, затем капитан видит результаты и принимает итоговое решение. Без решения капитана выбирается мнение большинства. Правильный ответ: 10 баллов команде.'},
  tug:{title:'Тап-баттл',icon:'arcade_tug',seconds:45,help:'Все участники нажимают большую 3D-кнопку. Сервер складывает число нажатий игроков в командный результат. Победа: +15 очков.'},
  captain:{title:'Мэмори капитанов',icon:'arcade_captain',seconds:100,help:'Все капитаны одновременно ищут пары среди 12 плиток. Побеждает завершивший за наименьшее время; при равенстве выигрывает меньшее число ходов. Победа: +15 очков.'}
 };
