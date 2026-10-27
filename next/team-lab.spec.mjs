@@ -9,6 +9,7 @@ test.beforeEach(async({page})=>{
   document.querySelector('#liveConsole').hidden=false;
   state.topics=[{id:'topic-a',name:'Тестовая тема'}];
   state.builds=[{id:'build-1',title:'Проверочная сборка'}];
+  state.buildsReady=true;
   studio=async (action,input)=>{
    if(action==='build_get')return{build:{id:input.id,title:'Проверочная сборка'},cards:[
     {type:'round',title:'Первый раунд',topic_id:'topic-a',settings:{count:1}},
@@ -22,6 +23,61 @@ test.beforeEach(async({page})=>{
    kind:'single',solution:{correct:1},explanation:'Ответ подтвержден'}];
   QwizTeamLab.refreshBuilds();
  });
+});
+
+
+test('Loading state cannot be mistaken for an empty catalog and requires readiness',async({page})=>{
+ await page.evaluate(()=>{
+  state.buildsReady=false;
+  state.builds=[];
+  QwizTeamLab.loadError('Соединение прервано');
+ });
+ await expect(page.locator('#teamLabBuild option')).toHaveText('Не удалось загрузить сборки');
+ await expect(page.locator('#teamLabStart')).toBeDisabled();
+ await expect(page.locator('#teamLabRetry')).toBeVisible();
+ await expect(page.locator('#teamLabMessage')).toContainText('Соединение прервано');
+});
+
+test('Retry reads saved builds from overview RPC, without creating a room or question request',async({page})=>{
+ await page.evaluate(()=>{
+  state.buildsReady=false;state.builds=[];
+  QwizTeamLab.loadError('Сервер временно не отвечает');
+  studio=async(action)=>{
+   if(action==='overview')return{topics:[{id:'topic-a',name:'Тестовая тема'}],builds:[{id:'build-remote',title:'Сборка из базы'}]};
+   throw Error('Unexpected server write or request: '+action);
+  };
+  state.db={}; // Simulates existing authenticated Supabase client
+ });
+ await page.locator('#teamLabRetry').click();
+ await expect(page.locator('#teamLabBuild')).toHaveValue('build-remote');
+ await expect(page.locator('#teamLabBuild option')).toHaveCount(2);
+ await expect(page.locator('#teamLabMessage')).toContainText('Сборка доступна');
+ await expect(page.locator('#teamLabRetry')).toBeHidden();
+ await expect(page.locator('#teamLabStart')).toBeEnabled();
+});
+
+test('Missing sandbox JS shows a recoverable error, never an endless loading option',async({page})=>{
+ await page.route('**/team-lab.js*',route=>route.abort('failed'));
+ await page.goto('http://127.0.0.1:8080/next/workspace.html',{waitUntil:'load'});
+ await expect(page.locator('#workspaceLoading')).toBeHidden();
+ // The test has no selected room; reveal the containing room console without
+ // invoking room discovery, which would correctly hide the console again.
+ await page.evaluate(()=>{
+  document.querySelector('#roomsPage').hidden=false;
+  document.querySelector('#liveConsole').hidden=false;
+ });
+ await expect(page.locator('#teamLabBuild option')).toHaveText('Модуль теста недоступен');
+ await expect(page.locator('#teamLabStart')).toBeDisabled();
+ await expect(page.locator('#teamLabRetry')).toBeVisible();
+});
+
+test('PWA app shell includes simulator assets and offline worker version has rotated',async({page})=>{
+ const response=await page.request.get('http://127.0.0.1:8080/next/sw.js');
+ expect(response.ok()).toBe(true);
+ const sw=await response.text();
+ expect(sw).toContain("'./team-lab.js'");
+ expect(sw).toContain("'./team-lab.css'");
+ expect(sw).toContain('qwiz-pwa-shell-20261028-v33');
 });
 
 async function start(page){

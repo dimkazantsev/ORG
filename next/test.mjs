@@ -405,7 +405,7 @@ test('Replay remains enabled in finished state after the team readiness check',(
  assert.match(host,/QwizStage\.iconLabel\(\$\('liveStart'\)/);
  assert.match(host,/qwiz_repeat_finished_room/);
  assert.match(page,/id="liveControlsHint"/);
- assert.match(page,/workspace-teams\.js\?v=arcade-ready-20261027-1/);
+ assert.match(page,/workspace-teams\.js\?v=team-lab-recovery-20261028-3/);
 });
 test('3D avatars render in team roster, profile and new optional gallery',()=>{
  const src=readFileSync(new URL('./teams.js',import.meta.url),'utf8');

@@ -37,7 +37,10 @@
    // A previously installed PWA can stay on an old worker indefinitely.
    // Activate a waiting update at the HOME screen only; NEVER reload a live game.
    const activateOnHome=()=>{
-    if(!document.getElementById('gameView')?.hidden)return;
+    const game=document.getElementById('gameView');
+    if(game&&!game.hidden)return; // never take over an active student round
+    const roomPage=document.getElementById('roomsPage');
+    if(roomPage&&!roomPage.hidden&&document.getElementById('liveConsole')&&!document.getElementById('liveConsole').hidden)return; // protect active teacher session
     reg.waiting?.postMessage({type:'SKIP_WAITING'});
    };
    activateOnHome();

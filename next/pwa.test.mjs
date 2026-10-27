@@ -11,7 +11,7 @@ test('PWA manifest is scoped to next/ and uses standalone mode',()=>{
 test('PWA is registered on every role and presentation route',()=>{
  for(const page of ['index.html','workspace.html','presenter.html','profile.html']){
   const html=read(page);assert.match(html,/rel="manifest" href="\.\/manifest\.webmanifest"/);
-  assert.match(html,/src="\.\/pwa\.js\?v=answer-grey-20261027-1"/);
+  assert.match(html,/src="\.\/pwa\.js\?v=team-lab-recovery-20261028-3"/);
  }
  assert.match(read('pwa.js'),/navigator\.serviceWorker\.register\('\.\/sw\.js'/);
 });

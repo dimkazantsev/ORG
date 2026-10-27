@@ -10,7 +10,7 @@ window.QwizTeamLab=(()=>{
  const shuffle=a=>{const out=a.slice();for(let i=out.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]]}return out};
  const modes={tug:'Тап-баттл',captain:'Мэмори капитанов',blitz:'Блиц-консенсус'};
  const effects={headstart:['Фора +12',12],teamwork:['Командный рывок',9],momentum:['Импульс +15%',null],fog:['Туман −5',-5],storm:['Шторм −8',-8],drain:['Потеря −12',-12]};
- let adapter=null,run=null,busy=false,serial=0;
+ let adapter=null,run=null,busy=false,serial=0,initialized=false,reloading=false,loadErrorText='';
  const team=i=>run.teams[i];
  const label=(k)=>effects[k]?.[0]||k;
  function setMessage(text,error=false){const el=$('teamLabMessage');if(el){el.textContent=text;el.classList.toggle('error',error)}}
@@ -26,14 +26,43 @@ window.QwizTeamLab=(()=>{
  }
  function refreshBuilds(){
   const select=$('teamLabBuild');if(!select||!adapter)return;
-  const previous=select.value;
-  const builds=adapter.builds()||[];
+  const start=$('teamLabStart'),retry=$('teamLabRetry'),previous=select.value;
+  const ready=adapter.ready?.()!==false;
+  const builds=ready?(adapter.builds()||[]).filter(b=>b?.id):[];
   select.replaceChildren();
-  select.add(new Option('Выберите сохранённую сборку',''));
-  for(const build of builds)if(build.id)select.add(new Option(String(build.title||build.name||'Без названия'),String(build.id)));
+  if(!ready){
+   select.add(new Option(loadErrorText?'Не удалось загрузить сборки':'Загрузка сохранённых сборок…',''));
+   select.disabled=true;start.disabled=true;retry.hidden=!loadErrorText;
+   if(loadErrorText)setMessage('Ошибка загрузки сборок: '+loadErrorText+' Нажмите «Обновить список».',true);
+   return;
+  }
+  loadErrorText='';
+  select.add(new Option(builds.length?'Выберите сохранённую сборку':'Нет сохранённых сборок',''));
+  for(const build of builds)select.add(new Option(String(build.title||build.name||'Без названия'),String(build.id)));
   if(builds.some(b=>String(b.id)===previous))select.value=previous;
   else if(builds.length)select.value=String(builds[0].id);
-  select.disabled=!!run;
+  select.disabled=!!run||!builds.length;
+  start.disabled=busy||!builds.length;
+  retry.hidden=!!builds.length;
+  if(!run&&!busy){
+   if(builds.length)setMessage('Сборка доступна. Запустите тест: 3 игрока против 3 виртуальных соперников.');
+   else setMessage('Сохранённых сборок пока нет. Создайте и сохраните игру в конструкторе, затем нажмите «Обновить список».');
+  }
+ }
+ function loadError(error){
+  loadErrorText=String(error?.message||error||'Сервер не ответил').slice(0,260);
+  if(!run)refreshBuilds();
+ }
+ async function retryBuilds(){
+  if(reloading||busy||run)return;
+  const button=$('teamLabRetry');
+  reloading=true;button.disabled=true;button.textContent='Обновляем…';
+  setMessage('Повторно запрашиваем сохранённые сборки.');
+  try{
+   if(!adapter?.reload)throw Error('Обновление недоступно. Перезагрузите кабинет.');
+   await adapter.reload();refreshBuilds();
+  }catch(error){loadError(error)}
+  finally{reloading=false;button.disabled=false;button.textContent='↻ Обновить список'}
  }
  function readQuestion(q,card,index){
   const options=Array.isArray(q.options)?q.options:[];
@@ -315,7 +344,10 @@ window.QwizTeamLab=(()=>{
  function init(callbacks){
   adapter=callbacks;
   const root=$('teamLab');if(!root)return;
+  if(initialized){refreshBuilds();return}
+  initialized=true;
   $('teamLabStart').addEventListener('click',start);
+  $('teamLabRetry').addEventListener('click',retryBuilds);
   $('teamLabNext').addEventListener('click',next);
   $('teamLabPrev').addEventListener('click',previous);
   $('teamLabStop').addEventListener('click',()=>{serial++;close();refreshBuilds()});
@@ -324,5 +356,5 @@ window.QwizTeamLab=(()=>{
  }
  function snapshot(){return run?{index:run.index,phase:run.phase,scores:run.teams.map(t=>t.score),length:run.events.length,
   pending:run.pendingEffect?.key||null,log:run.log.slice(),kind:active()?.kind,answered:run.submitted}:null}
- return Object.freeze({init,refreshBuilds,snapshot});
+ return Object.freeze({init,refreshBuilds,loadError,snapshot});
 })();

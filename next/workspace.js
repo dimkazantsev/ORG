@@ -67,7 +67,7 @@ const arcadeGames={
  tug:{title:'Тап-баттл',icon:'arcade_tug',seconds:45,help:'Все участники нажимают большую 3D-кнопку. Сервер складывает число нажатий игроков в командный результат. Победа: +15 очков.'},
  captain:{title:'Мэмори капитанов',icon:'arcade_captain',seconds:100,help:'Все капитаны одновременно ищут пары среди 12 плиток. Побеждает завершивший за наименьшее время; при равенстве выигрывает меньшее число ходов. Победа: +15 очков.'}
 };
-const state={db:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,bankOffset:0,bankPageSize:25,bankRequest:0,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',dragFrom:null,selectedCard:null,clockOffset:0,liveKey:'',lastDeadlineRefresh:0};
+const state={db:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,bankOffset:0,bankPageSize:25,bankRequest:0,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',buildsReady:false,dragFrom:null,selectedCard:null,clockOffset:0,liveKey:'',lastDeadlineRefresh:0};
 function msg(id,text='',isError=false){const el=$(id);if(!el)return;el.textContent=text;el.classList.toggle('error',!!isError)}
 function disable(id,value){const el=$(id);if(el)el.disabled=value}
 function fmt(x){return Math.round(Number(x)||0).toLocaleString('ru-RU',{maximumFractionDigits:0})}
@@ -142,7 +142,7 @@ function createOption(value,label){const n=document.createElement('option');n.va
 function fillSelect(select,options,placeholder,selected=''){select.replaceChildren();if(placeholder!==null)select.add(createOption('',placeholder));for(const [value,title]of options)select.add(createOption(value,title));select.value=selected}
 function nameTopic(id){return state.topics.find(t=>t.id===id)?.name||'Все темы'}
 async function overview(){
- const d=await studio('overview');state.topics=d.topics||[];state.builds=d.builds||[];window.QwizTeamLab?.refreshBuilds();
+ const d=await studio('overview');state.topics=d.topics||[];state.builds=d.builds||[];state.buildsReady=true;window.QwizTeamLab?.refreshBuilds();
  updateSelectors();configureBankModes();renderTopics();renderBuilds();await loadQuestions();
 }
 function updateSelectors(){
@@ -1332,12 +1332,41 @@ function wire(){
  for(const b of all('[data-close]'))b.onclick=()=>$(b.dataset.close).close();
  for(const dialog of all('dialog'))dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close()});
 }
+// Simulator catalog is independent of live-room and team-manager boot.
+function initTeamLab(){
+ const lab=window.QwizTeamLab;
+ if(!lab?.init){
+  const select=$('teamLabBuild');select.replaceChildren(new Option('Модуль теста недоступен',''));
+  select.disabled=true;$('teamLabStart').disabled=true;
+  $('teamLabMessage').textContent='Не удалось загрузить скрипт симулятора. Проверьте подключение и обновите страницу.';
+  $('teamLabMessage').classList.add('error');
+  $('teamLabRetry').hidden=false;
+  $('teamLabRetry').addEventListener('click',()=>location.reload());
+  return;
+ }
+ lab.init({
+  ready:()=>state.buildsReady,
+  builds:()=>state.builds,
+  build:id=>studio('build_get',{id}),
+  questions:card=>loadSandboxQuestions(card),
+  catalog:()=>rpc('qwiz_geo_catalog'),
+  map:()=>window.QwizGeo.loadMap(),
+  reload:async()=>{
+   if(!state.db)throw Error('Соединение с базой недоступно.');
+   const result=await studio('overview');
+   state.topics=result.topics||[];state.builds=result.builds||[];
+   state.buildsReady=true;updateSelectors();renderTopics();renderBuilds();
+   lab.refreshBuilds();
+  }
+ });
+}
 function workspaceReady(){document.documentElement.classList.remove('studio-starting');$('workspaceLoading').hidden=true}
 async function init(){
  // Read before wiring listeners or awaiting Supabase. The previous code overwrote
  // sessionStorage with the default 'bank' state during initial scroll/layout.
  const savedBeforeBoot=readPosition();
  restoringView=true;
+ initTeamLab();
  wire();
  fillSelect($('bankMode'),flagModes.map(([id,title])=>[id,title]),'Все механики');
  const select=$('editKind');
@@ -1348,12 +1377,20 @@ async function init(){
  }
  select.value='country';
 
- if(!window.supabase?.createClient){connection('error','Не удалось подключиться');workspaceReady();return}
+ if(!window.supabase?.createClient){
+  connection('error','Не удалось подключиться');
+  window.QwizTeamLab?.loadError('Не загрузилась библиотека подключения к Supabase.');
+  workspaceReady();return;
+ }
  state.db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
  try{const {data:{session}}=await state.db.auth.getSession();if(!session)throw Error('Войдите как преподаватель на главной.');
   if(!await rpc('org_quiz_is_admin_check'))throw Error('У вас нет прав преподавателя.');
   connection('ready','Кабинет подключён');
-  await overview();await loadRooms();
+  // Local timeout changes the UI only, and never polls the API.
+  const buildsLoadingTimeout=setTimeout(()=>{
+   if(!state.buildsReady)window.QwizTeamLab?.loadError('Сервер не ответил за 15 секунд.');
+  },15000);
+  try{await overview()}finally{clearTimeout(buildsLoadingTimeout)}await loadRooms();
   if(savedBeforeBoot){await restorePosition(savedBeforeBoot)}
   else{
    const hash=location.hash.slice(1);
@@ -1366,7 +1403,11 @@ async function init(){
   setInterval(()=>{if(!state.room||document.hidden)return;const s=state.room;if(['question','result'].includes(s.phase)&&!s.paused){const left=QwizStage.updateClock(s,state.clockOffset,document,'liveTimer');if(left===0&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}}else if(s.phase==='countdown'&&!s.paused&&Date.parse(s.ends_at)<=Date.now()+state.clockOffset&&Date.now()-state.lastDeadlineRefresh>1500){state.lastDeadlineRefresh=Date.now();refreshLive()}},250);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state.roomCode)refreshLive()});
   window.addEventListener('online',()=>{if(state.roomCode)refreshLive()});
- }catch(e){restoringView=false;connection('error',e.message);$('bankItems').innerHTML='<div class="empty">'+esc(e.message)+' <a href="./">Вернуться ко входу</a></div>'}
+  }catch(e){
+  restoringView=false;connection('error',e.message);
+  if(!state.buildsReady)window.QwizTeamLab?.loadError(e.message);
+  $('bankItems').innerHTML='<div class="empty">'+esc(e.message)+' <a href="./">Вернуться ко входу</a></div>'
+ }
  finally{workspaceReady()}
 }
 window.addEventListener('DOMContentLoaded',init);

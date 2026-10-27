@@ -102,13 +102,7 @@ async function teamAction(action,input={}){
 }
 function teamDropClear(){teamUI.dragged=null;all('.is-drop-target,.is-dragging').forEach(el=>el.classList.remove('is-drop-target','is-dragging'));}
 window.addEventListener('DOMContentLoaded',()=>{
- window.QwizTeamLab?.init({
-  builds:()=>state.builds,
-  build:id=>studio('build_get',{id}),
-  questions:card=>loadSandboxQuestions(card),
-  catalog:()=>rpc('qwiz_geo_catalog'),
-  map:()=>window.QwizGeo.loadMap()
- });
+ // Simulator is initialised independently by workspace.js with explicit loading/error states.
  $('manageTeams').onclick=()=>{$('teamManager').scrollIntoView({behavior:motionPreference.matches?'instant':'smooth',block:'start'});$('teamManagerHeading').focus({preventScroll:true});};
 
  $('teamSettings').onsubmit=e=>{e.preventDefault();if(e.target.reportValidity())teamAction('settings',{count:Number($('teamCount').value),mode:$('teamMode').value});};
