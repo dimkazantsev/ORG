@@ -1816,3 +1816,55 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
  #cardPlayScreen .card-play-arcade-shell .arcade-scene{height:clamp(160px,25dvh,235px)}
  #cardPlayScreen .card-play-arcade-blitz-hero .arcade-scene{height:110px}
 }
+
+
+/* Geography card preview: native light SVG map, no rectangular focus outline. */
+#cardPlayScreen .card-play-geography{width:100%;max-width:960px}
+#cardPlayScreen .card-play-map-wrap{
+ border:0!important;outline:0!important;box-shadow:none!important;
+ background:#f0f7fc;overflow:hidden;min-width:0;min-height:0;padding:0;
+ border-radius:14px;
+}
+#cardPlayScreen .card-play-map{
+ display:block;width:100%;height:auto;max-height:clamp(260px,51dvh,510px);
+ min-width:0;overflow:hidden;background:#eef6fb;outline:0!important;
+ -webkit-tap-highlight-color:transparent;
+}
+#cardPlayScreen .card-play-map path{
+ fill:#d7dfef;stroke:#fff;stroke-width:.65;
+ pointer-events:visibleFill;vector-effect:non-scaling-stroke;
+ outline:none!important;box-shadow:none!important;filter:none!important;
+ -webkit-tap-highlight-color:transparent;transition:fill .12s ease;
+}
+#cardPlayScreen .card-play-map path[data-card-region]{cursor:pointer}
+#cardPlayScreen .card-play-map path[data-card-region]:hover,
+#cardPlayScreen .card-play-map path[data-card-region]:focus-visible{fill:#b79aea;outline:none!important}
+#cardPlayScreen .card-play-map path.is-selected{fill:#9b6be5!important;stroke:#fff!important;outline:none!important}
+#cardPlayScreen .card-play-map path.is-focused{fill:#8656d0!important;stroke:#fff!important;outline:none!important}
+#cardPlayScreen .card-play-map path.is-right{fill:#40b679!important;stroke:#fff!important;outline:none!important}
+#cardPlayScreen .card-play-map path:focus{outline:none!important}
+#cardPlayScreen .card-play-map-choice{
+ margin:10px 0;font-size:13px;font-weight:750;color:#6f47a6;
+}
+#cardPlayScreen .card-play-geo-media{
+ display:grid;place-items:center;min-height:100px;margin:10px 0 16px;
+}
+#cardPlayScreen .card-play-geo-media img{
+ display:block;width:auto;max-width:100%;height:auto;max-height:210px;object-fit:contain;
+}
+#cardPlayScreen .card-play-geo-clues{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,180px),1fr));gap:9px;margin:14px 0;
+}
+#cardPlayScreen .card-play-geo-clues span{
+ background:#f2eafd;border:1px solid #e3d4fa;border-radius:11px;
+ padding:12px;font-size:13px;font-weight:740;color:#66429c;overflow-wrap:anywhere;
+}
+#cardPlayScreen.is-audience .card-play-map-wrap{background:#e9f3fb}
+#cardPlayScreen.is-audience .card-play-geo-clues span{background:#3e2d56;border-color:#684b8d;color:#fff}
+@media(max-width:650px){
+ #cardPlayScreen .card-play-map{max-height:clamp(240px,43dvh,390px)}
+ #cardPlayScreen .card-play-geo-media img{max-height:160px}
+}
+@media(prefers-reduced-motion:reduce){
+ #cardPlayScreen .card-play-map path{transition:none}
+}
