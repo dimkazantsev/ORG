@@ -174,10 +174,10 @@
    if(error)throw error;
    if(answer!==null&&data.last_answer){
      t.revealQuestion=t.view?.question;
-     t.lastAnswer=data.last_answer;t.feedbackUntil=Date.now()+Math.min(1000,Math.max(400,Number(data.question_seconds||5)*160));
+     t.lastAnswer=data.last_answer;t.feedbackUntil=Date.now()+Math.min(30000,Math.max(1000,Number(data.answer_seconds||8)*1000));
      setTimeout(()=>{if(!t.closed&&Date.now()>=t.feedbackUntil){
        t.lastAnswer=null;t.revealQuestion=null;t.renderKey=null;roundState(t);
-     }},Math.min(1080,Math.max(480,Number(data.question_seconds||5)*160+80)));
+     }},Math.min(30080,Math.max(1080,Number(data.answer_seconds||8)*1000+80)));
    }
    t.view=data;
    t.message=answer===null?'':data.last_correct?'Верно! +10 очков':'Нет, этот ответ неверный.';
