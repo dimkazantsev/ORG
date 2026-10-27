@@ -474,7 +474,7 @@ test('One archive-clear button previews all completed games, cancels safely and 
   state.db={rpc:async(method,params)=>{
    window.archiveCalls.push({method,params});
    if(method==='qwiz_clear_finished_rooms'){
-    if(params.p_confirm===false)return {data:{count:30,deleted:false},error:null};
+    if(params.p_confirm===false)return {data:{count:window.archiveWasCleared?0:30,deleted:false},error:null};
     window.archiveWasCleared=true;
     return {data:{count:30,deleted:true},error:null};
    }
