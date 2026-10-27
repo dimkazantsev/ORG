@@ -5,12 +5,12 @@
 <meta name="theme-color" content="#faf9fd"><link rel="manifest" href="./manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="default"><title>QWIZ-PARTY — Студия преподавателя</title>
 <link rel="preload" href="./assets/manrope-variable.ttf" as="font" type="font/ttf" crossorigin>
 <link rel="stylesheet" href="./theme.css?v=lavender-2">
-<link rel="stylesheet" href="./workspace.css?v=geo-full-question-20261028-1"><link rel="stylesheet" href="./team-lab.css?v=team-lab-recovery-20261028-3">
+<link rel="stylesheet" href="./workspace.css?v=geo-full-question-20261028-1"><link rel="stylesheet" href="./team-lab.css?v=bonus-explorer-20261028-1">
 <script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link rel="stylesheet" href="./stage.css?v=responsive-results-20261025"><script defer src="./stage.js?v=consensus-fix-20261027-1"></script>
 <script defer src="./vendor/qrcode.min.js"></script><script defer src="./workspace.js?v=team-lab-recovery-20261028-3"></script>
 <link rel="stylesheet" href="./motion.css?v=2">
-<link rel="stylesheet" href="./teams.css?v=unified-lobby-20261026-3"><script defer src="./avatar-art.js?v=avatar-3d-20261024-16"></script><script defer src="./teams.js?v=captain-team-20261026-3"></script><script defer src="./workspace-teams.js?v=team-lab-recovery-20261028-3"></script><script defer src="./team-lab.js?v=team-lab-recovery-20261028-3"></script>
+<link rel="stylesheet" href="./teams.css?v=unified-lobby-20261026-3"><script defer src="./avatar-art.js?v=avatar-3d-20261024-16"></script><script defer src="./teams.js?v=captain-team-20261026-3"></script><script defer src="./workspace-teams.js?v=team-lab-recovery-20261028-3"></script><script defer src="./team-lab-bonuses.js?v=bonus-explorer-20261028-1"></script><script defer src="./team-lab.js?v=bonus-explorer-20261028-1"></script>
 <link rel="stylesheet" href="./arcade.css?v=consensus-fix-20261027-1"><script defer src="./arcade.js?v=card-play-sandbox-20261028-1"></script>
 <link rel="stylesheet" href="./russia-geo.css?v=geo-native-20261028-1"><script defer src="./russia-geo.js?v=geo-control-20261027-6"></script>
 <script defer src="./card-geo-preview.js?v=geo-full-question-20261028-1"></script><script defer src="./card-sandbox.js?v=geo-full-question-20261028-1"></script><script defer src="./pwa.js?v=team-lab-recovery-20261028-3"></script></head><body class="studio-polish" data-design="lavender-20261022"><a class="skip-link" href="#mainContent">К содержимому</a>
@@ -112,9 +112,39 @@
    <button type="button" class="secondary-button" id="teamLabStop" hidden>Остановить</button>
  </div>
  <p id="teamLabMessage" class="team-lab-message" role="status">Загружаем сохранённые игры преподавателя…</p>
- <div id="teamLabIdle" class="team-lab-idle">Командный эксперимент начнётся здесь. Управляйте ответами и вручную переходите к следующему вопросу.</div>
+ <section id="teamLabBonusExplorer" class="team-lab-bonuses" aria-labelledby="teamLabBonusHeading">
+ <div class="team-lab-bonuses-heading">
+  <div><span class="eyebrow">ДЕЙСТВУЮЩИЕ ЭФФЕКТЫ · 6</span>
+    <h3 id="teamLabBonusHeading">Бонусы и штрафы команд</h3>
+    <p>Два голосования: сначала команда-победитель выбирает усилить себя или ослабить соперника, затем большинством выбирает конкретный эффект.</p></div>
+  <button type="button" class="team-lab-primary" data-bonus-start>Проверить голосование и последствия</button>
+ </div>
+ <div class="team-lab-rules" aria-label="Условия получения бонуса">
+  <span><strong>1.</strong> Победить в мини-игре</span>
+  <span><strong>2.</strong> Выполнить условия режима</span>
+  <span><strong>3.</strong> Получить большинство на двух голосованиях</span>
+  <span><strong>4.</strong> Применить в следующем обычном раунде</span>
+ </div>
+ <div class="team-lab-catalog-groups">
+  <div><h4 class="team-lab-effect-group-title is-positive">Усиления своей команды</h4><div id="teamLabBonusPositive" class="team-lab-bonus-catalog"></div></div><div><h4 class="team-lab-effect-group-title is-negative">Штрафы сопернику</h4><div id="teamLabBonusNegative" class="team-lab-bonus-catalog"></div></div>
+ </div>
+ <details class="team-lab-eligibility">
+  <summary>Когда в настоящей игре доступно голосование за бонус?</summary>
+  <p>В серверной версии нужна победа и хотя бы 1 игровой балл в мини-игре. Для «Тап-баттла» участвуют минимум 70% команды (если настройка раунда не изменена) и выполняется отрыв от соперника — обычно от 15 очков. Для «Мэмори капитанов» достаточно участия капитана при необходимом отрыве. В «Блиц-консенсусе» действует отдельное сравнение результатов делегатов. Также необходим следующий обычный раунд с вопросами и большинство голосов за стратегию и за конкретный эффект. Окно голосования на сервере составляет от 18 до 24 секунд в зависимости от результата игры.</p>
+ </details>
+ <div class="team-lab-demo-controls">
+  <label>Кто выиграл мини-игру?
+   <select id="teamLabBonusWinner"><option value="0">Команда преподавателя · 3 одинаковых голоса</option><option value="1">Случайная команда · 3 независимых голоса</option></select>
+  </label>
+  <button type="button" class="team-lab-primary" data-bonus-start>Начать голосование</button>
+ </div>
+ <div id="teamLabBonusDemo" class="team-lab-demo" hidden></div>
+ <p id="teamLabBonusFeedback" class="team-lab-demo-help" role="status">Лаборатория доступна даже после финиша. До запуска теста показываются расчёты; для изменения тестового счёта запустите сборку. Никаких записей на сервере.</p>
+</section>
+<div id="teamLabIdle" class="team-lab-idle">Командный эксперимент начнётся здесь. Управляйте ответами и вручную переходите к следующему вопросу.</div>
  <div id="teamLabStage" hidden>
   <label class="team-lab-override team-lab-sandbox-toggle"><input type="checkbox" id="teamLabForceBonus"><span>Разрешить тестирование бонусов без достижения порога <small>(только симуляция)</small></span></label>
+  <div id="teamLabBonusCheck" class="team-lab-bonus-check" aria-live="polite">Бонусы доступны после мини-игр при выполнении условий голосования.</div>
   <div class="team-lab-duel">
    <article class="team-lab-team is-teacher">
     <span class="team-lab-side">ВАША КОМАНДА · СЛЕВА</span>

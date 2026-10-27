@@ -9,7 +9,7 @@ window.QwizTeamLab=(()=>{
  const sample=a=>a[Math.floor(Math.random()*a.length)];
  const shuffle=a=>{const out=a.slice();for(let i=out.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[out[i],out[j]]=[out[j],out[i]]}return out};
  const modes={tug:'Тап-баттл',captain:'Мэмори капитанов',blitz:'Блиц-консенсус'};
- const effects={headstart:['Фора +12',12],teamwork:['Командный рывок',9],momentum:['Импульс +15%',null],fog:['Туман −5',-5],storm:['Шторм −8',-8],drain:['Потеря −12',-12]};
+ const effects={headstart:['Фора +12',12],teamwork:['Командный рывок',9],momentum:['Импульс +15%',null],fog:['Туман соперника −5',-5],storm:['Штормовой заслон −8',-8],drain:['Энергетический отток −12',-12]};
  let adapter=null,run=null,busy=false,serial=0,initialized=false,reloading=false,loadErrorText='';
  const team=i=>run.teams[i];
  const label=(k)=>effects[k]?.[0]||k;
@@ -94,22 +94,22 @@ window.QwizTeamLab=(()=>{
  }
  async function eventsFor(cards,callbacks){
   const events=[],warnings=[];
-  for(const card of cards){
+  for(const [cardIndex,card] of cards.entries()){
    if(!card||['intro','break','finale','team_stats','player_stats'].includes(card.type))continue;
    const mode=card.settings?.arcade_mode;
    if(modes[mode]){
-    events.push({kind:'arcade',mode,title:card.title||modes[mode],settings:card.settings||{}});
+    events.push({kind:'arcade',mode,title:card.title||modes[mode],settings:card.settings||{},cardIndex});
    }else if(mode==='russia_map'){
     if(!run.geoCatalog){run.geoCatalog=await callbacks.catalog();run.geoMap=await callbacks.map()}
     const geo=window.QwizCardGeoPreview.build({card,catalog:run.geoCatalog,geometry:run.geoMap});
-    for(const g of geo)events.push(geoQuestions(g,card));
+    for(const g of geo)events.push({...geoQuestions(g,card),cardIndex});
    }else if(card.type==='round'){
     if(!card.topic_id){warnings.push('Карточка «'+(card.title||'Раунд')+'» не имеет темы');continue}
     const questions=await callbacks.questions(card);
     let skipped=0;
     for(const [index,q] of (questions||[]).entries()){
      const item=readQuestion(q,card,index);
-     if(item)events.push(item);else skipped++;
+     if(item)events.push({...item,cardIndex});else skipped++;
     }
     if(skipped)warnings.push('«'+(card.title||'Раунд')+'»: '+skipped+' сложных/неполных заданий не моделируются (порядок, сборка, память или отсутствует ключ)');
    }
@@ -120,7 +120,7 @@ window.QwizTeamLab=(()=>{
  function resetActivity(event){
   run.answer=new Set();run.submitted=false;run.feedback='';run.arcadeResult=null;
   run.taps=[0,0];run.matches=[0,0];run.blitzChoices=[null,null];
-  run.pendingVote=null;run.strategy=null;run.boost=null;
+  run.pendingVote=null;run.strategy=null;run.boost=null;run.strategyVotes=[];run.optionVotes=[];
   if(event?.kind==='question'&&run.pendingEffect){
    const effect=run.pendingEffect;run.pendingEffect=null;
    const t=team(effect.target),before=t.score;
@@ -179,15 +179,28 @@ window.QwizTeamLab=(()=>{
     '<button type="button" class="team-lab-primary" data-lab-resolve>Завершить мини-игру</button>');
  }
  function bonusBody(){
-  const v=run.arcadeResult,options=run.strategy==='sabotage'?['fog','storm','drain']:['headstart','teamwork','momentum'];
-  if(!v)return '';
-  const winner=team(v.winner);
-  if(!run.strategy)return '<div class="team-lab-prompt"><span class="team-lab-eyebrow">ПОБЕДА · ГОЛОСОВАНИЕ 1/2</span><h4>Что сделать с преимуществом?</h4>'+
-   '<p>Победитель: '+esc(winner.name)+'. Три участника команды преподавателя голосуют одинаково; действия соперника выбираются случайно.</p></div>'+
-   '<div class="team-lab-strategies"><button data-lab-strategy="support" type="button">Усилить себя</button><button data-lab-strategy="sabotage" type="button">Ослабить соперника</button></div>';
-  return '<div class="team-lab-prompt"><span class="team-lab-eyebrow">ГОЛОСОВАНИЕ 2/2</span><h4>'+esc(run.strategy==='support'?'Выберите бонус':'Выберите штраф')+'</h4>'+
-   '<p>Эффект будет применён к следующему обычному вопросу, как в серверной модели.</p></div><div class="team-lab-strategies">'+
-   options.map(key=>'<button type="button" data-lab-boost="'+key+'">'+esc(label(key))+'</button>').join('')+'</div>';
+  const v=run.arcadeResult;if(!v)return '';
+  const bot=v.winner===1,winner=team(v.winner);
+  const names=k=>k==='support'?'Усилить себя':k==='sabotage'?'Ослабить соперника':label(k);
+  const tally=(votes,keys)=>'<div class="team-lab-sandbox-votes">'+
+   (run.strategy&&run.strategyVotes.length?
+    '<div class="team-lab-strategy-summary">Голоса за стратегию '+esc(run.strategy==='support'?'усилить себя':'ослабить соперника')+
+     ' <strong>'+run.strategyVotes.filter(v=>v===run.strategy).length+'/3</strong></div>':'')+keys.map(k=>
+   '<div>'+esc(names(k))+' <strong>'+votes.filter(x=>x===k).length+'/3</strong></div>').join('')+'</div>';
+  const info='<p class="team-lab-help">Большинство: минимум 2 из 3 одинаковых голосов. В настоящей комнате голосует только команда-победитель.</p>';
+  if(!run.strategy)return '<div class="team-lab-prompt"><span class="team-lab-eyebrow">БОНУС · ЭТАП 1 / 2</span><h4>Усилить себя или ослабить соперника?</h4>'+
+    '<p>Победитель: '+esc(winner.name)+'. '+(bot?'Откройте три отдельных голоса системы.':'Одно ваше решение повторяют трое игроков.')+'</p></div>'+
+    (bot?'<button type="button" class="team-lab-primary" data-lab-bot-vote="strategy">Показать голоса случайной команды</button>':
+    '<div class="team-lab-strategies"><button type="button" data-lab-strategy="support">Усилить себя</button><button type="button" data-lab-strategy="sabotage">Ослабить соперника</button></div>')+
+    tally(run.strategyVotes,['support','sabotage'])+info;
+  const opts=run.strategy==='sabotage'?['fog','storm','drain']:['headstart','teamwork','momentum'];
+  return '<div class="team-lab-prompt"><span class="team-lab-eyebrow">БОНУС · ЭТАП 2 / 2</span><h4>'+
+    esc(run.strategy==='support'?'Выберите конкретное усиление':'Выберите конкретный штраф')+'</h4><p>Решение первого этапа: '+
+    esc(names(run.strategy))+' — '+run.strategyVotes.filter(x=>x===run.strategy).length+'/3 голосов.</p></div>'+
+    (bot?'<button type="button" class="team-lab-primary" data-lab-bot-vote="option">Показать выбор трёх игроков системы</button>':
+    '<div class="team-lab-strategies">'+opts.map(key=>'<button type="button" data-lab-boost="'+key+'"><strong>'+esc(label(key))+'</strong><small>'+
+    esc(window.QwizBonusExplorer?.effects.find(x=>x.id===key)?.detail||'Применение в следующем раунде')+'</small></button>').join('')+'</div>')+
+    tally(run.optionVotes,opts)+info;
  }
  function stats(){
   $('teamLabTeacherScore').textContent=String(team(0).score);
@@ -198,13 +211,28 @@ window.QwizTeamLab=(()=>{
  }
  function draw(){
   if(!run)return;
-  const e=active();if(!e){$('teamLabStageBody').innerHTML='<p class="team-lab-completed">Тест завершён. Посмотрите итоговый счёт и историю. Для нового эксперимента нажмите «Запустить заново».</p>';$('teamLabNext').disabled=true;$('teamLabStatus').textContent='Финиш';stats();return}
+  const e=active();if(!e){
+   $('teamLabStageBody').innerHTML='<p class="team-lab-completed">Тест завершён. Можно проверить бонусы и штрафы в лаборатории выше, увидеть расчёт и применить его к тестовому счёту. Для нового эксперимента нажмите «Запустить тест».</p>';
+   $('teamLabNext').disabled=true;$('teamLabPrev').disabled=!run.moments.length;
+   $('teamLabStatus').textContent='Финиш';
+   $('teamLabBonusCheck').textContent='Это конец сборки: игровой бонус на следующем раунде уже невозможен. Лаборатория эффектов выше позволяет отдельно увидеть голосование и последствия.';
+   stats();return;
+  }
   $('teamLabStatus').textContent='Этап '+(run.index+1)+' / '+run.events.length+' · '+(e.kind==='arcade'?'Мини-игра':'Вопрос');
   // Teacher owns navigation: unanswered questions and unfinished mini-games may be skipped.
   $('teamLabNext').disabled=run.phase==='bonus';
   $('teamLabPrev').disabled=!run.moments?.length;
   $('teamLabNext').textContent=run.index===run.events.length-1?'К итогам →':'Следующий вопрос / этап →';
   $('teamLabStageBody').innerHTML=run.phase==='bonus'?bonusBody():e.kind==='arcade'?arcadeBody(e):questionBody(e);
+  const banner=$('teamLabBonusCheck');
+  if(banner){
+   const count=run.events.filter(x=>x.kind==='arcade').length;
+   banner.textContent=!count?'В этой сборке нет мини-игр: автоматических бонусных голосований не будет. Для изучения всех эффектов воспользуйтесь лабораторией выше.':
+    run.phase==='bonus'?'Идёт голосование команды-победителя: нужно большинство по стратегии и конкретному эффекту.':
+    e.kind==='arcade'?'Чтобы заработать бонус: завершите мини-игру, выполните условия режима, затем пройдите оба этапа голосования.':
+    run.pendingEffect?'Ожидает следующего обычного раунда: '+label(run.pendingEffect.key):
+    'В сборке '+count+' мини-игр. Бонусы открываются по условиям серверной механики. Лаборатория выше доступна в любое время.';
+  }
   stats();
  }
  function submitAnswer(){
@@ -234,13 +262,27 @@ window.QwizTeamLab=(()=>{
   if(![0,1].includes(winner))winner=0;
   const reward=e.mode==='blitz'?10:15;
   team(winner).score+=reward;
-  const settings=e.settings||{},minimum=25,lead=Math.max(0,Number.isFinite(Number(settings.bonus_lead))&&settings.bonus_lead!==undefined?Number(settings.bonus_lead):15);
-  const enough=points[winner]>=minimum&&points[winner]-points[1-winner]>=lead;
+  const settings=e.settings||{};
+  const lead=Math.max(0,Math.min(200,Number.isFinite(Number(settings.bonus_lead))&&settings.bonus_lead!==undefined?Number(settings.bonus_lead):15));
+  const participation=Math.max(50,Math.min(100,Number.isFinite(Number(settings.bonus_percent))?Number(settings.bonus_percent):70));
+  const activated=e.mode==='tug'?((winner===0?run.taps[0]:run.taps[1])>0?3:0):
+    e.mode==='captain'?((winner===0?run.matches[0]:run.matches[1])>0?1:0):
+    e.mode==='blitz'?((winner===0?run.blitzChoices[0]:run.blitzChoices[1])!=null?1:0):0;
+  // Mirrors live qwiz_bonus_eligible: point >=1, delegate/team participation,
+  // normal gap except blitz and a separately following ordinary round.
+  const enough=points[winner]>=1&&(e.mode==='blitz'?points[winner]>=points[1-winner]:points[winner]-points[1-winner]>=lead)&&
+    (['captain','blitz'].includes(e.mode)?activated>=1:activated*100>=participation*3);
   const overridden=$('teamLabForceBonus')?.checked===true;
-  const hasNextQuestion=run.events.slice(run.index+1).some(event=>event.kind==='question');
-  const canBoost=hasNextQuestion&&(enough||overridden)&&(e.mode!=='tug'||points[winner]>0||overridden);
-  run.arcadeResult={winner,points,canBoost};
-  run.feedback=team(winner).name+' побеждает (локальная модель), +'+reward+' очков. '+(canBoost?(overridden&&!enough?'Тестовый обход порога включён.':'Условие дополнительного эффекта выполнено.'):'Дополнительный эффект не выдан: требуется следующий вопрос, результат от 25 и отрыв ≥'+lead+'.');
+  const hasNextQuestion=run.events.slice(run.index+1).some(event=>event.kind==='question'&&
+    (e.cardIndex===undefined||event.cardIndex===undefined||event.cardIndex>e.cardIndex));
+  const canBoost=hasNextQuestion&&(enough||overridden);
+  run.arcadeResult={winner,points,canBoost,eligible:enough,participation,lead,activated,hasNextQuestion};
+  run.feedback=team(winner).name+' побеждает (локальная модель), +'+reward+' очков. '+
+    (canBoost?(overridden&&!enough?'Только в симуляции сняты условия допуска.':'Условия допуска выполнены; команда может голосовать.') :
+    'Бонус недоступен: '+(!hasNextQuestion?'после этой мини-игры нет следующего обычного раунда вопросов.':
+    points[winner]<1?'результат меньше 1 игрового балла.':
+    activated===0||e.mode==='tug'&&activated*100<participation*3?'не выполнен порог активности команды.':
+    'разница результатов меньше '+lead+' очков.'));
   log(run.feedback);
   draw();
  }
@@ -250,7 +292,7 @@ window.QwizTeamLab=(()=>{
    log:run.log.slice(),pendingEffect:run.pendingEffect?{...run.pendingEffect}:null,
    answer:[...run.answer],submitted:run.submitted,feedback:run.feedback,
    taps:run.taps.slice(),matches:run.matches.slice(),blitzChoices:run.blitzChoices.slice(),
-   arcadeResult:run.arcadeResult?{...run.arcadeResult}:null,strategy:run.strategy});
+   arcadeResult:run.arcadeResult?{...run.arcadeResult}:null,strategy:run.strategy,strategyVotes:run.strategyVotes.slice(),optionVotes:run.optionVotes.slice()});
  }
  function previous(){
   if(!run?.moments.length)return;
@@ -258,7 +300,7 @@ window.QwizTeamLab=(()=>{
   run.index=x.index;run.phase=x.phase;run.log=x.log;run.pendingEffect=x.pendingEffect;
   run.teams.forEach((t,i)=>t.score=x.scores[i]);run.answer=new Set(x.answer);
   run.submitted=x.submitted;run.feedback=x.feedback;run.taps=x.taps;run.matches=x.matches;
-  run.blitzChoices=x.blitzChoices;run.arcadeResult=x.arcadeResult;run.strategy=x.strategy;
+  run.blitzChoices=x.blitzChoices;run.arcadeResult=x.arcadeResult;run.strategy=x.strategy;run.strategyVotes=x.strategyVotes||[];run.optionVotes=x.optionVotes||[];
   draw();
  }
  function next(){
@@ -271,13 +313,7 @@ window.QwizTeamLab=(()=>{
   }
   if(e.kind==='arcade'&&run.arcadeResult.canBoost&&!run.arcadeResult.boostDone){
    remember();run.phase='bonus';run.arcadeResult.boostDone=true;
-   // Bot votes randomly, including choice of sabotage/support, without fake network requests.
-   if(run.arcadeResult.winner===1){
-    run.strategy=sample(['support','sabotage']);
-    const key=sample(run.strategy==='support'?['headstart','teamwork','momentum']:['fog','storm','drain']);
-    setEffect(key);
-    return;
-   }
+   // Show both voting steps for the bot as well as for the teacher.
    draw();return;
   }
   remember();run.index++;run.phase='play';resetActivity(active());draw();
@@ -285,13 +321,13 @@ window.QwizTeamLab=(()=>{
  function setEffect(key){
   const result=run.arcadeResult;if(!result||!effects[key])return;
   const winner=result.winner,penalty=['fog','storm','drain'].includes(key);
-  remember();run.pendingEffect={target:penalty?1-winner:winner,key};
+  remember();if(!run.optionVotes.length)run.optionVotes=[key,key,key];run.pendingEffect={target:penalty?1-winner:winner,key};
   log(team(winner).name+' выбирает '+label(key)+' → '+team(run.pendingEffect.target).name+'. Эффект ожидает следующий вопрос.');
   run.phase='play';
   run.index++;resetActivity(active());draw();
  }
  function handle(e){
-  const b=e.target.closest('button[data-lab-answer],button[data-lab-submit],button[data-lab-tap],button[data-lab-pair],button[data-lab-blitz],button[data-lab-resolve],button[data-lab-strategy],button[data-lab-boost]');
+  const b=e.target.closest('button[data-lab-answer],button[data-lab-submit],button[data-lab-tap],button[data-lab-pair],button[data-lab-blitz],button[data-lab-resolve],button[data-lab-strategy],button[data-lab-boost],button[data-lab-bot-vote]');
   if(!b||!run)return;
   const item=active();
   if(b.hasAttribute('data-lab-answer')&&!run.submitted&&item?.kind==='question'){
@@ -311,7 +347,20 @@ window.QwizTeamLab=(()=>{
    run.blitzChoices=[Number(b.dataset.labBlitz),Math.floor(Math.random()*4)];draw();
   }else if(b.hasAttribute('data-lab-resolve'))resolveArcade();
   else if(b.hasAttribute('data-lab-strategy')&&run.phase==='bonus'){
-   run.strategy=b.dataset.labStrategy;draw();
+   run.strategy=b.dataset.labStrategy;run.strategyVotes=[run.strategy,run.strategy,run.strategy];draw();
+  }else if(b.hasAttribute('data-lab-bot-vote')&&run.phase==='bonus'&&run.arcadeResult?.winner===1){
+   if(b.dataset.labBotVote==='strategy'&&!run.strategy){
+    const votes=Array.from({length:3},()=>sample(['support','sabotage']));run.strategyVotes=votes;
+    run.strategy=['support','sabotage'].find(choice=>votes.filter(x=>x===choice).length>=2)||null;
+    if(!run.strategy){log('Три голоса разделились: без большинства по стратегии бонус не получен.');run.phase='play';run.index++;resetActivity(active())}
+    draw();
+   }else if(b.dataset.labBotVote==='option'&&run.strategy){
+    const opts=run.strategy==='support'?['headstart','teamwork','momentum']:['fog','storm','drain'];
+    const votes=Array.from({length:3},()=>sample(opts));run.optionVotes=votes;
+    const majority=opts.find(choice=>votes.filter(x=>x===choice).length>=2);
+    if(!majority){log('Соперник не собрал большинство по эффекту: баллы без изменений.');run.phase='play';run.index++;resetActivity(active());draw()}
+    else setEffect(majority);
+   }
   }else if(b.hasAttribute('data-lab-boost')&&run.phase==='bonus'){
    const key=b.dataset.labBoost;if(!effects[key])return;
    if((run.strategy==='sabotage')!==['fog','storm','drain'].includes(key))return;
@@ -352,9 +401,20 @@ window.QwizTeamLab=(()=>{
   $('teamLabPrev').addEventListener('click',previous);
   $('teamLabStop').addEventListener('click',()=>{serial++;close();refreshBuilds()});
   $('teamLabStageBody').addEventListener('click',handle);
+  window.QwizBonusExplorer?.init();
   refreshBuilds();
+ }
+ function applyDemoEffect({key,target}){
+  if(!run)return {ok:false,message:'Сначала запустите сохранённую сборку, чтобы менять именно тестовый счёт.'};
+  if(!Object.prototype.hasOwnProperty.call(effects,key)||![0,1].includes(target))return {ok:false,message:'Неизвестный эффект.'};
+  const before=team(target).score,members=team(target).members;
+  const delta=window.QwizBonusExplorer?.calc(key,before,members);
+  if(!Number.isFinite(delta))return {ok:false,message:'Формула эффекта недоступна.'};
+  team(target).score=Math.max(0,before+delta);
+  log('ДЕМОНСТРАЦИЯ (не игровой раунд): '+team(target).name+' · '+label(key)+' · '+(delta>0?'+':'')+delta+' очков · '+before+' → '+team(target).score);
+  stats();return {ok:true,before,delta,after:team(target).score};
  }
  function snapshot(){return run?{index:run.index,phase:run.phase,scores:run.teams.map(t=>t.score),length:run.events.length,
   pending:run.pendingEffect?.key||null,log:run.log.slice(),kind:active()?.kind,answered:run.submitted}:null}
- return Object.freeze({init,refreshBuilds,loadError,snapshot});
+ return Object.freeze({init,refreshBuilds,loadError,snapshot,applyDemoEffect});
 })();
