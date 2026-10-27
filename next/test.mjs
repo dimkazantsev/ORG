@@ -1189,3 +1189,18 @@ test('Arcade-only builds save and compile without a standard question round',()=
  assert.match(migration,/public\.qwiz_check_room_start/);
  assert.match(migration,/public\.qwiz_compile_build/);
 });
+
+
+test('Arcade-only room readiness aligns with server authorization and does not require bank questions',()=>{
+ const js=readFileSync(new URL('./workspace-teams.js',import.meta.url),'utf8');
+ const html=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
+ const sql=readFileSync(new URL('./migrations/20261027_room_state_arcade_only_launch_readiness.sql',import.meta.url),'utf8');
+ assert.match(sql,/'has_arcade_round',exists\(/);
+ assert.match(sql,/card->>'type' in \('round','bonus','duel'\)/);
+ assert.match(sql,/card->'settings'->>'arcade_mode' in \('blitz','captain','tug'\)/);
+ assert.match(js,/hasArcade=s\.has_arcade_round===true/);
+ assert.match(js,/const ready=issues\.length===0&&\(hasQuestions\|\|hasGeography\|\|hasArcade\)/);
+ assert.match(js,/const canStart=s\.phase==='lobby'&&ready&&hasPlayers&&waiting===0&&formed&&!teamUI\.busy/);
+ assert.match(js,/Mini-игры|Мини-игры готовы/);
+ assert.match(html,/id="liveStart"/);
+});
