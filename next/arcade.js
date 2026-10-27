@@ -2,7 +2,7 @@
 /* QWIZ-PARTY: synchronised team arcade. Client shows state; Postgres owns scores, boosts and achievements. */
 window.QwizArcade=(()=>{
  const META={
-  blitz:{title:'Блиц-вопрос',desc:'Захватите право ответить первыми. Команда-победитель получит право проголосовать за усиление следующего раунда.',cta:'ЗАХВАТИТЬ ВОПРОС'},
+  blitz:{title:'Блиц-консенсус',desc:'Сначала голосует каждый участник. Затем капитан видит мнения команды и выбирает окончательный ответ.',cta:'ГОЛОСОВАТЬ'},
   tug:{title:'Тап-баттл',desc:'Все участники нажимают кнопку одновременно. Считаются реальные суммарные нажатия всей команды, а не среднее значение на человека.',cta:'ТАП!'},
   captain:{title:'Мэмори капитанов',desc:'Открывайте по две плитки и собирайте пары. Быстрее всех!',cta:'ОТКРЫТЬ ПЛИТКУ'}
  };
@@ -47,7 +47,16 @@ window.QwizArcade=(()=>{
     '<span class="arcade-blitz-facet facet-right"></span><span class="arcade-blitz-bolt">ϟ</span>'+
    '</div><span class="arcade-blitz-ring ring-a"></span><span class="arcade-blitz-ring ring-b"></span></div>';
  }
- function rankMarkup(v){const teams=v?.teams||[],max=Math.max(1,...teams.map(t=>Number(t.points)||0));
+ function rankMarkup(v){
+  if(v?.mode==='blitz'){
+   const totals=v.consensus?.team_progress||[];
+   return '<div class="consensus-progress"><span class="arcade-kicker">КОМАНДЫ · ХОД ГОЛОСОВАНИЯ</span>'+
+     totals.map(t=>'<div class="consensus-progress-row"><strong>'+escape(t.name)+'</strong>'+
+      '<div class="consensus-progress-track"><span style="width:'+Math.min(100,100*Number(t.votes||0)/Math.max(1,Number(t.members||1)))+'%"></span></div>'+
+      '<span>'+Number(t.votes||0)+'/'+Number(t.members||0)+'</span>'+
+      (t.submitted?'<em>Ответ капитана принят</em>':'')+'</div>').join('')+'</div>';
+  }
+  const teams=v?.teams||[],max=Math.max(1,...teams.map(t=>Number(t.points)||0));
   return teams.map((t,i)=>{const d=(v.extra?.players||[]).find(p=>p.team_id===t.id);
    const score=v.mode==='captain'?(d?.completed_ms!=null?Math.ceil(d.completed_ms/1000)+' сек.':(d?.pairs||0)+'/6 пар'):
     v.mode==='rocket'?(d?.cleared||0)+' препятствий':v.mode==='tug'?Number(t.taps||0).toLocaleString('ru-RU')+' тапов':Math.round(Number(t.points)||0).toLocaleString('ru-RU');
@@ -57,7 +66,7 @@ window.QwizArcade=(()=>{
   '<div class="arcade-head"><div><span class="arcade-kicker">QWIZ-PARTY · КОМАНДНОЕ ИСПЫТАНИЕ</span><h2>'+escape(m.title)+'</h2></div><span class="arcade-countdown" data-arcade-clock>—</span></div>'+
   '<p class="arcade-lead">'+escape(m.desc)+'</p><div class="arcade-scene">'+art(mode)+(kind==='player'&&['tug','rocket'].includes(mode)?'<button type="button" class="arcade-tap-btn '+(mode==='tug'?'arcade-tap-center':'arcade-runner-jump-btn')+'" data-arcade-tap disabled>'+escape(m.cta)+'</button>':'')+'</div>'+
   '<div data-arcade-question hidden></div>'+(mode==='captain'&&kind==='player'?'<div class="arcade-memory-info" data-memory-info role="status"></div><div class="arcade-memory-board" data-arcade-memory role="group" aria-label="Поле Мэмори"></div>':'')+'<div class="arcade-ranks" data-arcade-ranks></div>'+
-  (kind==='player'?(['tug','rocket'].includes(mode)?'':(mode==='captain'?'':'<button type="button" class="arcade-tap-btn" data-arcade-tap disabled>'+escape(m.cta)+'</button>'))+(mode==='captain'?'':'<span class="arcade-tap-caption" data-arcade-personal>Синхронизация с игровым сервером…</span>'):'')+
+  (kind==='player'?(['tug','rocket'].includes(mode)?'':(['captain','blitz'].includes(mode)?'':'<button type="button" class="arcade-tap-btn" data-arcade-tap disabled>'+escape(m.cta)+'</button>'))+(['captain','blitz'].includes(mode)?'':'<span class="arcade-tap-caption" data-arcade-personal>Синхронизация с игровым сервером…</span>'):'')+
   '<div class="arcade-alert" role="status" aria-live="polite" data-arcade-alert>Подключаем результаты…</div><div class="arcade-badges" data-arcade-badges></div><section class="arcade-vote" data-arcade-vote hidden></section></div>';
  }
  function stop(kind){const tr=ui[kind];if(!tr)return;if(tr.interval)clearTimeout(tr.interval);if(tr.clock)clearInterval(tr.clock);if(tr.flushTimer)clearTimeout(tr.flushTimer);if(tr.onClick)tr.root?.removeEventListener('click',tr.onClick);if(tr.onPointerDown)tr.root?.removeEventListener('pointerdown',tr.onPointerDown);if(tr.memory)tr.memory.runId+=1;tr.closed=true;ui[kind]=null;}
@@ -76,7 +85,7 @@ window.QwizArcade=(()=>{
    // A repeated mechanic in a later card is a new game, not a continuation
    // of the previous card's taps, question, selection or pending work.
    if(tr.view?.card_position!==undefined&&tr.view.card_position!==data.card_position){
-     tr.pending=0;tr.batch=null;tr.qkey='';tr.alertOverride=0;
+     tr.pending=0;tr.batch=null;tr.qkey='';tr.consensusKey='';tr.consensusBusy=false;tr.alertOverride=0;
       tr.memoryKey=null;if(tr.memory)tr.memory.runId+=1;tr.memory=null;tr.lastJumpTarget=null;tr.gameBusy=false;tr.visualTapCount=0;tr.localTaps=0;
      if(tr.flushTimer){clearTimeout(tr.flushTimer);tr.flushTimer=null;}
    }
@@ -89,6 +98,86 @@ window.QwizArcade=(()=>{
   const figure=/^https:\/\/\S+$/.test(q.media_url||'')?'<img class="arcade-choice-image" style="max-height:140px;max-width:100%" src="'+escape(q.media_url)+'" alt="Флаг для блиц-вопроса">':'';
   return '<article class="arcade-question"><span class="arcade-kicker">ДОПОЛНИТЕЛЬНЫЙ ВОПРОС</span><h3>'+escape(q.prompt)+'</h3>'+figure+'<div class="arcade-choices">'+images+'</div>'+
   (shown?'<div class="arcade-reveal">Верный ответ: '+String.fromCharCode(65+Number(q.correct))+'</div>':'')+'</article>';
+ }
+
+ function renderConsensus(tr,v){
+  const root=tr.root.querySelector('[data-arcade-question]');if(!root)return;
+  const state=v.consensus||{},q=v.question;
+  const stage=state.stage||'reading';
+  const isPlayer=tr.kind==='player',canVote=isPlayer&&stage==='voting'&&!!state.my_team_id;
+  const canFinalize=isPlayer&&stage==='captain'&&state.captain;
+  const selected=stage==='captain'?state.final_choice:state.my_choice;
+  const tally=new Map((state.my_team_votes||[]).map(x=>[Number(x.choice),Number(x.votes)||0]));
+  const deadline=stage==='voting'?state.vote_ends_at:state.ends_at;
+  const time=Math.max(0,Math.ceil(((Date.parse(deadline)||0)-currentTime(tr))/1000));
+  const labels={reading:'Знакомимся с вопросом',voting:'ЭТАП 1 / 2 · ГОЛОСОВАНИЕ КОМАНДЫ',
+    captain:'ЭТАП 2 / 2 · РЕШЕНИЕ КАПИТАНА',completed:'РЕЗУЛЬТАТЫ КОНСЕНСУСА'};
+  const key=JSON.stringify([v.card_position,stage,state.my_choice,state.final_choice,
+    state.captain,state.my_team_votes,q?.prompt,q?.correct,state.team_decision,canVote,canFinalize]);
+  if(tr.consensusKey===key)return;
+  tr.consensusKey=key;
+  if(!q){
+   root.hidden=false;
+   root.innerHTML='<div class="consensus-wait"><span class="arcade-kicker">БЛИЦ-КОНСЕНСУС</span>'+
+    '<strong>Вопрос появится через несколько секунд</strong><p>Все участники увидят одинаковые варианты ответа.</p></div>';
+   return;
+  }
+  const media=/^https:\/\/\S+$/.test(q.media_url||'')?
+   '<img class="consensus-flag" src="'+escape(q.media_url)+'" alt="Изображение к вопросу">':'';
+  const options=(q.options||[]).map((opt,i)=>{
+   const image=opt&&typeof opt==='object'&&/^https:\/\/\S+$/.test(opt.image_url||'')?
+    '<img loading="lazy" src="'+escape(opt.image_url)+'" alt="Вариант '+(i+1)+'">':
+    '<span>'+escape(typeof opt==='string'?opt:opt?.label||'Вариант '+(i+1))+'</span>';
+   const chosen=selected===i;
+   const showCounts=stage==='captain'&&state.captain;
+   const showCorrect=stage==='completed'&&Number.isInteger(q.correct);
+   return '<button type="button" class="consensus-option'+(chosen?' is-chosen':'')+
+    (showCorrect&&q.correct===i?' is-correct':'')+'" data-consensus-choice="'+i+'" '+
+    ((!canVote&&!canFinalize||tr.consensusBusy)?'disabled':'')+
+    ' aria-pressed="'+chosen+'"><b class="consensus-letter">'+String.fromCharCode(65+i)+'</b>'+
+    image+(showCounts?'<strong class="consensus-votes">'+(tally.get(i)||0)+' гол.</strong>':'')+
+    (chosen?'<span class="consensus-selected">✓</span>':'')+'</button>';
+  }).join('');
+  const caption=stage==='reading'?'Читайте вопрос. Голосование скоро откроется.':
+   stage==='voting'?(isPlayer?'Выберите ответ. До конца этапа можно изменить голос.':'Все участники выбирают ответ одновременно.'):
+   stage==='captain'?(state.captain?'Вы — капитан. Сравните голоса и зафиксируйте решение.':'Капитан видит распределение голосов и выбирает ответ команды.'):
+   (state.team_decision==null?'Команда не отправила ответ.':
+    'Ответ команды: '+String.fromCharCode(65+Number(state.team_decision))+
+     (Number.isInteger(q.correct)?(state.team_decision===q.correct?' · верно, +10 баллов':' · неверно, 0 баллов'):''));
+  root.hidden=false;
+  root.innerHTML='<article class="consensus-question" aria-label="Блиц-консенсус">'+
+   '<div class="consensus-phase"><span>'+labels[stage]+'</span><strong data-consensus-clock>'+time+' сек.</strong></div>'+
+   '<h3>'+escape(q.prompt)+'</h3>'+media+
+   '<div class="consensus-options">'+options+'</div>'+
+   (stage==='captain'&&state.captain?
+     '<p class="consensus-detail">Голоса вашей команды: '+Number(state.my_team_count||0)+
+      '. Если капитан не выберет ответ, победит вариант большинства.</p>':'')+
+   (stage==='completed'&&Number.isInteger(q.correct)?'<div class="consensus-correct">Правильный ответ: '+
+      String.fromCharCode(65+q.correct)+'</div>':'')+
+   '<p class="consensus-caption" role="status">'+caption+'</p></article>';
+ }
+ async function consensusVote(tr,choice){
+  if(tr.closed||tr.consensusBusy||!Number.isInteger(choice)||choice<0||choice>3)return;
+  const phase=tr.view?.consensus?.stage;
+  if(!['voting','captain'].includes(phase))return;
+  if(phase==='captain'&&!tr.view?.consensus?.captain)return;
+  tr.consensusBusy=true;
+  // Selected state responds immediately; server remains authoritative.
+  const root=tr.root.querySelector('[data-arcade-question]');
+  root?.querySelectorAll('[data-consensus-choice]').forEach(button=>{
+    const selected=Number(button.dataset.consensusChoice)===choice;
+    button.classList.toggle('is-chosen',selected);
+    button.setAttribute('aria-pressed',String(selected));
+  });
+  try{
+   const {error}=await tr.client.rpc('qwiz_consensus_vote',
+     {p_room:tr.roomId,p_choice:choice,p_phase:phase==='captain'?'final':'vote'});
+   if(error)throw error;
+   tr.consensusKey='';await fetchState(tr);
+  }catch(e){
+   tr.consensusKey='';showMessage(tr,e.message||'Голос не принят',true);
+   tr.alertOverride=Date.now()+2500;renderConsensus(tr,tr.view);
+  }finally{tr.consensusBusy=false;}
  }
  // Memory: the 12 DOM buttons are stable throughout a round. Never rebuild them
  // after each RPC: removing/recreating nodes was swallowing rapid touches.
@@ -236,9 +325,12 @@ window.QwizArcade=(()=>{
   const list=tr.root.querySelector('[data-arcade-ranks]');if(list)list.innerHTML=rankMarkup(v);
 
   const mine=v.mine||{},myTeam=mine.team_id,leader=(v.teams||[]).find(t=>t.place===1&&Number(t.points)>0),canAnswer=v.mode==='blitz'&&valid&&!claim&&v.blitz_eligible_team===myTeam&&v.answer_correct!==true&&v.question;
-  const qroot=tr.root.querySelector('[data-arcade-question]');
-  if(qroot){const qkey=v.question?JSON.stringify([v.question.prompt,v.answered_at,v.blitz_attempts,canAnswer,v.question.correct]):'';
-   if(tr.qkey!==qkey){tr.qkey=qkey;qroot.hidden=!v.question;qroot.innerHTML=v.question?promptMarkup(v.question,tr.kind==='player'&&canAnswer,v.question.correct!==null&&v.question.correct!==undefined):'';}
+  if(v.mode==='blitz')renderConsensus(tr,v);
+  else {
+   const qroot=tr.root.querySelector('[data-arcade-question]');
+   if(qroot){const qkey=v.question?JSON.stringify([v.question.prompt,v.answered_at,v.blitz_attempts,false,v.question.correct]):'';
+    if(tr.qkey!==qkey){tr.qkey=qkey;qroot.hidden=!v.question;
+      qroot.innerHTML=v.question?promptMarkup(v.question,false,v.question.correct!==null&&v.question.correct!==undefined):'';}}
   }
   if(v.mode==='captain'&&tr.kind==='player')paintMemory(tr,v.extra||{},valid);
   if(v.mode==='rocket'){const run=v.extra||{},figure=tr.root.querySelector('[data-runner-character]');
@@ -285,7 +377,7 @@ window.QwizArcade=(()=>{
   }
   const status=v.awarded_at?'Результат зафиксирован. Награды зачислены.':
    !v.running?'Соревнование завершено.':
-   v.mode==='blitz'?(claim?'Борьба за право ответа.':v.answer_correct===true?'Правильный ответ! Блиц завершён.':v.blitz_eligible_team===null?'Попытки закончились.':canAnswer?'Ваш ход! Ответьте на блиц-вопрос.':'Право ответа у команды '+escape((v.teams||[]).find(t=>t.id===v.blitz_eligible_team)?.name||'лидера')+'.') :
+   v.mode==='blitz'?'':
    v.mode==='captain'?'':
    !valid?'Время вышло. Ведущий продолжит игру.':'Идёт командная битва! Показатели обновляются автоматически.';
   if(!tr.alertOverride||Date.now()>tr.alertOverride)showMessage(tr,status);
@@ -294,6 +386,7 @@ window.QwizArcade=(()=>{
  function tick(tr){const v=tr.view;if(!v||tr.closed)return;
   const clock=tr.root.querySelector('[data-arcade-clock]');const sec=left(v.ends_at,tr);
   if(clock){clock.textContent=sec+' сек.';clock.dataset.urgent=String(sec<=3);}
+  const consentClock=tr.root.querySelector('[data-consensus-clock]');if(consentClock){const at=tr.view?.consensus?.stage==='voting'?tr.view?.consensus?.vote_ends_at:tr.view?.consensus?.ends_at;consentClock.textContent=left(at,tr)+' сек.';}
   if(v.mode==='rocket'){const obstacle=tr.root.querySelector('[data-runner-obstacle]');if(obstacle&&!obstacle.hidden){const dt=(Date.parse(v.extra?.next_at)-currentTime(tr))/1000;obstacle.style.left=(20+78*Math.max(0,Math.min(1,dt/2.25)))+'%';}}
   const button=tr.root.querySelector('[data-arcade-tap]');
   if(button&&sec===0)button.disabled=true;
@@ -311,6 +404,7 @@ window.QwizArcade=(()=>{
      }
      const tile=e.target.closest('[data-arcade-tile]');if(tile&&e.detail===0)flip(tr,Number(tile.dataset.arcadeTile));
     const opt=e.target.closest('[data-arcade-answer]');if(opt)answer(tr,Number(opt.dataset.arcadeAnswer));
+    const consensus=e.target.closest('[data-consensus-choice]');if(consensus)void consensusVote(tr,Number(consensus.dataset.consensusChoice));
     const boost=e.target.closest('[data-boost-choice]');if(boost)voteBoost(tr,boost.dataset.boostChoice);
    };root.addEventListener('click',tr.onClick);
     tr.onPointerDown=e=>{
@@ -328,7 +422,7 @@ window.QwizArcade=(()=>{
    }
   // Spread room state reads: 40 devices no longer hit the same RPC 25 times/sec.
   // Actions still refresh immediately. Transient failures back off, preserving the last view.
-  const poll=()=>{if(tr.closed)return;const base=tr.view?.vote?.open?(tr.kind==='player'?1500:2200):tr.kind==='player'?4700:tr.kind==='screen'?3500:5500;
+  const poll=()=>{if(tr.closed)return;const base=tr.view?.mode==='blitz'?(tr.kind==='player'?1400:2300):tr.view?.vote?.open?(tr.kind==='player'?1500:2200):tr.kind==='player'?4700:tr.kind==='screen'?3500:5500;
    const retry=Math.min(20000,base*Math.pow(1.6,Math.min(tr.failures||0,4)));
    tr.interval=setTimeout(async()=>{if(tr.closed)return;
     if(navigator.onLine&&document.visibilityState!=='hidden')await fetchState(tr);
