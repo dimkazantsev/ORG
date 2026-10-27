@@ -335,16 +335,16 @@ function roundScorePanel(view,title,final=false,endsAt=null){
  const metricUnit=String(view?.metric_unit||'результат');
  const fmtScore=x=>Number(x||0).toLocaleString('ru-RU',{maximumFractionDigits:0});
  const fmtMetric=x=>Number(x||0).toLocaleString('ru-RU',{notation:'compact',maximumFractionDigits:1});
- const value=x=>arcade?'<span class="round-performance">'+fmtMetric(x.metric)+' <small>'+esc(metricUnit)+'</small></span>':
+ const value=(x,isTeam)=>arcade&&!(view.mode==='blitz'&&isTeam)?'<span class="round-performance">'+fmtMetric(x.metric)+' <small>'+esc(metricUnit)+'</small></span>':
   '<span class="round-question-points">'+fmtScore(x.score)+' <small>баллов</small></span>';
- const rowset=a=>a.length?'<ol class="round-score-list">'+a.map((x,i)=>
-  '<li><span class="round-rank">'+(i+1)+'</span><strong>'+esc(x.nickname||x.name||'Участник')+'</strong><b>'+value(x)+'</b></li>').join('')+
+ const rowset=(a,isTeam)=>a.length?'<ol class="round-score-list">'+a.map((x,i)=>
+  '<li><span class="round-rank">'+(i+1)+'</span><strong>'+esc(x.nickname||x.name||'Участник')+'</strong><b>'+value(x,isTeam)+'</b></li>').join('')+
   '</ol>':'<p class="small-help">Результаты обрабатываются сервером</p>';
  const myId=ctx.room?.me?.id,myTeamId=ctx.room?.me?.team_id;
  const myIndex=players.findIndex(x=>x.id===myId),teamIndex=rows.findIndex(x=>x.id===myTeamId);
  const team=teamIndex>=0?rows[teamIndex]:null,individual=myIndex>=0?players[myIndex]:null;
  const highlight=individual||team?'<div class="round-self-summary" aria-label="Ваши результаты">'+
-  (team?'<div><span>ВАША КОМАНДА · '+(teamIndex+1)+' МЕСТО</span><strong>'+(arcade?fmtMetric(team.metric):fmtScore(team.score))+'</strong><small>'+esc(arcade?metricUnit:'баллов за вопросы')+'</small></div>':'')+
+  (team?'<div><span>ВАША КОМАНДА · '+(teamIndex+1)+' МЕСТО</span><strong>'+(arcade&&view.mode!=='blitz'?fmtMetric(team.metric):fmtScore(team.score))+'</strong><small>'+esc(arcade&&view.mode!=='blitz'?metricUnit:'баллов за вопросы')+'</small></div>':'')+
   (individual?'<div><span>ВАШ РЕЗУЛЬТАТ · '+(myIndex+1)+' МЕСТО</span><strong>'+(arcade?fmtMetric(individual.metric):fmtScore(individual.score))+'</strong><small>'+esc(arcade?metricUnit:'баллов за вопросы')+'</small></div>':'')+
   '</div>':'';
  const rewardBanner=reward?'<div class="round-reward-banner"><strong>Выбран командный бонус · '+esc(reward.title)+'</strong>'+
@@ -353,9 +353,9 @@ function roundScorePanel(view,title,final=false,endsAt=null){
   '<div class="round-results-orbit" aria-hidden="true">✦</div>'+
   '<span class="eyebrow">'+(final?'ИГРА ЗАВЕРШЕНА':'РАУНД ЗАВЕРШЁН')+'</span>'+
   '<h1>'+esc(title||'Результаты')+'</h1>'+highlight+
-  (arcade?'<p class="round-results-note">Показаны показатели мини-игры, а не очки за вопросы. Победа приносит достижение и возможность проголосовать за бонус.</p>':'')+
-  rewardBanner+'<div class="round-results-grid"><section><h2>Команды</h2>'+rowset(rows)+'</section>'+
-  '<section><h2>Участники</h2>'+rowset(players)+'</section></div>'+
+  (arcade?'<p class="round-results-note">Показатели мини-игры отделены от баллов за вопросы. За правильный блиц-вопрос команда получает 10 баллов; победа также открывает голосование за бонус.</p>':'')+
+  rewardBanner+'<div class="round-results-grid"><section><h2>Команды</h2>'+rowset(rows,true)+'</section>'+
+  '<section><h2>Участники</h2>'+rowset(players,false)+'</section></div>'+
   (!final?'<p class="round-results-next" id="playerNextStatus" role="status">'+
     (endsAt&&remaining(endsAt)>0?'Следующая карточка через <strong id="playerResultCountdown">'+remaining(endsAt)+'</strong> сек.':'Ожидаем перехода от сервера…')+'</p>':'')+'</section>';
 }
