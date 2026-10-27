@@ -125,6 +125,13 @@ window.QwizCardSandbox=(()=>{
     '<p class="card-play-note">В реальном Блиц-консенсусе вопрос и варианты выдаёт сервер. Здесь проверяются только этапы и управление голосованием; варианты A–D — обозначения, а не реальные вопросы.</p>'+
     '<div class="card-play-answers">'+options.map((v,i)=>'<button type="button" data-card-vote="'+(captain?'captain':'player')+':'+i+'" class="card-play-answer'+(chosen===i?' is-picked':'')+'" aria-pressed="'+(chosen===i)+'" '+(s.view==='audience'?'disabled':'')+'><span class="card-play-letter">'+v+'</span><span class="card-play-choice">Выбрать '+v+'</span></button>').join('')+'</div></div>';
  }
+ function introHtml(s){
+  const mode=s.card.settings?.arcade_mode,meta={russia_map:'Карта России',tug:'Тап-баттл',blitz:'Блиц-консенсус',captain:'Мэмори капитанов'};
+  const title=s.card.title||'Новый этап';
+  return '<div class="card-play-intro"><div class="card-play-orb" aria-hidden="true">'+icon(mode==='russia_map'?'flag':mode?'play':'sparkles')+'</div>'+
+    '<span class="card-play-overline">QWIZ-PARTY · '+esc(mode&&meta[mode]||s.topic||'КВИЗ')+'</span><h3>'+esc(title)+'</h3>'+
+    '<p>'+esc(mode==='russia_map'?'У каждого участника индивидуальные задания на карте.':s.card.type==='finale'?'Показываются финальные результаты игры.':isArcade(s)?'Командное испытание начинается с заставки.':'Стартовая анимация и объявление темы.')+'</p></div>';
+ }
  function summaryHtml(s,kind){
   const mode=s.card.settings?.arcade_mode;
   if(kind==='bonus')return '<div class="card-play-intro"><div class="card-play-orb">'+icon('sparkles')+'</div><h3>Командные усиления</h3><p>После победы команда может выбрать стратегию, затем бонус или помеху. В этом режиме ничего не начисляется.</p>'+
