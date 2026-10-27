@@ -77,7 +77,7 @@ test('PWA app shell includes simulator assets and offline worker version has rot
  const sw=await response.text();
  expect(sw).toContain("'./team-lab.js'");
  expect(sw).toContain("'./team-lab.css'");
- expect(sw).toContain('qwiz-pwa-shell-20261028-v33');
+ expect(sw).toContain('qwiz-pwa-shell-20261028-v34');
 });
 
 async function start(page){
@@ -115,6 +115,72 @@ for(const width of [320,390,768,1440]){
   await page.screenshot({path:'visual-artifacts/team-lab-checkbox-'+width+'.png',fullPage:true});
  });
 }
+
+test('Six current bonuses and penalties appear without a saved build and without archive entries',async({page})=>{
+ await expect(page.locator('#teamLabBonusPositive .team-lab-catalog-card')).toHaveCount(3);
+ await expect(page.locator('#teamLabBonusNegative .team-lab-catalog-card')).toHaveCount(3);
+ await expect(page.locator('#teamLabBonusExplorer')).toContainText('Фора');
+ await expect(page.locator('#teamLabBonusExplorer')).toContainText('Энергетический отток');
+ await expect(page.locator('#teamLabBonusExplorer')).not.toContainText('Дино-забег');
+});
+
+test('Teacher chooses two steps by 3/3 majority and sees formula before applying to game score',async({page})=>{
+ await start(page);
+ await page.locator('#teamLabBonusExplorer [data-bonus-start]').first().click();
+ await expect(page.locator('#teamLabBonusDemo')).toContainText('ШАГ 1/3');
+ await page.locator('[data-demo-strategy="support"]').click();
+ await expect(page.locator('#teamLabBonusDemo')).toContainText('ШАГ 2/3');
+ await expect(page.locator('#teamLabBonusDemo')).toContainText('3/3');
+ await page.locator('[data-demo-option="headstart"]').click();
+ await expect(page.locator('#teamLabBonusDemo')).toContainText('ШАГ 3/3');
+ await expect(page.locator('.team-lab-demo-timeline')).toContainText('12');
+ await expect(page.locator('#teamLabTeacherScore')).toHaveText('0');
+ await page.locator('[data-demo-apply]').click();
+ await expect(page.locator('#teamLabTeacherScore')).toHaveText('12');
+ await expect(page.locator('#teamLabHistory')).toContainText('ДЕМОНСТРАЦИЯ');
+ await expect(page.locator('[data-demo-apply]')).toHaveCount(0);
+});
+
+test('Penalty preview never goes below zero and actual score changes only after confirmation',async({page})=>{
+ await start(page);
+ await page.locator('#teamLabBonusExplorer [data-bonus-start]').first().click();
+ await page.locator('[data-demo-strategy="sabotage"]').click();
+ await page.locator('[data-demo-option="drain"]').click();
+ await expect(page.locator('.team-lab-demo-timeline')).toContainText('0');
+ await expect(page.locator('#teamLabBotScore')).toHaveText('0');
+ await page.locator('[data-demo-apply]').click();
+ await expect(page.locator('#teamLabBotScore')).toHaveText('0');
+ await expect(page.locator('#teamLabHistory')).toContainText('Энергетический отток');
+});
+
+test('Bonus laboratory remains available after every game step is completed',async({page})=>{
+ await start(page);
+ await page.locator('#teamLabNext').click();
+ await page.locator('#teamLabNext').click();
+ await page.locator('#teamLabNext').click();
+ await expect(page.locator('#teamLabStatus')).toHaveText('Финиш');
+ await page.locator('#teamLabBonusExplorer [data-bonus-start]').first().click();
+ await page.locator('[data-demo-strategy="support"]').click();
+ await page.locator('[data-demo-option="teamwork"]').click();
+ await page.locator('[data-demo-apply]').click();
+ await expect(page.locator('#teamLabTeacherScore')).toHaveText('9');
+});
+
+test('Actual simulator shows three ballots after a bot win instead of silently bypassing voting',async({page})=>{
+ await start(page);
+ await page.locator('#teamLabNext').click(); // bypass first question
+ await page.locator('#teamLabForceBonus').check();
+ await page.locator('#teamLabWinner').selectOption('1');
+ await page.locator('[data-lab-resolve]').click();
+ await page.locator('#teamLabNext').click();
+ await expect(page.locator('#teamLabStatus')).toContainText('Этап 2 / 3');
+ await expect(page.locator('[data-lab-bot-vote="strategy"]')).toBeVisible();
+ await page.locator('[data-lab-bot-vote="strategy"]').click();
+ const btn=page.locator('[data-lab-bot-vote="option"]');
+ await expect(btn).toBeVisible();
+ await expect(page.locator('.team-lab-sandbox-votes')).toContainText('2/3');
+});
+
 test('Simulator appears below team cards and loads chosen saved build without a room join',async({page})=>{
  await expect(page.locator('#teamLab')).toBeVisible();
  const below=await page.evaluate(()=>document.querySelector('#teamLab').compareDocumentPosition(document.querySelector('#teamManager'))&Node.DOCUMENT_POSITION_PRECEDING);
@@ -200,7 +266,7 @@ test('Without a future ordinary question no fake bonus stage is offered',async({
  await page.locator('#teamLabForceBonus').check();
  await page.locator('#teamLabWinner').selectOption('0');
  await page.locator('[data-lab-resolve]').click();
- await expect(page.locator('.team-lab-feedback')).toContainText('требуется следующий вопрос');
+ await expect(page.locator('.team-lab-feedback')).toContainText('нет следующего обычного раунда');
  await page.locator('#teamLabNext').click();
  await expect(page.locator('#teamLabStatus')).toHaveText('Финиш');
 });
