@@ -1783,3 +1783,36 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
  #roundCards .round-card-tools .round-play,.card-play-tap,.card-play-map path{transition:none!important}
  .card-play-dialog::backdrop{backdrop-filter:none}
 }
+
+/* In-sandbox arcade shares the real 3D stage rather than a disconnected illustration.
+   The local tap count updates text only: no re-creation of the button at 40+ taps. */
+#cardPlayScreen .card-play-arcade-shell{min-width:0;max-width:100%;width:100%;padding:0;border:0;background:transparent;box-shadow:none}
+#cardPlayScreen .card-play-arcade-shell .arcade-scene{
+ position:relative;min-width:0;width:100%;height:clamp(180px,29dvh,275px);
+ min-height:0;margin:0 auto;overflow:hidden;border-radius:20px;
+}
+#cardPlayScreen .card-play-arcade-shell .arcade-tap-stage,
+#cardPlayScreen .card-play-arcade-shell .arcade-memory-hero{width:100%;height:100%;min-height:0;max-height:none}
+#cardPlayScreen .card-play-arcade-shell[data-arcade-root="tug"] .arcade-tap-center{
+ display:grid;place-items:center;position:absolute;left:50%;top:50%;z-index:4;
+ width:clamp(115px,32%,175px);height:auto;min-height:0;aspect-ratio:1;
+ border-radius:50%;padding:0;transform:translate(-50%,-50%);touch-action:manipulation;
+}
+#cardPlayScreen .card-play-tap-art{
+ display:flex;flex-direction:row;gap:9px;justify-content:center;align-items:center;
+ box-sizing:border-box;width:auto;height:auto;max-width:max-content;aspect-ratio:auto;
+ min-height:0;margin:12px auto 0;padding:8px 17px;border-radius:999px;
+ background:#f3e8ff;color:#6436b0;border:1px solid #d7bbfa;
+ box-shadow:none;
+}
+#cardPlayScreen .card-play-tap-art span{font-size:17px}
+#cardPlayScreen .card-play-tap-art strong{font-size:24px;line-height:1.1}
+#cardPlayScreen .card-play-tap-art small{font-size:11px}
+#cardPlayScreen .card-play-arcade-blitz-hero{border:0;max-width:100%;padding:0;background:transparent;box-shadow:none;margin-bottom:16px}
+#cardPlayScreen .card-play-arcade-blitz-hero .arcade-scene{height:clamp(105px,18dvh,165px);position:relative}
+#cardPlayScreen .card-play-arcade-blitz-hero .consensus-hero{width:100%;height:100%}
+#cardPlayScreen.is-audience .card-play-tap-art{background:#442f64;color:#e3ceff;border-color:#72519b}
+@media(max-width:650px){
+ #cardPlayScreen .card-play-arcade-shell .arcade-scene{height:clamp(160px,25dvh,235px)}
+ #cardPlayScreen .card-play-arcade-blitz-hero .arcade-scene{height:110px}
+}
