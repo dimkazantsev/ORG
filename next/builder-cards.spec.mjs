@@ -586,3 +586,75 @@ test('Build save errors appear alongside the editor controls without erasing arc
  await expect(page.locator('#roundCards .round-card')).toHaveCount(2);
  await expect(page.locator('#saveBuild')).toBeEnabled();
 });
+
+
+test('Arcade-only lobby enables Start without a standard question, after captain or random team confirmation',async({page})=>{
+ await page.evaluate(()=>{
+  section('rooms');
+  const s={
+   room_id:'00000000-0000-4000-8000-000000000001',code:'A1B2C3D4',
+   title:'ОРГ',phase:'lobby',index:-1,total:0,setup_issues:[],
+   has_geo_round:false,has_arcade_round:true,
+   players:[{id:'student-one',name:'Игрок',team_id:'team-one'}],
+   teams:[{id:'team-one',name:'Неукротимые',score:0}],
+   team_lobby:{mode:'random',confirmed:true},
+   unassigned_count:0,control_revision:'test-revision',
+   answers_count:0
+  };
+  window.__arcadeStartTestState=s;
+  state.room=s;state.roomCode=s.code;
+  window.__controlCalls=[];
+  // Simulate successful host RPC; no personal account or real rooms required.
+  rpc=async(method,args)=>{
+   window.__controlCalls.push({method,args});
+   if(method==='qwiz_party_control_checked')return {phase:'intermission'};
+   return {};
+  };
+  projection=()=>true;
+  refreshLive=async()=>{};
+  renderLive(s);
+ });
+ const start=page.locator('#liveStart');
+ await expect(start).toBeEnabled();
+ await expect(page.locator('#roomReadinessTitle')).toContainText('Мини-игры готовы');
+ await expect(page.locator('#roomReadinessTitle')).not.toContainText('вопросы ещё не готовы');
+ await expect(page.locator('#addRoomQuestions')).toBeHidden();
+ await start.click();
+ await expect.poll(()=>page.evaluate(()=>window.__controlCalls
+   .filter(x=>x.method==='qwiz_party_control_checked'&&x.args.p_action==='start').length)).toBe(1);
+ await expect(start).toBeEnabled();
+});
+
+test('Arcade-only host Start explains when teams or participants are not ready',async({page})=>{
+ await page.evaluate(()=>{
+  section('rooms');
+  const s={
+   room_id:'00000000-0000-4000-8000-000000000001',code:'A1B2C3D4',title:'ОРГ',
+   phase:'lobby',total:0,index:-1,setup_issues:[],has_geo_round:false,has_arcade_round:true,
+   teams:[{id:'team-one',name:'Неукротимые',score:0}],players:[],
+   unassigned_count:0,team_lobby:{mode:'random',confirmed:false},control_revision:'test',
+  };
+  window.__arcadeNoPlayers=s;state.room=s;state.roomCode=s.code;renderLive(s);
+ });
+ await expect(page.locator('#liveStart')).toBeDisabled();
+ await expect(page.locator('#roomReadinessTitle')).toContainText('Мини-игры готовы');
+ await expect(page.locator('#roomReadinessText')).toContainText('хотя бы один подключённый участник');
+ await page.evaluate(()=>{
+  const s=window.__arcadeNoPlayers;
+  s.players=[{id:'student-one',name:'Игрок',team_id:'team-one'}];
+  renderLive(s);
+ });
+ await expect(page.locator('#liveStart')).toBeDisabled();
+ await expect(page.locator('#roomReadinessText')).toContainText('Подтвердите составы команд');
+ await page.evaluate(()=>{
+  window.__arcadeNoPlayers.team_lobby.confirmed=true;
+  renderLive(window.__arcadeNoPlayers);
+ });
+ await expect(page.locator('#liveStart')).toBeEnabled();
+ await page.evaluate(()=>{
+  window.__arcadeNoPlayers.has_arcade_round=false;
+  renderLive(window.__arcadeNoPlayers);
+ });
+ await expect(page.locator('#liveStart')).toBeDisabled();
+ await expect(page.locator('#roomReadinessText')).toContainText('Добавьте настроенную мини-игру');
+});
