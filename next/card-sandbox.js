@@ -183,12 +183,13 @@ window.QwizCardSandbox=(()=>{
   const token=++seq;
   session={card:JSON.parse(JSON.stringify(card)),topic:String(topic||''),view:'player',step:0,questions:[],mapRegions:[],optionOrder:new WeakMap(),loading:false,error:''};
   resetRound();
-  dialog.showModal();
-  paint();
   const s=session;
   const mode=s.card.settings?.arcade_mode;
-  if(s.card.type!=='round'||(mode&&mode!=='russia_map'))return;
-  s.loading=true;paint();
+  const needsData=s.card.type==='round'&&(!mode||mode==='russia_map');
+  s.loading=needsData;
+  dialog.showModal();
+  paint();
+  if(!needsData)return;
   try{
    if(mode==='russia_map'){
     s.mapRegions=await loadMap();
