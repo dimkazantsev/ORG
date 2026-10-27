@@ -112,6 +112,7 @@
  </div>
  <p id="teamLabMessage" class="team-lab-message" role="status">Выберите сборку. Тест не создаёт комнату, участников или настоящие достижения.</p>
  <div id="teamLabIdle" class="team-lab-idle">Командный эксперимент начнётся здесь. Управляйте ответами и вручную переходите к следующему вопросу.</div>
+ <label class="team-lab-override team-lab-sandbox-toggle"><input type="checkbox" id="teamLabForceBonus"> Разрешить тестирование бонусов без достижения порога (только симуляция)</label>
  <div id="teamLabStage" hidden>
   <div class="team-lab-duel">
    <article class="team-lab-team is-teacher">
@@ -130,7 +131,7 @@
   </div>
   <div class="team-lab-stage-head"><strong id="teamLabStatus">Этап</strong><span>Ответы и бонусы проверяются локально</span></div>
   <div id="teamLabStageBody" class="team-lab-stage-body"></div>
-  <div class="team-lab-bottom"><button type="button" id="teamLabNext" class="team-lab-next" disabled>Следующий вопрос / этап →</button>
+  <div class="team-lab-bottom"><button type="button" id="teamLabPrev" class="secondary-button" disabled>← Назад</button><button type="button" id="teamLabNext" class="team-lab-next" disabled>Следующий вопрос / этап →</button>
    <span>Переключение вручную</span></div>
   <details class="team-lab-history-panel"><summary>История раундов, бонусов и штрафов</summary><ol id="teamLabHistory"></ol></details>
  </div>
