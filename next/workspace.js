@@ -133,7 +133,7 @@ async function restorePosition(last=readPosition()){
   requestAnimationFrame(()=>window.scrollTo({top:target,behavior:'instant'}));
  }finally{restoringView=false;savePosition()}
 }
-function section(section){state.activePage=section;for(const id of ['bank','builder','rooms','insights'])$(id+'Page').hidden=id!==section;
+function section(section){state.activePage=section;for(const id of ['bank','builder','rooms','insights','bonuses'])$(id+'Page').hidden=id!==section;
  for(const n of all('[data-section]')){const selected=n.dataset.section===section;n.classList.toggle('selected',selected);if(selected)n.setAttribute('aria-current','page');else n.removeAttribute('aria-current')}
  animatePage($(section+'Page'));
  if(section==='rooms')loadRooms();if(section==='insights')loadInsights();
@@ -1174,6 +1174,10 @@ async function control(action){
   if(roomCode===state.roomCode){
    state.channel?.send({type:'broadcast',event:'phase',payload:{room:roomCode}})?.catch(()=>{});
    await refreshLive();
+   if(action==='start'){
+    if(!state.room||state.room.phase==='lobby')throw Error('Запуск не подтверждён сервером: комната осталась в ожидании. Проверьте распределение игроков и повторите запуск.');
+    msg('liveMessage','Запуск подтверждён сервером. Комната перешла в этап «'+QwizStage.phaseLabel(state.room.phase)+'».');
+   }
    if(completingGeography&&state.room?.activity?.type==='round_stats')
     msg('liveMessage','Раунд «Регионы» завершён. На экране идут итоги; следующий этап откроется автоматически.');
    else if(completingIntro&&state.room?.phase==='intermission')
