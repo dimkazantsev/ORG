@@ -14,7 +14,7 @@ function makeSandbox(challenge=1){
   if(!nodes.has(id))nodes.set(id,{
    id,open:false,innerHTML:'',textContent:'',disabled:false,
    parentElement:{scrollTop:0},classList:{toggle(){}},
-   setAttribute(){},querySelector(){return {scrollIntoView(){}}},
+   setAttribute(){},replaceChildren(){this.innerHTML=''},querySelector(){return {scrollIntoView(){}}},
    querySelectorAll(){return []},
    addEventListener(name,handler){const all=handlers.get(name)||[];all.push(handler);handlers.set(name,all)},
    showModal(){this.open=true},close(){this.open=false}
