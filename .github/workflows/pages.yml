@@ -31,7 +31,7 @@ jobs:
           node --check app.js
           test -s studio-2026.css
           test -s ui-ux-pro-max.css
-          node --test next/test.mjs next/flags-six.test.cjs
+          node --test next/test.mjs next/flags-six.test.cjs next/last-opened-build.test.mjs
           test -s next/presenter.html
           test -s next/presenter.css
           test -s next/presenter.js
@@ -125,6 +125,7 @@ jobs:
                grep -q 'QWIZ-PARTY — экран аудитории' /tmp/org-next-presenter.html &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/workspace.html" -o /tmp/qwiz-workspace.html &&
                grep -q 'Сборки и раунды' /tmp/qwiz-workspace.html &&
+               grep -q 'last-opened-game-20261028-1' /tmp/qwiz-workspace.html &&
                grep -q 'id="generalOpenBonusRules"' /tmp/qwiz-workspace.html &&
                grep -q 'id="bonusRulesActivity"' /tmp/qwiz-workspace.html &&
                grep -q 'id="bonusRulesGap"' /tmp/qwiz-workspace.html &&
