@@ -42,3 +42,8 @@ BEGIN
  IF v_n<>12 THEN RAISE EXCEPTION 'Deleted % instead of 12',v_n; END IF;
 END;
 $retire_flag_memory$;
+
+-- A future teacher import must not silently recreate the retired flag-memory mode.
+-- The standalone arcade stores its own challenges, not in the flag question bank.
+ALTER TABLE public.qwiz_bank ADD CONSTRAINT qwiz_no_legacy_flag_memory
+ CHECK (kind<>'flag' OR coalesce(solution->>'flag_mode','')<>'memory');
