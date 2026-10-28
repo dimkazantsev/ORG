@@ -31,10 +31,13 @@ CREATE OR REPLACE FUNCTION public.qwiz_bonus_window(p_room uuid, p_position inte
  STABLE SECURITY DEFINER
  SET search_path TO ''
 AS $function$
- SELECT coalesce((SELECT greatest(18,least(24,(rb.timeline->p_position->'settings'->>'bonus_vote_seconds')::integer)) FROM public.qwiz_room_builds rb WHERE rb.room_id=p_room), greatest(18,least(24,18+floor(greatest(0,coalesce(
- (select points from public.qwiz_arcade_rank(p_room,p_position) where place=1 limit 1),0))/25)::integer)));
-$function$
-
+ SELECT greatest(18,least(24,coalesce(
+  (SELECT (rb.timeline->p_position->'settings'->>'bonus_vote_seconds')::integer
+   FROM public.qwiz_room_builds rb WHERE rb.room_id=p_room),
+  18+floor(greatest(0,coalesce(
+   (SELECT points FROM public.qwiz_arcade_rank(p_room,p_position) WHERE place=1 LIMIT 1),0))/25)::integer
+ )));
+$function$;
 
 CREATE OR REPLACE FUNCTION public.qwiz_teacher_bonus_rules(
  p_action text, p_build uuid, p_card uuid DEFAULT NULL, p_settings jsonb DEFAULT '{}'::jsonb
