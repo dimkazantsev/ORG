@@ -40,12 +40,22 @@
     <p>Два голосования: сначала команда-победитель выбирает усилить себя или ослабить соперника, затем большинством выбирает конкретный эффект.</p></div>
   <button type="button" class="team-lab-primary" data-bonus-start>Проверить голосование и последствия</button>
  </div>
- <div class="team-lab-rules" aria-label="Условия получения бонуса">
+ <div class="team-lab-rules" aria-label="Четыре шага получения бонуса">
   <span><strong>1.</strong> Победить в мини-игре</span>
-  <button type="button" id="bonusRulesJump" class="bonus-rules-step" aria-controls="bonusRulesEditor" title="Перейти к настройке условий получения бонуса"><strong>2.</strong> Выполнить условия режима ↗</button>
+  <button type="button" id="bonusRulesJump" class="bonus-rules-step" aria-controls="bonusRulesEditor" aria-describedby="bonusRulesStepHint" title="Открыть настройки игровых условий"><strong>2.</strong> Выполнить условия режима <span class="bonus-rules-step-icon" aria-hidden="true">↗</span></button>
   <span><strong>3.</strong> Получить большинство на двух голосованиях</span>
   <span><strong>4.</strong> Применить в следующем обычном раунде</span>
  </div>
+ <p id="bonusRulesStepHint" class="bonus-rules-step-hint">Шаг 2 — кнопка настройки условий. Остальные шаги показывают порядок получения бонуса.</p>
+ <details class="bonus-rules-explainer">
+  <summary>Что означает каждый из четырёх шагов?</summary>
+  <ol>
+   <li><strong>Победить в мини-игре.</strong> Система определяет команду-победителя по правилам выбранной мини-игры.</li>
+   <li><strong>Выполнить условия режима.</strong> Система проверяет минимальный игровой результат, отрыв и участие там, где они применяются. Нажмите этот шаг, чтобы изменить пороги для новой комнаты.</li>
+   <li><strong>Получить большинство на двух голосованиях.</strong> Сначала победители выбирают усиление себя или штраф сопернику, затем конкретный эффект. На каждом этапе нужно больше половины голосов команды.</li>
+   <li><strong>Применить в следующем обычном раунде.</strong> Эффект будет рассчитан перед следующим раундом вопросов. Если такого раунда нет, отложенный эффект не начисляется.</li>
+  </ol>
+ </details>
  <section id="bonusRulesEditor" class="bonus-rules-editor" aria-labelledby="bonusRulesTitle">
   <div class="bonus-rules-editor-head"><div><span class="eyebrow">РЕДАКТОР УСЛОВИЙ</span><h4 id="bonusRulesTitle">Настроить условия получения бонуса</h4><p>Для каждой мини-игры в сохранённой сборке. Изменения действуют только в новых комнатах: запущенные и уже созданные комнаты сохраняют свои правила.</p></div><span class="bonus-rules-privacy">Только преподаватель</span></div>
   <div class="bonus-rules-choices">
@@ -61,7 +71,20 @@
     <label>Окно голосования<select id="bonusRulesVote"><option value="auto">Автоматически · 18–24 секунды</option><option value="18">18 секунд</option><option value="19">19 секунд</option><option value="20">20 секунд</option><option value="21">21 секунда</option><option value="22">22 секунды</option><option value="23">23 секунды</option><option value="24">24 секунды</option></select><small>Общее окно двух этапов голосования, не каждого по отдельности.</small></label>
    </div>
    <div id="bonusRulesPreview" class="bonus-rules-preview" aria-live="polite"></div>
-   <div class="bonus-rules-editor-actions"><button type="submit" class="team-lab-primary" id="bonusRulesSave">Сохранить условия</button><button type="button" class="bonus-rules-reset" id="bonusRulesReset">Стандартные значения</button></div>
+   <div class="bonus-rules-editor-actions"><button type="submit" class="team-lab-primary" id="bonusRulesSave" title="Записать выбранные условия в сохранённую сборку">Сохранить условия</button><button type="button" class="bonus-rules-reset" id="bonusRulesReset" title="Подставить исходные значения в форму без сохранения">Стандартные значения</button></div>
+   <details class="bonus-rules-explainer bonus-rules-fields-help">
+    <summary>Как работают поля и кнопки редактора?</summary>
+    <dl>
+     <dt>Сохранённая сборка</dt><dd>Выберите программу игры, в которой будете изменять условия. Настройки затронут только новые комнаты, созданные по этой сборке.</dd>
+     <dt>Мини-игра</dt><dd>Выберите конкретную карточку. Если в сборке несколько одинаковых мини-игр, пороги для них настраиваются отдельно.</dd>
+     <dt>Минимальный игровой результат</dt><dd>Сколько игровых очков должна набрать победившая команда, чтобы претендовать на бонус. Это не общие баллы в рейтинге.</dd>
+     <dt>Активных участников команды, %</dt><dd>Минимальная доля игроков, которые действительно участвовали в «Тап-баттле». В других режимах поле скрыто.</dd>
+     <dt>Минимальный отрыв от соперника</dt><dd>Необходимая разница игровых результатов. Используется в «Тап-баттле» и «Мэмори капитанов»; у «Блиц-консенсуса» отдельное условие.</dd>
+     <dt>Окно голосования</dt><dd>Общее время на два голосования. Автоматический вариант рассчитывает 18–24 секунды; фиксированный задаёт одно время.</dd>
+     <dt>Сохранить условия</dt><dd>Записывает настройки выбранной мини-игры в базу. Уже созданные комнаты не меняются.</dd>
+     <dt>Стандартные значения</dt><dd>Заполняет форму исходными параметрами (1 очко, 70%, 15 очков, автоматическое время), но ничего не сохраняет до нажатия «Сохранить условия».</dd>
+    </dl>
+   </details>
   </form>
   <p id="bonusRulesStatus" class="bonus-rules-status" role="status" aria-live="polite">Выберите сохранённую сборку для редактирования действующих мини-игр.</p>
  </section>
