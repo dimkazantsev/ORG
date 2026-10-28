@@ -6,6 +6,7 @@ test.beforeEach(async({page})=>{
   body:'window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}})}})};'
  }));
  await page.goto('http://127.0.0.1:8080/next/workspace.html',{waitUntil:'load'});
+ await expect(page.locator('#workspaceLoading')).toBeHidden();
  await page.evaluate(()=>{document.getElementById('bonusesPage').hidden=false});
 });
 
