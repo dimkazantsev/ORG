@@ -549,6 +549,9 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
   --arcade-icon-color:#7751be;
   --arcade-icon-surface:#f0e9ff;
 }
+#arcadePalette [data-arcade="sequence_memory"]{
+  --arcade-icon-color:#6f4aa5;--arcade-icon-surface:#efe5ff;
+}
 #arcadePalette [data-arcade="captain"]{
   --arcade-icon-color:#9a5681;
   --arcade-icon-surface:#f7eaf3;
