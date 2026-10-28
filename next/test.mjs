@@ -517,7 +517,13 @@ test('2026 quiz round flow: editor, countdown, score displays and two-stage vote
  const stage=readFileSync(new URL('./stage.js',import.meta.url),'utf8');
  const map=readFileSync(new URL('./russia-geo.js',import.meta.url),'utf8');
  const dbGate=readFileSync(new URL('./migrations/20261025_bonus_gate_host_next.sql',import.meta.url),'utf8');
- for(const id of ['openGamesPalette','generalLeadSeconds','generalStatsSeconds','generalBonusPercent','generalBonusLead','hostProjectorMusic'])assert.match(studio,new RegExp('id="'+id+'"'));
+ for(const id of ['openGamesPalette','generalLeadSeconds','generalStatsSeconds','generalOpenBonusRules','hostProjectorMusic',
+   'bonusRulesBuild','bonusRulesCard','bonusRulesActivity','bonusRulesGap','bonusRulesMin'])assert.match(studio,new RegExp('id="'+id+'"'));
+ // Bonus thresholds must have exactly one editor: General Settings no longer owns them.
+ for(const obsolete of ['generalBonusPercent','generalBonusLead'])assert.doesNotMatch(studio,new RegExp('id="'+obsolete+'"'));
+ assert.doesNotMatch(studio,/Порог 70% участия; дополнительно нужны не менее 25 игровых очков/);
+ assert.match(source,/function openGeneralBonusRules\(\)/);
+ assert.match(source,/QwizBonusSettings\?\.focusBuild\?\.\(state\.buildId\)/);
  for(const type of ['Вступление','Вопросы','Игры','Финал'])assert.match(studio,new RegExp(type));
  const topPalette=studio.slice(studio.indexOf('id="cardPalette"'),studio.indexOf('id="gamesPalette"'));
  for(const obsolete of ['data-card="team_stats"','data-card="player_stats"','data-card="bonus"'])assert.ok(!topPalette.includes(obsolete),'Removed top-level card must not be in the palette: '+obsolete);
