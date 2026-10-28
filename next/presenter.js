@@ -7,7 +7,7 @@ let room=new URLSearchParams(location.search).get('room')?.trim().toUpperCase()|
 const $=id=>document.getElementById(id);
 const escapeText=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // Saved-room labels can be legacy; projector must display the same name as phones.
-const ARCADE_VISIBLE_NAMES={tug:'Тап-баттл',blitz:'Блиц-консенсус',captain:'Мэмори капитанов'};
+const ARCADE_VISIBLE_NAMES={tug:'Тап-баттл',blitz:'Блиц-консенсус',captain:'Мэмори капитанов',sequence_memory:'Секретный код'};
 const screenArcadeActivity=a=>{const mode=a?.settings?.arcade_mode||a?.settings?.queued_settings?.arcade_mode;return mode&&ARCADE_VISIBLE_NAMES[mode]?{...a,title:ARCADE_VISIBLE_NAMES[mode],icon:mode==='blitz'?'arcade_consensus':a.icon}:a};
 const ctx={client:null,last:null,channel:null,local:null,checking:false,timer:null,previousQuestion:-2,finalStep:0,finalTimer:null,sound:false,audio:null,lastReleaseAttempt:0,offset:0,renderKey:''};
 const seconds=t=>Math.max(0,Math.ceil((Date.parse(t)-Date.now()-ctx.offset)/1000))||0;
