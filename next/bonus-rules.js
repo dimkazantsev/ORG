@@ -38,7 +38,12 @@ window.QwizBonusSettings=(()=>{
    if(request!==loading||activeBuild()!==id)return;
    cards=Array.isArray(data?.cards)?data.cards.filter(x=>Object.hasOwn(modes,x.mode)):[];
    loadedBuild=id;choice.replaceChildren(option('','Выберите мини-игру'));
-   for(const card of cards)choice.add(option(card.id,(Number(card.position)+1)+'. '+(card.title||modes[card.mode])+' · '+modes[card.mode]));
+   for(const card of cards){
+    const modeTitle=modes[card.mode],customTitle=String(card.title||'').trim();
+    const title=customTitle&&customTitle.toLocaleLowerCase('ru')!==modeTitle.toLocaleLowerCase('ru')
+     ?customTitle+' · '+modeTitle:modeTitle;
+    choice.add(option(card.id,(Number(card.position)+1)+'. '+title));
+   }
    choice.disabled=cards.length===0;
    if(cards.length){choice.value=String(cards[0].id);presentCard();status('Настройки загружены. Можно изменять условия выбранной мини-игры.');}
    else status('В этой сборке нет действующих мини-игр с бонусным голосованием. Архивные механики скрыты.');
@@ -74,9 +79,10 @@ window.QwizBonusSettings=(()=>{
    &&Number.isInteger(t.bonus_percent)&&t.bonus_percent>=50&&t.bonus_percent<=100
    &&Number.isInteger(t.bonus_lead)&&t.bonus_lead>=0&&t.bonus_lead<=200
    &&(t.bonus_vote_seconds===null||Number.isInteger(t.bonus_vote_seconds)&&t.bonus_vote_seconds>=18&&t.bonus_vote_seconds<=24);
-  const lines=['Победа в мини-игре','не менее '+(valid?t.bonus_min_points:'?')+' очков'];
+  const pointWord=n=>(n%10===1&&n%100!==11?'очка':'очков');
+  const lines=['Победа в мини-игре','не менее '+(valid?t.bonus_min_points+' '+pointWord(t.bonus_min_points):'? очков')];
   if(tap)lines.push('участие от '+(valid?t.bonus_percent:'?')+'% команды');
-  if(!blitz)lines.push('отрыв от соперника от '+(valid?t.bonus_lead:'?')+' очков');
+  if(!blitz)lines.push('отрыв от соперника от '+(valid?t.bonus_lead+' '+pointWord(t.bonus_lead):'? очков'));
   if(blitz)lines.push('результат не хуже другой команды');
   lines.push('2 голосования большинством','следующий обычный раунд с вопросами');
   $('bonusRulesPreview').textContent=(valid?'Право на бонус: ':'Проверьте значения. Правило: ')+lines.join(' · ')+'. Голосование: '+(t.bonus_vote_seconds===null?'автоматически 18–24 секунды':t.bonus_vote_seconds+' секунд')+'.';
