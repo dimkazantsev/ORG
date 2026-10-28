@@ -260,9 +260,11 @@ window.QwizTeamLab=(()=>{
   }
   let winner=forced==='auto'?(points[0]===points[1]?sample([0,1]):points[0]>points[1]?0:1):Number(forced);
   if(![0,1].includes(winner))winner=0;
-  const reward=e.mode==='blitz'?10:15;
-  team(winner).score+=reward;
   const settings=e.settings||{};
+  const configured=Number(settings.arcade_score_points);
+  const reward=Number.isInteger(configured)&&configured>=0&&configured<=200?configured:(e.mode==='blitz'?10:15);
+  // Local abstraction only: in a live Blitz, points go to each correct team, not to this simulated winner.
+  team(winner).score+=reward;
   const lead=Math.max(0,Math.min(200,Number.isFinite(Number(settings.bonus_lead))&&settings.bonus_lead!==undefined?Number(settings.bonus_lead):15));
   const participation=Math.max(50,Math.min(100,Number.isFinite(Number(settings.bonus_percent))?Number(settings.bonus_percent):70));
   const minPoints=Math.max(1,Math.min(e.mode==='blitz'?10:200,Number.isFinite(Number(settings.bonus_min_points))?Number(settings.bonus_min_points):1));
@@ -278,7 +280,7 @@ window.QwizTeamLab=(()=>{
     (e.cardIndex===undefined||event.cardIndex===undefined||event.cardIndex>e.cardIndex));
   const canBoost=hasNextQuestion&&(enough||overridden);
   run.arcadeResult={winner,points,canBoost,eligible:enough,participation,lead,activated,hasNextQuestion};
-  run.feedback=team(winner).name+' побеждает (локальная модель), +'+reward+' очков. '+
+  run.feedback=team(winner).name+' побеждает (локальная модель), +'+reward+' баллов в рейтинг. '+
     (canBoost?(overridden&&!enough?'Только в симуляции сняты условия допуска.':'Условия допуска выполнены; команда может голосовать.') :
     'Бонус недоступен: '+(!hasNextQuestion?'после этой мини-игры нет следующего обычного раунда вопросов.':
     points[winner]<minPoints?'результат меньше '+minPoints+' игровых очков.':
