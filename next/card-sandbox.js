@@ -7,6 +7,8 @@ window.QwizCardSandbox=(()=>{
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const icon=n=>window.QwizStage?.uiIcon(n)||'';
  const names={locate:'Найти субъект',identify:'Угадать название',capital:'Административный центр',flag:'Флаг субъекта',silhouette:'Угадать по контуру',neighbour:'Соседи',detective:'Географический детектив',district:'Федеральный округ'};
+ const secretGlyphs={red:'🔴',blue:'🔵',yellow:'🟡',green:'🟢',ru:'🇷🇺',cn:'🇨🇳',br:'🇧🇷',jp:'🇯🇵',fr:'🇫🇷',de:'🇩🇪',it:'🇮🇹',star:'⭐',shield:'🛡️',crown:'👑',eagle:'🦅',globe:'🌐',torch:'🔥',letter:'📜',dove:'🕊️',key:'🔑',seal:'📩'};
+ const secretGlyph=value=>secretGlyphs[value]||'◆';
  let session=null,seq=0;
  const safeImage=url=>typeof url==='string'&&(/^https:\/\//i.test(url)||/^\.\/assets\//.test(url))?url:'';
  const cap=(x,min,max)=>Math.min(max,Math.max(min,Number(x)||min));
@@ -17,8 +19,11 @@ window.QwizCardSandbox=(()=>{
   session.picks=new Map();session.mapPicks=new Map();session.geoPicks=new Map();session.taps=0;session.blitzVote=null;session.captainVote=null;
   session.faces=shuffle(['◆','✦','☼','●','▲','♣','◆','✦','☼','●','▲','♣']);
   session.faceUp=[];session.matched=[];session.moves=0;
+  clearTimeout(session.secretTimer);session.secretTimer=null;session.secretShowStart=0;
+  session.secretAnswer=[];session.secretSubmitted=false;session.secretPoints=0;session.secretExact=0;
+  if(session.secretTemplate)session.secretCode=buildSecretCode(session.secretTemplate);
  }
- function isArcade(s){return ['tug','captain','blitz'].includes(s.card.settings?.arcade_mode)}
+ function isArcade(s){return ['tug','captain','blitz','sequence_memory'].includes(s.card.settings?.arcade_mode)}
  function stages(s){
   const c=s.card,settings=c.settings||{},mode=settings.arcade_mode;
   if(mode==='russia_map'){
@@ -26,6 +31,12 @@ window.QwizCardSandbox=(()=>{
    s.geoQuestions.forEach((q,i)=>{steps.push({kind:'geo-question',i,label:'Вопрос '+(i+1)});steps.push({kind:'geo-answer',i,label:'Ответ '+(i+1)})});
    steps.push({kind:'summary',label:'Итоги'});return steps;
   }
+  if(mode==='sequence_memory')return [
+   {kind:'intro',label:'Заставка'},
+   {kind:'secret-show',label:'Показ кода'},
+   {kind:'secret-answer',label:'Ввод кода'},
+   {kind:'secret-result',label:'Результат'},
+   {kind:'bonus',label:'Бонус'}];
   if(isArcade(s)){
    const types=mode==='blitz'?['intro','vote','captain-vote','arcade-result','bonus']:['intro','arcade','arcade-result','bonus'];
    return types.map((kind,i)=>({kind,label:['Заставка',mode==='blitz'?'Голосование':'Игра',mode==='blitz'?'Капитан':'Результат',mode==='blitz'?'Результат':'Бонус', 'Бонус'][i]}));
@@ -135,6 +146,67 @@ window.QwizCardSandbox=(()=>{
    revealHtml+'</section>';
  }
 
+
+ // The sandbox uses the public catalogue, but invents only a LOCAL practice sequence.
+ // It never requests the server's secret, affects a real session, or awards points.
+ function buildSecretCode(template){
+  const palette=unique((template.palette||[]).filter(id=>Object.hasOwn(secretGlyphs,id)));
+  const length=cap(template.symbols,4,8);
+  if(palette.length<2)throw Error('У испытания отсутствует палитра символов.');
+  const variant=template.variant||'basic';
+  const repeats=variant==='one_repeat'?1:variant==='two_repeats'?2:0;
+  if((variant==='all_unique'||repeats>0)&&palette.length<length-repeats)
+   throw Error('Недостаточно символов для испытания.');
+  const code=shuffle(palette).slice(0,Math.min(palette.length,length-repeats));
+  if(repeats){
+   const repeated=shuffle(code).slice(0,repeats);
+   code.push(...repeated);
+  }
+  while(code.length<length)code.push(palette[Math.floor(Math.random()*palette.length)]);
+  return shuffle(code.slice(0,length));
+ }
+ function secretHtml(s,kind){
+  const template=s.secretTemplate,code=s.secretCode||[];
+  if(!template||!code.length)return '<div class="card-play-intro"><h3>'+(s.error?'Испытание недоступно':'Загружаем испытание…')+'</h3><p>'+esc(s.error||'Получаем выбранный шаблон из каталога 30 испытаний.')+'</p></div>';
+  const showing=kind==='secret-show',answering=kind==='secret-answer',result=kind==='secret-result';
+  let index=-1;
+  if(showing){
+   if(!s.secretShowStart)s.secretShowStart=Date.now();
+   const elapsed=Date.now()-s.secretShowStart;
+   if(elapsed>=1500)index=Math.floor((elapsed-1500)/1100);
+   const remaining=elapsed<1500?1500-elapsed:1100-((elapsed-1500)%1100);
+   clearTimeout(s.secretTimer);
+   s.secretTimer=setTimeout(()=>{if(session===s&&s.step===1)paint()},Math.max(20,remaining+12));
+  }
+  const glyph=showing&&index>=0&&index<code.length?secretGlyph(code[index]):answering?'🔒':result?'✓':'✦';
+  const label=showing?(index<0?'ПРИГОТОВЬТЕСЬ':'ЗАПОМНИТЕ СИМВОЛ'):answering?'ВОССТАНОВИТЕ КОД':'РЕЗУЛЬТАТ';
+  const progress=showing?(index<0?'Символы появятся по одному':(Math.min(code.length,index+1)+' / '+code.length)):
+   answering?'Введите символы в показанном порядке':'Локальный результат испытания';
+  let panel='';
+  if(answering){
+   const chosen=s.secretAnswer||[];
+   panel='<p class="arcade-secret-hint">'+(s.view==='audience'?'Участники восстанавливают последовательность на телефонах.':
+    'Вспомните порядок символов. Нажимайте кнопки ниже; повторы допускаются.')+'</p>'+
+    '<div class="arcade-secret-slots" aria-label="Ваш код">'+Array.from({length:code.length},(_,i)=>
+     '<span class="arcade-secret-slot'+(chosen[i]?' filled':'')+'">'+(chosen[i]&&s.view==='player'?secretGlyph(chosen[i]):i+1)+'</span>').join('')+'</div>';
+   if(s.view==='player'&&!s.secretSubmitted)panel+='<div class="arcade-secret-choices" role="group" aria-label="Кнопки кода">'+
+    template.palette.map(id=>'<button type="button" data-card-secret-choice="'+esc(id)+'" aria-label="Добавить символ '+esc(id)+'" '+(chosen.length>=code.length?'disabled':'')+'>'+secretGlyph(id)+'</button>').join('')+'</div>'+
+    '<div class="arcade-secret-actions"><button type="button" data-card-secret-undo '+(!chosen.length?'disabled':'')+'>Удалить</button>'+
+    '<button type="button" data-card-secret-submit '+(chosen.length!==code.length?'disabled':'')+'>Подтвердить</button></div>';
+   if(s.secretSubmitted)panel+='<p class="arcade-secret-done">Демонстрационный ответ подтверждён.</p>';
+  }else if(result){
+   panel=s.secretSubmitted?'<p class="arcade-secret-done">В тесте: '+s.secretPoints+' / 10 · совпало '+s.secretExact+' из '+code.length+'</p>'+
+    '<p class="arcade-secret-hint">Правильный код: '+code.map(secretGlyph).join(' ')+'</p>':
+    '<p class="arcade-secret-hint">Ответ ещё не подтверждён. Вернитесь к этапу «Ввод кода», затем нажмите «Подтвердить».</p>';
+  }else panel='<p class="arcade-secret-hint">Следите за сменой символов. Это локальная демонстрация, без связи с комнатой.</p>';
+  return '<section class="card-play-arcade card-play-secret"><div class="arcade-shell arcade-player" data-arcade-root="sequence_memory">'+
+   '<p class="card-play-overline">'+esc(template.name)+' · уровень '+Number(template.level||1)+' · '+code.length+' символов</p>'+
+   '<div class="arcade-scene"><div class="arcade-secret-scene" role="status" aria-live="off">'+
+   '<span class="arcade-secret-eyebrow">'+label+'</span><span class="arcade-secret-symbol">'+glyph+'</span>'+
+   '<span class="arcade-secret-progress">'+progress+'</span></div></div>'+
+   '<div class="arcade-secret-panel">'+panel+'</div></div></section>';
+ }
+
  function memoryHtml(s){
   return '<div class="card-play-memory">'+s.faces.map((symbol,i)=>'<button type="button" data-card-flip="'+i+'" class="'+(s.matched.includes(i)?' is-matched':s.faceUp.includes(i)?' is-open':'')+'" aria-label="Плитка '+(i+1)+'">'+
     (s.matched.includes(i)||s.faceUp.includes(i)?esc(symbol):'✦')+'</button>').join('')+'</div>'+
@@ -160,7 +232,7 @@ window.QwizCardSandbox=(()=>{
     '<div class="card-play-answers">'+options.map((v,i)=>'<button type="button" data-card-vote="'+(captain?'captain':'player')+':'+i+'" class="card-play-answer'+(chosen===i?' is-picked':'')+'" aria-pressed="'+(chosen===i)+'" '+(s.view==='audience'?'disabled':'')+'><span class="card-play-letter">'+v+'</span><span class="card-play-choice">Выбрать '+v+'</span></button>').join('')+'</div></div>';
  }
  function introHtml(s){
-  const mode=s.card.settings?.arcade_mode,meta={russia_map:'Карта России',tug:'Тап-баттл',blitz:'Блиц-консенсус',captain:'Мэмори капитанов'};
+  const mode=s.card.settings?.arcade_mode,meta={russia_map:'Карта России',tug:'Тап-баттл',blitz:'Блиц-консенсус',captain:'Мэмори капитанов',sequence_memory:'Секретный код'};
   const title=s.card.title||'Новый этап';
   return '<div class="card-play-intro"><div class="card-play-orb" aria-hidden="true">'+icon(mode==='russia_map'?'flag':mode?'play':'sparkles')+'</div>'+
     '<span class="card-play-overline">QWIZ-PARTY · '+esc(mode&&meta[mode]||s.topic||'КВИЗ')+'</span><h3>'+esc(title)+'</h3>'+
@@ -188,6 +260,7 @@ window.QwizCardSandbox=(()=>{
    case 'geo-question':return mapHtml(s,step,false);
    case 'geo-answer':return mapHtml(s,step,true);
    case 'arcade':case 'vote':case 'captain-vote':return arcadeHtml(s,step.kind);
+   case 'secret-show':case 'secret-answer':case 'secret-result':return secretHtml(s,step.kind);
    case 'arcade-result':case 'summary':case 'bonus':return summaryHtml(s,step.kind);
    case 'generic':return genericHtml(s);
    default:return introHtml(s);
@@ -197,13 +270,18 @@ window.QwizCardSandbox=(()=>{
   const s=session;if(!s)return;
   const dialog=el('cardPlayDialog');if(!dialog?.open)return;
   const steps=stages(s);s.step=cap(s.step,0,steps.length-1);
+  if(s.step===1&&steps[1]?.kind==='secret-show'&&s.secretShowStart&&s.secretCode?.length&&
+     Date.now()-s.secretShowStart>=1500+s.secretCode.length*1100){s.step=2;}
+  clearTimeout(s.secretTimer);s.secretTimer=null;
   const current=steps[s.step];
   const visibleStep=s.step+':'+s.view;
   const changed=s.visibleStep!==visibleStep;s.visibleStep=visibleStep;
   el('cardPlayTitle').textContent=s.card.title||'Проверка карточки';
   el('cardPlayMeta').textContent='Этап '+(s.step+1)+' из '+steps.length+' · '+(s.topic||'Конструктор');
   el('cardPlaySafety').textContent=s.loading?'Загружаем данные для локальной проверки…':s.error?
-   'Данные частично недоступны: '+s.error:'Тест без комнаты и начисления баллов · переходы вручную';
+   'Данные частично недоступны: '+s.error:s.card.settings?.arcade_mode==='sequence_memory'?
+   'Локальная демонстрация · код создаётся только для теста · без комнаты, сервера и начисления баллов':
+   'Тест без комнаты и начисления баллов · переходы вручную';
   el('cardPlaySafety').classList.toggle('is-error',!!s.error);
   el('cardPlaySteps').innerHTML=steps.map((step,i)=>'<button type="button" data-card-step="'+i+'" class="'+(i===s.step?' is-current':'')+'" aria-current="'+(i===s.step?'step':'false')+'">'+esc(step.label)+'</button>').join('');
   el('cardPlayPrev').disabled=s.step<=0;
@@ -217,6 +295,7 @@ window.QwizCardSandbox=(()=>{
   el('cardPlaySteps').querySelector('.is-current')?.scrollIntoView({block:'nearest',inline:'nearest'});
  }
  function close(){
+  if(session)clearTimeout(session.secretTimer);
   ++seq;session=null;
   const dialog=el('cardPlayDialog');if(dialog?.open)dialog.close();
   if(el('cardPlayScreen'))el('cardPlayScreen').replaceChildren();
@@ -229,13 +308,25 @@ window.QwizCardSandbox=(()=>{
   resetRound();
   const s=session;
   const mode=s.card.settings?.arcade_mode;
-  const needsData=s.card.type==='round'&&(!mode||mode==='russia_map');
+  const needsData=mode==='sequence_memory'||(s.card.type==='round'&&(!mode||mode==='russia_map'));
   s.loading=needsData;
   dialog.showModal();
   paint();
   if(!needsData)return;
   try{
-   if(mode==='russia_map'){
+   if(mode==='sequence_memory'){
+    // Only the public 30-template catalogue is read; never a real game session.
+    const response=await fetch(new URL('./memory-challenges.plan.json',location.href),{cache:'force-cache'});
+    if(!response.ok)throw Error('Не удалось загрузить каталог «Секретного кода».');
+    const plan=await response.json();
+    const items=(plan.levels||[]).flatMap(level=>level.items||[]);
+    if(items.length!==30)throw Error('В каталоге должно быть 30 испытаний.');
+    const requested=Number(s.card.settings?.secret_challenge)||0;
+    const chosen=requested>=1&&requested<=30?items[requested-1]:items[Math.floor(Math.random()*items.length)];
+    if(!chosen)throw Error('Выбранное испытание недоступно.');
+    if(token!==seq||session!==s)return;
+    s.secretTemplate=chosen;s.secretCode=buildSecretCode(chosen);
+   }else if(mode==='russia_map'){
     // Two independent read-only sources are fetched once when the preview opens.
     // All eight question modes are generated from the verified catalog and real SVG paths.
     const [mapRegions,catalog]=await Promise.all([loadMap(),loadCatalog()]);
@@ -253,7 +344,7 @@ window.QwizCardSandbox=(()=>{
  }
  function init(){
   const dialog=el('cardPlayDialog');if(!dialog)return;
-  dialog.addEventListener('close',()=>{++seq;session=null;el('cardPlayScreen').replaceChildren()});
+  dialog.addEventListener('close',()=>{if(session)clearTimeout(session.secretTimer);++seq;session=null;el('cardPlayScreen').replaceChildren()});
   dialog.addEventListener('click',e=>{
    if(e.target===dialog){close();return}
    const button=e.target.closest('button');
@@ -279,6 +370,20 @@ window.QwizCardSandbox=(()=>{
     const pair=button.dataset.cardGeoChoice.split(':');s.geoPicks.set(Number(pair[0]),pair.slice(1).join(':'));paint();return;
    }
    if(button.hasAttribute('data-card-confirm')){s.step=Math.min(s.step+1,stages(s).length-1);paint();return}
+   if(s.card.settings?.arcade_mode==='sequence_memory'&&s.view==='player'&&stages(s)[s.step]?.kind==='secret-answer'&&!s.secretSubmitted){
+    if(button.hasAttribute('data-card-secret-choice')&&s.secretAnswer.length<s.secretCode.length){
+     const choice=button.dataset.cardSecretChoice;
+     if(s.secretTemplate.palette.includes(choice)){s.secretAnswer.push(choice);paint()}
+     return;
+    }
+    if(button.hasAttribute('data-card-secret-undo')){s.secretAnswer.pop();paint();return}
+    if(button.hasAttribute('data-card-secret-submit')&&s.secretAnswer.length===s.secretCode.length){
+     s.secretExact=s.secretAnswer.filter((id,i)=>id===s.secretCode[i]).length;
+     s.secretPoints=s.secretExact===s.secretCode.length?10:s.secretExact===s.secretCode.length-1?6:
+      s.secretExact>=Math.ceil(s.secretCode.length/2)?3:0;
+     s.secretSubmitted=true;s.step=3;paint();return;
+    }
+   }
    if(button.hasAttribute('data-card-tap')){s.taps+=1;const count=el('cardPlayScreen')?.querySelector('.card-play-tap-art strong');if(count)count.textContent=String(s.taps);return}
    if(button.hasAttribute('data-card-vote')){const [kind,num]=button.dataset.cardVote.split(':');if(kind==='captain')s.captainVote=Number(num);else s.blitzVote=Number(num);paint();return}
    if(button.hasAttribute('data-card-flip')){

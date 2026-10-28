@@ -1,11 +1,11 @@
 /* QWIZ-PARTY PWA v1: static shell only; never cache Supabase, RPC or private answers. */
 'use strict';
-const VERSION='qwiz-pwa-shell-20261028-v46';
+const VERSION='qwiz-pwa-shell-20261029-v47';
 const STATIC=VERSION+'-static';
 const PAGES=VERSION+'-pages';
 const SDK='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
 const ROOT=new URL('./',self.registration.scope);
-const SHELL=['./','./index.html','./workspace.html','./presenter.html','./profile.html','./manifest.webmanifest','./pwa-icon.svg','../favicon.svg','./assets/manrope-variable.ttf','./theme.css','./stage.css','./stage.js','./app.js','./app.css','./arcade.js','./secret-code.js','./arcade.css','./player-layout.js','./player-layout.css','./russia-geo.js','./russia-geo.css','./lobby.css','./motion.css','./teams.js','./teams.css','./avatar-art.js','./workspace.js','./workspace.css','./workspace-teams.js','./team-lab.js','./team-lab-bonuses.js','./bonus-rules.js','./team-lab.css','./presenter.js','./presenter.css','./profile.js','./profile.css','./vendor/qrcode.min.js'];
+const SHELL=['./','./index.html','./workspace.html','./presenter.html','./profile.html','./manifest.webmanifest','./pwa-icon.svg','../favicon.svg','./assets/manrope-variable.ttf','./theme.css','./stage.css','./stage.js','./app.js','./app.css','./arcade.js','./secret-code.js','./arcade.css','./card-sandbox.js','./card-geo-preview.js','./memory-challenges.plan.json','./player-layout.js','./player-layout.css','./russia-geo.js','./russia-geo.css','./lobby.css','./motion.css','./teams.js','./teams.css','./avatar-art.js','./workspace.js','./workspace.css','./workspace-teams.js','./team-lab.js','./team-lab-bonuses.js','./bonus-rules.js','./team-lab.css','./presenter.js','./presenter.css','./profile.js','./profile.css','./vendor/qrcode.min.js'];
 const assetPaths=new Set(SHELL.map(p=>new URL(p,ROOT).pathname));
 const pagePaths=new Set(['./','./index.html','./workspace.html','./presenter.html','./profile.html'].map(p=>new URL(p,ROOT).pathname));
 self.addEventListener('install',event=>{
