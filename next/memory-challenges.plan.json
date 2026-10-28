@@ -1,9 +1,9 @@
 {
-  "name": "Задание на память",
+  "name": "Секретный код",
   "mode": "sequence_memory",
   "gameType": "standalone_arcade",
   "status": "approved_concept_pending_engine",
-  "visualStyle": "Reuse existing QWIZ-PARTY cards, arcade animation tokens, responsive typography and controls; no separate theme",
+  "visualStyle": "Reuse existing QWIZ-PARTY arcade surfaces, controls, lilac/fuchsia color tokens, typography, responsive layouts and animation style; no new art direction.",
   "scoring": {
     "correctAll": 10,
     "oneWrong": 6,
@@ -558,5 +558,7 @@
         }
       ]
     }
-  ]
+  ],
+  "displayName": "Секретный код",
+  "internalDescription": "Standalone sequence memory arcade, unrelated to flag question categories or captain pairs"
 }
