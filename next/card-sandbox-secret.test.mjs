@@ -75,7 +75,7 @@ test('All 30 Secret Code templates render as real sandbox challenges, not generi
   assert.match(sandbox.steps(),/Ввод кода/);
   sandbox.click('data-card-step',{cardStep:'2'});
   assert.match(sandbox.html(),new RegExp(challenges[i-1].name));
-  assert.equal((sandbox.html().match(/class="arcade-secret-slot/g)||[]).length,challenges[i-1].symbols);
+  assert.equal((sandbox.html().match(/class="arcade-secret-slot(?: filled)?"/g)||[]).length,challenges[i-1].symbols);
   assert.match(sandbox.html(),/data-card-secret-choice=/);
   assert.doesNotMatch(sandbox.html(),/не выбрана действующая мини-игра/);
   assert.equal(sandbox.fetches,1);
