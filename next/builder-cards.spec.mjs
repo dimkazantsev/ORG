@@ -88,7 +88,8 @@ test('Mechanics expand by default with aligned SVG chevron and selected card has
  await cards.nth(1).locator('[data-edit-card]').click();
  const mechanics=page.locator('#cardModesDetails');
  await expect(mechanics).toHaveAttribute('open','');
- await expect(page.locator('#cardFlagModes [data-card-mode]')).toHaveCount(12);
+ // Legacy flag memorization was retired; the standalone Secret Code is NOT a flag mode.
+ await expect(page.locator('#cardFlagModes [data-card-mode]')).toHaveCount(11);
  const svg=mechanics.locator('.card-modes-chevron');
  await expect(svg).toBeVisible();
  const box=await svg.evaluate(el=>{
@@ -192,7 +193,7 @@ for(const width of [320,390,768,1440]){
     kind==='geography'?'#cardGeoQuestionModes>label.check-row':'#cardGeoModes>label';
    const tiles=page.locator(selector);
    await expect(tiles.first()).toBeVisible();
-   await expect(tiles).toHaveCount(kind==='flags'?12:kind==='geography'?2:9);
+   await expect(tiles).toHaveCount(kind==='flags'?11:kind==='geography'?2:9);
    const metrics=await tiles.evaluateAll(elements=>elements.map(element=>{
     const label=element.getBoundingClientRect(),input=element.querySelector('input');
     const mark=input.getBoundingClientRect();
