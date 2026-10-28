@@ -46,7 +46,7 @@ BEGIN
  selected:=CASE WHEN (a.settings->>'secret_challenge') ~ '^([1-9]|[12][0-9]|30)$'
   THEN (a.settings->>'secret_challenge')::int
   ELSE (('x'||substr(md5(p_room::text||':'||p_position),1,8))::bit(32)::bigint % 30+1)::int END;
- SELECT * INTO c FROM public.qwiz_secret_code_catalog WHERE c.n=selected;
+ SELECT * INTO c FROM public.qwiz_secret_code_catalog WHERE n=selected;
  IF c.n IS NULL THEN RAISE EXCEPTION 'Задания Секретного кода не установлены'; END IF;
  palette:=c.palette;
  FOR n IN 1..c.length LOOP
