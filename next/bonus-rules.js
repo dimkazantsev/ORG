@@ -85,12 +85,12 @@ window.QwizBonusSettings=(()=>{
  }
  function showPreview(){
   const card=current();if(!card)return;
-  const t=thresholds(),blitz=card.mode==='blitz',tap=card.mode==='tug';
+  const t=thresholds(),blitz=card.mode==='blitz',secret=card.mode==='sequence_memory',tap=['tug','sequence_memory'].includes(card.mode);
   const errors=[];
-  if(!Number.isInteger(t.arcade_score_points)||t.arcade_score_points<0||t.arcade_score_points>(blitz?10:200))
-   errors.push(blitz?'Блиц-консенсус: награда за правильный ответ может составлять от 0 до 10 баллов рейтинга.':'Награда в рейтинг должна быть целым числом от 0 до 200.');
-  if(!Number.isInteger(t.bonus_min_points)||t.bonus_min_points<1||t.bonus_min_points>(blitz?10:200))
-   errors.push(blitz?'В Блиц-консенсусе результат бывает только 0 или 10. Условие выше 10 игровых очков недостижимо.':'Минимальный игровой результат должен быть целым числом от 1 до 200.');
+  if(!Number.isInteger(t.arcade_score_points)||t.arcade_score_points<0||t.arcade_score_points>(blitz||secret?10:200))
+   errors.push(blitz?'Блиц-консенсус: награда за правильный ответ может составлять от 0 до 10 баллов рейтинга.':secret?'Награда Секретного кода должна быть от 0 до 10 баллов.':'Награда в рейтинг должна быть целым числом от 0 до 200.');
+  if(!Number.isInteger(t.bonus_min_points)||t.bonus_min_points<1||t.bonus_min_points>(blitz||secret?10:200))
+   errors.push(blitz?'В Блиц-консенсусе результат бывает только 0 или 10. Условие выше 10 игровых очков недостижимо.':secret?'В Секретном коде средний результат команды составляет от 0 до 10. Укажите порог допуска от 1 до 10.':'Минимальный игровой результат должен быть целым числом от 1 до 200.');
   if(!Number.isInteger(t.bonus_percent)||t.bonus_percent<50||t.bonus_percent>100)
    errors.push('Доля активных игроков должна быть целым числом от 50 до 100%.');
   if(!Number.isInteger(t.bonus_lead)||t.bonus_lead<0||t.bonus_lead>200)
@@ -141,7 +141,7 @@ window.QwizBonusSettings=(()=>{
   $('bonusRulesReset').addEventListener('click',()=>{
    const card=current();if(!card)return;
    $('bonusRulesReward').value=ratingDefaults[card.mode]??0;
-   $('bonusRulesMin').value=card.mode==='blitz'?10:1;$('bonusRulesActivity').value=70;$('bonusRulesGap').value=15;$('bonusRulesVote').value='auto';
+   $('bonusRulesMin').value=card.mode==='blitz'?10:card.mode==='sequence_memory'?3:1;$('bonusRulesActivity').value=70;$('bonusRulesGap').value=15;$('bonusRulesVote').value='auto';
    showPreview();status('Стандартные баллы в рейтинг и пороги восстановлены в форме. Нажмите «Сохранить условия», чтобы записать их в сборку.');
   });
   if(typeof state!=='undefined'&&Array.isArray(state.builds))populateBuilds(state.builds);
