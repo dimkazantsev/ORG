@@ -190,6 +190,7 @@ window.QwizStage=(()=>{
   arcade_rocket:'<path d="M4 16c-1.8 1.5-2 5-2 5s3.5-.2 5-2a2 2 0 0 0-3-3Z"/><path d="m12 15-3-3c1-3 2.6-5.6 5.5-7.5C16.8 3 19 2 22 2c0 3-1 5.2-2.5 7.5C17.6 12.4 15 14 12 15Z"/><path d="M9 12H4c.5-3 2.3-5.5 6-5.5M12 15v5c3-.5 5.5-2.3 5.5-6"/><circle cx="16.2" cy="7.8" r="1.2"/>',
   arcade_blitz:'<circle cx="12" cy="12.5" r="8"/><path d="M10 2h4m-2 2v2m6.5 0L20 4.5M12.5 8l-4 6h4l-1 4 5-7h-4z"/>',
   arcade_tug:'<path d="M2 12h7m6 0h7M7 8l-4 4 4 4m10-8 4 4-4 4"/><path d="m9.5 11 2.5-3 2.5 3v3L12 17l-2.5-3z"/>',
+  arcade_secret:'<rect x="4" y="9" width="16" height="12" rx="2"/><path d="M8 9V6a4 4 0 0 1 8 0v3m-4 5v3m-1-2h2"/>',
   arcade_captain:'<path d="M5 3 19 17m-5 3 6-6m-15 2 3 3m-3 2 3-3M19 3 5 17m5 3-6-6m15 2-3 3m3 2-3-3"/>',
   intro:'<circle cx="12" cy="12" r="9"/><path d="m10 8 6 4-6 4z"/>',
   finale:'<path d="M7 4h10v7c0 7-10 7-10 0V4ZM7 7H3v3c0 3 3 5 6 5m8-8h4v3c0 3-3 5-6 5m-3 2v4m-4 0h8"/>'
