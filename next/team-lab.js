@@ -256,7 +256,7 @@ window.QwizTeamLab=(()=>{
   else if(e.mode==='captain')points=run.matches.map(v=>v*5);
   else{
    // An abstract consensus choice can be tested, but cannot establish real answer correctness.
-   points=[run.blitzChoices[0]===null?0:30,run.blitzChoices[1]===null?0:30];
+   points=[run.blitzChoices[0]===null?0:10,run.blitzChoices[1]===null?0:10];
   }
   let winner=forced==='auto'?(points[0]===points[1]?sample([0,1]):points[0]>points[1]?0:1):Number(forced);
   if(![0,1].includes(winner))winner=0;
@@ -265,12 +265,13 @@ window.QwizTeamLab=(()=>{
   const settings=e.settings||{};
   const lead=Math.max(0,Math.min(200,Number.isFinite(Number(settings.bonus_lead))&&settings.bonus_lead!==undefined?Number(settings.bonus_lead):15));
   const participation=Math.max(50,Math.min(100,Number.isFinite(Number(settings.bonus_percent))?Number(settings.bonus_percent):70));
+  const minPoints=Math.max(1,Math.min(e.mode==='blitz'?10:200,Number.isFinite(Number(settings.bonus_min_points))?Number(settings.bonus_min_points):1));
   const activated=e.mode==='tug'?((winner===0?run.taps[0]:run.taps[1])>0?3:0):
     e.mode==='captain'?((winner===0?run.matches[0]:run.matches[1])>0?1:0):
     e.mode==='blitz'?((winner===0?run.blitzChoices[0]:run.blitzChoices[1])!=null?1:0):0;
   // Mirrors live qwiz_bonus_eligible: point >=1, delegate/team participation,
   // normal gap except blitz and a separately following ordinary round.
-  const enough=points[winner]>=1&&(e.mode==='blitz'?points[winner]>=points[1-winner]:points[winner]-points[1-winner]>=lead)&&
+  const enough=points[winner]>=minPoints&&(e.mode==='blitz'?points[winner]>=points[1-winner]:points[winner]-points[1-winner]>=lead)&&
     (['captain','blitz'].includes(e.mode)?activated>=1:activated*100>=participation*3);
   const overridden=$('teamLabForceBonus')?.checked===true;
   const hasNextQuestion=run.events.slice(run.index+1).some(event=>event.kind==='question'&&
@@ -280,7 +281,7 @@ window.QwizTeamLab=(()=>{
   run.feedback=team(winner).name+' побеждает (локальная модель), +'+reward+' очков. '+
     (canBoost?(overridden&&!enough?'Только в симуляции сняты условия допуска.':'Условия допуска выполнены; команда может голосовать.') :
     'Бонус недоступен: '+(!hasNextQuestion?'после этой мини-игры нет следующего обычного раунда вопросов.':
-    points[winner]<1?'результат меньше 1 игрового балла.':
+    points[winner]<minPoints?'результат меньше '+minPoints+' игровых очков.':
     activated===0||e.mode==='tug'&&activated*100<participation*3?'не выполнен порог активности команды.':
     'разница результатов меньше '+lead+' очков.'));
   log(run.feedback);
