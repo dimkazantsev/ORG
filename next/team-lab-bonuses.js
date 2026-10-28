@@ -43,6 +43,20 @@ window.QwizBonusExplorer=(()=>{
   const tally=Object.entries(votes.reduce((acc,v)=>(acc[v]=(acc[v]||0)+1,acc),{})).sort((a,b)=>b[1]-a[1]);
   return tally[0]?.[1]>votes.length/2?tally[0][0]:null;
  }
+ function voteLabel(key){
+  if(key==='support')return 'Усилить свою команду';
+  if(key==='sabotage')return 'Ослабить соперника';
+  return get(key)?.title||'Неизвестный выбор';
+ }
+ function votesSummary(votes){
+  if(!Array.isArray(votes)||votes.length===0)return 'Не проводилось';
+  const counts=new Map();
+  for(const choice of votes){
+   const label=voteLabel(choice);
+   counts.set(label,(counts.get(label)||0)+1);
+  }
+  return [...counts].map(([label,count])=>label+' — '+count+' из '+votes.length).join('; ');
+ }
  function votesBlock(){
   const votes=trial.votes||[];
   const keys=trial.stage==='strategy'?['support','sabotage']:effects.filter(e=>e.tone===(trial.strategy==='support'?'positive':'negative')).map(e=>e.id);
@@ -88,8 +102,10 @@ window.QwizBonusExplorer=(()=>{
      (trial.applied?'<div class="team-lab-feedback" role="status">Тестовый счёт изменён на '+(trial.delta>0?'+':'')+trial.delta+'; в журнале зафиксирован эффект.</div>':
        '<button class="team-lab-primary" type="button" data-demo-apply>Применить к тестовому счёту</button>'):
     '<h4>Эффект не получен</h4><p class="team-lab-demo-note">Три голоса разошлись: большинство не выбрало один вариант. В настоящей игре бонус не начисляется.</p>')+
-    '<div class="team-lab-demo-votes-summary">Этап 1: '+html(trial.strategyVotes.map(v=>v==='support'?'Усилить себя':'Ослабить соперника').join(' · '))+
-    ' · Этап 2: '+html(trial.optionVotes.join(' · '))+'</div>';
+    '<div class="team-lab-demo-votes-summary" aria-label="Итоги голосований">'+
+     '<div><strong>Этап 1 · Стратегия:</strong> '+html(votesSummary(trial.strategyVotes))+'</div>'+
+     '<div><strong>Этап 2 · Эффект:</strong> '+html(votesSummary(trial.optionVotes))+'</div>'+
+    '</div>';
   }
   panel.hidden=false;
  }
