@@ -121,9 +121,14 @@ test('Teacher edits ranking points separately for tap victory and blitz correct 
  await page.locator('#bonusRulesCard').selectOption('blitz');
  await expect(page.locator('#bonusRulesReward')).toHaveValue('10');
  await expect(page.locator('#bonusRulesRewardHelp')).toContainText('каждой команде');
- await expect(page.locator('#bonusRulesReward')).toHaveAttribute('max','10');
+ await expect(page.locator('#bonusRulesMin')).toHaveValue('10');
+ await expect(page.locator('#bonusRulesMin')).toHaveAttribute('readonly','');
+ await expect(page.locator('#bonusRulesMinHelp')).toContainText('15 и выше невозможен');
+ await expect(page.locator('#bonusRulesPreview')).toContainText('правильный ответ (10 игровых очков)');
+  await expect(page.locator('#bonusRulesReward')).toHaveAttribute('max','10');
  await page.locator('#bonusRulesReward').fill('11');
  await expect(page.locator('#bonusRulesSave')).toBeDisabled();
+ await expect(page.locator('#bonusRulesValidation')).toContainText('от 0 до 10 баллов рейтинга');
  await page.locator('#bonusRulesReward').fill('7');
  await expect(page.locator('#bonusRulesPreview')).toContainText('+7 баллов');
  await page.locator('#bonusRulesSave').click();
