@@ -59,8 +59,9 @@ window.QwizBonusSettings=(()=>{
  function presentCard(){
   const card=current(),form=$('bonusRulesForm');if(!card){form.hidden=true;return}
   form.hidden=false;
+  $('bonusRulesReward').max=card.mode==='blitz'?'10':'200';
   $('bonusRulesReward').value=card.arcade_score_points??ratingDefaults[card.mode]??0;
-  $('bonusRulesRewardHelp').textContent=card.mode==='blitz'?'Начисляется каждой команде за правильный итоговый ответ, даже если несколько команд ответили верно. От 0 до 200.':'Начисляется только команде-победителю в общий рейтинг. От 0 до 200.';
+  $('bonusRulesRewardHelp').textContent=card.mode==='blitz'?'Начисляется каждой команде за правильный итоговый ответ, даже если несколько команд ответили верно. От 0 до 10 — правило единой шкалы вопросов.':'Начисляется только команде-победителю в общий рейтинг. От 0 до 200.';
   $('bonusRulesMin').max=card.mode==='blitz'?'10':'200';
   $('bonusRulesMin').value=card.bonus_min_points??1;
   $('bonusRulesActivity').value=card.bonus_percent??70;
@@ -78,7 +79,7 @@ window.QwizBonusSettings=(()=>{
  function showPreview(){
   const card=current();if(!card)return;
   const t=thresholds(),blitz=card.mode==='blitz',tap=card.mode==='tug';
-  const valid=Number.isInteger(t.arcade_score_points)&&t.arcade_score_points>=0&&t.arcade_score_points<=200
+  const valid=Number.isInteger(t.arcade_score_points)&&t.arcade_score_points>=0&&t.arcade_score_points<=(blitz?10:200)
    &&Number.isInteger(t.bonus_min_points)&&t.bonus_min_points>=1&&t.bonus_min_points<=(blitz?10:200)
    &&Number.isInteger(t.bonus_percent)&&t.bonus_percent>=50&&t.bonus_percent<=100
    &&Number.isInteger(t.bonus_lead)&&t.bonus_lead>=0&&t.bonus_lead<=200
