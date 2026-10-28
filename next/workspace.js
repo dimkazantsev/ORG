@@ -844,6 +844,15 @@ async function saveBuild(){
   const result=await studio('build_save',{id:state.buildId||undefined,title,cards:state.cards});
   if(!result?.id)throw Error('Сервер не подтвердил сохранение. Повторите попытку.');
   state.buildId=result.id;
+  // build_save replaces card rows. Refresh their IDs before any later bonus-rule edit
+  // or another save, otherwise a stale draft could undo the editor's saved thresholds.
+  try{
+   const latest=await studio('build_get',{id:result.id});
+   if(Array.isArray(latest?.cards)&&latest.cards.length===state.cards.length){
+    state.cards=latest.cards.map(c=>({...c,title:gameTitle(c)}));
+    renderCards();
+   }
+  }catch(error){console.warn('Saved build card IDs could not be refreshed:',error)}
   savePosition();
   buildSaveNotice('Сборка сохранена. Игры можно запускать без обычных раундов вопросов.');
   try{await overview();}
