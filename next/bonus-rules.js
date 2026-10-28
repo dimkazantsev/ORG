@@ -12,16 +12,20 @@ window.QwizBonusSettings=(()=>{
  const activeBuild=()=>$('bonusRulesBuild')?.value||'';
  function populateBuilds(list){
   if(!$('bonusRulesBuild'))return;
-  builds=Array.isArray(list)?list.slice():[];
   const select=$('bonusRulesBuild'),before=select.value;
+  const previousUpdated=builds.find(b=>String(b.id)===before)?.updated_at;
+  builds=Array.isArray(list)?list.slice():[];
+  const currentUpdated=builds.find(b=>String(b.id)===before)?.updated_at;
+  const buildChanged=!!before&&previousUpdated!==undefined&&currentUpdated!==previousUpdated;
   select.replaceChildren(option('','Выберите сохранённую сборку'));
   for(const b of builds)select.add(option(b.id,b.title));
   select.value=builds.some(b=>String(b.id)===before)?before:'';
+  if(buildChanged){loadedBuild='';cards=[];$('bonusRulesForm').hidden=true;}
   if(!select.value){
    cards=[];loadedBuild='';$('bonusRulesCard').replaceChildren(option('','Сначала выберите сборку'));
    $('bonusRulesCard').disabled=true;$('bonusRulesForm').hidden=true;
    status(builds.length?'Выберите сборку, затем конкретную мини-игру.':'Сохранённых сборок нет. Сначала создайте и сохраните сборку.');
-  }
+  }else if(buildChanged&&$('bonusesPage')?.hidden===false)void load();
  }
  async function load(){
   const id=activeBuild(),request=++loading;
