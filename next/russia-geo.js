@@ -174,10 +174,12 @@
    if(error)throw error;
    if(answer!==null&&data.last_answer){
      t.revealQuestion=t.view?.question;
-     t.lastAnswer=data.last_answer;t.feedbackUntil=Date.now()+Math.min(30000,Math.max(1000,Number(data.answer_seconds||8)*1000));
-     setTimeout(()=>{if(!t.closed&&Date.now()>=t.feedbackUntil){
-       t.lastAnswer=null;t.revealQuestion=null;t.renderKey=null;roundState(t);
-     }},Math.min(30080,Math.max(1080,Number(data.answer_seconds||8)*1000+80)));
+     t.lastAnswer=data.last_answer;t.feedbackUntil=Date.now()+480;
+     if(t.feedbackTimer)clearTimeout(t.feedbackTimer);
+     t.feedbackTimer=setTimeout(()=>{if(!t.closed&&Date.now()>=t.feedbackUntil){
+       t.lastAnswer=null;t.revealQuestion=null;t.renderKey=null;t.feedbackScrollKey=null;
+       roundState(t);
+     }},500);
    }
    t.view=data;
    t.message=answer===null?'':data.last_correct?'Верно! +10 очков':'Нет, этот ответ неверный.';
@@ -359,6 +361,6 @@
   };
   update();t.interval=setInterval(update,3500);return true;
  }
- function stop(kind){for(const [key,t] of sessions){if(t.kind!==kind)continue;t.closed=true;clearInterval(t.interval);if(t.onClick)t.root?.removeEventListener('click',t.onClick);for(const [event,handler] of [['pointerdown',t.onPointerDown],['pointermove',t.onPointerMove],['pointerup',t.onPointerUp],['pointercancel',t.onPointerUp],['wheel',t.onWheel],['keydown',t.onKeyDown]])if(handler)t.root?.removeEventListener(event,handler);sessions.delete(key)}}
+ function stop(kind){for(const [key,t] of sessions){if(t.kind!==kind)continue;t.closed=true;clearInterval(t.interval);if(t.feedbackTimer)clearTimeout(t.feedbackTimer);if(t.onClick)t.root?.removeEventListener('click',t.onClick);for(const [event,handler] of [['pointerdown',t.onPointerDown],['pointermove',t.onPointerMove],['pointerup',t.onPointerUp],['pointercancel',t.onPointerUp],['wheel',t.onWheel],['keydown',t.onKeyDown]])if(handler)t.root?.removeEventListener(event,handler);sessions.delete(key)}}
  window.QwizGeo=Object.freeze({mountPlayer,mountProjector,stop,loadMap,labels,MAP_URL});
 })();
