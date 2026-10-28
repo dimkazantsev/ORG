@@ -76,7 +76,7 @@ AS $function$
    WHEN mode='sequence_memory' THEN (
       SELECT coalesce(avg(coalesce(ans.points,0))::numeric,0) FROM public.org_next_players member
       LEFT JOIN public.qwiz_secret_code_answers ans ON ans.room_id=p_room AND ans.card_position=p_position AND ans.player_id=member.id
-      WHERE member.team_id=x.team_id AND member.room_id=p_room)
+      WHERE member.team_id=x.team_id AND member.room_id=p_room AND member.joined_at<=x.started_at)
    WHEN mode='tug' THEN x.taps::numeric
    WHEN mode='blitz' THEN
     CASE WHEN EXISTS(SELECT 1 FROM public.qwiz_arcade_runs ar
@@ -110,7 +110,7 @@ AS $function$
  LEFT JOIN public.qwiz_arcade_memory_players mp ON mp.room_id=p_room AND mp.card_position=p_position AND mp.team_id=x.team_id
  LEFT JOIN public.qwiz_arcade_runner_players rp ON rp.room_id=p_room AND rp.card_position=p_position AND rp.team_id=x.team_id
  )
- SELECT x.team_id,x.name,round(x.pts)::numeric,x.taps,x.players_active,x.members,
+ SELECT x.team_id,x.name,CASE WHEN x.mode='sequence_memory' THEN round(x.pts,1) ELSE round(x.pts) END::numeric,x.taps,x.players_active,x.members,
  row_number() OVER (ORDER BY x.pts DESC,CASE WHEN x.mode='captain' THEN x.moves ELSE 0 END ASC,x.position)::int
  FROM scores x ORDER BY x.pts DESC,CASE WHEN x.mode='captain' THEN x.moves ELSE 0 END ASC,x.position;
 $function$;
