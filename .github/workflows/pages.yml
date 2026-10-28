@@ -123,13 +123,15 @@ jobs:
                grep -q -- '--mint' /tmp/org-next-style.css &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/presenter.html" -o /tmp/org-next-presenter.html &&
                grep -q 'QWIZ-PARTY — экран аудитории' /tmp/org-next-presenter.html &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/workspace.html" -o /tmp/qwiz-workspace.html &&
+               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/workspace.html?release=$GITHUB_RUN_ID-$attempt" -o /tmp/qwiz-workspace.html &&
                grep -q 'Сборки и раунды' /tmp/qwiz-workspace.html &&
                grep -q 'last-opened-game-20261028-1' /tmp/qwiz-workspace.html &&
                grep -q 'id="generalOpenBonusRules"' /tmp/qwiz-workspace.html &&
                grep -q 'id="bonusRulesValidation"' /tmp/qwiz-workspace.html &&
                grep -q 'russian-votes-20261028-1' /tmp/qwiz-workspace.html &&
                grep -q 'tap-gloss-20261028-1' /tmp/qwiz-workspace.html &&
+               curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/next/arcade.css?v=tap-gloss-20261028-1&release=$GITHUB_RUN_ID-$attempt" -o /tmp/qwiz-arcade.css &&
+               grep -q 'premium tactile Tap-battle' /tmp/qwiz-arcade.css &&
                grep -q 'id="bonusRulesActivity"' /tmp/qwiz-workspace.html &&
                grep -q 'id="bonusRulesGap"' /tmp/qwiz-workspace.html &&
                ! grep -q 'id="generalBonusPercent"' /tmp/qwiz-workspace.html &&
