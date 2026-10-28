@@ -19,14 +19,24 @@ for(const width of [320,390,768,1440]){
     const rect=node.getBoundingClientRect();
     return {left:rect.left,right:rect.right,top:rect.top,height:rect.height,
       paddingLeft:getComputedStyle(node).paddingLeft,
-      textAlign:getComputedStyle(node).textAlign,display:getComputedStyle(node).display};
+      textAlign:getComputedStyle(node).textAlign,display:getComputedStyle(node).display,
+      number:node.querySelector('.bonus-rule-number')?.getBoundingClientRect().toJSON(),
+      label:node.querySelector('.bonus-rule-text')?.getBoundingClientRect().toJSON()};
    });
    return {left:outer.left,right:outer.right,cards};
   });
   expect(state.cards).toHaveLength(4);
   expect(state.cards.every(card=>card.left>=state.left-1&&card.right<=state.right+1)).toBe(true);
-  expect(state.cards.every(card=>card.textAlign==='left'&&card.display==='block')).toBe(true);
+  expect(state.cards.every(card=>card.textAlign==='left'&&card.display==='grid')).toBe(true);
   expect(new Set(state.cards.map(card=>card.paddingLeft)).size).toBe(1);
+  expect(state.cards.every(card=>card.number&&card.label)).toBe(true);
+  expect(state.cards.every(card=>Math.abs(card.number.y-card.label.y)<2)).toBe(true);
+  for(const card of state.cards){
+   expect(card.label.x).toBeGreaterThan(card.number.x);
+   expect(card.label.y).toBeGreaterThanOrEqual(card.top+9);
+   expect(card.label.y).toBeLessThanOrEqual(card.top+16);
+  }
+
   for(const card of state.cards){
    const row=state.cards.filter(other=>Math.abs(other.top-card.top)<1);
    expect(row.every(other=>Math.abs(other.height-card.height)<1)).toBe(true);

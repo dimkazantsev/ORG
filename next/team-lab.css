@@ -120,13 +120,22 @@
 .team-lab-bonuses-heading h3{font-size:clamp(19px,2.3vw,25px);margin:7px 0;color:#34214d}
 .team-lab-bonuses-heading p{font-size:12px;line-height:1.55;color:#756585;max-width:660px;margin:0}
 .team-lab-rules{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:16px 0 8px;align-items:stretch}
-.team-lab-rules > span,.team-lab-rules > .bonus-rules-step{
- display:block;box-sizing:border-box;width:100%;min-width:0;min-height:69px;margin:0;
+.team-lab-rules > .bonus-rule-card{
+ display:grid;box-sizing:border-box;grid-template-columns:20px minmax(0,1fr);
+ align-items:start;align-content:start;justify-items:stretch;justify-content:stretch;
+ column-gap:4px;width:100%;min-width:0;min-height:69px;margin:0;
  border:1px solid #e3d8f1;border-radius:11px;background:#faf7ff;
  line-height:1.45;padding:11px 12px;font-family:inherit;font-size:12px;font-weight:650;
  color:#695180;text-align:left;white-space:normal;overflow-wrap:break-word;
 }
-.team-lab-rules strong{display:inline;color:#7c4bc4;font-weight:800}
+.team-lab-rules .bonus-rule-number{
+ display:block;align-self:start;margin:0;padding:0;color:#7c4bc4;
+ font-family:inherit;font-size:inherit;font-weight:800;line-height:1.45;
+}
+.team-lab-rules .bonus-rule-text{
+ display:block;align-self:start;margin:0;padding:0;min-width:0;
+ font-family:inherit;font-size:inherit;font-weight:inherit;line-height:1.45;text-align:left;
+}
 .team-lab-catalog-groups{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
 .team-lab-effect-group-title{font-size:12px;font-weight:850;letter-spacing:.03em;margin:8px 0 10px}
 .team-lab-effect-group-title.is-positive{color:#367a59}
