@@ -31,7 +31,7 @@ jobs:
           node --check app.js
           test -s studio-2026.css
           test -s ui-ux-pro-max.css
-          node --test next/test.mjs next/flags-six.test.cjs next/last-opened-build.test.mjs next/bonus-rules-threshold.test.mjs next/bonus-vote-summary.test.mjs next/tap-appearance.test.mjs next/secret-code.test.mjs
+          node --test next/test.mjs next/flags-six.test.cjs next/last-opened-build.test.mjs next/bonus-rules-threshold.test.mjs next/bonus-vote-summary.test.mjs next/tap-appearance.test.mjs next/secret-code.test.mjs next/card-sandbox-secret.test.mjs
           test -s next/presenter.html
           test -s next/presenter.css
           test -s next/presenter.js
@@ -48,6 +48,7 @@ jobs:
           test -s next/assets/manrope-variable.ttf
           test -s next/migrations/qwiz_advance_variable_collision_fix.sql
           node --check next/workspace.js
+          node --check next/card-sandbox.js
           node --check next/profile.js
           node --check next/stage.js
           node --check next/player-layout.js
