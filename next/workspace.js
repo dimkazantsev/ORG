@@ -67,7 +67,7 @@ const arcadeGames={
  tug:{title:'Тап-баттл',icon:'arcade_tug',seconds:45,help:'Все участники нажимают большую 3D-кнопку. Сервер складывает число нажатий игроков в командный результат. Победа: настроенные баллы рейтинга (по умолчанию 15).'},
  captain:{title:'Мэмори капитанов',icon:'arcade_captain',seconds:100,help:'Все капитаны одновременно ищут пары среди 12 плиток. Побеждает завершивший за наименьшее время; при равенстве выигрывает меньшее число ходов. Победа: настроенные баллы рейтинга (по умолчанию 15).'}
 };
-const state={db:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,bankOffset:0,bankPageSize:25,bankRequest:0,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',buildsReady:false,dragFrom:null,selectedCard:null,clockOffset:0,liveKey:'',lastDeadlineRefresh:0};
+const state={db:null,accountId:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,bankOffset:0,bankPageSize:25,bankRequest:0,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',buildsReady:false,dragFrom:null,selectedCard:null,clockOffset:0,liveKey:'',lastDeadlineRefresh:0};
 function msg(id,text='',isError=false){const el=$(id);if(!el)return;el.textContent=text;el.classList.toggle('error',!!isError)}
 function disable(id,value){const el=$(id);if(el)el.disabled=value}
 function fmt(x){return Math.round(Number(x)||0).toLocaleString('ru-RU',{maximumFractionDigits:0})}
@@ -116,6 +116,35 @@ async function refreshWorkspace(){
  finally{button.disabled=false;button.setAttribute('aria-busy','false')}
 }
 const resumeKey='qwiz-studio-position-v3';
+const lastBuildKeyBase='qwiz-studio-last-opened-build-v1:';
+function lastBuildKey(){return state.accountId?lastBuildKeyBase+state.accountId:null}
+function storedLastBuild(){
+ const key=lastBuildKey();if(!key)return null;
+ try{return localStorage.getItem(key)||null}catch{return null}
+}
+function rememberLastBuild(id){
+ const key=lastBuildKey();if(!key||!id)return;
+ try{localStorage.setItem(key,id)}catch{}
+}
+function forgetLastBuild(id){
+ const key=lastBuildKey();if(!key||!id)return;
+ try{if(localStorage.getItem(key)===id)localStorage.removeItem(key)}catch{}
+}
+function lastAvailableBuild(){
+ if(!state.buildsReady||!state.builds.length)return null;
+ const candidate=[storedLastBuild(),readPosition()?.buildId,state.buildId];
+ return candidate.find(id=>id&&state.builds.some(b=>b.id===id))||state.builds[0].id;
+}
+let autoLoadingBuild=false;
+async function ensureLastBuildOpen(){
+ if(autoLoadingBuild||!state.buildsReady||state.activePage!=='builder')return;
+ // Never overwrite open drafts or loaded games merely by switching sections.
+ if(!$('composer').hidden)return;
+ const id=lastAvailableBuild();if(!id)return;
+ autoLoadingBuild=true;
+ try{await loadBuild(id)}finally{autoLoadingBuild=false}
+}
+let requestedBuildSerial=0;
 let restoringView=true,restoreScrollQueued=false; // Lock persistence during initial render; F5 must not overwrite saved section.
 function savePosition(){
  if(restoringView)return;
@@ -142,8 +171,11 @@ async function restorePosition(last=readPosition()){
   if(typeof last.mode==='string'&&[...$('bankMode').options].some(o=>o.value===last.mode))$('bankMode').value=last.mode;
   state.bankOffset=Math.max(0,Math.floor(Number(last.bankOffset)||0));
   await loadQuestions();
-  if(last.section==='builder'&&last.buildId&&state.builds.some(b=>b.id===last.buildId))await loadBuild(last.buildId);
-  else section(last.section);
+  if(last.section==='builder'){
+   const id=last.buildId&&state.builds.some(b=>b.id===last.buildId)?last.buildId:lastAvailableBuild();
+   if(id)await loadBuild(id);
+   else section('builder');
+  }else section(last.section);
   if(last.section==='rooms'&&last.roomCode&&state.hostRooms?.some(r=>r.code===last.roomCode))await selectRoom(last.roomCode);
   const target=Math.max(0,Number(last.scrollY)||0);
   await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
@@ -155,7 +187,7 @@ async function restorePosition(last=readPosition()){
 function section(section){state.activePage=section;for(const id of ['bank','builder','rooms','insights','bonuses'])$(id+'Page').hidden=id!==section;
  for(const n of all('[data-section]')){const selected=n.dataset.section===section;n.classList.toggle('selected',selected);if(selected)n.setAttribute('aria-current','page');else n.removeAttribute('aria-current')}
  animatePage($(section+'Page'));
- if(section==='rooms')loadRooms();if(section==='insights')loadInsights();if(section==='bonuses')window.QwizBonusSettings?.loadIfNeeded();
+ if(section==='rooms')loadRooms();if(section==='insights')loadInsights();if(section==='bonuses')window.QwizBonusSettings?.loadIfNeeded();if(section==='builder')void ensureLastBuildOpen();
  window.scrollTo({top:0,behavior:'instant'});if(!restoringView)history.replaceState(null,'','#'+section);savePosition()}
 function createOption(value,label){const n=document.createElement('option');n.value=value;n.textContent=label;return n}
 function fillSelect(select,options,placeholder,selected=''){select.replaceChildren();if(placeholder!==null)select.add(createOption('',placeholder));for(const [value,title]of options)select.add(createOption(value,title));select.value=selected}
@@ -472,7 +504,7 @@ function card(type){
 }
 function ensureFinale(){state.cards=state.cards.filter((c,i)=>c.type!=='finale'||i===state.cards.length-1);
  if(!state.cards.some(c=>c.type==='finale'))state.cards.push(card('finale'))}
-function newBuild(){state.buildId=null;state.selectedCard=null;state.cards=[card('intro'),card('round'),card('finale')];$('buildTitle').value='';$('composer').hidden=false;renderCards();$('buildTitle').focus()}
+function newBuild(){requestedBuildSerial++;state.buildId=null;state.selectedCard=null;state.cards=[card('intro'),card('round'),card('finale')];$('buildTitle').value='';$('composer').hidden=false;renderCards();$('buildTitle').focus()}
 function cardInsertIndex(){
  const index=state.cards.indexOf(state.selectedCard);
  return index<0?Math.max(0,state.cards.length-1):Math.min(index+1,state.cards.length-1);
@@ -745,7 +777,8 @@ async function deleteBuild(id){
  if(!confirm('Удалить сборку «'+build.title+'»? Сыгранные комнаты и результаты сохранятся.'))return;
  try{
   await studio('build_delete',{id});
-  if(state.buildId===id){state.buildId=null;$('composer').hidden=true;savePosition()}
+  forgetLastBuild(id);
+  if(state.buildId===id){requestedBuildSerial++;state.buildId=null;state.cards=[];state.selectedCard=null;$('composer').hidden=true;savePosition()}
   await overview();
   msg('buildMessage','Сборка удалена. История сыгранных комнат сохранена.');
  }catch(error){msg('buildMessage',error.message,true)}
@@ -801,13 +834,28 @@ async function clearFinishedArchive(){
   if(button){button.disabled=button.dataset.archiveEmpty==='true';button.removeAttribute('aria-busy')}
  }
 }
-async function loadBuild(id){try{const r=await studio('build_get',{id});state.buildId=r.build.id;
- $('buildTitle').value=r.build.title;
- state.selectedCard=null;state.cards=(r.cards||[]).filter(c=>!['team_stats','player_stats'].includes(c.type)&&c.settings?.arcade_mode!=='rocket').map(c=>({...c,title:gameTitle(c)})); // Keep legacy blank bonuses visible for deletion.
- const inferred=state.cards.filter(c=>synchronizeCardTopic(c)).length;
- ensureFinale();$('composer').hidden=false;renderCards();section('builder');savePosition();
- if(inferred)msg('buildMessage','Темы '+inferred+' карточек восстановлены по выбранным механикам. Сохраните сборку, чтобы применить изменения.');
- }catch(e){msg('buildMessage',e.message,true)}}
+async function loadBuild(id){
+ if(!id)return false;
+ const serial=++requestedBuildSerial;
+ try{
+  const r=await studio('build_get',{id});
+  // Slow responses may not replace a more recently opened game or new draft.
+  if(serial!==requestedBuildSerial)return false;
+  if(!r?.build?.id||!Array.isArray(r.cards))throw Error('Сервер не вернул содержание сохранённой игры.');
+  state.buildId=r.build.id;
+  $('buildTitle').value=r.build.title;
+  state.selectedCard=null;
+  state.cards=r.cards.filter(c=>!['team_stats','player_stats'].includes(c.type)&&c.settings?.arcade_mode!=='rocket')
+   .map(c=>({...c,title:gameTitle(c)}));
+  const inferred=state.cards.filter(c=>synchronizeCardTopic(c)).length;
+  ensureFinale();
+  $('composer').hidden=false;
+  rememberLastBuild(state.buildId);
+  renderCards();renderBuilds();section('builder');savePosition();
+  if(inferred)msg('buildMessage','Темы '+inferred+' карточек восстановлены по выбранным механикам. Сохраните сборку, чтобы применить изменения.');
+  return true;
+ }catch(e){if(serial===requestedBuildSerial)msg('buildMessage',e.message,true);return false}
+}
 function validBuildActivity(card){
  if(card?.type==='round'&&card?.settings?.arcade_mode!=='russia_map')return true;
  if((card?.type==='round'||card?.type==='bonus'||card?.type==='duel')&&
@@ -852,6 +900,7 @@ async function saveBuild(){
   const result=await studio('build_save',{id:state.buildId||undefined,title,cards:state.cards});
   if(!result?.id)throw Error('Сервер не подтвердил сохранение. Повторите попытку.');
   state.buildId=result.id;
+  rememberLastBuild(result.id);
   // build_save replaces card rows. Refresh their IDs before any later bonus-rule edit
   // or another save, otherwise a stale draft could undo the editor's saved thresholds.
   try{
@@ -1429,6 +1478,7 @@ async function init(){
  state.db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
  try{const {data:{session}}=await state.db.auth.getSession();if(!session)throw Error('Войдите как преподаватель на главной.');
   if(!await rpc('org_quiz_is_admin_check'))throw Error('У вас нет прав преподавателя.');
+  state.accountId=session.user?.id||null;
   connection('ready','Кабинет подключён');
   // Local timeout changes the UI only, and never polls the API.
   const buildsLoadingTimeout=setTimeout(()=>{
