@@ -73,6 +73,25 @@ function disable(id,value){const el=$(id);if(el)el.disabled=value}
 function fmt(x){return Math.round(Number(x)||0).toLocaleString('ru-RU',{maximumFractionDigits:0})}
 async function rpc(method,args={}){const {data,error}=await state.db.rpc(method,args);if(error)throw new Error(error.message||'Ошибка базы данных');return data}
 async function studio(action,p_input={}){return rpc('qwiz_studio',{p_action:action,p_input})}
+window.QwizBonusRulesApi=Object.freeze({
+ list:buildId=>rpc('qwiz_teacher_bonus_rules',{p_action:'list',p_build:buildId}),
+ async save(buildId,cardId,settings){
+  const result=await rpc('qwiz_teacher_bonus_rules',{p_action:'save',p_build:buildId,p_card:cardId,p_settings:settings});
+  // Keep an open builder draft in sync, so a later ordinary build save does not revert this edit.
+  if(state.buildId===buildId){
+   const updated=(result?.cards||[]).find(c=>String(c.id)===String(cardId));
+   if(updated){
+    const card=state.cards.find(c=>String(c.id)===String(cardId));
+    if(card)card.settings={...card.settings,bonus_min_points:updated.bonus_min_points,
+     bonus_percent:updated.bonus_percent,bonus_lead:updated.bonus_lead,
+     ...(updated.bonus_vote_seconds==null?{}:{bonus_vote_seconds:updated.bonus_vote_seconds})};
+    if(card&&updated.bonus_vote_seconds==null)delete card.settings.bonus_vote_seconds;
+   }
+  }
+  return result;
+ }
+});
+
 const motionPreference=window.matchMedia('(prefers-reduced-motion: reduce)');
 const runningMotion=new Map();
 function animateView(element,frames,options={}){
@@ -136,13 +155,13 @@ async function restorePosition(last=readPosition()){
 function section(section){state.activePage=section;for(const id of ['bank','builder','rooms','insights','bonuses'])$(id+'Page').hidden=id!==section;
  for(const n of all('[data-section]')){const selected=n.dataset.section===section;n.classList.toggle('selected',selected);if(selected)n.setAttribute('aria-current','page');else n.removeAttribute('aria-current')}
  animatePage($(section+'Page'));
- if(section==='rooms')loadRooms();if(section==='insights')loadInsights();
+ if(section==='rooms')loadRooms();if(section==='insights')loadInsights();if(section==='bonuses')window.QwizBonusSettings?.loadIfNeeded();
  window.scrollTo({top:0,behavior:'instant'});if(!restoringView)history.replaceState(null,'','#'+section);savePosition()}
 function createOption(value,label){const n=document.createElement('option');n.value=value;n.textContent=label;return n}
 function fillSelect(select,options,placeholder,selected=''){select.replaceChildren();if(placeholder!==null)select.add(createOption('',placeholder));for(const [value,title]of options)select.add(createOption(value,title));select.value=selected}
 function nameTopic(id){return state.topics.find(t=>t.id===id)?.name||'Все темы'}
 async function overview(){
- const d=await studio('overview');state.topics=d.topics||[];state.builds=d.builds||[];state.buildsReady=true;window.QwizTeamLab?.refreshBuilds();
+ const d=await studio('overview');state.topics=d.topics||[];state.builds=d.builds||[];state.buildsReady=true;window.QwizTeamLab?.refreshBuilds();window.QwizBonusSettings?.refreshBuilds(state.builds);
  updateSelectors();configureBankModes();renderTopics();renderBuilds();await loadQuestions();
 }
 function updateSelectors(){
