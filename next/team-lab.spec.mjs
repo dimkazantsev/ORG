@@ -126,6 +126,8 @@ test('Six current bonuses and penalties appear without a saved build and without
 
 test('Teacher chooses two steps by 3/3 majority and sees formula before applying to game score',async({page})=>{
  await start(page);
+ // The bonus catalog is now its own teacher page, hidden while the room simulator runs.
+ await page.evaluate(()=>{document.querySelector('#bonusesPage').hidden=false;});
  await page.locator('#teamLabBonusExplorer [data-bonus-start]').first().click();
  await expect(page.locator('#teamLabBonusDemo')).toContainText('ШАГ 1/3');
  await page.locator('[data-demo-strategy="support"]').click();
@@ -143,6 +145,8 @@ test('Teacher chooses two steps by 3/3 majority and sees formula before applying
 
 test('Penalty preview never goes below zero and actual score changes only after confirmation',async({page})=>{
  await start(page);
+ // The bonus catalog is now its own teacher page, hidden while the room simulator runs.
+ await page.evaluate(()=>{document.querySelector('#bonusesPage').hidden=false;});
  await page.locator('#teamLabBonusExplorer [data-bonus-start]').first().click();
  await page.locator('[data-demo-strategy="sabotage"]').click();
  await page.locator('[data-demo-option="drain"]').click();
@@ -155,6 +159,8 @@ test('Penalty preview never goes below zero and actual score changes only after 
 
 test('Bonus laboratory remains available after every game step is completed',async({page})=>{
  await start(page);
+ // The bonus catalog is now its own teacher page, hidden while the room simulator runs.
+ await page.evaluate(()=>{document.querySelector('#bonusesPage').hidden=false;});
  await page.locator('#teamLabNext').click();
  await page.locator('#teamLabNext').click();
  await page.locator('#teamLabNext').click();
