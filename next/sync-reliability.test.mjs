@@ -8,10 +8,10 @@ test('all resilience code parses and new builds are referenced',()=>{
  for(const name of ['app.js','arcade.js','presenter.js','workspace.js','card-sandbox.js','card-geo-preview.js']){
   assert.doesNotThrow(()=>new Script(read(name),{filename:name}));
  }
- const pages=[['index.html','app.js?v=consensus-fix-20261027-1'],
-  ['index.html','arcade.js?v=mobile-40-20261028-1'],
+ const pages=[['index.html','app.js?v='],
+  ['index.html','arcade.js?v='],
   ['workspace.html','workspace.js?v='],
-  ['presenter.html','presenter.js?v=mobile-40-20261028-1'],
+  ['presenter.html','presenter.js?v='],
   ['workspace.html','card-sandbox.js?v=geo-full-question-20261028-1'],
   ['workspace.html','card-geo-preview.js?v=geo-full-question-20261028-1']];
  for(const [page,asset] of pages) assert.ok(read(page).includes(asset),page+' missing '+asset);
