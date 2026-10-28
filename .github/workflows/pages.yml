@@ -125,6 +125,11 @@ jobs:
                grep -q 'QWIZ-PARTY — экран аудитории' /tmp/org-next-presenter.html &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/workspace.html" -o /tmp/qwiz-workspace.html &&
                grep -q 'Сборки и раунды' /tmp/qwiz-workspace.html &&
+               grep -q 'id="generalOpenBonusRules"' /tmp/qwiz-workspace.html &&
+               grep -q 'id="bonusRulesActivity"' /tmp/qwiz-workspace.html &&
+               grep -q 'id="bonusRulesGap"' /tmp/qwiz-workspace.html &&
+               ! grep -q 'id="generalBonusPercent"' /tmp/qwiz-workspace.html &&
+               ! grep -q 'id="generalBonusLead"' /tmp/qwiz-workspace.html &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/profile.html" -o /tmp/qwiz-profile.html &&
                grep -q 'Мой профиль' /tmp/qwiz-profile.html &&
                curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/workspace.js?v=teams-flags-1" -o /tmp/qwiz-workspace.js &&
