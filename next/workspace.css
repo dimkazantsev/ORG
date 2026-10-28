@@ -1870,3 +1870,22 @@ body.studio-polish .page>.page-head{position:relative;isolation:isolate;overflow
 }
 
 #cardPlayScreen .card-play-map path.is-wrong{fill:#e48496!important;stroke:#fff!important;outline:none!important}
+
+
+/* Single bonus-rules entry point inside the general timing dialog. */
+#generalDialog .general-bonus-link{
+ display:flex;align-items:center;justify-content:space-between;gap:16px;
+ padding:16px;margin:14px 0 18px;border:1px solid #e2d3ef;border-radius:14px;
+ background:#faf7ff;
+}
+#generalDialog .general-bonus-link > div{min-width:0;flex:1}
+#generalDialog .general-bonus-link strong{display:block;font-size:13px;color:#4b336b;font-weight:800}
+#generalDialog .general-bonus-link p{font-size:12px;color:#736487;line-height:1.55;margin:6px 0 0}
+#generalDialog .general-bonus-link > button{
+ flex:0 0 auto;min-height:44px;white-space:normal;text-align:center;
+ align-self:center;gap:7px;
+}
+@media(max-width:640px){
+ #generalDialog .general-bonus-link{flex-direction:column;align-items:stretch}
+ #generalDialog .general-bonus-link > button{width:100%}
+}

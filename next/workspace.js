@@ -713,27 +713,30 @@ function saveCard(event){
 function generalSettings(){
  const first=state.cards.find(c=>c.type==='round')?.settings||buildDefaults;
  $('generalLeadSeconds').value=first.lead_seconds??5;$('generalStatsSeconds').value=first.stats_seconds??7;
- $('generalBonusPercent').value=first.bonus_percent??70;$('generalBonusLead').value=first.bonus_lead??15;
  $('generalSeconds').value=first.seconds||30;$('generalAnswerSeconds').value=first.answer_seconds||10;$('generalCount').value=first.count||5;$('generalSound').value=first.sound||'fanfare';
  $('generalApplyCount').checked=false;$('generalApplySound').checked=false;$('generalCount').disabled=true;$('generalSound').disabled=true;
  $('generalRoundCount').textContent=state.cards.filter(c=>c.type==='round').length;$('generalDialog').showModal();
 }
 function saveGeneralSettings(event){
  event.preventDefault();const timing={seconds:Number($('generalSeconds').value),answer_seconds:Number($('generalAnswerSeconds').value),
- lead_seconds:Number($('generalLeadSeconds').value),stats_seconds:Number($('generalStatsSeconds').value),
- bonus_percent:Number($('generalBonusPercent').value),bonus_lead:Number($('generalBonusLead').value)};
+ lead_seconds:Number($('generalLeadSeconds').value),stats_seconds:Number($('generalStatsSeconds').value)};
  if(timing.seconds<10||timing.seconds>120||timing.answer_seconds<5||timing.answer_seconds>30||
- timing.lead_seconds<1||timing.lead_seconds>5||timing.stats_seconds<5||timing.stats_seconds>10||
- timing.bonus_percent<50||timing.bonus_percent>100||timing.bonus_lead<0||timing.bonus_lead>200)return;
+ timing.lead_seconds<1||timing.lead_seconds>5||timing.stats_seconds<5||timing.stats_seconds>10)return;
  if($('generalApplyCount').checked)timing.count=Number($('generalCount').value);
  if($('generalApplySound').checked)timing.sound=$('generalSound').value;
  Object.assign(buildDefaults,timing);
  for(const c of state.cards){
   if(c.type==='round')c.settings={...buildDefaults,...c.settings,...timing};
   else if(['blitz','tug','captain'].includes(c.settings?.arcade_mode))
-   c.settings={...c.settings,bonus_percent:timing.bonus_percent,bonus_lead:timing.bonus_lead,stats_seconds:timing.stats_seconds,lead_seconds:timing.lead_seconds};
+   c.settings={...c.settings,stats_seconds:timing.stats_seconds,lead_seconds:timing.lead_seconds};
  }
  $('generalDialog').close();renderCards();msg('buildMessage','Общие настройки применены. Сохраните сборку, чтобы использовать их в игре.');QwizStage.audio.play('accept');
+}
+function openGeneralBonusRules(){
+ // One source of truth: eligibility lives on each saved mini-game card, not in round timing.
+ $('generalDialog').close();
+ section('bonuses');
+ window.QwizBonusSettings?.focusBuild?.(state.buildId);
 }
 function renderBuilds(){$('savedBuilds').innerHTML=state.builds.length?state.builds.map(b=>
  '<div class="saved-build-wrap"><button type="button" class="saved-build" data-load-build="'+esc(b.id)+'"><span>Сохранённая сборка</span><strong>'+esc(QwizStage.capitalize(b.title))+'</strong><span>Редактировать →</span></button><button type="button" class="card-trash" data-delete-build="'+esc(b.id)+'" title="Удалить сборку" aria-label="Удалить сборку '+esc(b.title)+'">'+trashSvg+'</button></div>').join(''):'<div class="empty">Сборок пока нет. Создайте первую.</div>'}
@@ -1299,7 +1302,7 @@ function wire(){
  };
  $('editKind').onchange=()=>answerEditor($('editKind').value,null);
  $('questionForm').onsubmit=saveQuestion;
- $('newBuild').onclick=newBuild;$('generalSettings').onclick=generalSettings;$('generalForm').onsubmit=saveGeneralSettings;
+ $('newBuild').onclick=newBuild;$('generalSettings').onclick=generalSettings;$('generalForm').onsubmit=saveGeneralSettings;$('generalOpenBonusRules').onclick=openGeneralBonusRules;
  $('generalApplyCount').onchange=e=>{$('generalCount').disabled=!e.target.checked};$('generalApplySound').onchange=e=>{$('generalSound').disabled=!e.target.checked};
  QwizStage.decorateControls();
  QwizStage.iconLabel($('studioSound'),QwizStage.audio.enabled?'Звук включён':'Звук выключен',QwizStage.audio.enabled?'volume':'muted');

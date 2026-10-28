@@ -134,3 +134,54 @@ test('Teacher edits ranking points separately for tap victory and blitz correct 
  await page.locator('#bonusRulesReset').click();
  await expect(page.locator('#bonusRulesReward')).toHaveValue('10');
 });
+
+test('General settings delegate bonus thresholds to one editor and select the current saved build',async({page})=>{
+ await page.evaluate(()=>{
+  state.builds=[{id:'fixture-build',title:'Сборка с мини-игрой'}];
+  state.buildId='fixture-build';
+  state.cards=[{id:'round',type:'round',title:'Вопросы',settings:{count:5,seconds:30,answer_seconds:10,lead_seconds:5,stats_seconds:7}}];
+  window.QwizBonusRulesApi={
+   list:async()=>({cards:[{id:'tug-card',title:'Тап-баттл',mode:'tug',position:1,
+    bonus_percent:83,bonus_lead:29,bonus_min_points:3,arcade_score_points:17,bonus_vote_seconds:null}]})
+  };
+  window.QwizBonusSettings.refreshBuilds(state.builds);
+  generalSettings();
+ });
+ await expect(page.locator('#generalDialog')).toBeVisible();
+ await expect(page.locator('#generalBonusPercent')).toHaveCount(0);
+ await expect(page.locator('#generalBonusLead')).toHaveCount(0);
+ await expect(page.locator('#generalOpenBonusRules')).toBeVisible();
+ await page.locator('#generalOpenBonusRules').click();
+ await expect(page.locator('#generalDialog')).not.toBeVisible();
+ await expect(page.locator('#bonusesPage')).toBeVisible();
+ await expect(page.locator('#bonusRulesBuild')).toHaveValue('fixture-build');
+ await expect(page.locator('#bonusRulesActivity')).toHaveValue('83');
+ await expect(page.locator('#bonusRulesGap')).toHaveValue('29');
+});
+
+test('General timing apply keeps individual bonus eligibility and reward settings unchanged',async({page})=>{
+ const actual=await page.evaluate(()=>{
+  state.cards=[
+   {id:'round-1',type:'round',title:'Раунд',settings:{count:5,seconds:30,answer_seconds:10,
+     lead_seconds:5,stats_seconds:7,bonus_percent:81,bonus_lead:46}},
+   {id:'game-1',type:'bonus',title:'Тап-баттл',settings:{arcade_mode:'tug',
+     bonus_percent:93,bonus_lead:24,bonus_min_points:4,arcade_score_points:32,
+     lead_seconds:5,stats_seconds:7}},
+   {id:'game-2',type:'bonus',title:'Мэмори',settings:{arcade_mode:'captain',
+     bonus_percent:66,bonus_lead:38,bonus_min_points:2,arcade_score_points:21,
+     lead_seconds:5,stats_seconds:7}}
+  ];
+  generalSettings();
+  document.querySelector('#generalStatsSeconds').value='9';
+  saveGeneralSettings({preventDefault(){}});
+  return state.cards.filter(c=>c.settings?.bonus_percent!==undefined)
+   .map(c=>({id:c.id,percent:c.settings.bonus_percent,lead:c.settings.bonus_lead,
+     min:c.settings.bonus_min_points,points:c.settings.arcade_score_points,
+     stats:c.settings.stats_seconds}));
+ });
+ expect(actual).toEqual([
+  {id:'round-1',percent:81,lead:46,stats:9},
+  {id:'game-1',percent:93,lead:24,min:4,points:32,stats:9},
+  {id:'game-2',percent:66,lead:38,min:2,points:21,stats:9}
+ ]);
+});

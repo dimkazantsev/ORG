@@ -131,6 +131,29 @@ window.QwizBonusSettings=(()=>{
   if(!initialised)init();
   if(activeBuild()&&loadedBuild!==activeBuild())void load();
  }
+ function focusBuild(buildId){
+  if(!initialised)init();
+  const select=$('bonusRulesBuild');
+  if(!select)return;
+  const desired=String(buildId||'');
+  if(desired&&builds.some(b=>String(b.id)===desired)){
+   if(select.value!==desired||loadedBuild!==desired){
+    select.value=desired;
+    void load();
+   }
+  }else if(!desired){
+   // Unpublished drafts cannot be edited by the server-backed bonus editor.
+   select.value='';
+   loadedBuild='';cards=[];loading++;
+   $('bonusRulesCard').replaceChildren(option('','Сначала выберите сборку'));
+   $('bonusRulesCard').disabled=true;
+   $('bonusRulesForm').hidden=true;
+   status('Текущая сборка ещё не сохранена. Сохраните её в конструкторе, затем вернитесь сюда. Или выберите другую сохранённую сборку.');
+  }else{
+   status('Не удалось найти сборку. Обновите список или сначала сохраните её в конструкторе.',true);
+  }
+  $('bonusRulesEditor')?.scrollIntoView({behavior:'smooth',block:'start'});
+ }
  document.addEventListener('DOMContentLoaded',init);
- return Object.freeze({refreshBuilds:populateBuilds,loadIfNeeded,init});
+ return Object.freeze({refreshBuilds:populateBuilds,loadIfNeeded,focusBuild,init});
 })();
