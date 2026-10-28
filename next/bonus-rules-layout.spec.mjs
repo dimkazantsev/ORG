@@ -84,3 +84,46 @@ test('Editor avoids duplicate mode names and uses correct singular score label',
  await expect(page.locator('#bonusRulesPreview')).toContainText('не менее 1 очка');
  await expect(page.locator('#bonusRulesPreview')).not.toContainText('1 очков');
 });
+
+test('Teacher edits ranking points separately for tap victory and blitz correct answer',async({page})=>{
+ const writes=[];
+ await page.evaluate(()=>{
+  window.__bonusWrites=[];
+  window.QwizBonusRulesApi={
+   list:async()=>({cards:[
+    {id:'tap',title:'Тап-баттл',mode:'tug',position:1,arcade_score_points:15,
+      bonus_min_points:1,bonus_percent:70,bonus_lead:15,bonus_vote_seconds:null},
+    {id:'blitz',title:'Блиц-консенсус',mode:'blitz',position:2,arcade_score_points:10,
+      bonus_min_points:1,bonus_percent:70,bonus_lead:15,bonus_vote_seconds:null}
+   ]}),
+   save:async(id,card,settings)=>{
+    window.__bonusWrites.push({id,card,settings});
+    return {cards:[{id:card,title:'Тест',mode:card==='tap'?'tug':'blitz',position:1,
+      ...settings}]};
+   }
+  };
+  window.QwizBonusSettings.refreshBuilds([{id:'fixture-build',title:'Тестовая сборка'}]);
+ });
+ await page.locator('#bonusRulesBuild').selectOption('fixture-build');
+ await expect(page.locator('#bonusRulesReward')).toHaveValue('15');
+ await expect(page.locator('#bonusRulesRewardHelp')).toContainText('команде-победителю');
+ await page.locator('#bonusRulesReward').fill('25');
+ await expect(page.locator('#bonusRulesPreview')).toContainText('+25 баллов');
+ await page.locator('#bonusRulesSave').click();
+ await expect.poll(async()=>page.evaluate(()=>window.__bonusWrites.length)).toBe(1);
+ const first=await page.evaluate(()=>window.__bonusWrites[0]);
+ expect(first.settings.arcade_score_points).toBe(25);
+ expect(first.settings.bonus_min_points).toBe(1);
+ await page.locator('#bonusRulesCard').selectOption('blitz');
+ await expect(page.locator('#bonusRulesReward')).toHaveValue('10');
+ await expect(page.locator('#bonusRulesRewardHelp')).toContainText('каждой команде');
+ await page.locator('#bonusRulesReward').fill('35');
+ await expect(page.locator('#bonusRulesPreview')).toContainText('+35 баллов');
+ await page.locator('#bonusRulesSave').click();
+ await expect.poll(async()=>page.evaluate(()=>window.__bonusWrites.length)).toBe(2);
+ const second=await page.evaluate(()=>window.__bonusWrites[1]);
+ expect(second.card).toBe('blitz');
+ expect(second.settings.arcade_score_points).toBe(35);
+ await page.locator('#bonusRulesReset').click();
+ await expect(page.locator('#bonusRulesReward')).toHaveValue('10');
+});
