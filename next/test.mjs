@@ -1097,7 +1097,7 @@ test('Geography mobile taps confirm immediately and correct region is enlarged',
  assert.match(src,/e\.type==='pointercancel'\|\|!pointer/);
  assert.match(src,/confirm\.textContent='Проверяем…'/);
  assert.match(src,/b\.classList\.add\('geo-option-pending'\)/);
- assert.match(src,/t\.feedbackUntil=Date\.now\(\)\+Math\.min/);
+ assert.match(src,/t\.feedbackUntil=Date\.now\(\)\+480/);
  assert.match(styles,/\.geo-option-pending/);
  assert.match(styles,/\.geo-region\.geo-correct-answer/);
  assert.match(arcade,/setTimeout\(\(\)=>flush\(tr\),160\)/);
