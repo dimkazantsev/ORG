@@ -49,3 +49,17 @@ test('All three screens load the same Secret Code UI, with existing design token
  assert.match(arcade,/sequence_memory:\{title:'Секретный код'/);
  assert.match(read('./arcade.css'),/arcade-secret-scene/);
 });
+
+
+test('Fast geography advances server index without delaying the following question',()=>{
+ const geo=read('./russia-geo.js'),sql=read('./migrations/20261028_geo_immediate_answer.sql');
+ assert.match(geo,/t\.feedbackUntil=Date\.now\(\)\+480/);
+ assert.match(geo,/t\.feedbackTimer=setTimeout/);
+ assert.match(sql,/updated_at=clock_timestamp\(\)/);
+ assert.doesNotMatch(sql,/updated_at=clock_timestamp\(\)\+make_interval/);
+});
+test('Secret Code stays unpredictable even with a known room identifier',()=>{
+ const sql=read('./migrations/20261028_secret_code_private_rng.sql');
+ assert.match(sql,/gen_random_uuid\(\)::text/);
+ assert.doesNotMatch(sql,/md5\(p_room::text/);
+});
