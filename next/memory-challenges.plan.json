@@ -2,7 +2,7 @@
   "name": "Секретный код",
   "mode": "sequence_memory",
   "gameType": "standalone_arcade",
-  "status": "playable_server_engine_v1",
+  "status": "implemented_active",
   "visualStyle": "Reuse existing QWIZ-PARTY arcade surfaces, controls, lilac/fuchsia color tokens, typography, responsive layouts and animation style; no new art direction.",
   "scoring": {
     "correctAll": 10,
