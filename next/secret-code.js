@@ -30,12 +30,11 @@ window.QwizSecretCode=(()=>{
     '<div class="arcade-secret-choices" role="group" aria-label="Кнопки кода">'+choices+'</div>'+
     '<div class="arcade-secret-actions"><button type="button" data-secret-undo '+(!chosen.length||tr.secretBusy?'disabled':'')+'>Удалить</button>'+
     '<button type="button" data-secret-submit '+(chosen.length!==data.length||tr.secretBusy?'disabled':'')+'>Подтвердить</button></div>';
-  }else if(data.submitted){
-   panel.innerHTML='<p class="arcade-secret-done">Ответ принят сервером. Ожидайте результатов команд.</p>';
   }else if(data.phase==='result'){
    panel.innerHTML='<p class="arcade-secret-done">Ваш результат: '+Number(data.my_points||0)+' / 10 · совпало '+Number(data.my_exact||0)+' из '+Number(data.length||0)+'</p>'+
     '<p class="arcade-secret-hint">Правильный код: '+(data.solution||[]).map(glyph).join(' ')+'</p>';
-  }else panel.innerHTML='<p class="arcade-secret-hint">Следите за сменой символов. Ответить можно после показа.</p>';
+  }else if(data.submitted){panel.innerHTML='<p class="arcade-secret-done">Ответ принят сервером. Ожидайте результатов команд.</p>';}
+  else panel.innerHTML='<p class="arcade-secret-hint">Следите за сменой символов. Ответить можно после показа.</p>';
  }
  async function refresh(tr){
   if(tr.closed||tr.secretBusyPoll||tr.mode!=='sequence_memory'||!tr.view?.running)return;
