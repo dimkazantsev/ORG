@@ -59,6 +59,12 @@ test('Geography answer does not pause between questions and shows immediate brie
  assert.match(geo,/t\.feedbackTimer=setTimeout/);
  assert.match(geo,/t\.feedbackScrollKey=null/);
 });
+test('Secret Code is unpredictable even if a player knows the room ID',()=>{
+ const sql=read('./migrations/20261028_secret_code_private_rng.sql');
+ assert.match(sql,/gen_random_uuid\(\)::text/);
+ assert.doesNotMatch(sql,/md5\(p_room::text/);
+});
+
 test('Secret Code-only room passes the live readiness gate',()=>{
  const sql=read('./migrations/20261028_secret_code_lobby_readiness.sql');
  assert.match(sql,/has_arcade_round/);
