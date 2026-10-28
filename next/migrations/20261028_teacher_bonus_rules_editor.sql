@@ -22,8 +22,7 @@ BEGIN
    AND r.points>=greatest(1,least(200,coalesce((card->'settings'->>'bonus_min_points')::integer,1))) AND (other_points IS NULL OR (v.mode='blitz' AND r.points>=other_points OR v.mode<>'blitz' AND r.points-other_points>=gap))
    AND (v.mode IN ('blitz','captain') AND r.active>=1
         OR v.mode IN ('rocket','tug') AND r.active*100>=pct*greatest(r.members,1));
-END $function$
-
+END $function$;
 
 CREATE OR REPLACE FUNCTION public.qwiz_bonus_window(p_room uuid, p_position integer)
  RETURNS integer
