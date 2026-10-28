@@ -88,7 +88,7 @@ window.QwizBonusExplorer=(()=>{
      (trial.applied?'<div class="team-lab-feedback" role="status">Тестовый счёт изменён на '+(trial.delta>0?'+':'')+trial.delta+'; в журнале зафиксирован эффект.</div>':
        '<button class="team-lab-primary" type="button" data-demo-apply>Применить к тестовому счёту</button>'):
     '<h4>Эффект не получен</h4><p class="team-lab-demo-note">Три голоса разошлись: большинство не выбрало один вариант. В настоящей игре бонус не начисляется.</p>')+
-    '<div class="team-lab-demo-votes-summary">Этап 1: '+html(trial.strategyVotes.join(' · '))+
+    '<div class="team-lab-demo-votes-summary">Этап 1: '+html(trial.strategyVotes.map(v=>v==='support'?'Усилить себя':'Ослабить соперника').join(' · '))+
     ' · Этап 2: '+html(trial.optionVotes.join(' · '))+'</div>';
   }
   panel.hidden=false;
