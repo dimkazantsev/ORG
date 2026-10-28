@@ -247,3 +247,16 @@
 .bonus-rules-status{font-size:12px;line-height:1.6;color:#715e86;margin:12px 0 0}
 .bonus-rules-status.error{color:#a92f5c}
 @media(max-width:700px){.bonus-rules-choices,.bonus-rules-fields{grid-template-columns:minmax(0,1fr)}.bonus-rules-editor-actions{grid-template-columns:minmax(0,1fr);max-width:none}.bonus-rules-editor-head{flex-direction:column}}
+
+
+/* Rating points earned from a mini-game are separate from its qualification score and achievement credits. */
+.bonus-rating-summary{border:1px solid #e4d8ee;border-radius:12px;background:#fff;padding:13px 15px;margin:8px 0 16px;color:#5f4b74}
+.bonus-rating-summary strong{display:block;font-size:12px;color:#3f3056;font-weight:800}
+.bonus-rating-summary p{font-size:12px;line-height:1.65;margin:6px 0 0}
+.bonus-rules-fields > .bonus-rating-field{
+ grid-column:1/-1;border-bottom:1px solid #e8dcf2;padding-bottom:15px;margin-bottom:3px;
+ color:#493264;font-weight:850;
+}
+.bonus-rules-fields > .bonus-rating-field input{max-width:260px;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
+.bonus-rules-fields > .bonus-rating-field small{max-width:720px}
+@media(max-width:700px){.bonus-rules-fields > .bonus-rating-field input{max-width:none}}
