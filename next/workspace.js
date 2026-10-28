@@ -22,7 +22,7 @@ const flagModes=[
  ['history','История и символика',true]
 ];
 // Align live teacher preview with arcade labels in existing saved rooms.
-const ARCADE_VISIBLE_NAMES={tug:'Тап-баттл',blitz:'Блиц-консенсус',captain:'Мэмори капитанов'};
+const ARCADE_VISIBLE_NAMES={tug:'Тап-баттл',blitz:'Блиц-консенсус',captain:'Мэмори капитанов',sequence_memory:'Секретный код'};
 const hostArcadeActivity=a=>{const mode=a?.settings?.arcade_mode||a?.settings?.queued_settings?.arcade_mode;return mode&&ARCADE_VISIBLE_NAMES[mode]?{...a,title:ARCADE_VISIBLE_NAMES[mode],icon:mode==='blitz'?'arcade_consensus':a.icon}:a};
 const titleKind=id=>flagModes.find(x=>x[0]===id)?.[1]||'Флаги мира';
 const icons={round:'▦',intro:'◉',break:'♫',team_stats:'▥',player_stats:'♙',bonus:'✦',duel:'⇄',finale:'★'};
@@ -37,6 +37,7 @@ const cardSvgPaths={
  arcade_blitz:'<circle cx="10.5" cy="13.5" r="7.5"/><path d="M8 2h5m-2.5 4V3m6.5 3.5 1.5-1.5"/><path d="m11.5 9-3 5h3l-1 4 4-6h-3Z"/>',
   arcade_tug:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><path d="m9.5 7.5 1-2m4 12 1.5 1.5M12 1v2M12 21v2M1 12h2m18 0h2"/><path d="M11 9v4l2 1"/>',
   arcade_captain:'<rect x="2.8" y="3.5" width="8.5" height="8.5" rx="1.7"/><rect x="12.7" y="3.5" width="8.5" height="8.5" rx="1.7"/><rect x="2.8" y="13" width="8.5" height="8.5" rx="1.7"/><rect x="12.7" y="13" width="8.5" height="8.5" rx="1.7"/><path d="m6 8 1.1 1.4L9 7m7.3 1 1.1 1.4L19.1 7m-9 10h4"/>',
+ arcade_secret:'<rect x="4" y="9" width="16" height="12" rx="2"/><path d="M8 9V6a4 4 0 0 1 8 0v3m-4 5v3m-1-2h2"/>',
  duel:'<path d="m4 7 4-4m0 0 4 4M8 3v12M20 17l-4 4m0 0-4-4m4 4V9"/>',
  finale:'<path d="M7 4h10v7c0 7-10 7-10 0V4ZM7 7H3v3c0 3 3 5 6 5m8-8h4v3c0 3-3 5-6 5m-3 2v4m-4 0h8"/>',
  flag:'<path d="M5 21V3m0 1c5-3 8 2 15-1v11c-7 3-10-2-15 1"/>',
@@ -65,7 +66,8 @@ const buildDefaults={count:5,seconds:30,answer_seconds:10,order:'random',offset:
 const arcadeGames={
  blitz:{title:'Блиц-консенсус',icon:'arcade_blitz',seconds:60,help:'Участники голосуют за ответ, затем капитан видит результаты и принимает итоговое решение. Без решения капитана выбирается мнение большинства. Правильный ответ: настроенные баллы рейтинга (по умолчанию 10) каждой ответившей верно команде.'},
  tug:{title:'Тап-баттл',icon:'arcade_tug',seconds:45,help:'Все участники нажимают большую 3D-кнопку. Сервер складывает число нажатий игроков в командный результат. Победа: настроенные баллы рейтинга (по умолчанию 15).'},
- captain:{title:'Мэмори капитанов',icon:'arcade_captain',seconds:100,help:'Все капитаны одновременно ищут пары среди 12 плиток. Побеждает завершивший за наименьшее время; при равенстве выигрывает меньшее число ходов. Победа: настроенные баллы рейтинга (по умолчанию 15).'}
+ captain:{title:'Мэмори капитанов',icon:'arcade_captain',seconds:100,help:'Все капитаны одновременно ищут пары среди 12 плиток. Побеждает завершивший за наименьшее время; при равенстве выигрывает меньшее число ходов. Победа: настроенные баллы рейтинга (по умолчанию 15).'},
+ sequence_memory:{title:'Секретный код',icon:'arcade_secret',seconds:45,help:'30 испытаний. Запомните и повторите 4–8 символов. Каждый игрок отвечает один раз; команда соревнуется по среднему результату. Победа даёт 10 очков рейтинга по умолчанию.'}
 };
 const state={db:null,accountId:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,bankOffset:0,bankPageSize:25,bankRequest:0,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',buildsReady:false,dragFrom:null,selectedCard:null,clockOffset:0,liveKey:'',lastDeadlineRefresh:0};
 function msg(id,text='',isError=false){const el=$(id);if(!el)return;el.textContent=text;el.classList.toggle('error',!!isError)}
@@ -538,6 +540,7 @@ function appendCard(type='round',arcadeMode=null){
 }
 function cardDesc(c){const settings=c.settings||{};
  if(settings.arcade_mode==='russia_map')return 'География России · карта · '+(settings.geo_count||15)+' случайных субъектов каждому игроку · '+((settings.geo_count||15)*((settings.seconds||30)+(settings.answer_seconds||10)))+' сек. · '+(settings.seconds||30)+' сек. на вопрос · '+(settings.answer_seconds||10)+' сек. на ответ';
+  if(settings.arcade_mode==='sequence_memory')return 'Последовательность символов · '+(settings.secret_challenge?'испытание №'+settings.secret_challenge:'случайное из 30')+' · все игроки · средний балл команды';
   if(arcadeGames[settings.arcade_mode])return 'Командная мини-игра · '+Math.max(30,Math.min(120,Number(settings.arcade_seconds)||arcadeGames[settings.arcade_mode].seconds))+' секунд · командное голосование за усиления';
  if(c.type==='round'){const geography=state.topics.some(t=>t.id===c.topic_id&&t.name==='География России');const selected=geography?(settings.geo_modes||[]).map(m=>({capital:'Административный центр',district:'Федеральный округ'}[m]||m)):(settings.flag_modes||[]).map(titleKind);return (c.topic_id?nameTopic(c.topic_id):'Тема не выбрана')+' · '+(selected.length?selected.join(', '):'Выберите механики перед запуском')+' · '+(settings.count||5)+' вопр. · '+(settings.seconds||30)+' сек. · ответ '+(settings.answer_seconds||10)+' сек.';}
  if(c.type==='intro')return 'Анимированная заставка перед первым раундом';
@@ -653,6 +656,8 @@ function editCard(i){state.editingCard=i;const c=state.cards[i],s=c.settings||{}
    for(const item of all('#cardGeoModes input:not(:disabled)'))item.checked=Array.isArray(s.geo_modes)&&s.geo_modes.includes(item.value);}
  $('cardArcadeSeconds').value=Math.max(30,Math.min(120,Number(s.arcade_seconds)||arcade?.seconds||45));
  $('cardArcadeHelp').textContent=arcade?.help||'';
+  $('cardSecretCodeSettings').hidden=s.arcade_mode!=='sequence_memory';
+  $('cardSecretChallenge').value=String(s.secret_challenge||0);
  $('cardOrder').value=s.order||'random';$('cardOffset').value=(s.offset||0)+1;
  $('cardTeamCap').value=s.team_cap||'';$('cardPlayerCap').value=s.player_cap||'';
  $('cardSound').value=s.sound||'fanfare';
@@ -727,6 +732,7 @@ function saveCard(event){
   bonus_lead:s.bonus_lead??buildDefaults.bonus_lead,
   flag_modes:flagQuestion?selected:[],
   geo_modes:mapMode?mapModes:(ordinaryGeo?geoSelected:[])};
+ if(s.arcade_mode==='sequence_memory')nextSettings.secret_challenge=Math.max(0,Math.min(30,Number($('cardSecretChallenge').value)||0));
  if(arcadeGames[s.arcade_mode])
   nextSettings.arcade_seconds=Math.max(30,Math.min(120,Number($('cardArcadeSeconds').value)||arcadeGames[s.arcade_mode].seconds));
  if(mapMode){
@@ -859,7 +865,7 @@ async function loadBuild(id){
 function validBuildActivity(card){
  if(card?.type==='round'&&card?.settings?.arcade_mode!=='russia_map')return true;
  if((card?.type==='round'||card?.type==='bonus'||card?.type==='duel')&&
-  ['blitz','captain','tug','russia_map'].includes(card?.settings?.arcade_mode))return true;
+  ['blitz','captain','tug','sequence_memory','russia_map'].includes(card?.settings?.arcade_mode))return true;
  return false;
 }
 function buildSaveNotice(text='',isError=false){
@@ -883,8 +889,8 @@ async function saveBuild(){
    // New cards must have an explicit rating reward in the room timeline.
    // This keeps old room snapshots unchanged, while newly compiled rooms use
    // the teacher's settings (including an intentional zero).
-   if(['tug','blitz','captain'].includes(c.settings?.arcade_mode)&&c.settings.arcade_score_points==null)
-    c.settings.arcade_score_points=c.settings.arcade_mode==='blitz'?10:15;
+   if(['tug','blitz','captain','sequence_memory'].includes(c.settings?.arcade_mode)&&c.settings.arcade_score_points==null)
+    c.settings.arcade_score_points=['blitz','sequence_memory'].includes(c.settings.arcade_mode)?10:15;
    if(c.type!=='round')continue;
    synchronizeCardTopic(c);
    const modes=c.settings||{},flags=Array.isArray(modes.flag_modes)&&modes.flag_modes.length>0;
@@ -1163,7 +1169,7 @@ async function updateModeratorLiveStats(s){
      target.innerHTML='<div class="moderator-live-meter"><strong>'+Number(d.answered||0)+'</strong><span>решено заданий</span></div>'+
        '<div class="moderator-live-meter"><strong>'+Number(d.players||0)+'</strong><span>игроков</span></div>'+
        '<div class="moderator-live-meter"><strong>'+Number(d.remaining||0)+' c</strong><span>осталось</span></div>';
-   }else if(['rocket','blitz','tug','captain'].includes(mode)){
+   }else if(['rocket','blitz','tug','captain','sequence_memory'].includes(mode)){
      const d=await rpc('qwiz_party_arcade',{p_code:s.code});
      if(!target.isConnected||state.roomCode!==s.code)return;
      target.innerHTML=(d.teams||[]).slice(0,8).map(t=>'<div class="moderator-live-team"><span>'+esc(t.name)+'</span><strong>'+Number(t.points||0).toFixed(0)+'</strong></div>').join('')||
