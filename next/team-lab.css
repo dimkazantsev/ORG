@@ -177,7 +177,9 @@
 .team-lab-demo-timeline .is-positive{color:#218957}
 .team-lab-demo-timeline .is-negative{color:#bb4964}
 .team-lab-demo-note{background:#f0e9fc;border-left:3px solid #9167d6;padding:12px 14px;border-radius:9px;font-size:12px;line-height:1.6;color:#66527d}
-.team-lab-demo-votes-summary{font-size:11px;line-height:1.6;color:#867597;margin-top:15px;overflow-wrap:anywhere}
+.team-lab-demo-votes-summary{display:grid;gap:8px;font-size:12px;line-height:1.55;color:#725f85;margin-top:15px;overflow-wrap:anywhere}
+.team-lab-demo-votes-summary>div{padding:10px 12px;border:1px solid #e8ddf4;border-radius:10px;background:#faf7ff}
+.team-lab-demo-votes-summary strong{color:#60417f;font-weight:800}
 .team-lab-demo-help{font-size:11px;color:#847392;line-height:1.65;margin:12px 0 0}
 .team-lab-bonus-check{margin:4px 0 14px;padding:11px 14px;border-radius:12px;border:1px solid #dfcef3;color:#614182;background:#f7f1ff;font-size:12px;line-height:1.5}
 @media(max-width:700px){
