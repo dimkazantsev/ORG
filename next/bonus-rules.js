@@ -5,6 +5,7 @@
 window.QwizBonusSettings=(()=>{
  const $=id=>document.getElementById(id);
  const modes={tug:'Тап-баттл',blitz:'Блиц-консенсус',captain:'Мэмори капитанов'};
+ const ratingDefaults={tug:15,blitz:10,captain:15};
  let builds=[],cards=[],loading=0,loadedBuild='',initialised=false,busy=false;
  const status=(msg,error=false)=>{const el=$('bonusRulesStatus');if(!el)return;el.textContent=msg;el.classList.toggle('error',error)};
  const option=(value,label)=>new Option(label,String(value));
@@ -52,12 +53,14 @@ window.QwizBonusSettings=(()=>{
  const int=id=>Number($(id)?.value);
  const vote=()=> $('bonusRulesVote').value==='auto'?null:Number($('bonusRulesVote').value);
  function thresholds(){
-  return {bonus_min_points:int('bonusRulesMin'),bonus_percent:int('bonusRulesActivity'),
+  return {arcade_score_points:int('bonusRulesReward'),bonus_min_points:int('bonusRulesMin'),bonus_percent:int('bonusRulesActivity'),
     bonus_lead:int('bonusRulesGap'),bonus_vote_seconds:vote()};
  }
  function presentCard(){
   const card=current(),form=$('bonusRulesForm');if(!card){form.hidden=true;return}
   form.hidden=false;
+  $('bonusRulesReward').value=card.arcade_score_points??ratingDefaults[card.mode]??0;
+  $('bonusRulesRewardHelp').textContent=card.mode==='blitz'?'Начисляется каждой команде за правильный итоговый ответ, даже если несколько команд ответили верно. От 0 до 200.':'Начисляется только команде-победителю в общий рейтинг. От 0 до 200.';
   $('bonusRulesMin').max=card.mode==='blitz'?'10':'200';
   $('bonusRulesMin').value=card.bonus_min_points??1;
   $('bonusRulesActivity').value=card.bonus_percent??70;
@@ -75,17 +78,19 @@ window.QwizBonusSettings=(()=>{
  function showPreview(){
   const card=current();if(!card)return;
   const t=thresholds(),blitz=card.mode==='blitz',tap=card.mode==='tug';
-  const valid=Number.isInteger(t.bonus_min_points)&&t.bonus_min_points>=1&&t.bonus_min_points<=(blitz?10:200)
+  const valid=Number.isInteger(t.arcade_score_points)&&t.arcade_score_points>=0&&t.arcade_score_points<=200
+   &&Number.isInteger(t.bonus_min_points)&&t.bonus_min_points>=1&&t.bonus_min_points<=(blitz?10:200)
    &&Number.isInteger(t.bonus_percent)&&t.bonus_percent>=50&&t.bonus_percent<=100
    &&Number.isInteger(t.bonus_lead)&&t.bonus_lead>=0&&t.bonus_lead<=200
    &&(t.bonus_vote_seconds===null||Number.isInteger(t.bonus_vote_seconds)&&t.bonus_vote_seconds>=18&&t.bonus_vote_seconds<=24);
   const pointWord=n=>(n%10===1&&n%100!==11?'очка':'очков');
+  const ratingWord=n=>n%100>=11&&n%100<=14?'баллов':n%10===1?'балл':n%10>=2&&n%10<=4?'балла':'баллов';
   const lines=['Победа в мини-игре','не менее '+(valid?t.bonus_min_points+' '+pointWord(t.bonus_min_points):'? очков')];
   if(tap)lines.push('участие от '+(valid?t.bonus_percent:'?')+'% команды');
   if(!blitz)lines.push('отрыв от соперника от '+(valid?t.bonus_lead+' '+pointWord(t.bonus_lead):'? очков'));
   if(blitz)lines.push('результат не хуже другой команды');
   lines.push('2 голосования большинством','следующий обычный раунд с вопросами');
-  $('bonusRulesPreview').textContent=(valid?'Право на бонус: ':'Проверьте значения. Правило: ')+lines.join(' · ')+'. Голосование: '+(t.bonus_vote_seconds===null?'автоматически 18–24 секунды':t.bonus_vote_seconds+' секунд')+'.';
+  $('bonusRulesPreview').textContent='В общий рейтинг: '+(valid?'+'+t.arcade_score_points+' '+ratingWord(t.arcade_score_points):'проверьте число баллов')+(blitz?' каждой команде с правильным ответом.':' команде-победителю.')+' Кредиты достижений рассчитываются отдельно. '+(valid?'Право на бонус: ':'Проверьте значения. Правило: ')+lines.join(' · ')+'. Голосование: '+(t.bonus_vote_seconds===null?'автоматически 18–24 секунды':t.bonus_vote_seconds+' секунд')+'.';
   $('bonusRulesSave').disabled=!valid||busy;
  }
  async function save(event){
@@ -115,8 +120,9 @@ window.QwizBonusSettings=(()=>{
   $('bonusRulesForm').addEventListener('change',showPreview);
   $('bonusRulesReset').addEventListener('click',()=>{
    const card=current();if(!card)return;
+   $('bonusRulesReward').value=ratingDefaults[card.mode]??0;
    $('bonusRulesMin').value=1;$('bonusRulesActivity').value=70;$('bonusRulesGap').value=15;$('bonusRulesVote').value='auto';
-   showPreview();status('Стандартные значения восстановлены в форме. Нажмите «Сохранить условия», чтобы записать их в сборку.');
+   showPreview();status('Стандартные баллы в рейтинг и пороги восстановлены в форме. Нажмите «Сохранить условия», чтобы записать их в сборку.');
   });
   if(typeof state!=='undefined'&&Array.isArray(state.builds))populateBuilds(state.builds);
  }
