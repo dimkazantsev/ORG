@@ -63,9 +63,9 @@ const gameTitle=c=>cleanCardTitle(arcadeGames[c?.settings?.arcade_mode]?.title&&
 const titles={round:'Раунд вопросов',intro:'Начало игры',break:'Музыкальная пауза',team_stats:'Рейтинг команд',player_stats:'Статистика игроков',bonus:'Бонусная активность',duel:'Дуэль команд',finale:'Финал игры'};
 const buildDefaults={count:5,seconds:30,answer_seconds:10,order:'random',offset:0,team_cap:null,player_cap:null,sound:'fanfare',lead_seconds:5,stats_seconds:7,bonus_percent:70,bonus_lead:15};
 const arcadeGames={
- blitz:{title:'Блиц-консенсус',icon:'arcade_blitz',seconds:60,help:'Участники голосуют за ответ, затем капитан видит результаты и принимает итоговое решение. Без решения капитана выбирается мнение большинства. Правильный ответ: 10 баллов команде.'},
- tug:{title:'Тап-баттл',icon:'arcade_tug',seconds:45,help:'Все участники нажимают большую 3D-кнопку. Сервер складывает число нажатий игроков в командный результат. Победа: +15 очков.'},
- captain:{title:'Мэмори капитанов',icon:'arcade_captain',seconds:100,help:'Все капитаны одновременно ищут пары среди 12 плиток. Побеждает завершивший за наименьшее время; при равенстве выигрывает меньшее число ходов. Победа: +15 очков.'}
+ blitz:{title:'Блиц-консенсус',icon:'arcade_blitz',seconds:60,help:'Участники голосуют за ответ, затем капитан видит результаты и принимает итоговое решение. Без решения капитана выбирается мнение большинства. Правильный ответ: настроенные баллы рейтинга (по умолчанию 10) каждой ответившей верно команде.'},
+ tug:{title:'Тап-баттл',icon:'arcade_tug',seconds:45,help:'Все участники нажимают большую 3D-кнопку. Сервер складывает число нажатий игроков в командный результат. Победа: настроенные баллы рейтинга (по умолчанию 15).'},
+ captain:{title:'Мэмори капитанов',icon:'arcade_captain',seconds:100,help:'Все капитаны одновременно ищут пары среди 12 плиток. Побеждает завершивший за наименьшее время; при равенстве выигрывает меньшее число ходов. Победа: настроенные баллы рейтинга (по умолчанию 15).'}
 };
 const state={db:null,topics:[],builds:[],questions:[],questionTotal:0,cards:[],buildId:null,editingQuestion:null,editingCard:null,roomCode:null,room:null,roomBusy:false,bankOffset:0,bankPageSize:25,bankRequest:0,channel:null,insights:null,bankTimer:null,roomTimer:null,activePage:'bank',buildsReady:false,dragFrom:null,selectedCard:null,clockOffset:0,liveKey:'',lastDeadlineRefresh:0};
 function msg(id,text='',isError=false){const el=$(id);if(!el)return;el.textContent=text;el.classList.toggle('error',!!isError)}
