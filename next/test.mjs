@@ -204,8 +204,8 @@ test('Mini-game palette and saved cards use distinct polished vector icons',()=>
  const palette=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
  const styles=readFileSync(new URL('./workspace.css',import.meta.url),'utf8');
  assert.doesNotMatch(palette,/data-arcade="rocket"/);
- for(const mode of ['blitz','tug','captain','sequence_memory']){
-   assert.match(workspace,new RegExp("arcade_"+mode+":'<(?:path|circle|rect)"));
+ for(const [mode,icon] of [['blitz','blitz'],['tug','tug'],['captain','captain'],['sequence_memory','secret']]){
+   assert.match(workspace,new RegExp("arcade_"+icon+":'<(?:path|circle|rect)"));
    assert.match(palette,new RegExp('data-arcade="'+mode+'"'));
  }
  assert.match(workspace,/arcade-palette-icon/);
