@@ -78,3 +78,51 @@ test('Removed Dino stays absent, while active team games have matching names on 
  expect(values).toHaveLength(3);
  for(const check of values)expect(check).toEqual({rocketRemoved:true,tug:true,blitz:true,captain:true,normalizes:true});
 });
+
+
+for(const [tapWidth,tapHeight] of [[375,812],[1280,800]]){
+ test('Enhanced Tap button stays clickable, centered and accessible at '+tapWidth+'px',async({page})=>{
+  await page.setViewportSize({width:tapWidth,height:tapHeight});
+  await page.goto(URL);
+  await page.evaluate(()=>window.mountExample('tug'));
+  const btn=page.locator('.arcade-tap-center');
+  await expect(btn).toHaveText('ТАП!');
+  const visual=await btn.evaluate(el=>{
+   const style=getComputedStyle(el),before=getComputedStyle(el,'::before'),
+      after=getComputedStyle(el,'::after');
+   const stage=el.closest('.arcade-scene').querySelector('.arcade-tap-stage');
+   const sr=stage.getBoundingClientRect(),br=el.getBoundingClientRect();
+   return {
+    pointerBefore:before.pointerEvents,pointerAfter:after.pointerEvents,
+    border:parseFloat(style.borderTopWidth),
+    layers:style.backgroundImage.split('radial-gradient').length-1,
+    centered:Math.abs((br.left+br.width/2)-(sr.left+sr.width/2))<2,
+    within:br.left>=sr.left&&br.right<=sr.right&&br.top>=sr.top&&br.bottom<=sr.bottom,
+    radius:style.borderRadius
+   };
+  });
+  expect(visual.pointerBefore).toBe('none');
+  expect(visual.pointerAfter).toBe('none');
+  expect(visual.border).toBeGreaterThanOrEqual(5);
+  expect(visual.layers).toBeGreaterThanOrEqual(2);
+  expect(visual.centered).toBe(true);
+  expect(visual.within).toBe(true);
+  expect(visual.radius).toContain('%');
+  await btn.click();
+  await expect.poll(()=>page.evaluate(()=>window.accepted.filter(x=>x.action==='tap').length)).toBeGreaterThan(0);
+ });
+}
+
+test('Tap button respects reduced-motion without obscuring the accessible label',async({page})=>{
+ await page.emulateMedia({reducedMotion:'reduce'});
+ await page.goto(URL);
+ await page.evaluate(()=>window.mountExample('tug'));
+ const effect=await page.locator('.arcade-tap-center').evaluate(el=>({
+  transition:getComputedStyle(el).transitionDuration,
+  pseudo:getComputedStyle(el,'::before').pointerEvents,
+  label:el.textContent.trim()
+ }));
+ expect(effect.transition.split(',').every(s=>parseFloat(s)===0)).toBe(true);
+ expect(effect.pseudo).toBe('none');
+ expect(effect.label).toBe('ТАП!');
+});
