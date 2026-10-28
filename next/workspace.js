@@ -17,7 +17,7 @@ const flagModes=[
  ['similar','Похожие флаги',true],
  ['assemble','Сборка флага',true],
  ['multiple','Несколько правильных ответов',true],
- ['memory','Задания на память',true],
+ // Former flag memorization has moved out of this question category.
  ['geo','География и карты',true],
  ['history','История и символика',true]
 ];
@@ -968,7 +968,7 @@ async function loadRooms(){
 const launchModeNames={
  country:'Страна по флагу',picker:'Выбор флага',colors:'Цвета',symbols:'Символы',
  fragments:'Фрагменты',errors:'Поиск ошибок',similar:'Похожие флаги',
- assemble:'Сборка флага',multiple:'Несколько ответов',memory:'Запоминание',
+ assemble:'Сборка флага',multiple:'Несколько ответов',
  geo:'География флага',history:'История флага',
  capital:'Административный центр',district:'Федеральный округ',
  locate:'Найти субъект',identify:'Угадать название',flag:'Узнать по флагу',
