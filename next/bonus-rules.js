@@ -62,8 +62,15 @@ window.QwizBonusSettings=(()=>{
   $('bonusRulesReward').max=card.mode==='blitz'?'10':'200';
   $('bonusRulesReward').value=card.arcade_score_points??ratingDefaults[card.mode]??0;
   $('bonusRulesRewardHelp').textContent=card.mode==='blitz'?'Начисляется каждой команде за правильный итоговый ответ, даже если несколько команд ответили верно. От 0 до 10 — правило единой шкалы вопросов.':'Начисляется только команде-победителю в общий рейтинг. От 0 до 200.';
-  $('bonusRulesMin').max=card.mode==='blitz'?'10':'200';
-  $('bonusRulesMin').value=card.bonus_min_points??1;
+  const minInput=$('bonusRulesMin'),fixedBlitz=card.mode==='blitz';
+  // Blitz yields only 0 or 10 game points. Thresholds 1–10 are equivalent.
+  minInput.max=fixedBlitz?'10':'200';
+  minInput.readOnly=fixedBlitz;
+  minInput.value=fixedBlitz?10:(card.bonus_min_points??1);
+  $('bonusRulesMinLabel').textContent=fixedBlitz?'Условие Блиц-консенсуса':'Минимальный игровой результат';
+  $('bonusRulesMinHelp').textContent=fixedBlitz?
+   'Фиксировано: правильный ответ = 10 игровых очков, неправильный = 0. Порог 15 и выше невозможен. Это не баллы общего рейтинга.':
+   'Укажите от 1 до 200 игровых очков победителя; это условие допуска к бонусу, а не награда в рейтинг.';
   $('bonusRulesActivity').value=card.bonus_percent??70;
   $('bonusRulesGap').value=card.bonus_lead??15;
   $('bonusRulesVote').value=card.bonus_vote_seconds==null?'auto':String(card.bonus_vote_seconds);
@@ -72,26 +79,38 @@ window.QwizBonusSettings=(()=>{
   $('bonusRulesActivity').disabled=!tap;$('bonusRulesGap').disabled=blitz;
   $('bonusRulesModeHint').textContent=tap?
    'Тап-баттл: победитель получает право голосовать, если набрал достаточно игровых очков, выдержал порог участия и необходимый отрыв.':
-   blitz?'Блиц-консенсус: правильный ответ даёт 10 игровых очков. Требуются голосование делегата и результат не ниже соперника; процент участия и отрыв здесь не применяются.':
+   blitz?'Блиц-консенсус: игровой результат бывает только 0 или 10. Нужен правильный ответ и участие делегата; процент участия всей команды и отрыв здесь не применяются. Условие выше 10 очков невозможно.':
    'Мэмори капитанов: достаточно участия капитана. Требуются минимальные игровые очки и установленный отрыв от соперника.';
   showPreview();
  }
  function showPreview(){
   const card=current();if(!card)return;
   const t=thresholds(),blitz=card.mode==='blitz',tap=card.mode==='tug';
-  const valid=Number.isInteger(t.arcade_score_points)&&t.arcade_score_points>=0&&t.arcade_score_points<=(blitz?10:200)
-   &&Number.isInteger(t.bonus_min_points)&&t.bonus_min_points>=1&&t.bonus_min_points<=(blitz?10:200)
-   &&Number.isInteger(t.bonus_percent)&&t.bonus_percent>=50&&t.bonus_percent<=100
-   &&Number.isInteger(t.bonus_lead)&&t.bonus_lead>=0&&t.bonus_lead<=200
-   &&(t.bonus_vote_seconds===null||Number.isInteger(t.bonus_vote_seconds)&&t.bonus_vote_seconds>=18&&t.bonus_vote_seconds<=24);
+  const errors=[];
+  if(!Number.isInteger(t.arcade_score_points)||t.arcade_score_points<0||t.arcade_score_points>(blitz?10:200))
+   errors.push(blitz?'Блиц-консенсус: награда за правильный ответ может составлять от 0 до 10 баллов рейтинга.':'Награда в рейтинг должна быть целым числом от 0 до 200.');
+  if(!Number.isInteger(t.bonus_min_points)||t.bonus_min_points<1||t.bonus_min_points>(blitz?10:200))
+   errors.push(blitz?'В Блиц-консенсусе результат бывает только 0 или 10. Условие выше 10 игровых очков недостижимо.':'Минимальный игровой результат должен быть целым числом от 1 до 200.');
+  if(!Number.isInteger(t.bonus_percent)||t.bonus_percent<50||t.bonus_percent>100)
+   errors.push('Доля активных игроков должна быть целым числом от 50 до 100%.');
+  if(!Number.isInteger(t.bonus_lead)||t.bonus_lead<0||t.bonus_lead>200)
+   errors.push('Минимальный отрыв должен быть целым числом от 0 до 200.');
+  if(t.bonus_vote_seconds!==null&&(!Number.isInteger(t.bonus_vote_seconds)||t.bonus_vote_seconds<18||t.bonus_vote_seconds>24))
+   errors.push('Время голосования должно быть от 18 до 24 секунд.');
+  const valid=errors.length===0;
+  const validation=$('bonusRulesValidation');
+  if(validation){validation.hidden=valid;validation.textContent=errors.join(' ');}
+
   const pointWord=n=>(n%10===1&&n%100!==11?'очка':'очков');
   const ratingWord=n=>n%100>=11&&n%100<=14?'баллов':n%10===1?'балл':n%10>=2&&n%10<=4?'балла':'баллов';
-  const lines=['Победа в мини-игре','не менее '+(valid?t.bonus_min_points+' '+pointWord(t.bonus_min_points):'? очков')];
-  if(tap)lines.push('участие от '+(valid?t.bonus_percent:'?')+'% команды');
-  if(!blitz)lines.push('отрыв от соперника от '+(valid?t.bonus_lead+' '+pointWord(t.bonus_lead):'? очков'));
+  const thresholdText=blitz?'правильный ответ (10 игровых очков)':
+   (Number.isInteger(t.bonus_min_points)?'не менее '+t.bonus_min_points+' '+pointWord(t.bonus_min_points):'минимальный результат не задан');
+  const lines=['Победа в мини-игре',thresholdText];
+  if(tap)lines.push('участие от '+t.bonus_percent+'% команды');
+  if(!blitz)lines.push('отрыв от соперника от '+t.bonus_lead+' '+pointWord(t.bonus_lead));
   if(blitz)lines.push('результат не хуже другой команды');
   lines.push('2 голосования большинством','следующий обычный раунд с вопросами');
-  $('bonusRulesPreview').textContent='В общий рейтинг: '+(valid?'+'+t.arcade_score_points+' '+ratingWord(t.arcade_score_points):'проверьте число баллов')+(blitz?' каждой команде с правильным ответом.':' команде-победителю.')+' Кредиты достижений рассчитываются отдельно. '+(valid?'Право на бонус: ':'Проверьте значения. Правило: ')+lines.join(' · ')+'. Голосование: '+(t.bonus_vote_seconds===null?'автоматически 18–24 секунды':t.bonus_vote_seconds+' секунд')+'.';
+  $('bonusRulesPreview').textContent='В общий рейтинг: '+(Number.isInteger(t.arcade_score_points)?'+'+t.arcade_score_points+' '+ratingWord(t.arcade_score_points):'награда не задана')+(blitz?' каждой команде с правильным ответом.':' команде-победителю.')+' Кредиты достижений рассчитываются отдельно. '+(valid?'Право на бонус: ':'Условия (не сохранены): ')+lines.join(' · ')+'. Голосование: '+(t.bonus_vote_seconds===null?'автоматически 18–24 секунды':t.bonus_vote_seconds+' секунд')+'.';
   $('bonusRulesSave').disabled=!valid||busy;
  }
  async function save(event){
@@ -122,7 +141,7 @@ window.QwizBonusSettings=(()=>{
   $('bonusRulesReset').addEventListener('click',()=>{
    const card=current();if(!card)return;
    $('bonusRulesReward').value=ratingDefaults[card.mode]??0;
-   $('bonusRulesMin').value=1;$('bonusRulesActivity').value=70;$('bonusRulesGap').value=15;$('bonusRulesVote').value='auto';
+   $('bonusRulesMin').value=card.mode==='blitz'?10:1;$('bonusRulesActivity').value=70;$('bonusRulesGap').value=15;$('bonusRulesVote').value='auto';
    showPreview();status('Стандартные баллы в рейтинг и пороги восстановлены в форме. Нажмите «Сохранить условия», чтобы записать их в сборку.');
   });
   if(typeof state!=='undefined'&&Array.isArray(state.builds))populateBuilds(state.builds);

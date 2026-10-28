@@ -260,3 +260,9 @@
 .bonus-rules-fields > .bonus-rating-field input{max-width:260px;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
 .bonus-rules-fields > .bonus-rating-field small{max-width:720px}
 @media(max-width:700px){.bonus-rules-fields > .bonus-rating-field input{max-width:none}}
+
+
+/* Explain fixed binary Blitz eligibility without silently disabling save. */
+.bonus-rules-fields input[readonly]{background:#f5f1fa;color:#624a7d;cursor:default;border-color:#d8c8e8;box-shadow:none}
+.bonus-rules-validation{margin:10px 0 12px;border:1px solid #e7bac8;background:#fff6f8;color:#9f315b;border-radius:11px;padding:11px 14px;font-size:12px;line-height:1.6;font-weight:700}
+.bonus-rules-validation[hidden]{display:none!important}
