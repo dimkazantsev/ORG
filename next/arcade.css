@@ -1330,3 +1330,51 @@
     animation:none!important;
   }
 }
+
+
+/* Secret Code mini-game: reuse the approved QWIZ-PARTY palette and spacing. */
+.arcade-shell[data-arcade-root="sequence_memory"] .arcade-scene{
+ position:relative;display:grid;place-items:center;min-height:clamp(175px,27dvh,260px);
+ padding:0;border:1px solid #e2d2fa;border-radius:23px;
+ background:radial-gradient(ellipse at 40% 20%,#f8e6ff,#cda5ff 58%,#8d57d5);overflow:hidden;
+}
+.arcade-secret-scene{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ min-height:180px;width:100%;gap:9px;text-align:center;isolation:isolate;
+}
+.arcade-secret-scene:before{
+ content:"";position:absolute;z-index:-1;width:clamp(105px,25%,170px);
+ aspect-ratio:1;border:1px solid #ffffffba;border-radius:50%;
+ box-shadow:0 0 0 11px #ffffff26,0 0 0 25px #ffffff13,0 0 40px #ffffff7f;
+}
+.arcade-secret-eyebrow{color:#50307b;letter-spacing:.11em;font-size:clamp(10px,2vw,13px);font-weight:850}
+.arcade-secret-symbol{display:grid;place-items:center;min-height:90px;font-size:clamp(55px,10vw,85px);line-height:1.1;
+ filter:drop-shadow(0 8px 10px #633e9e45)}
+.arcade-secret-progress{color:#4f3469;font-weight:750;font-size:13px}
+.arcade-secret-panel{display:grid;gap:13px;min-width:0}
+.arcade-secret-hint{text-align:center;color:#645477;font-size:clamp(12px,2.7vw,14px);line-height:1.4;margin:8px}
+.arcade-secret-slots{display:flex;flex-wrap:wrap;justify-content:center;gap:6px}
+.arcade-secret-slot{display:grid;place-items:center;min-width:clamp(30px,9%,48px);width:clamp(30px,9%,48px);height:clamp(41px,11vw,54px);
+ border-radius:11px;border:1px solid #ddcafa;background:#f6f1fe;color:#8466aa;font-weight:800;font-size:clamp(15px,4vw,23px)}
+.arcade-secret-slot.filled{background:#fff;color:#412b69;border-color:#aa86eb}
+.arcade-secret-choices{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;max-width:530px;margin:0 auto;width:100%}
+.arcade-secret-choices button{min-height:clamp(55px,14vw,78px);border:1px solid #d8c5f7;border-radius:15px;
+ background:linear-gradient(145deg,#fff,#f3e9ff);font-size:clamp(27px,6vw,39px);
+ box-shadow:0 4px 0 #d0b7f3;touch-action:manipulation}
+.arcade-secret-choices button:disabled{opacity:.5}
+.arcade-secret-choices button:not(:disabled):active{transform:translateY(4px);box-shadow:none}
+.arcade-secret-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:10px}
+.arcade-secret-actions button{min-height:50px;border-radius:13px;border:1px solid #d9c5f5;background:white;color:#6c41b1;font-weight:800}
+.arcade-secret-actions [data-secret-submit]{background:linear-gradient(135deg,#9358e8,#7140d3);color:white;border:0}
+.arcade-secret-actions button:disabled{opacity:.45}
+.arcade-secret-choices button:focus-visible,.arcade-secret-actions button:focus-visible{outline:3px solid #754ed8;outline-offset:3px}
+.arcade-secret-done{padding:15px;background:#f7f1ff;border:1px solid #dacaef;border-radius:13px;color:#59368a;text-align:center;font-weight:800}
+@media(max-width:420px){
+ .arcade-shell[data-arcade-root="sequence_memory"] .arcade-scene{min-height:170px}
+ .arcade-secret-scene{min-height:170px}
+ .arcade-secret-panel{gap:9px}
+ .arcade-secret-choices{gap:6px}
+}
+@media(prefers-reduced-motion:reduce){
+ .arcade-secret-scene,.arcade-secret-symbol,.arcade-secret-choices button{animation:none!important;transition:none!important}
+}
