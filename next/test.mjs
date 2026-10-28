@@ -688,8 +688,9 @@ test('Flags of the World starts without legacy question formats or auto-seeding'
  const resetSql=readFileSync(new URL('./migrations/MANUAL_flags_world_catalog_reset.sql',import.meta.url),'utf8');
  for(const name of ['Угадать страну по флагу','Выбрать флаг по названию','Цвета и полосы',
   'Символы и гербы','Скрытые фрагменты и пиксели','Поиск ошибок',
-  'Похожие флаги','Сборка флага','Несколько правильных ответов','Задания на память',
+  'Похожие флаги','Сборка флага','Несколько правильных ответов',
   'География и карты','История и символика'])assert.ok(w.includes(name),name);
+ assert.doesNotMatch(w,/\['memory','Задания на память',true\]/);
  assert.doesNotMatch(w,/qwiz_seed_topics/);
  assert.doesNotMatch(h,/id="bankKind"/);
  assert.match(w,/kind:'flag'/);
@@ -700,6 +701,24 @@ test('Flags of the World starts without legacy question formats or auto-seeding'
  assert.match(flagSql,/->>'label'/);
  assert.match(resetSql,/qwiz_flags_reset_archive_20261022/);
  assert.match(resetSql,/count\(\*\) from public\.org_next_rooms/);
+});
+
+test('Standalone memory blueprint uses existing project design and contains exactly 30 templates',()=>{
+ const plan=JSON.parse(readFileSync(new URL('./memory-challenges.plan.json',import.meta.url),'utf8'));
+ assert.equal(plan.name,'Задание на память');
+ assert.equal(plan.gameType,'standalone_arcade');
+ assert.equal(plan.mode,'sequence_memory');
+ assert.match(plan.visualStyle,/Reuse existing QWIZ-PARTY/);
+ assert.equal(plan.levels.length,5);
+ const all=plan.levels.flatMap(level=>level.items);
+ assert.equal(all.length,30);
+ assert.equal(new Set(all.map(c=>c.id)).size,30);
+ for(const [i,level] of plan.levels.entries()){
+  assert.equal(level.level,i+1);
+  assert.equal(level.items.length,6);
+  assert.equal(level.symbolCount,4+i);
+  assert.ok(level.items.every(item=>item.symbols===level.symbolCount&&item.level===level.level));
+ }
 });
 
 test('Flags subcategories are a metadata filter, not duplicated topic tables',()=>{

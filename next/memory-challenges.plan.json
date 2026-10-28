@@ -1,0 +1,562 @@
+{
+  "name": "Задание на память",
+  "mode": "sequence_memory",
+  "gameType": "standalone_arcade",
+  "status": "approved_concept_pending_engine",
+  "visualStyle": "Reuse existing QWIZ-PARTY cards, arcade animation tokens, responsive typography and controls; no separate theme",
+  "scoring": {
+    "correctAll": 10,
+    "oneWrong": 6,
+    "halfOrMore": 3,
+    "otherwise": 0
+  },
+  "display": {
+    "sequential": true,
+    "showEachMs": 800,
+    "answerTimeSec": 20,
+    "sharedSeedPerRound": true,
+    "oneSubmitPerPlayer": true
+  },
+  "ranking": {
+    "team": "mean_player_score",
+    "tieBreakers": [
+      "perfect_answers",
+      "valid_submit_time"
+    ]
+  },
+  "levels": [
+    {
+      "level": 1,
+      "theme": "Цветовые сигналы",
+      "symbolCount": 4,
+      "items": [
+        {
+          "id": "memory-01",
+          "name": "Красный сигнал",
+          "level": 1,
+          "symbols": 4,
+          "theme": "Цветовые сигналы",
+          "palette": [
+            "red",
+            "blue",
+            "yellow",
+            "green"
+          ],
+          "variant": "basic"
+        },
+        {
+          "id": "memory-02",
+          "name": "Четыре цвета",
+          "level": 1,
+          "symbols": 4,
+          "theme": "Цветовые сигналы",
+          "palette": [
+            "red",
+            "blue",
+            "yellow",
+            "green"
+          ],
+          "variant": "all_unique"
+        },
+        {
+          "id": "memory-03",
+          "name": "Первый повтор",
+          "level": 1,
+          "symbols": 4,
+          "theme": "Цветовые сигналы",
+          "palette": [
+            "red",
+            "blue",
+            "yellow",
+            "green"
+          ],
+          "variant": "one_repeat"
+        },
+        {
+          "id": "memory-04",
+          "name": "Двойной сигнал",
+          "level": 1,
+          "symbols": 4,
+          "theme": "Цветовые сигналы",
+          "palette": [
+            "red",
+            "blue",
+            "yellow",
+            "green"
+          ],
+          "variant": "two_repeats"
+        },
+        {
+          "id": "memory-05",
+          "name": "Перемена порядка",
+          "level": 1,
+          "symbols": 4,
+          "theme": "Цветовые сигналы",
+          "palette": [
+            "red",
+            "blue",
+            "yellow",
+            "green"
+          ],
+          "variant": "position_shift"
+        },
+        {
+          "id": "memory-06",
+          "name": "Цветовая комбинация",
+          "level": 1,
+          "symbols": 4,
+          "theme": "Цветовые сигналы",
+          "palette": [
+            "red",
+            "blue",
+            "yellow",
+            "green"
+          ],
+          "variant": "mixed"
+        }
+      ]
+    },
+    {
+      "level": 2,
+      "theme": "Флаги мира",
+      "symbolCount": 5,
+      "items": [
+        {
+          "id": "memory-07",
+          "name": "Европейская комбинация",
+          "level": 2,
+          "symbols": 5,
+          "theme": "Флаги мира",
+          "palette": [
+            "ru",
+            "cn",
+            "br",
+            "jp",
+            "fr",
+            "de",
+            "it"
+          ],
+          "variant": "basic"
+        },
+        {
+          "id": "memory-08",
+          "name": "Азиатский маршрут",
+          "level": 2,
+          "symbols": 5,
+          "theme": "Флаги мира",
+          "palette": [
+            "ru",
+            "cn",
+            "br",
+            "jp",
+            "fr",
+            "de",
+            "it"
+          ],
+          "variant": "all_unique"
+        },
+        {
+          "id": "memory-09",
+          "name": "Пять государств",
+          "level": 2,
+          "symbols": 5,
+          "theme": "Флаги мира",
+          "palette": [
+            "ru",
+            "cn",
+            "br",
+            "jp",
+            "fr",
+            "de",
+            "it"
+          ],
+          "variant": "one_repeat"
+        },
+        {
+          "id": "memory-10",
+          "name": "Похожие триколоры",
+          "level": 2,
+          "symbols": 5,
+          "theme": "Флаги мира",
+          "palette": [
+            "ru",
+            "cn",
+            "br",
+            "jp",
+            "fr",
+            "de",
+            "it"
+          ],
+          "variant": "two_repeats"
+        },
+        {
+          "id": "memory-11",
+          "name": "Возвращение флага",
+          "level": 2,
+          "symbols": 5,
+          "theme": "Флаги мира",
+          "palette": [
+            "ru",
+            "cn",
+            "br",
+            "jp",
+            "fr",
+            "de",
+            "it"
+          ],
+          "variant": "position_shift"
+        },
+        {
+          "id": "memory-12",
+          "name": "Международный код",
+          "level": 2,
+          "symbols": 5,
+          "theme": "Флаги мира",
+          "palette": [
+            "ru",
+            "cn",
+            "br",
+            "jp",
+            "fr",
+            "de",
+            "it"
+          ],
+          "variant": "mixed"
+        }
+      ]
+    },
+    {
+      "level": 3,
+      "theme": "Символы и гербы",
+      "symbolCount": 6,
+      "items": [
+        {
+          "id": "memory-13",
+          "name": "Геральдический ряд",
+          "level": 3,
+          "symbols": 6,
+          "theme": "Символы и гербы",
+          "palette": [
+            "star",
+            "shield",
+            "crown",
+            "eagle",
+            "globe",
+            "torch"
+          ],
+          "variant": "basic"
+        },
+        {
+          "id": "memory-14",
+          "name": "Короны и щиты",
+          "level": 3,
+          "symbols": 6,
+          "theme": "Символы и гербы",
+          "palette": [
+            "star",
+            "shield",
+            "crown",
+            "eagle",
+            "globe",
+            "torch"
+          ],
+          "variant": "all_unique"
+        },
+        {
+          "id": "memory-15",
+          "name": "Повтор звезды",
+          "level": 3,
+          "symbols": 6,
+          "theme": "Символы и гербы",
+          "palette": [
+            "star",
+            "shield",
+            "crown",
+            "eagle",
+            "globe",
+            "torch"
+          ],
+          "variant": "one_repeat"
+        },
+        {
+          "id": "memory-16",
+          "name": "Государственные знаки",
+          "level": 3,
+          "symbols": 6,
+          "theme": "Символы и гербы",
+          "palette": [
+            "star",
+            "shield",
+            "crown",
+            "eagle",
+            "globe",
+            "torch"
+          ],
+          "variant": "two_repeats"
+        },
+        {
+          "id": "memory-17",
+          "name": "Запутанная последовательность",
+          "level": 3,
+          "symbols": 6,
+          "theme": "Символы и гербы",
+          "palette": [
+            "star",
+            "shield",
+            "crown",
+            "eagle",
+            "globe",
+            "torch"
+          ],
+          "variant": "position_shift"
+        },
+        {
+          "id": "memory-18",
+          "name": "Дипломатический шифр",
+          "level": 3,
+          "symbols": 6,
+          "theme": "Символы и гербы",
+          "palette": [
+            "star",
+            "shield",
+            "crown",
+            "eagle",
+            "globe",
+            "torch"
+          ],
+          "variant": "mixed"
+        }
+      ]
+    },
+    {
+      "level": 4,
+      "theme": "Секретная депеша",
+      "symbolCount": 7,
+      "items": [
+        {
+          "id": "memory-19",
+          "name": "Код делегации",
+          "level": 4,
+          "symbols": 7,
+          "theme": "Секретная депеша",
+          "palette": [
+            "letter",
+            "dove",
+            "globe",
+            "key",
+            "shield",
+            "seal",
+            "star"
+          ],
+          "variant": "basic"
+        },
+        {
+          "id": "memory-20",
+          "name": "Сигнал посольства",
+          "level": 4,
+          "symbols": 7,
+          "theme": "Секретная депеша",
+          "palette": [
+            "letter",
+            "dove",
+            "globe",
+            "key",
+            "shield",
+            "seal",
+            "star"
+          ],
+          "variant": "all_unique"
+        },
+        {
+          "id": "memory-21",
+          "name": "Повторяющийся шифр",
+          "level": 4,
+          "symbols": 7,
+          "theme": "Секретная депеша",
+          "palette": [
+            "letter",
+            "dove",
+            "globe",
+            "key",
+            "shield",
+            "seal",
+            "star"
+          ],
+          "variant": "one_repeat"
+        },
+        {
+          "id": "memory-22",
+          "name": "Протокол саммита",
+          "level": 4,
+          "symbols": 7,
+          "theme": "Секретная депеша",
+          "palette": [
+            "letter",
+            "dove",
+            "globe",
+            "key",
+            "shield",
+            "seal",
+            "star"
+          ],
+          "variant": "two_repeats"
+        },
+        {
+          "id": "memory-23",
+          "name": "Смешанная последовательность",
+          "level": 4,
+          "symbols": 7,
+          "theme": "Секретная депеша",
+          "palette": [
+            "letter",
+            "dove",
+            "globe",
+            "key",
+            "shield",
+            "seal",
+            "star"
+          ],
+          "variant": "position_shift"
+        },
+        {
+          "id": "memory-24",
+          "name": "Последнее сообщение",
+          "level": 4,
+          "symbols": 7,
+          "theme": "Секретная депеша",
+          "palette": [
+            "letter",
+            "dove",
+            "globe",
+            "key",
+            "shield",
+            "seal",
+            "star"
+          ],
+          "variant": "mixed"
+        }
+      ]
+    },
+    {
+      "level": 5,
+      "theme": "Мастер-код",
+      "symbolCount": 8,
+      "items": [
+        {
+          "id": "memory-25",
+          "name": "Восьмёрка",
+          "level": 5,
+          "symbols": 8,
+          "theme": "Мастер-код",
+          "palette": [
+            "red",
+            "blue",
+            "crown",
+            "star",
+            "ru",
+            "jp",
+            "cn",
+            "shield",
+            "globe"
+          ],
+          "variant": "basic"
+        },
+        {
+          "id": "memory-26",
+          "name": "Обманчивые повторы",
+          "level": 5,
+          "symbols": 8,
+          "theme": "Мастер-код",
+          "palette": [
+            "red",
+            "blue",
+            "crown",
+            "star",
+            "ru",
+            "jp",
+            "cn",
+            "shield",
+            "globe"
+          ],
+          "variant": "all_unique"
+        },
+        {
+          "id": "memory-27",
+          "name": "Символы трёх стран",
+          "level": 5,
+          "symbols": 8,
+          "theme": "Мастер-код",
+          "palette": [
+            "red",
+            "blue",
+            "crown",
+            "star",
+            "ru",
+            "jp",
+            "cn",
+            "shield",
+            "globe"
+          ],
+          "variant": "one_repeat"
+        },
+        {
+          "id": "memory-28",
+          "name": "Двойной шифр",
+          "level": 5,
+          "symbols": 8,
+          "theme": "Мастер-код",
+          "palette": [
+            "red",
+            "blue",
+            "crown",
+            "star",
+            "ru",
+            "jp",
+            "cn",
+            "shield",
+            "globe"
+          ],
+          "variant": "two_repeats"
+        },
+        {
+          "id": "memory-29",
+          "name": "Последняя комбинация",
+          "level": 5,
+          "symbols": 8,
+          "theme": "Мастер-код",
+          "palette": [
+            "red",
+            "blue",
+            "crown",
+            "star",
+            "ru",
+            "jp",
+            "cn",
+            "shield",
+            "globe"
+          ],
+          "variant": "position_shift"
+        },
+        {
+          "id": "memory-30",
+          "name": "Финальный мастер-код",
+          "level": 5,
+          "symbols": 8,
+          "theme": "Мастер-код",
+          "palette": [
+            "red",
+            "blue",
+            "crown",
+            "star",
+            "ru",
+            "jp",
+            "cn",
+            "shield",
+            "globe"
+          ],
+          "variant": "mixed"
+        }
+      ]
+    }
+  ]
+}

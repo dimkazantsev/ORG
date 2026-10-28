@@ -42,10 +42,6 @@ predicates.forEach(([label,truth,sets],i)=>sets.forEach((codes,j)=>{
  const ordered=rotate(codes,(i+j)%4),indices=ordered.map((code,k)=>truth.has(code)?k:-1).filter(k=>k>=0);assert.equal(indices.length,2);
  add('multiple-'+(i+1)+'-'+j,'multiple','multi','Выберите все флаги '+label+'.',ordered.map(code=>({image_url:image(code)})),{correct_indices:indices,option_labels:ordered.map(code=>names[code])},'Правильный набор: '+indices.map(k=>names[ordered[k]]).join(', ')+'.');
 }));
-similar.forEach((codes,i)=>{
- const ordered=rotate(codes,i%4),target=codes[0];
- add('memory-'+(i+1),'memory','flag','Какой стране принадлежит флаг, показанный в начале вопроса?',ordered.map(code=>names[code]),{correct:ordered.indexOf(target),media_url:image(target),flag_memory:{seconds:5}},'Был показан флаг государства «'+names[target]+'».');
-});
 const geography=JSON.parse(read('assets/flag-maps/countries.geojson'));
 assert.equal(geography.features.length,12);
 geography.features.forEach((feature,i)=>{
@@ -72,16 +68,16 @@ const history=[
  ['Как ведомство культуры ЮАР объясняет схождение линий рисунка флага в одну полосу?',['Сближение разных элементов общества и движение к единству','Точное число провинций','Карту крупнейших рек','Единственную религию государства'],'Это интерпретируется как сближение общества и единство.',za]
 ];
 history.forEach(([prompt,options,explanation,url],i)=>{const order=rotate(options,i%4);add('history-'+(i+1),'history','flag',prompt,order,{correct:order.indexOf(options[0])},explanation,[url])});
-assert.equal(rows.length,80);
-assert.deepEqual(Object.fromEntries(['similar','assemble','multiple','memory','geo','history'].map(mode=>[mode,rows.filter(x=>x.mode===mode).length])),{similar:12,assemble:20,multiple:12,memory:12,geo:12,history:12});
+assert.equal(rows.length,68);
+assert.deepEqual(Object.fromEntries(['similar','assemble','multiple','geo','history'].map(mode=>[mode,rows.filter(x=>x.mode===mode).length])),{similar:12,assemble:20,multiple:12,geo:12,history:12});
 function build(){
  geography.features.forEach((feature,i)=>{
   const projection=d3.geoMercator().fitExtent([[24,20],[616,340]],feature),d=d3.geoPath(projection)(feature);assert.ok(d&&!/NaN|Infinity/.test(d));
   fs.writeFileSync(path.join(root,'assets/flag-maps/outline-'+String(i+1).padStart(2,'0')+'.svg'),'<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360"><title>Контур страны без названия</title><path d="'+d+'" fill="#b7a1e0" stroke="#674491" stroke-width="1.2" stroke-linejoin="round"/></svg>\n');
  });
- const sql=`-- Curated pilot: 80 questions; idempotent, no edits to previous questions.\nbegin;\ndo $seed$\ndeclare t uuid;o uuid;r jsonb;\nbegin\n if (select count(*) from public.qwiz_topics where name='Флаги мира')<>1 then raise exception 'Expected exactly one Flags topic; specify owner before importing';end if;\n select id,owner_id into t,o from public.qwiz_topics where name='Флаги мира';\n for r in select value from jsonb_array_elements($data$${JSON.stringify(rows)}$data$::jsonb) loop\n  if not public.qwiz_flags_question_valid(r->>'kind',r->'options',r->'solution') then raise exception 'Invalid curated question: %',r->>'id';end if;\n  if not exists(select 1 from public.qwiz_bank b where b.topic_id=t and ('fw:six:'||(r->>'id'))=any(b.tags)) then\n   insert into public.qwiz_bank(owner_id,topic_id,kind,prompt,options,solution,explanation,difficulty,tags)\n   values(o,t,r->>'kind',r->>'prompt',r->'options',r->'solution',r->>'explanation',3,array['fw:published','fw:stages7-12','fw:six:'||(r->>'id')]);\n  end if;\n end loop;\n if (select count(*) from public.qwiz_bank where topic_id=t and 'fw:stages7-12'=any(tags))<>80 then raise exception 'Expected 80 curated questions';end if;\nend $seed$;\ncommit;\n`;
- fs.writeFileSync(path.join(root,'migrations/qwiz_flags_remaining_six_seed.sql'),sql);
- console.log('Generated 80 questions and 12 outlines.');
+ const sql=`-- Curated pilot: 68 active questions; idempotent, no edits to previous questions.\nbegin;\ndo $seed$\ndeclare t uuid;o uuid;r jsonb;\nbegin\n if (select count(*) from public.qwiz_topics where name='Флаги мира')<>1 then raise exception 'Expected exactly one Flags topic; specify owner before importing';end if;\n select id,owner_id into t,o from public.qwiz_topics where name='Флаги мира';\n for r in select value from jsonb_array_elements($data$${JSON.stringify(rows)}$data$::jsonb) loop\n  if not public.qwiz_flags_question_valid(r->>'kind',r->'options',r->'solution') then raise exception 'Invalid curated question: %',r->>'id';end if;\n  if not exists(select 1 from public.qwiz_bank b where b.topic_id=t and ('fw:six:'||(r->>'id'))=any(b.tags)) then\n   insert into public.qwiz_bank(owner_id,topic_id,kind,prompt,options,solution,explanation,difficulty,tags)\n   values(o,t,r->>'kind',r->>'prompt',r->'options',r->'solution',r->>'explanation',3,array['fw:published','fw:stages7-12','fw:six:'||(r->>'id')]);\n  end if;\n end loop;\n if (select count(*) from public.qwiz_bank where topic_id=t and 'fw:stages7-12'=any(tags))<>68 then raise exception 'Expected 68 active curated questions';end if;\nend $seed$;\ncommit;\n`;
+ fs.writeFileSync(path.join(root,'migrations/qwiz_flags_remaining_five_seed.sql'),sql);
+ console.log('Generated 68 active questions (without retired flag-memory mode) and 12 outlines.');
 }
 if(require.main===module)build();
 module.exports={rows,geography,build};
