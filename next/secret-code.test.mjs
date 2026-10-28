@@ -49,3 +49,19 @@ test('All three screens load the same Secret Code UI, with existing design token
  assert.match(arcade,/sequence_memory:\{title:'Секретный код'/);
  assert.match(read('./arcade.css'),/arcade-secret-scene/);
 });
+
+test('Geography answer does not pause between questions and shows immediate brief feedback',()=>{
+ const geo=read('./russia-geo.js');
+ const sql=read('./migrations/20261028_geo_immediate_answer.sql');
+ assert.match(sql,/updated_at=clock_timestamp\(\)/);
+ assert.doesNotMatch(sql,/updated_at=clock_timestamp\(\)\+make_interval/);
+ assert.match(geo,/t\.feedbackUntil=Date\.now\(\)\+480/);
+ assert.match(geo,/t\.feedbackTimer=setTimeout/);
+ assert.match(geo,/t\.feedbackScrollKey=null/);
+});
+test('Secret Code-only room passes the live readiness gate',()=>{
+ const sql=read('./migrations/20261028_secret_code_lobby_readiness.sql');
+ assert.match(sql,/has_arcade_round/);
+ assert.match(sql,/\('blitz','captain','tug','sequence_memory'\)/);
+ assert.match(lifecycle,/\('blitz','captain','tug','sequence_memory','russia_map'\)/);
+});
