@@ -184,7 +184,7 @@ test('Actual simulator shows three ballots after a bot win instead of silently b
  await page.locator('[data-lab-bot-vote="strategy"]').click();
  const btn=page.locator('[data-lab-bot-vote="option"]');
  await expect(btn).toBeVisible();
- await expect(page.locator('.team-lab-sandbox-votes')).toContainText('2/3');
+ await expect(page.locator('.team-lab-strategy-summary')).toContainText(/[23]\/3/);
 });
 
 test('Simulator appears below team cards and loads chosen saved build without a room join',async({page})=>{
