@@ -98,8 +98,12 @@ test('Teacher edits ranking points separately for tap victory and blitz correct 
    ]}),
    save:async(id,card,settings)=>{
     window.__bonusWrites.push({id,card,settings});
-    return {cards:[{id:card,title:'Тест',mode:card==='tap'?'tug':'blitz',position:1,
-      ...settings}]};
+    return {cards:[
+     {id:'tap',title:'Тап-баттл',mode:'tug',position:1,arcade_score_points:15,
+      bonus_min_points:1,bonus_percent:70,bonus_lead:15,bonus_vote_seconds:null},
+     {id:'blitz',title:'Блиц-консенсус',mode:'blitz',position:2,arcade_score_points:10,
+      bonus_min_points:1,bonus_percent:70,bonus_lead:15,bonus_vote_seconds:null}
+    ].map(x=>x.id===card?{...x,...settings}:x)};
    }
   };
   window.QwizBonusSettings.refreshBuilds([{id:'fixture-build',title:'Тестовая сборка'}]);
