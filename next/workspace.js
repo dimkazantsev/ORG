@@ -532,7 +532,7 @@ function appendCard(type='round',arcadeMode=null){
  if(arcadeMode==='rocket')return null;
  if(state.cards.length>=60){msg('buildMessage','Не больше 60 карточек.',true);return null}
  const added=card(type);
- if(arcadeMode&&arcadeGames[arcadeMode]){const meta=arcadeGames[arcadeMode];added.title=meta.title;added.icon=meta.icon;added.settings.arcade_mode=arcadeMode;added.settings.arcade_seconds=meta.seconds;}
+ if(arcadeMode&&arcadeGames[arcadeMode]){const meta=arcadeGames[arcadeMode];added.title=meta.title;added.icon=meta.icon;added.settings.arcade_mode=arcadeMode;added.settings.arcade_seconds=meta.seconds;if(arcadeMode==='sequence_memory'){added.settings.secret_challenge=0;added.settings.bonus_lead=0;added.settings.bonus_min_points=3;added.settings.arcade_score_points=10;}}
  state.cards.splice(cardInsertIndex(),0,added);
  state.selectedCard=added;
  renderCards();
