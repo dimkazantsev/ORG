@@ -31,7 +31,7 @@ jobs:
           node --check app.js
           test -s studio-2026.css
           test -s ui-ux-pro-max.css
-          node --test next/test.mjs next/flags-six.test.cjs next/last-opened-build.test.mjs next/bonus-rules-threshold.test.mjs next/bonus-vote-summary.test.mjs next/tap-appearance.test.mjs
+          node --test next/test.mjs next/flags-six.test.cjs next/last-opened-build.test.mjs next/bonus-rules-threshold.test.mjs next/bonus-vote-summary.test.mjs next/tap-appearance.test.mjs next/secret-code.test.mjs
           test -s next/presenter.html
           test -s next/presenter.css
           test -s next/presenter.js
@@ -129,7 +129,8 @@ jobs:
                grep -q 'id="generalOpenBonusRules"' /tmp/qwiz-workspace.html &&
                grep -q 'id="bonusRulesValidation"' /tmp/qwiz-workspace.html &&
                grep -q 'russian-votes-20261028-1' /tmp/qwiz-workspace.html &&
-               grep -q 'tap-gloss-20261028-1' /tmp/qwiz-workspace.html &&
+               grep -q 'secret-code-live-20261028-1' /tmp/qwiz-workspace.html &&
+               grep -q 'data-arcade="sequence_memory"' /tmp/qwiz-workspace.html &&
                curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/next/arcade.css?v=tap-gloss-20261028-1&release=$GITHUB_RUN_ID-$attempt" -o /tmp/qwiz-arcade.css &&
                grep -q 'premium tactile Tap-battle' /tmp/qwiz-arcade.css &&
                grep -q 'id="bonusRulesActivity"' /tmp/qwiz-workspace.html &&
