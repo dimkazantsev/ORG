@@ -7,7 +7,7 @@ const q=(selector,root=document)=>root.querySelector(selector);
 const qa=(selector,root=document)=>[...root.querySelectorAll(selector)];
 const esc=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 // Canonical names for legacy saved arcade cards and all player intro screens.
-const ARCADE_VISIBLE_NAMES={tug:'Тап-баттл',blitz:'Блиц-консенсус',captain:'Мэмори капитанов'};
+const ARCADE_VISIBLE_NAMES={tug:'Тап-баттл',blitz:'Блиц-консенсус',captain:'Мэмори капитанов',sequence_memory:'Секретный код'};
 const playerArcadeActivity=a=>{const mode=a?.settings?.arcade_mode||a?.settings?.queued_settings?.arcade_mode;return mode&&ARCADE_VISIBLE_NAMES[mode]?{...a,title:ARCADE_VISIBLE_NAMES[mode],icon:mode==='blitz'?'arcade_consensus':a.icon}:a};
 const storage={get(k){try{return sessionStorage.getItem('org2:'+k)}catch{return null}},set(k,v){try{sessionStorage.setItem('org2:'+k,v)}catch{}},del(k){try{sessionStorage.removeItem('org2:'+k)}catch{}}};
 const ctx={client:null,role:'player',roomCode:null,room:null,quizzes:[],channel:null,refreshing:false,lastRefresh:0,releaseAttemptAt:0,refreshTimer:null,clock:null,mode:'home',visibleTab:'library',clockOffset:0,gameCue:''};
