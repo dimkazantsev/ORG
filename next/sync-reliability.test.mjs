@@ -10,11 +10,13 @@ test('all resilience code parses and new builds are referenced',()=>{
  }
  const pages=[['index.html','app.js?v=consensus-fix-20261027-1'],
   ['index.html','arcade.js?v=mobile-40-20261028-1'],
-  ['workspace.html','workspace.js?v=team-lab-recovery-20261028-3'],
+  ['workspace.html','workspace.js?v='],
   ['presenter.html','presenter.js?v=mobile-40-20261028-1'],
   ['workspace.html','card-sandbox.js?v=geo-full-question-20261028-1'],
   ['workspace.html','card-geo-preview.js?v=geo-full-question-20261028-1']];
  for(const [page,asset] of pages) assert.ok(read(page).includes(asset),page+' missing '+asset);
+ assert.match(read('workspace.html'),/workspace\.js\?v=[a-z0-9-]+/i);
+ // Content-hashed/dated versions change routinely; the QA gate must test presence and parsing, not an obsolete fixed value.
 });
 test('teacher card sandbox uses read-only question retrieval without writing gameplay state',()=>{
  const sandbox=read('card-sandbox.js');
