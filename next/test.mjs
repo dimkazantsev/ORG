@@ -705,7 +705,7 @@ test('Flags of the World starts without legacy question formats or auto-seeding'
 
 test('Standalone memory blueprint uses existing project design and contains exactly 30 templates',()=>{
  const plan=JSON.parse(readFileSync(new URL('./memory-challenges.plan.json',import.meta.url),'utf8'));
- assert.equal(plan.name,'Задание на память');
+ assert.equal(plan.name,'Секретный код');
  assert.equal(plan.gameType,'standalone_arcade');
  assert.equal(plan.mode,'sequence_memory');
  assert.match(plan.visualStyle,/Reuse existing QWIZ-PARTY/);

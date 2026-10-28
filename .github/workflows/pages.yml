@@ -31,7 +31,7 @@ jobs:
           node --check app.js
           test -s studio-2026.css
           test -s ui-ux-pro-max.css
-          node --test next/test.mjs next/flags-six.test.cjs next/last-opened-build.test.mjs next/bonus-rules-threshold.test.mjs next/bonus-vote-summary.test.mjs
+          node --test next/test.mjs next/flags-six.test.cjs next/last-opened-build.test.mjs next/bonus-rules-threshold.test.mjs next/bonus-vote-summary.test.mjs next/tap-appearance.test.mjs
           test -s next/presenter.html
           test -s next/presenter.css
           test -s next/presenter.js
@@ -129,6 +129,7 @@ jobs:
                grep -q 'id="generalOpenBonusRules"' /tmp/qwiz-workspace.html &&
                grep -q 'id="bonusRulesValidation"' /tmp/qwiz-workspace.html &&
                grep -q 'russian-votes-20261028-1' /tmp/qwiz-workspace.html &&
+               grep -q 'tap-gloss-20261028-1' /tmp/qwiz-workspace.html &&
                grep -q 'id="bonusRulesActivity"' /tmp/qwiz-workspace.html &&
                grep -q 'id="bonusRulesGap"' /tmp/qwiz-workspace.html &&
                ! grep -q 'id="generalBonusPercent"' /tmp/qwiz-workspace.html &&
