@@ -1203,12 +1203,16 @@ function projection(){const u=new URL('./presenter.html',location.href);if(state
 async function loadInsights(){try{state.insights=await rpc('qwiz_teacher_stats');renderInsights()}
  catch(e){$('insightMetrics').innerHTML='<div class="empty">'+esc(e.message)+'</div>'}}
 function renderInsights(){const d=state.insights||{},overview=d.overview||{},students=d.students||[];
+ const savedAnswers=students.reduce((n,x)=>n+Number(x.answers||0),0);
+ const missingResults=students.length>0&&savedAnswers===0;
+ const notice=$('insightDataNotice');
+ if(notice){notice.hidden=!missingResults;notice.textContent=missingResults?'Участники зарегистрированы, но нет ни одного сохранённого ответа. Рейтинг не сформирован. Локальные тесты не записываются в статистику.':'';}
  $('insightMetrics').innerHTML=[['Комнат',overview.rooms||0],['Завершено',overview.completed||0],['Студентов',students.length],['Ответов',students.reduce((s,x)=>s+Number(x.answers||0),0)]]
   .map(([label,value])=>'<div><span>'+label+'</span><strong>'+fmt(value)+'</strong></div>').join('');
  const key=$('studentSort').value;const rows=students.slice().sort((a,b)=>Number(b[key]||0)-Number(a[key]||0));
- $('studentRows').innerHTML=rows.map((s,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(s.name)+'</td><td>'+esc(s.group)+'</td><td>'+fmt(s.games)+'</td><td>'+fmt(s.answers)+'</td><td>'+fmt(s.correct)+'</td><td>'+fmt(s.accuracy)+'%</td><td>'+fmt(s.score)+'</td></tr>').join('')||'<tr><td colspan="8">Пока нет ответов.</td></tr>';
+ $('studentRows').innerHTML=missingResults?'<tr><td colspan="8">Нет сохранённых ответов — рейтинг не сформирован.</td></tr>':rows.map((s,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc(s.name)+'</td><td>'+esc(s.group)+'</td><td>'+fmt(s.games)+'</td><td>'+fmt(s.answers)+'</td><td>'+fmt(s.correct)+'</td><td>'+fmt(s.accuracy)+'%</td><td>'+fmt(s.score)+'</td></tr>').join('')||'<tr><td colspan="8">Пока нет ответов.</td></tr>';
  const best=Math.max(1,...rows.slice(0,10).map(x=>Number(x.correct||0)));
- $('studentChart').innerHTML=rows.slice(0,10).map(s=>'<div class="bar-row"><span>'+esc(s.name)+'</span><div class="bar-track"><div class="bar-fill" style="width:'+(100*Number(s.correct||0)/best).toFixed(2)+'%"></div></div><strong>'+fmt(s.correct)+'</strong></div>').join('')||'<p class="small-help">Нет данных для диаграммы.</p>';
+ $('studentChart').innerHTML=missingResults?'<p class="small-help">Нет сохранённых результатов для диаграммы.</p>':rows.slice(0,10).map(s=>'<div class="bar-row"><span>'+esc(s.name)+'</span><div class="bar-track"><div class="bar-fill" style="width:'+(100*Number(s.correct||0)/best).toFixed(2)+'%"></div></div><strong>'+fmt(s.correct)+'</strong></div>').join('')||'<p class="small-help">Нет данных для диаграммы.</p>';
  const bar=(arr,label)=>arr.length?arr.map(x=>{
   const total=Math.max(1,Number(x.answers||0));const good=Number(x.correct||0);
   const pct=Math.max(0,Math.min(100,Math.round(100*good/total)));
