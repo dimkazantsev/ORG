@@ -82,7 +82,7 @@ window.QwizBonusRulesApi=Object.freeze({
    const updated=(result?.cards||[]).find(c=>String(c.id)===String(cardId));
    if(updated){
     const card=state.cards.find(c=>String(c.id)===String(cardId));
-    if(card)card.settings={...card.settings,bonus_min_points:updated.bonus_min_points,
+    if(card)card.settings={...card.settings,arcade_score_points:updated.arcade_score_points,bonus_min_points:updated.bonus_min_points,
      bonus_percent:updated.bonus_percent,bonus_lead:updated.bonus_lead,
      ...(updated.bonus_vote_seconds==null?{}:{bonus_vote_seconds:updated.bonus_vote_seconds})};
     if(card&&updated.bonus_vote_seconds==null)delete card.settings.bonus_vote_seconds;
@@ -829,6 +829,11 @@ async function saveBuild(){
    throw Error('Добавьте хотя бы одну настроенную игру или раунд вопросов.');
   }
   for(const c of state.cards){
+   // New cards must have an explicit rating reward in the room timeline.
+   // This keeps old room snapshots unchanged, while newly compiled rooms use
+   // the teacher's settings (including an intentional zero).
+   if(['tug','blitz','captain'].includes(c.settings?.arcade_mode)&&c.settings.arcade_score_points==null)
+    c.settings.arcade_score_points=c.settings.arcade_mode==='blitz'?10:15;
    if(c.type!=='round')continue;
    synchronizeCardTopic(c);
    const modes=c.settings||{},flags=Array.isArray(modes.flag_modes)&&modes.flag_modes.length>0;
