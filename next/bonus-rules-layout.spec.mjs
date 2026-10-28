@@ -58,3 +58,18 @@ test('Editor actions share width and height on desktop, stack on mobile',async({
   else expect(boxes[1].y).toBeGreaterThan(boxes[0].y+boxes[0].height-1);
  }
 });
+
+test('Editor avoids duplicate mode names and uses correct singular score label',async({page})=>{
+ await page.evaluate(()=>{
+  window.QwizBonusRulesApi={
+   list:async()=>({cards:[{id:'card-captain',title:'Мэмори капитанов',mode:'captain',position:3,
+    bonus_min_points:1,bonus_percent:70,bonus_lead:15,bonus_vote_seconds:null}]}),
+   save:async()=>{throw Error('Should not call a write for a display test')}
+  };
+  window.QwizBonusSettings.refreshBuilds([{id:'build-test',title:'Проверочная сборка'}]);
+ });
+ await page.locator('#bonusRulesBuild').selectOption('build-test');
+ await expect(page.locator('#bonusRulesCard option').nth(1)).toHaveText('4. Мэмори капитанов');
+ await expect(page.locator('#bonusRulesPreview')).toContainText('не менее 1 очка');
+ await expect(page.locator('#bonusRulesPreview')).not.toContainText('1 очков');
+});
