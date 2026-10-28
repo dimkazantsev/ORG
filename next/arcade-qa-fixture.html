@@ -12,10 +12,17 @@ const batches=new Set();
 window.mountExample=mode=>{
  QwizArcade.stop('player');
  fake.mode=mode;fake.running=true;fake.card_position+=1;
+ fake.secret_code=mode==='sequence_memory'?{phase:'answer',template:'Четыре цвета',level:1,length:4,choices:['red','blue','yellow','green'],answer_count:0,submitted:false}:null;
  fake.extra=mode==='captain'?{captain:true,tiles:Array.from({length:12},(_,index)=>({index,icon:null,matched:false,open:false})),pairs:0,moves:0,players:[{team_id:'team1',pairs:0,moves:0,completed_ms:null}]}:
  mode==='rocket'?{selected:true,alive:true,cleared:0,next_at:new Date(Date.now()+1600).toISOString(),players:[{team_id:'team1',cleared:0}]}:{};
  const client={rpc:async(method,params)=>{
   if(method==='qwiz_party_arcade')return {data:{...fake,server_now:new Date().toISOString()},error:null};
+  if(method==='qwiz_secret_code_state')return {data:fake.secret_code,error:null};
+  if(method==='qwiz_secret_code_submit'){
+   accepted.push({action:'secret-submit',answer:params.p_answer});
+   fake.secret_code={...fake.secret_code,submitted:true};
+   return {data:{ok:true},error:null};
+  }
   if(method==='qwiz_arcade_play'){accepted.push({action:params.p_action,tile:params.p_tile});if(params.p_action==='flip'){const tile=fake.extra.tiles[params.p_tile];tile.icon='🌈';tile.open=true;}return {data:{ok:true},error:null};}
   if(method==='qwiz_arcade_tap_once'){
    if(!batches.has(params.p_batch)){
