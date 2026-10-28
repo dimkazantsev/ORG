@@ -28,6 +28,6 @@ test('Enhanced Tap stage and tactile button use only existing CSS; game RPC and 
 for(const page of ['index.html','presenter.html','workspace.html','arcade-qa-fixture.html']){
  test('Tap stylesheet cache updated on '+page,()=>{
   const html=readFileSync(new URL('./'+page,import.meta.url),'utf8');
-  assert.match(html,/arcade\.css\?v=tap-gloss-20261028-1/);
+  assert.match(html,/arcade\.css\?v=secret-code-live-20261028-1/);
  });
 }

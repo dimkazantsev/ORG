@@ -204,8 +204,8 @@ test('Mini-game palette and saved cards use distinct polished vector icons',()=>
  const palette=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
  const styles=readFileSync(new URL('./workspace.css',import.meta.url),'utf8');
  assert.doesNotMatch(palette,/data-arcade="rocket"/);
- for(const mode of ['blitz','tug','captain']){
-   assert.match(workspace,new RegExp("arcade_"+mode+":'<(?:path|circle|rect)"));
+ for(const [mode,icon] of [['blitz','blitz'],['tug','tug'],['captain','captain'],['sequence_memory','secret']]){
+   assert.match(workspace,new RegExp("arcade_"+icon+":'<(?:path|circle|rect)"));
    assert.match(palette,new RegExp('data-arcade="'+mode+'"'));
  }
  assert.match(workspace,/arcade-palette-icon/);
@@ -465,7 +465,7 @@ test('Round intro icon follows the actual gameplay mechanic on phone and project
  const stage=readFileSync(new URL('./stage.js',import.meta.url),'utf8');
  const phone=readFileSync(new URL('./app.js',import.meta.url),'utf8');
  const projector=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
- for(const key of ['round','flag','map','arcade_rocket','arcade_blitz','arcade_tug','arcade_captain','intro','finale']){
+ for(const key of ['round','flag','map','arcade_rocket','arcade_blitz','arcade_tug','arcade_captain','arcade_secret','intro','finale']){
   assert.match(stage,new RegExp(key+":'<"),'Missing round artwork for '+key);
  }
  assert.match(stage,/function roundIconSvg\(key\)/);
@@ -894,7 +894,8 @@ test('Studio game selector keeps full names, uses consistent icons and an access
   ['data-geo="russia_map"','Карта регионов России'],
   ['data-arcade="blitz"','Блиц-консенсус'],
   ['data-arcade="tug"','Тап-баттл'],
-  ['data-arcade="captain"','Дуэль капитанов']
+  ['data-arcade="captain"','Дуэль капитанов'],
+  ['data-arcade="sequence_memory"','Секретный код']
  ];
  for(const [attribute,title] of names){
   const button=layout.match(new RegExp('<button[^>]*'+attribute+'[^>]*>([^<]+)<\\/button>'));
@@ -918,7 +919,7 @@ test('Mini-game buttons keep complete labels and the disclosure uses a separate 
  const html=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
  const styles=readFileSync(new URL('./workspace.css',import.meta.url),'utf8');
  const host=readFileSync(new URL('./workspace.js',import.meta.url),'utf8');
- const games=['Карта регионов России','Блиц-консенсус','Тап-баттл','Дуэль капитанов'];
+ const games=['Карта регионов России','Блиц-консенсус','Тап-баттл','Дуэль капитанов','Секретный код'];
  for(const label of games)assert.ok(html.includes('>'+label+'</button>'),'Missing game '+label);
  assert.match(host,/const label=b\.textContent\.replace\(\/\\s\+\/g,' '\)\.trim\(\)/);
  assert.match(html,/class="games-chevron-box" aria-hidden="true"/);

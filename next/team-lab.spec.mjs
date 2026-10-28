@@ -77,7 +77,7 @@ test('PWA app shell includes simulator assets and offline worker version has rot
  const sw=await response.text();
  expect(sw).toContain("'./team-lab.js'");
  expect(sw).toContain("'./team-lab.css'");
- expect(sw).toContain('qwiz-pwa-shell-20261028-v44');
+ expect(sw).toContain('qwiz-pwa-shell-20261028-v45');
 });
 
 async function start(page){

@@ -126,3 +126,19 @@ test('Tap button respects reduced-motion without obscuring the accessible label'
  expect(effect.pseudo).toBe('none');
  expect(effect.label).toBe('ТАП!');
 });
+
+test('Secret Code is playable: all four choices can be repeated and one server submission is sent',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.goto(URL);
+ await page.evaluate(()=>window.mountExample('sequence_memory'));
+ await expect(page.locator('.arcade-secret-choices button')).toHaveCount(4);
+ await page.locator('[data-secret-choice="red"]').click();
+ await page.locator('[data-secret-choice="blue"]').click();
+ await page.locator('[data-secret-choice="red"]').click();
+ await page.locator('[data-secret-choice="green"]').click();
+ await expect(page.locator('[data-secret-submit]')).toBeEnabled();
+ await page.locator('[data-secret-submit]').click();
+ await expect.poll(()=>page.evaluate(()=>window.accepted.filter(x=>x.action==='secret-submit').length)).toBe(1);
+ await expect(page.locator('.arcade-secret-done')).toContainText('Ответ принят');
+ expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
+});

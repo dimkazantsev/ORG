@@ -4,8 +4,8 @@
  */
 window.QwizBonusSettings=(()=>{
  const $=id=>document.getElementById(id);
- const modes={tug:'Тап-баттл',blitz:'Блиц-консенсус',captain:'Мэмори капитанов'};
- const ratingDefaults={tug:15,blitz:10,captain:15};
+ const modes={tug:'Тап-баттл',blitz:'Блиц-консенсус',captain:'Мэмори капитанов',sequence_memory:'Секретный код'};
+ const ratingDefaults={tug:15,blitz:10,captain:15,sequence_memory:10};
  let builds=[],cards=[],loading=0,loadedBuild='',initialised=false,busy=false;
  const status=(msg,error=false)=>{const el=$('bonusRulesStatus');if(!el)return;el.textContent=msg;el.classList.toggle('error',error)};
  const option=(value,label)=>new Option(label,String(value));
@@ -59,22 +59,22 @@ window.QwizBonusSettings=(()=>{
  function presentCard(){
   const card=current(),form=$('bonusRulesForm');if(!card){form.hidden=true;return}
   form.hidden=false;
-  $('bonusRulesReward').max=card.mode==='blitz'?'10':'200';
+  $('bonusRulesReward').max=['blitz','sequence_memory'].includes(card.mode)?'10':'200';
   $('bonusRulesReward').value=card.arcade_score_points??ratingDefaults[card.mode]??0;
-  $('bonusRulesRewardHelp').textContent=card.mode==='blitz'?'Начисляется каждой команде за правильный итоговый ответ, даже если несколько команд ответили верно. От 0 до 10 — правило единой шкалы вопросов.':'Начисляется только команде-победителю в общий рейтинг. От 0 до 200.';
+  $('bonusRulesRewardHelp').textContent=card.mode==='sequence_memory'?'До 10 баллов за победу команды со средним результатом памяти. Каждый участник получает 0–10 игровых очков.':card.mode==='blitz'?'Начисляется каждой команде за правильный итоговый ответ, даже если несколько команд ответили верно. От 0 до 10 — правило единой шкалы вопросов.':'Начисляется только команде-победителю в общий рейтинг. От 0 до 200.';
   const minInput=$('bonusRulesMin'),fixedBlitz=card.mode==='blitz';
   // Blitz yields only 0 or 10 game points. Thresholds 1–10 are equivalent.
-  minInput.max=fixedBlitz?'10':'200';
+  minInput.max=['blitz','sequence_memory'].includes(card.mode)?'10':'200';
   minInput.readOnly=fixedBlitz;
   minInput.value=fixedBlitz?10:(card.bonus_min_points??1);
   $('bonusRulesMinLabel').textContent=fixedBlitz?'Условие Блиц-консенсуса':'Минимальный игровой результат';
-  $('bonusRulesMinHelp').textContent=fixedBlitz?
+  $('bonusRulesMinHelp').textContent=card.mode==='sequence_memory'?'Средний результат игроков команды: от 1 до 10. Победа определяется по среднему баллу всех участников.':fixedBlitz?
    'Фиксировано: правильный ответ = 10 игровых очков, неправильный = 0. Порог 15 и выше невозможен. Это не баллы общего рейтинга.':
    'Укажите от 1 до 200 игровых очков победителя; это условие допуска к бонусу, а не награда в рейтинг.';
   $('bonusRulesActivity').value=card.bonus_percent??70;
   $('bonusRulesGap').value=card.bonus_lead??15;
   $('bonusRulesVote').value=card.bonus_vote_seconds==null?'auto':String(card.bonus_vote_seconds);
-  const tap=card.mode==='tug',blitz=card.mode==='blitz';
+  const tap=['tug','sequence_memory'].includes(card.mode),blitz=card.mode==='blitz';
   $('bonusRulesActivityWrap').hidden=!tap;$('bonusRulesGapWrap').hidden=blitz;
   $('bonusRulesActivity').disabled=!tap;$('bonusRulesGap').disabled=blitz;
   $('bonusRulesModeHint').textContent=tap?
@@ -85,12 +85,12 @@ window.QwizBonusSettings=(()=>{
  }
  function showPreview(){
   const card=current();if(!card)return;
-  const t=thresholds(),blitz=card.mode==='blitz',tap=card.mode==='tug';
+  const t=thresholds(),blitz=card.mode==='blitz',secret=card.mode==='sequence_memory',tap=['tug','sequence_memory'].includes(card.mode);
   const errors=[];
-  if(!Number.isInteger(t.arcade_score_points)||t.arcade_score_points<0||t.arcade_score_points>(blitz?10:200))
-   errors.push(blitz?'Блиц-консенсус: награда за правильный ответ может составлять от 0 до 10 баллов рейтинга.':'Награда в рейтинг должна быть целым числом от 0 до 200.');
-  if(!Number.isInteger(t.bonus_min_points)||t.bonus_min_points<1||t.bonus_min_points>(blitz?10:200))
-   errors.push(blitz?'В Блиц-консенсусе результат бывает только 0 или 10. Условие выше 10 игровых очков недостижимо.':'Минимальный игровой результат должен быть целым числом от 1 до 200.');
+  if(!Number.isInteger(t.arcade_score_points)||t.arcade_score_points<0||t.arcade_score_points>(blitz||secret?10:200))
+   errors.push(blitz?'Блиц-консенсус: награда за правильный ответ может составлять от 0 до 10 баллов рейтинга.':secret?'Награда Секретного кода должна быть от 0 до 10 баллов.':'Награда в рейтинг должна быть целым числом от 0 до 200.');
+  if(!Number.isInteger(t.bonus_min_points)||t.bonus_min_points<1||t.bonus_min_points>(blitz||secret?10:200))
+   errors.push(blitz?'В Блиц-консенсусе результат бывает только 0 или 10. Условие выше 10 игровых очков недостижимо.':secret?'В Секретном коде средний результат команды составляет от 0 до 10. Укажите порог допуска от 1 до 10.':'Минимальный игровой результат должен быть целым числом от 1 до 200.');
   if(!Number.isInteger(t.bonus_percent)||t.bonus_percent<50||t.bonus_percent>100)
    errors.push('Доля активных игроков должна быть целым числом от 50 до 100%.');
   if(!Number.isInteger(t.bonus_lead)||t.bonus_lead<0||t.bonus_lead>200)
@@ -141,7 +141,7 @@ window.QwizBonusSettings=(()=>{
   $('bonusRulesReset').addEventListener('click',()=>{
    const card=current();if(!card)return;
    $('bonusRulesReward').value=ratingDefaults[card.mode]??0;
-   $('bonusRulesMin').value=card.mode==='blitz'?10:1;$('bonusRulesActivity').value=70;$('bonusRulesGap').value=15;$('bonusRulesVote').value='auto';
+   $('bonusRulesMin').value=card.mode==='blitz'?10:card.mode==='sequence_memory'?3:1;$('bonusRulesActivity').value=70;$('bonusRulesGap').value=15;$('bonusRulesVote').value='auto';
    showPreview();status('Стандартные баллы в рейтинг и пороги восстановлены в форме. Нажмите «Сохранить условия», чтобы записать их в сборку.');
   });
   if(typeof state!=='undefined'&&Array.isArray(state.builds))populateBuilds(state.builds);
