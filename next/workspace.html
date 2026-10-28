@@ -42,7 +42,7 @@
  </div>
  <div class="team-lab-rules" aria-label="Условия получения бонуса">
   <span><strong>1.</strong> Победить в мини-игре</span>
-  <button type="button" id="bonusRulesJump" class="bonus-rules-step" aria-controls="bonusRulesEditor" title="Перейти к настройке условий получения бонуса"><strong>2.</strong> Выполнить условия режима <span aria-hidden="true">↗</span></button>
+  <button type="button" id="bonusRulesJump" class="bonus-rules-step" aria-controls="bonusRulesEditor" title="Перейти к настройке условий получения бонуса"><strong>2.</strong> Выполнить условия режима ↗</button>
   <span><strong>3.</strong> Получить большинство на двух голосованиях</span>
   <span><strong>4.</strong> Применить в следующем обычном раунде</span>
  </div>
@@ -57,11 +57,11 @@
    <div class="bonus-rules-fields">
     <label>Минимальный игровой результат<input type="number" id="bonusRulesMin" min="1" max="200" step="1" required><small>Очки мини-игры команды-победителя, не общий рейтинг.</small></label>
     <label id="bonusRulesActivityWrap">Активных участников команды, %<input type="number" id="bonusRulesActivity" min="50" max="100" step="1" required><small>Только Тап-баттл. Доля фактически участвовавших игроков.</small></label>
-    <label id="bonusRulesGapWrap">Минимальный отрыв от соперника<input type="number" id="bonusRulesGap" min="0" max="200" step="1" required><small>Разница игровых результатов команд. Ноль — допускается минимальное преимущество.</small></label>
+    <label id="bonusRulesGapWrap">Минимальный отрыв от соперника<input type="number" id="bonusRulesGap" min="0" max="200" step="1" required><small>Разница игровых результатов команд. Ноль — допускается равный результат при наличии победителя.</small></label>
     <label>Окно голосования<select id="bonusRulesVote"><option value="auto">Автоматически · 18–24 секунды</option><option value="18">18 секунд</option><option value="19">19 секунд</option><option value="20">20 секунд</option><option value="21">21 секунда</option><option value="22">22 секунды</option><option value="23">23 секунды</option><option value="24">24 секунды</option></select><small>Общее окно двух этапов голосования, не каждого по отдельности.</small></label>
    </div>
    <div id="bonusRulesPreview" class="bonus-rules-preview" aria-live="polite"></div>
-   <div class="bonus-rules-editor-actions"><button type="submit" class="team-lab-primary" id="bonusRulesSave">Сохранить условия</button><button type="button" class="bonus-rules-reset" id="bonusRulesReset">Вернуть исходные значения</button></div>
+   <div class="bonus-rules-editor-actions"><button type="submit" class="team-lab-primary" id="bonusRulesSave">Сохранить условия</button><button type="button" class="bonus-rules-reset" id="bonusRulesReset">Стандартные значения</button></div>
   </form>
   <p id="bonusRulesStatus" class="bonus-rules-status" role="status" aria-live="polite">Выберите сохранённую сборку для редактирования действующих мини-игр.</p>
  </section>
