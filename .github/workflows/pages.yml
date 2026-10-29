@@ -31,7 +31,7 @@ jobs:
           node --check app.js
           test -s studio-2026.css
           test -s ui-ux-pro-max.css
-          node --test next/test.mjs next/flags-six.test.cjs next/last-opened-build.test.mjs next/bonus-rules-threshold.test.mjs next/bonus-vote-summary.test.mjs next/tap-appearance.test.mjs next/secret-code.test.mjs next/card-sandbox-secret.test.mjs next/mobile-viewport.test.mjs next/early-advance.test.mjs
+          node --test next/test.mjs next/flags-six.test.cjs next/last-opened-build.test.mjs next/bonus-rules-threshold.test.mjs next/bonus-vote-summary.test.mjs next/tap-appearance.test.mjs next/secret-code.test.mjs next/card-sandbox-secret.test.mjs next/mobile-viewport.test.mjs next/early-advance.test.mjs next/seven-screen-regressions.test.mjs
           test -s next/presenter.html
           test -s next/presenter.css
           test -s next/presenter.js

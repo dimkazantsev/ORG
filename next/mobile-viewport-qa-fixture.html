@@ -2,9 +2,9 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>QWIZ-PARTY · viewport QA</title>
 <link rel="stylesheet" href="./theme.css">
-<link rel="stylesheet" href="./arcade.css?v=secret-code-live-20261028-1">
-<link rel="stylesheet" href="./russia-geo.css?v=geo-confirm-stable-20261029-1">
-<link rel="stylesheet" href="./player-layout.css?v=viewport-confirm-20261029-1">
+<link rel="stylesheet" href="./arcade.css?v=seven-fixes-20261029-1">
+<link rel="stylesheet" href="./russia-geo.css?v=seven-fixes-20261029-1">
+<link rel="stylesheet" href="./player-layout.css?v=seven-fixes-20261029-1">
 <script defer src="./arcade.js?v=bonus-modal-20261029-1"></script>
 <style>body{margin:0;background:#f5f0fc;font:14px system-ui,sans-serif}#gameView{display:block}#gameContent{min-width:0}#qaMode{position:fixed;top:3px;right:3px;z-index:1;background:#fff;padding:2px;font-size:10px;opacity:.85}.game-top .game-name{color:#2c2240}.game-top .player-more{display:inline-flex}</style>
 </head><body>
@@ -36,6 +36,23 @@ window.showGeoFixture=()=>{
  });
  const confirm=document.querySelector('[data-geo-confirm]');
  confirm.addEventListener('click',()=>{if(!confirm.disabled){confirm.disabled=true;confirm.setAttribute('aria-busy','true');document.querySelector('.geo-message').textContent='Проверяем ответ…';}});
+};
+window.showGeoIllustrationFixture=(kind='silhouette',revealed=false)=>{
+ QwizArcade?.stop?.('player');
+ const picture=kind==='silhouette'?
+  '<svg class="geo-map-svg geo-silhouette" viewBox="0 0 120 100"><path d="M35 7L75 12 87 29 108 36 96 55 110 87 70 90 47 71 19 77 27 44 13 28Z"/></svg>':
+  '<svg class="geo-flag" viewBox="0 0 120 80" role="img" aria-label="Флаг"><rect width="120" height="80" fill="#e9ebf0"/><rect y="0" width="120" height="25" fill="#e52632"/><rect y="25" width="120" height="30" fill="#fff"/><rect y="55" width="120" height="25" fill="#2875b9"/></svg>';
+ const labels=['Республика Коми','Орловская область','Омская область','Запорожская область'];
+ document.getElementById('gameContent').innerHTML='<section class="geo-game">'+
+ '<div class="geo-header"><span>КАРТА РОССИИ / УЗНАЙ</span><strong>3 / 10 · 10 очков</strong></div>'+
+ '<div class="geo-progress"><span style="width:30%"></span></div>'+
+ '<h2>'+(kind==='flag'?'Какому субъекту принадлежит этот флаг?':'Какой субъект изображён по контуру?')+'</h2>'+
+ '<div class="geo-visual-slot is-'+kind+'">'+picture+'</div>'+
+ '<div class="geo-options'+(revealed?' is-revealed':'')+'">'+
+ labels.map((label,i)=>'<button type="button" class="'+(revealed&&i===1?'geo-option-correct':'')+'">'+
+ '<span class="geo-choice-number">'+String.fromCharCode(65+i)+'</span><span class="geo-choice-label">'+label+(revealed&&i===1?' ✓':'')+'</span></button>').join('')+
+ '</div><p class="geo-message">'+(revealed?'<span class="geo-result-label is-correct">Верно!</span>':'')+
+ '</p><div class="geo-footer"><span>Осталось 8 сек.</span><small>Результат каждого игрока индивидуален</small></div></section>';
 };
 window.showBonusFixture=(stage='effects')=>{
  const now=new Date();

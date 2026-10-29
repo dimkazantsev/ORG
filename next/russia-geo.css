@@ -267,3 +267,79 @@
  opacity:1!important;cursor:not-allowed;
 }
 .geo-game .geo-confirm[aria-busy="true"]{pointer-events:none}
+
+
+/* 2026-10-29: stable flag/shape question media and neutral answers. */
+.geo-game>.geo-visual-slot{
+ box-sizing:border-box;position:relative;width:100%;min-width:0;min-height:120px;
+ display:grid;place-items:center;overflow:hidden;border:1px solid #e4dcee;
+ border-radius:16px;background:radial-gradient(ellipse at center,#faf9ff,#f0eef8);
+}
+.geo-game>.geo-visual-slot .geo-flag{
+ display:block;width:auto;max-width:88%;height:80%;max-height:80%;
+ margin:auto;object-fit:contain;box-shadow:none;border-radius:4px;
+}
+.geo-game>.geo-visual-slot .geo-silhouette{
+ width:100%;height:100%;min-height:0;max-height:100%;
+ padding:clamp(10px,2vw,20px);box-sizing:border-box;
+ background:transparent;object-fit:contain;
+}
+.geo-game .geo-options button,
+.geo-game .geo-options button:nth-child(n){
+ --tile-edge:#d6cce7;--tile-light:#faf8fe;--tile-glow:#ebe6f4;
+ background:#fff;border:1px solid #d7d0e7;
+ color:#352d47;box-shadow:0 2px 0 #ded7eb;
+ transform:none;transition:background .12s,border-color .12s;
+}
+.geo-game .geo-options button::before{display:none}
+.geo-game .geo-options button .geo-choice-number{
+ background:#e9dff9;color:#6d44bd;box-shadow:none;
+}
+.geo-game .geo-options button:not(:disabled):hover,
+.geo-game .geo-options button:not(:disabled):focus-visible{
+ border-color:#8050d8;background:#f4efff;transform:none;
+ box-shadow:0 2px 0 #cebce7;filter:none;
+}
+.geo-game .geo-options.is-revealed button{
+ color:#716a80;background:#f6f4fa;border-color:#e7e2ef;
+ box-shadow:none;opacity:.78;
+}
+.geo-game .geo-options.is-revealed .geo-option-correct{
+ color:#125f3e!important;background:#e6f8eb!important;
+ border:2px solid #24a66b!important;box-shadow:inset 0 0 0 1px #a9dec1!important;
+ opacity:1!important;
+}
+.geo-game .geo-options.is-revealed .geo-option-correct .geo-choice-number{
+ background:#168a55!important;color:white!important;
+}
+.geo-game .geo-options.is-revealed .geo-option-wrong{
+ background:#f6f4fa!important;border-color:#e7e2ef!important;
+ box-shadow:none!important;color:#716a80!important;
+}
+@media(max-width:680px){
+ .player-compact #gameContent .geo-game>.geo-visual-slot{
+  flex:1 1 40%;min-height:100px;max-height:44%;margin:0;
+ }
+ .player-compact #gameContent .geo-game>.geo-visual-slot .geo-silhouette{
+  height:100%!important;width:100%!important;min-height:0!important;
+ }
+ .player-compact #gameContent .geo-game>.geo-visual-slot .geo-flag{
+  max-height:90%!important;max-width:90%!important;
+ }
+ .player-compact #gameContent .geo-game>.geo-options{
+  flex:1 1 52%;min-height:0;align-self:stretch;align-content:stretch;
+  grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));
+ }
+ .player-compact #gameContent .geo-game>.geo-options button{
+  min-height:0!important;max-height:none!important;height:100%!important;
+  padding:clamp(6px,1.2dvh,11px)!important;margin:0;box-shadow:none;
+ }
+ .player-compact #gameContent .geo-game>.geo-message{
+  flex:0 0 16px;min-height:16px;max-height:16px;overflow:hidden;
+  font-size:11px;line-height:16px;
+ }
+}
+
+.geo-game .geo-message .geo-result-label{display:inline-block;padding:0;font-size:11px;line-height:1.2;font-weight:800}
+.geo-game .geo-message .geo-result-label.is-correct{color:#167849}
+.geo-game .geo-message .geo-result-label.is-wrong{color:#655184}

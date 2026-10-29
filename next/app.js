@@ -331,15 +331,27 @@ function personalResults(s,final=false){
 }
 function roundScorePanel(view,title,final=false,endsAt=null){
  const rows=view?.teams||[],players=view?.players||[],reward=view?.reward||null;
- const arcade=['tug','rocket','captain','blitz'].includes(view?.mode);
+ const arcade=['tug','rocket','captain','blitz','sequence_memory'].includes(view?.mode);
  const metricUnit=String(view?.metric_unit||'результат');
  const fmtScore=x=>Number(x||0).toLocaleString('ru-RU',{maximumFractionDigits:0});
  const fmtMetric=x=>Number(x||0).toLocaleString('ru-RU',{notation:'compact',maximumFractionDigits:1});
  const value=(x,isTeam)=>arcade&&view.mode!=='blitz'?'<span class="round-performance">'+fmtMetric(x.metric)+' <small>'+esc(metricUnit)+'</small></span>':
   '<span class="round-question-points">'+fmtScore(x.score)+' <small>баллов</small></span>';
- const rowset=(a,isTeam)=>a.length?'<ol class="round-score-list">'+a.map((x,i)=>
-  '<li><span class="round-rank">'+(i+1)+'</span><strong>'+esc(x.nickname||x.name||'Участник')+'</strong><b>'+value(x,isTeam)+'</b></li>').join('')+
-  '</ol>':'<p class="small-help">Результаты обрабатываются сервером</p>';
+ const rowset=(a,isTeam)=>{
+  if(!a.length)return '<p class="small-help">Результаты обрабатываются сервером</p>';
+  const myRef=isTeam?ctx.room?.me?.team_id:ctx.room?.me?.id;
+  const mobile=window.innerWidth<=680;
+  const indices=mobile?a.map((_,i)=>i).slice(0,3):a.map((_,i)=>i);
+  const ownIndex=a.findIndex(x=>x.id===myRef);
+  if(mobile&&ownIndex>=3)indices.push(ownIndex);
+  return '<ol class="round-score-list">'+indices.map(i=>{
+    const x=a[i],self=x.id===myRef;
+    return '<li class="'+(self?'is-mine':'')+'"><span class="round-rank">'+(i+1)+
+      '</span><strong>'+esc(x.nickname||x.name||'Участник')+'</strong><b>'+
+      value(x,isTeam)+'</b></li>';
+   }).join('')+'</ol>'+
+   (mobile&&a.length>indices.length?'<p class="round-more-count">Ещё участников: '+(a.length-indices.length)+'</p>':'');
+ };
  const myId=ctx.room?.me?.id,myTeamId=ctx.room?.me?.team_id;
  const myIndex=players.findIndex(x=>x.id===myId),teamIndex=rows.findIndex(x=>x.id===myTeamId);
  const team=teamIndex>=0?rows[teamIndex]:null,individual=myIndex>=0?players[myIndex]:null;
@@ -353,7 +365,7 @@ function roundScorePanel(view,title,final=false,endsAt=null){
   '<div class="round-results-orbit" aria-hidden="true">✦</div>'+
   '<span class="eyebrow">'+(final?'ИГРА ЗАВЕРШЕНА':'РАУНД ЗАВЕРШЁН')+'</span>'+
   '<h1>'+esc(title||'Результаты')+'</h1>'+highlight+
-  (view?.mode==='blitz'?'<p class="round-results-note">За правильный итоговый ответ команда получает 10 баллов. Личный ответ участника оценивается отдельно (0 или 10). Победитель выбирает усиление.</p>':view?.mode==='captain'?'<p class="round-results-note">Мэмори капитанов: показаны результаты поиска пар. Это не баллы за вопросы.</p>':view?.mode==='tug'?'<p class="round-results-note">Тап-баттл: показаны нажатия, а не баллы за вопросы.</p>':'')+
+  (view?.mode==='blitz'?'<p class="round-results-note">Блиц · правильный ответ: 10 баллов</p>':view?.mode==='captain'?'<p class="round-results-note">Мэмори · найденные пары</p>':view?.mode==='tug'?'<p class="round-results-note">Тап-баттл · нажатия команды</p>':'')+
   rewardBanner+'<div class="round-results-grid"><section><h2>Команды</h2>'+rowset(rows,true)+'</section>'+
   '<section><h2>Участники</h2>'+rowset(players,false)+'</section></div>'+
   (!final?'<p class="round-results-next" id="playerNextStatus" role="status">'+

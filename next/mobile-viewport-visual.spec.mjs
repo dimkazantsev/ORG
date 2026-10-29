@@ -42,6 +42,37 @@ for(const [width,height] of [[320,480],[360,640],[390,844],[430,932]]){
   for(const b of report.controls){expect(b.left).toBeGreaterThanOrEqual(report.card.left);
    expect(b.right).toBeLessThanOrEqual(report.card.right+1);}
  });
+ test('Geography flag and silhouette have stationary artwork and answers '+width+'×'+height,async({page})=>{
+  await page.setViewportSize({width,height});
+  await page.goto(FIXTURE);
+  for(const kind of ['flag','silhouette']){
+   await page.evaluate(k=>window.showGeoIllustrationFixture(k,false),kind);
+   const initial=await page.evaluate(()=>{
+    const media=document.querySelector('.geo-visual-slot').getBoundingClientRect();
+    const choices=[...document.querySelectorAll('.geo-options button')].map(b=>b.getBoundingClientRect());
+    const card=document.querySelector('#gameContent').getBoundingClientRect();
+    return {media,choices,card};
+   });
+   await page.evaluate(k=>window.showGeoIllustrationFixture(k,true),kind);
+   const revealed=await page.evaluate(()=>{
+    const media=document.querySelector('.geo-visual-slot').getBoundingClientRect();
+    const choices=[...document.querySelectorAll('.geo-options button')].map(b=>b.getBoundingClientRect());
+    const card=document.querySelector('#gameContent').getBoundingClientRect();
+    const correct=document.querySelectorAll('.geo-option-correct').length;
+    return {media,choices,card,correct};
+   });
+   expect(revealed.correct).toBe(1);
+   for(const prop of ['top','height','bottom']){
+    expect(Math.abs(revealed.media[prop]-initial.media[prop])).toBeLessThanOrEqual(1);
+   }
+   expect(revealed.media.bottom).toBeLessThanOrEqual(revealed.card.bottom+1);
+   for(let i=0;i<4;i++){
+    expect(Math.abs(revealed.choices[i].top-initial.choices[i].top)).toBeLessThanOrEqual(1);
+    expect(Math.abs(revealed.choices[i].height-initial.choices[i].height)).toBeLessThanOrEqual(1);
+    expect(revealed.choices[i].bottom).toBeLessThanOrEqual(revealed.card.bottom+1);
+   }
+  }
+ });
  test('Bonus strategy and effect dialog fits viewport '+width+'×'+height,async({page})=>{
   await page.setViewportSize({width,height});
   await page.goto(FIXTURE);
