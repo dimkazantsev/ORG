@@ -368,7 +368,7 @@ window.QwizArcade=(()=>{
     ballot.className='arcade-vote '+(strategyStage?'arcade-vote-strategy ':'arcade-vote-effects ')+(vote.strategy==='sabotage'?'is-harm':'is-boost');
     ballot.innerHTML='<div class="arcade-vote-title"><span>'+subtitle+' · 🏆 '+escape(champion?.name||'Лидеры')+'</span>'+
       '<strong>'+escape(title)+'</strong>'+
-      '<p>'+(strategyStage?'Победившая команда выбирает: зелёный путь усиливает себя, красный накладывает штраф на соперника.':'Выберите конкретный бонус или штраф. Он применяется в следующем раунде.')+' Нажмите вариант, голосование решается большинством. Решение принимается в два этапа. '+(vote.target_name?'Соперник: '+escape(vote.target_name)+'. ':'')+'Осталось '+remaining+' сек.</p></div>'+
+      '<p>'+(tr.kind==='player'?(strategyStage?'Выберите усиление своей команды или помеху сопернику.':'Выберите эффект. Решение определяется большинством голосов.'):(strategyStage?'Победившая команда выбирает: зелёный путь усиливает себя, красный накладывает штраф на соперника.':'Выберите конкретный бонус или штраф. Он применяется в следующем раунде.')+' Нажмите вариант, голосование решается большинством. Решение принимается в два этапа.')+' '+(vote.target_name?'Соперник: '+escape(vote.target_name)+'. ':'')+'Осталось '+remaining+' сек.</p></div>'+
       (selections.length?'<div class="arcade-boost-grid">'+selections.map(([id,caption,description])=>
         '<button type="button" data-boost-choice="'+id+'" '+(!canChoose||tr.voteBusy?'disabled':'')+
         ' data-vote-tone="'+(id==='sabotage'||HINDRANCES.some(item=>item[0]===id)?'harm':'boost')+'"'+
