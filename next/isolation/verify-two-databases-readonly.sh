@@ -34,10 +34,19 @@ def check(key, ref):
         raise SystemExit('ERROR: URI_PARSE_FAILED — re-copy the URI; URL-encode reserved characters in the password, and never include [YOUR-PASSWORD].')
     if u.scheme not in ('postgres', 'postgresql') or not u.password:
         raise SystemExit('ERROR: PASSWORD_NOT_PRESENT — the PostgreSQL URI needs a real encoded database password (not the account password or publishable key).')
-    direct = host == f'db.{ref}.supabase.co' and user in ('postgres', f'postgres.{ref}')
-    pool = (host.endswith('.pooler.supabase.com') and user == f'postgres.{ref}' and port == 5432)
-    if not (direct or pool):
-        raise SystemExit('ERROR: database host/user is not the expected project for ' + key)
+    # Allow only the dedicated, non-admin GOS catalog reader on the source.
+    # Custom Supabase shared-pooler usernames are ROLE.PROJECT_REF.
+    if key == 'GOS_SOURCE_DB_URL':
+        expected_user = f'qwiz_catalog_reader.{ref}'
+        pool = (host.endswith('.pooler.supabase.com')
+                and user == expected_user and port == 5432)
+        if not pool:
+            raise SystemExit('ERROR: GOS_READER_REQUIRED — use the dedicated qwiz_catalog_reader.<project_ref> user with official Session pooler port 5432; no postgres admin credentials.')
+    else:
+        direct = host == f'db.{ref}.supabase.co' and user == 'postgres' and port == 5432
+        pool = (host.endswith('.pooler.supabase.com') and user == f'postgres.{ref}' and port == 5432)
+        if not (direct or pool):
+            raise SystemExit('ERROR: database host/user is not the expected project for ' + key)
     if u.path not in ('', '/', '/postgres'):
         raise SystemExit('ERROR: expected postgres database for ' + key)
 
@@ -46,16 +55,20 @@ if environ.get('QWIZ_TARGET_DB_URL'):
     check('QWIZ_TARGET_DB_URL', 'vwsoergltegncrretxnz')
 PY
 
-# Every SQL query is SELECT-only; the PostgreSQL session additionally defaults to read-only.
+# Use an explicit PostgreSQL READ ONLY transaction rather than depending on
+# pooler-specific PGOPTIONS support. No changes to either production database.
 export PGSSLMODE=require PGCONNECT_TIMEOUT=7
-export PGOPTIONS="-c default_transaction_read_only=on -c statement_timeout=10000 -c lock_timeout=2000"
 query="
+begin read only;
+set local statement_timeout = '10s';
+set local lock_timeout = '2s';
 select
   (select count(*) from pg_tables where schemaname='public' and tablename like 'qwiz_%') as qwiz_tables,
   (select count(*) from pg_tables where schemaname='public' and tablename like 'org_next_%') as org_next_tables,
   (select count(*) from pg_tables where schemaname='public' and tablename like 'org_quiz_%') as org_quiz_tables,
   (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname like 'qwiz_%') as qwiz_functions,
   current_setting('server_version') as pg_version;
+commit;
 "
 echo "Verifying legacy GOS.ID PostgreSQL (read-only catalog counts)..."
 psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -v ON_ERROR_STOP=1 -A -t -q -c "$query"
