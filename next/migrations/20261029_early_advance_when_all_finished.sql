@@ -131,11 +131,11 @@ BEGIN
      then return false;end if;$new$;
      IF strpos(f,x)=0 THEN RAISE EXCEPTION 'Original tick arcade gate not found';END IF;
      f:=replace(f,x,y);
-     x := $old$     if clock_timestamp()<a.entered_at+make_interval(secs=>stage_seconds) then return false;end if;
-     if public.qwiz_bonus_eligible(r.id,a.card_position) AND
-       clock_timestamp()<a.entered_at+make_interval(secs=>public.qwiz_arcade_duration(a.settings,a.settings->>'arcade_mode')+public.qwiz_bonus_window(r.id,a.card_position))
-       AND NOT public.qwiz_bonus_vote_complete(r.id,a.card_position)
-      then return false;end if;
+     x := $old$      if clock_timestamp()<a.entered_at+make_interval(secs=>stage_seconds) then return false;end if;
+      if public.qwiz_bonus_eligible(r.id,a.card_position) AND
+        clock_timestamp()<a.entered_at+make_interval(secs=>public.qwiz_arcade_duration(a.settings,a.settings->>'arcade_mode')+public.qwiz_bonus_window(r.id,a.card_position))
+        AND NOT public.qwiz_bonus_vote_complete(r.id,a.card_position)
+       then return false;end if;
       perform public.qwiz_boost_lock(r.id);$old$;
      y := $new$     if clock_timestamp()<a.entered_at+make_interval(secs=>stage_seconds)
        and not public.qwiz_stage_everyone_done(r.id) then return false;end if;
