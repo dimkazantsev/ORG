@@ -1,4 +1,4 @@
-name: QWIZ / legacy GOS read-only source preflight
+name: QWIZ / verify BOTH Supabase DB URLs read-only
 on:
   push:
     branches: [isolation/qwiz-independent-supabase-20261030]
@@ -21,15 +21,16 @@ jobs:
         shell: bash
         env:
           SOURCE: ${{ secrets.GOS_SOURCE_DB_URL }}
+          TARGET: ${{ secrets.QWIZ_TARGET_DB_URL }}
         run: |
-          if [[ -z "$SOURCE" ]]; then
+          if [[ -z "$SOURCE" || -z "$TARGET" ]]; then
             echo 'configured=false' >> "$GITHUB_OUTPUT"
-            echo 'BLOCKED: GOS_SOURCE_DB_URL is not configured in repository Actions secrets; NO source database read happened.' >> "$GITHUB_STEP_SUMMARY"
+            echo 'BLOCKED: both source and target Actions secrets must be configured; no database queries executed.' >> "$GITHUB_STEP_SUMMARY"
           else
             echo 'configured=true' >> "$GITHUB_OUTPUT"
-            echo 'Source DB credential is present; proceeding to SELECT-only catalog checks.' >> "$GITHUB_STEP_SUMMARY"
+            echo 'Both source and target credentials are configured; proceeding to SELECT-only catalog checks.' >> "$GITHUB_STEP_SUMMARY"
           fi
-      - name: Query GOS source and optional QWIZ target metadata
+      - name: Verify GOS source AND QWIZ Free target via SELECT-only SQL
         if: steps.check.outputs.configured == 'true'
         shell: bash
         env:
@@ -37,7 +38,7 @@ jobs:
           QWIZ_TARGET_DB_URL: ${{ secrets.QWIZ_TARGET_DB_URL }}
         run: |
           bash next/isolation/verify-two-databases-readonly.sh
-          echo 'SOURCE_DATABASE_VERIFIED: yes; no migration or modifications executed.' >> "$GITHUB_STEP_SUMMARY"
-      - name: Mark source verification unproven when connection absent
+          echo 'BOTH_DATABASES_VERIFIED: yes; no migration or modifications executed.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Mark verification unproven if either encrypted connection is absent
         if: steps.check.outputs.configured != 'true'
-        run: echo "::warning title=Source not verified::Add a restricted GOS_SOURCE_DB_URL Actions secret to run live read-only verification. Workflow success here means only shell syntax validated."
+        run: echo "::warning title=Source not verified::Both GOS_SOURCE_DB_URL and QWIZ_TARGET_DB_URL must exist for live read-only verification."
