@@ -4,6 +4,7 @@ on:
     branches: [isolation/qwiz-independent-supabase-20261030]
     paths:
       - 'next/isolation/inspect-source-catalog-readonly.sql'
+      - 'next/isolation/inspect-private-dependencies-readonly.sql'
       - '.github/workflows/qwiz-source-catalog-audit.yml'
   workflow_dispatch:
 permissions:
@@ -47,7 +48,10 @@ jobs:
               raise SystemExit('ERROR: GOS_SOURCE_DB_URL is not the expected restricted source Session pooler URI')
           PY
           psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -v ON_ERROR_STOP=1 -A -q             -f next/isolation/inspect-source-catalog-readonly.sql
-          echo "PASS: inspected QWIZ-only catalog metadata from original GOS.ID; no data rows, credentials or function bodies exported." >> "$GITHUB_STEP_SUMMARY"
+          echo "Inspecting quiz_private structural dependencies (catalog only, no rows)..."
+          psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -v ON_ERROR_STOP=1 -A -q \
+            -f next/isolation/inspect-private-dependencies-readonly.sql
+          echo "PASS: inspected QWIZ source and quiz_private catalog metadata, no data rows or credentials exported." >> "$GITHUB_STEP_SUMMARY"
       - name: Never misreport skipped checks as successful
         if: steps.check.outputs.configured != 'true'
         run: echo "::warning::The encrypted database connection has not been configured. Source metadata was not read."
