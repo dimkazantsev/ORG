@@ -37,7 +37,10 @@ test('Geography puts zoom buttons and confirmation inside the mobile viewport',(
  assert.match(css,/game-card:has\(\.geo-game\)\{[\s\S]*?overflow:hidden!important/);
  assert.match(css,/\.geo-map-frame\{[\s\S]*?flex:1 1 auto/);
  assert.match(css,/grid-template-columns:minmax\(0,1fr\) minmax\(0,1fr\) minmax\(0,1\.5fr\)/);
- assert.match(css,/\.geo-confirm\[hidden\]\{[\s\S]*?visibility:hidden!important/);
+ assert.match(css,/\.geo-confirm\{[\s\S]*?visibility:visible!important/);
+ assert.match(geo,/!t\.selectedRegion\|\|feedbackActive\|\|t\.busy\?'disabled':''/);
+ assert.doesNotMatch(geo,/button\.hidden=false/);
+ assert.doesNotMatch(geo,/confirmRevealed/);
  assert.match(geo,/Коснитесь региона и подтвердите выбор/);
  assert.match(geo,/document\.documentElement\.classList\.contains\('player-compact'\)\)return/);
 });
@@ -46,9 +49,9 @@ test('All game screens receive the new arcade and geography scripts; PWA is bump
  for(const file of ['index.html','presenter.html','workspace.html']){
   const html=read('./'+file);
   assert.match(html,/arcade\.js\?v=bonus-modal-20261029-1/);
-  assert.match(html,/russia-geo\.js\?v=geo-fit-20261029-1/);
+  assert.match(html,/russia-geo\.js\?v=geo-confirm-stable-20261029-1/);
  }
- assert.match(read('./index.html'),/player-layout\.css\?v=viewport-fit-20261029-1/);
- assert.match(read('./sw.js'),/qwiz-pwa-shell-20261029-v48/);
+ assert.match(read('./index.html'),/player-layout\.css\?v=viewport-confirm-20261029-1/);
+ assert.match(read('./sw.js'),/qwiz-pwa-shell-20261029-v49/);
  assert.match(read('./PROJECT_RULES.md'),/Обязательное размещение игрового интерфейса в границах мобильного экрана/);
 });
