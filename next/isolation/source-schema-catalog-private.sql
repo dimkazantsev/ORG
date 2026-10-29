@@ -99,7 +99,7 @@ SELECT jsonb_build_object(
      FROM target_rel r
      JOIN pg_class c ON c.oid=r.oid
      CROSS JOIN LATERAL aclexplode(COALESCE(c.relacl,acldefault('r',c.relowner))) a
-     WHERE r.relkind IN ('r','p')
+     WHERE r.relkind IN ('r','p','v','m')
   ),'[]'::jsonb),
   'routine_grants',COALESCE((
      SELECT jsonb_agg(jsonb_build_object(
