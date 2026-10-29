@@ -54,6 +54,8 @@
  function revealTarget(t,selector){
   const node=t.root?.querySelector(selector);
   if(!node||!node.isConnected)return;
+  // The mobile geography UI fits its viewport; scrolling it would hide other controls.
+  if(window.matchMedia('(max-width:680px)').matches&&document.documentElement.classList.contains('player-compact'))return;
   const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   node.scrollIntoView?.({block:'center',inline:'nearest',behavior:reduced?'instant':'smooth'});
  }
@@ -127,7 +129,7 @@
    '<h2>'+esc(prompt(q))+'</h2>'+hint+img+
    (showMap?(t.mapError?'<div class="geo-map-loading">Не удалось загрузить карту. <button type="button" data-geo-map-retry>Повторить загрузку</button></div>':(geometry&&qmode==='silhouette'?mapMarkup(q.region,false,true):mapMarkup(qmode==='identify'?q.region:null,interactive&&!feedbackActive))):'')+
    (showMap&&qmode!=='silhouette'?'<div class="geo-map-toolbar" aria-label="Масштаб карты"><button type="button" data-geo-zoom="in" aria-label="Увеличить">＋</button><button type="button" data-geo-zoom="out" aria-label="Уменьшить">−</button><button type="button" data-geo-zoom="reset">Вся карта</button></div>':'')+
-   (interactive?'<p class="geo-tip">Найдите субъект по контуру. Названия скрыты до ответа: выделите регион и нажмите «Подтвердить выбор». Карту можно перемещать пальцем и двумя пальцами изменять масштаб.</p>'+
+   (interactive?'<p class="geo-tip">Коснитесь региона и подтвердите выбор. Карту можно перемещать одним пальцем, увеличивать двумя.</p>'+
     '<button type="button" class="geo-confirm" data-geo-confirm '+(!t.selectedRegion||feedbackActive?'hidden disabled':'')+'>Подтвердить</button>':options(q,t,feedbackActive)))+
    '<p class="geo-message" role="status" aria-live="polite">'+esc(t.message||'')+'</p>'+
    '<div class="geo-footer"><span>Осталось '+v.remaining+' сек.</span><small>Результат каждого игрока индивидуален</small></div></section>';

@@ -1,0 +1,56 @@
+<!doctype html><html lang="ru" class="player-compact">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>QWIZ-PARTY · viewport QA</title>
+<link rel="stylesheet" href="./theme.css">
+<link rel="stylesheet" href="./arcade.css?v=secret-code-live-20261028-1">
+<link rel="stylesheet" href="./russia-geo.css?v=geo-native-20261028-1">
+<link rel="stylesheet" href="./player-layout.css?v=viewport-fit-20261029-1">
+<script defer src="./arcade.js?v=bonus-modal-20261029-1"></script>
+<style>body{margin:0;background:#f5f0fc;font:14px system-ui,sans-serif}#gameView{display:block}#gameContent{min-width:0}#qaMode{position:fixed;top:3px;right:3px;z-index:1;background:#fff;padding:2px;font-size:10px;opacity:.85}.game-top .game-name{color:#2c2240}.game-top .player-more{display:inline-flex}</style>
+</head><body>
+<section id="gameView" aria-label="Макет реального экрана участника">
+<div class="player-layout">
+<div class="game-card" id="gameContent"></div>
+<div class="game-top"><div><span class="game-name">Пушистые</span><span class="game-sub">Тестовое испытание</span></div><button class="player-more" type="button"><span class="player-more-label">Статистика</span></button></div>
+</div></section>
+<script>
+window.showGeoFixture=()=>{
+ window.QwizArcade?.stop?.('player');
+ const paths=Array.from({length:32},(_,i)=>{
+  const x=40+(i%8)*130,y=35+Math.floor(i/8)*100;
+  return '<path class="geo-region" data-region="'+i+'" role="button" tabindex="0" d="M'+x+' '+y+' h110 v85 h-110 Z"/>';
+ }).join('');
+ document.getElementById('gameContent').innerHTML='<section class="geo-game">'+
+ '<div class="geo-header"><span>ГЕОГРАФИЯ / НАЙДИ СУБЪЕКТ</span><strong>1 / 10 · 0 очков</strong></div>'+
+ '<div class="geo-progress"><span style="width:10%"></span></div>'+
+ '<h2>Найдите на карте: Тамбовская область</h2>'+
+ '<div class="geo-map-frame"><svg class="geo-map-svg" viewBox="0 0 1120 480" preserveAspectRatio="xMidYMid meet"><g>'+paths+'</g></svg></div>'+
+ '<div class="geo-map-toolbar"><button type="button">＋</button><button type="button">−</button><button type="button">Вся карта</button></div>'+
+ '<p class="geo-tip">Коснитесь региона и подтвердите выбор. Карту можно перемещать одним пальцем, увеличивать двумя.</p>'+
+ '<button type="button" class="geo-confirm" data-geo-confirm hidden disabled>Подтвердить</button>'+
+ '<p class="geo-message" role="status"></p><div class="geo-footer"><span>Осталось 20 сек.</span><small>Результат каждого игрока индивидуален</small></div></section>';
+ document.querySelector('.geo-map-svg').addEventListener('click',event=>{
+  const node=event.target.closest('[data-region]');if(!node)return;
+  document.querySelectorAll('.geo-region').forEach(n=>n.classList.toggle('geo-selected',n===node));
+  const button=document.querySelector('[data-geo-confirm]');button.hidden=false;button.disabled=false;
+ });
+};
+window.showBonusFixture=(stage='effects')=>{
+ const now=new Date();
+ const fake={mode:'tug',running:false,card_position:1,
+  started_at:now.toISOString(),ends_at:now.toISOString(),server_now:now.toISOString(),
+  teams:[{id:'team1',name:'Пушистые',points:159,taps:159,place:1}],
+  mine:{team_id:'team1',player_id:'player1',captain:false,credits:0,achievements:[]},
+  awards:[],extra:{},awarded_at:now.toISOString(),
+  vote:{winner_team:'team1',stage, strategy:'support',open:true,can_vote:true,
+   counts:{},my_choice:null, vote_ends_at:new Date(Date.now()+30000).toISOString()}};
+ const client={rpc:async(method)=>method==='qwiz_party_arcade'
+  ?{data:{...fake,server_now:new Date().toISOString()},error:null}:{data:{ok:true},error:null}};
+ const root=document.getElementById('gameContent');
+ QwizArcade.stop('player');
+ QwizArcade.mountPlayer(root,{phase:'intermission',code:'1234ABCD',room_id:'local-qa',
+  activity:{settings:{arcade_mode:'tug'}}},{client});
+};
+window.addEventListener('load',()=>window.showGeoFixture());
+</script>
+</body></html>
