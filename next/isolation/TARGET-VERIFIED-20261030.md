@@ -274,3 +274,60 @@ https://github.com/dimkazantsev/ORG/actions/runs/40937511477
 - Перед переносом в настоящий QWIZ Supabase необходимо дополнить сценарий точными `DEFAULT/GENERATED/IDENTITY`, sequences, view/RLS/GRANT, установить роли, проверить фактическое исполнение RPC и откаты, 40 соединений и 40 ответов.
 
 Состояние после успешного теста: рабочий `gos-sim` и новый `vwsoergltegncrretxnz` **не переключались и не изменялись**. Публикация текущих временных файлов как миграции строго запрещена: они не содержат всего контракта.
+
+
+## 16. Полная изолированная репетиция схемы и контролируемый шлюз развёртывания (30.10.2026)
+
+**Пользователь попросил продолжить фактическую реализацию. В production QWIZ/ГОС.ID изменений не было, но создан и испытан атомарный schema-only пакет для отдельного Free-проекта.**
+
+### 16.1. Найденные ранее неучтённые объекты
+
+Попытка проверки 151 DEFAULT и 20 RLS policies выявила `schema "quiz_private" does not exist` в **одноразовой** PostgreSQL. Каталоговый read-only аудит обнаружил: `quiz_private.org_quiz_keys`, `quiz_private.qwiz_flags_reset_archive_20261022` (2 таблицы) и 9 приватных функций (is_quiz_admin, combo_multiplier, power_gain_for_streak, шесть org_quiz_*_impl). До этого набора префиксов `qwiz/org_next/org_quiz` **недоставало для точной миграции**.
+
+Созданы `source-quiz-private-catalog.sql`, `disposable-quiz-private.py`, сохранение приватных DEFAULT в scratch. Проверка https://github.com/dimkazantsev/ORG/actions/runs/40941066051 — SUCCESS:
+57 public tables, 2 `quiz_private` tables, 139 public functions, 9 private functions, 151 column defaults, 20 RLS policies, 4 views, 9 triggers и 283 constraints прошли SQL registration в disposable PG17. Тела `SECURITY DEFINER` функций **не исполнялись**, ряд SQL-зависимостей требует E2E проверки; частные данные/секреты не выгружались.
+
+### 16.2. Действительные привилегии исходной базы
+
+Чтобы не оставить 116 `SECURITY DEFINER` процедур с неожиданным PostgreSQL default `PUBLIC EXECUTE`, манифест расширен ACL из `pg_class.relacl`, `pg_proc.proacl` и `aclexplode`. По исходной базе:
+- 1173 table/view ACL entries на 57 таблиц и 4 views;
+- 390 function ACL entries на 139 публичных функций;
+- function grants: `PUBLIC` 6, `anon` 14, `authenticated` 92, `service_role` 139, `postgres` 139;
+- никаких принудительных `GRANT` действующему ГОС.ID не выполнялось.
+
+`disposable-acls.py` в локальной PostgreSQL проверяет `REVOKE ALL ... FROM PUBLIC` и заново выдаёт исходные точные разрешения: https://github.com/dimkazantsev/ORG/actions/runs/40941815915 (SUCCESS). Это тест синтаксиса разрешений, а не полный аудит безопасности RPC.
+
+### 16.3. Транзакционный schema-only bundle для пустого Free-проекта
+
+Генератор `next/isolation/build-guarded-target-schema.py` собирает приватные source catalog manifests во временном защищённом runner, формирует **один** SQL-файл:
+1. `BEGIN` и fail-closed предохранители: PostgreSQL 17+, `postgres` owner, существующая Supabase `auth` и штатные роли, **0 user tables в `public`**, **0 auth.users**, отсутствие `quiz_private`;
+2. 57 QWIZ public tables, 420 columns, 283 constraints и 34 дополнительных indexes;
+3. 2 private tables + 9 private functions; 139 public functions, 151 defaults;
+4. 4 views, 20 RLS policies, 9 triggers;
+5. `REVOKE/GRANT` на основе 1173 table/view + 390 function ACL записей, без наследования случайных PUBLIC grants;
+6. итоговые SQL COUNT checks, `COMMIT`.
+
+**Не перезаписывает** штатные `auth.uid()`, `auth.jwt()` или `auth.users`. В этот этап не включён перенос Auth пользователей, игровых строк, Storage или Realtime-настроек.
+
+Полная атомарная репетиция в **отдельной одноразовой PostgreSQL 17** с тестовой имитацией Supabase Auth и проверкой нулевых Auth users прошла успешно:
+https://github.com/dimkazantsev/ORG/actions/runs/40942270468 .
+
+Вся SQL-композиция удалена вместе со временным runner, исходный код функций/DDL не публиковался в открытом репозитории или логах.
+
+### 16.4. Отдельный предохранитель реального импорта
+
+Добавлена `.github/workflows/qwiz-gated-schema-import.yml`. Она срабатывает только на специальный push изменения `next/isolation/SCHEMA-IMPORT-GATE.md` с **точно** заданным commit message `QWIZ_FREE_SCHEMA_ONLY_IMPORT_APPROVED`, требует шифрованные GitHub Secrets:
+- `GOS_SOURCE_DB_URL` — уже работает, отдельный каталоговый читатель исходного ГОС.ID;
+- `QWIZ_TARGET_DB_URL` — **ещё не настроен**, PostgreSQL URI от нового QWIZ Free проекта `vwsoergltegncrretxnz`, Session pooler 5432, username `postgres.vwsoergltegncrretxnz`.
+
+Python проверяет hostname/username/ref, запрещает источник, отличный от GOS.ID, запрещает целевой ref, отличный от Free QWIZ, и запрещает одинаковый источник/назначение. База Free должна быть пуста: при расхождении guard аварийно прекращает SQL без изменений.
+
+Первый run после создания workflow: https://github.com/dimkazantsev/ORG/actions/runs/40942534917 — **SKIPPED** по предохранителю, что правильно. Реального импорта в новую базу **НЕ БЫЛО**.
+
+**Критические ограничения:** Repo `dimkazantsev/ORG` публичный. Секреты Actions шифруются, но workflow с правами записи в репозиторий может потенциально использовать сохранённые credentials. Поэтому `QWIZ_TARGET_DB_URL` необходимо сохранить только как GitHub Secret, не отправлять в чат и по завершении миграции **удалить либо ротировать**. Лучше, если возможно, использовать GitHub Environment с требованием подтверждения владельца. Данный workflow не может мигрировать данные/Auth/Storage и не должен использоваться для переключения рабочей игры.
+
+### 16.5. Фактическое состояние на конец проверки
+
+Прямой SELECT через подключённый Supabase подтвердил: Free target `vwsoergltegncrretxnz` **по-прежнему пуст** (`public` 0 таблиц, `auth.users` 0, `qwiz` functions 0, `quiz_private` отсутствует). GOS.ID работает на прежнем `bderfrcfuhnutuoyudje`, квиз пока использует его же.
+
+**Для следующего шага требуется конкретное пользовательское действие:** создать только `QWIZ_TARGET_DB_URL` в https://github.com/dimkazantsev/ORG/settings/secrets/actions с URL PostgreSQL **нового** QWIZ Free проекта. Пароль PostgreSQL нового проекта можно задать/сбросить, если он не известен (новый проект пустой; не трогать пароль старого GOS.ID). После этого сделать read-only проверки подключения из GitHub и лишь затем явно активировать schema-only gate. Не пытаться выполнять data/auth cutover без отдельного защищённого экспорта и backup.
