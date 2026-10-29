@@ -28,22 +28,11 @@ jobs:
           umask 077
           : "${GOS_SOURCE_DB_URL:?Source catalog reader secret missing}"
           : "${QWIZ_TARGET_DB_URL:?QWIZ Free destination postgres secret missing}"
-          python3 - <<'PY'
-          from urllib.parse import urlsplit,unquote
-          from os import environ
-          def check(key,expected_user):
-              u=urlsplit(environ[key])
-              if (u.scheme not in ('postgresql','postgres')
-                  or not (u.hostname or '').endswith('.pooler.supabase.com')
-                  or unquote(u.username or '')!=expected_user
-                  or u.port!=5432 or not u.password
-                  or u.path not in ('','/','/postgres')):
-                  raise SystemExit('Expected authorized project-scoped Session pooler URI for '+key)
-          check('GOS_SOURCE_DB_URL','qwiz_catalog_reader.bderfrcfuhnutuoyudje')
-          check('QWIZ_TARGET_DB_URL','postgres.vwsoergltegncrretxnz')
-          if environ['GOS_SOURCE_DB_URL']==environ['QWIZ_TARGET_DB_URL']:
-              raise SystemExit('Source/target database must be different projects')
-          PY
+          # Verify that both independent database credentials work without
+          # altering either source or target. The target URI may include raw
+          # special password characters; use the safe PGPASSWORD adapter.
+          python3 next/isolation/safe-session-pooler.py --connection GOS_SOURCE_DB_URL --mode probe
+          python3 next/isolation/safe-session-pooler.py --connection QWIZ_TARGET_DB_URL --mode probe
           temp="$(mktemp -d "$RUNNER_TEMP/qwiz-schema-import.XXXXXXXX")"
           trap 'rm -rf "$temp"' EXIT
           echo 'Read-only source catalog fetch from old GOS.ID...'
@@ -56,10 +45,10 @@ jobs:
           # CRITICAL: no source string reaches target, only locally generated schema DDL.
           unset GOS_SOURCE_DB_URL
           echo 'Performing guarded schema-only import in a single target transaction.'
-          if ! psql "$QWIZ_TARGET_DB_URL" -X --no-psqlrc --no-password -q \
-               -v ON_ERROR_STOP=1 -f "$temp/import.sql" \
-               > "$temp/import-stdout.log" 2> "$temp/import-stderr.log"; then
-            echo 'SCHEMA IMPORT FAILED / target transaction rolled back. See project DB logs privately; no SQL body printed.'
+          if ! python3 next/isolation/safe-session-pooler.py \
+               --connection QWIZ_TARGET_DB_URL --mode apply-schema \
+               --schema-file "$temp/import.sql"; then
+            echo 'SCHEMA IMPORT FAILED / target transaction rolled back. Check target project privately; SQL bodies and secrets not printed.'
             exit 1
           fi
           echo 'PASS: schema-only bundle applied in isolated QWIZ Free. No Auth users or game rows imported, and production QWIZ frontend not switched.'
