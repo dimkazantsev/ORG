@@ -178,7 +178,7 @@
   try{
    const {data,error}=await t.client.rpc('qwiz_geo_play',{p_room:t.roomId,p_answer:answer});
    if(error)throw error;
-   if(answer!==null&&data.last_answer){
+   if(data.last_answer&&(answer!==null||data.timed_out===true)){
      t.revealQuestion=t.view?.question;
      t.lastAnswer=data.last_answer;t.feedbackUntil=Date.now()+480;
      if(t.feedbackTimer)clearTimeout(t.feedbackTimer);
