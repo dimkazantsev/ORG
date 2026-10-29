@@ -1,0 +1,66 @@
+name: QWIZ / gated schema-only import into isolated Free project
+on:
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - 'next/isolation/SCHEMA-IMPORT-GATE.md'
+      - '.github/workflows/qwiz-gated-schema-import.yml'
+permissions:
+  contents: read
+jobs:
+  schema-import:
+    # A normal push, CI, PR update, or secret configuration CANNOT import a schema.
+    # Only the exact, intentionally authored approval commit message arms the job.
+    if: "${{ github.event.head_commit.message == 'QWIZ_FREE_SCHEMA_ONLY_IMPORT_APPROVED' }}"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate both projects, generate manifest privately, import ONLY to empty Free QWIZ
+        shell: bash
+        env:
+          GOS_SOURCE_DB_URL: ${{ secrets.GOS_SOURCE_DB_URL }}
+          QWIZ_TARGET_DB_URL: ${{ secrets.QWIZ_TARGET_DB_URL }}
+          PGSSLMODE: require
+          PGCONNECT_TIMEOUT: '8'
+        run: |
+          set -euo pipefail
+          umask 077
+          : "${GOS_SOURCE_DB_URL:?Source catalog reader secret missing}"
+          : "${QWIZ_TARGET_DB_URL:?QWIZ Free destination postgres secret missing}"
+          python3 - <<'PY'
+          from urllib.parse import urlsplit,unquote
+          from os import environ
+          def check(key,expected_user):
+              u=urlsplit(environ[key])
+              if (u.scheme not in ('postgresql','postgres')
+                  or not (u.hostname or '').endswith('.pooler.supabase.com')
+                  or unquote(u.username or '')!=expected_user
+                  or u.port!=5432 or not u.password
+                  or u.path not in ('','/','/postgres')):
+                  raise SystemExit('Expected authorized project-scoped Session pooler URI for '+key)
+          check('GOS_SOURCE_DB_URL','qwiz_catalog_reader.bderfrcfuhnutuoyudje')
+          check('QWIZ_TARGET_DB_URL','postgres.vwsoergltegncrretxnz')
+          if environ['GOS_SOURCE_DB_URL']==environ['QWIZ_TARGET_DB_URL']:
+              raise SystemExit('Source/target database must be different projects')
+          PY
+          temp="$(mktemp -d "$RUNNER_TEMP/qwiz-schema-import.XXXXXXXX")"
+          trap 'rm -rf "$temp"' EXIT
+          echo 'Read-only source catalog fetch from old GOS.ID...'
+          psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -qAt \
+            -v ON_ERROR_STOP=1 -f next/isolation/source-schema-catalog-private.sql > "$temp/public.json"
+          psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -qAt \
+            -v ON_ERROR_STOP=1 -f next/isolation/source-quiz-private-catalog.sql > "$temp/private.json"
+          python3 next/isolation/check-private-schema-manifest.py "$temp/public.json"
+          python3 next/isolation/build-guarded-target-schema.py "$temp/public.json" "$temp/private.json" "$temp/import.sql"
+          # CRITICAL: no source string reaches target, only locally generated schema DDL.
+          unset GOS_SOURCE_DB_URL
+          echo 'Performing guarded schema-only import in a single target transaction.'
+          if ! psql "$QWIZ_TARGET_DB_URL" -X --no-psqlrc --no-password -q \
+               -v ON_ERROR_STOP=1 -f "$temp/import.sql" \
+               > "$temp/import-stdout.log" 2> "$temp/import-stderr.log"; then
+            echo 'SCHEMA IMPORT FAILED / target transaction rolled back. See project DB logs privately; no SQL body printed.'
+            exit 1
+          fi
+          echo 'PASS: schema-only bundle applied in isolated QWIZ Free. No Auth users or game rows imported, and production QWIZ frontend not switched.'
+          echo 'QWIZ schema-only transaction imported. User data, Auth identities, Storage and 40-player validation still required before any production cutover.' >> "$GITHUB_STEP_SUMMARY"
