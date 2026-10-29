@@ -17,15 +17,23 @@ def check(key, ref):
     value = environ.get(key, '')
     if not value:
         raise SystemExit('ERROR: missing database URL for ' + key)
+    # Detect the placeholder displayed in the Supabase Dashboard before parsing:
+    # square brackets can make a standard URL parser reject the authority.
+    if '[YOUR-PASSWORD]' in value or '[YOUR_PASSWORD]' in value or '[PASSWORD]' in value:
+        raise SystemExit('ERROR: PASSWORD_PLACEHOLDER — the Supabase URI still contains [YOUR-PASSWORD]. Replace it locally in the GitHub secret with the actual DB password; do not share it in chat.')
+    if not value.startswith(('postgresql://', 'postgres://')):
+        raise SystemExit('ERROR: NOT_POSTGRES_URI — copy the URI from Supabase Connect > Direct > Session pooler > Type URI. Do not paste the API URL, connection parameters or code snippets.')
+    if any(ch in value for ch in ('\\n', '\\r', '\\t')):
+        raise SystemExit('ERROR: INVALID_WHITESPACE — expected one continuous database URI on one line.')
     try:
         u = urlsplit(value)
         host = (u.hostname or '').lower()
         user = unquote(u.username or '')
         port = u.port
     except (ValueError, TypeError):
-        raise SystemExit('ERROR: invalid database URL for ' + key)
+        raise SystemExit('ERROR: URI_PARSE_FAILED — re-copy the URI; URL-encode reserved characters in the password, and never include [YOUR-PASSWORD].')
     if u.scheme not in ('postgres', 'postgresql') or not u.password:
-        raise SystemExit('ERROR: expected an authenticated PostgreSQL URI in ' + key)
+        raise SystemExit('ERROR: PASSWORD_NOT_PRESENT — the PostgreSQL URI needs a real encoded database password (not the account password or publishable key).')
     direct = host == f'db.{ref}.supabase.co' and user in ('postgres', f'postgres.{ref}')
     pool = (host.endswith('.pooler.supabase.com') and user == f'postgres.{ref}' and port == 5432)
     if not (direct or pool):
