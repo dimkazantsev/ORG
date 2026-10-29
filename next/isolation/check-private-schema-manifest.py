@@ -58,6 +58,7 @@ def verify(o):
     public_refs=collections.Counter()
     external_definers=0
     no_explicit_search_path=0
+    has_search_path_token=0
     auth_referencing=0
     storage_referencing=0
     for routine in o["routines"]:
@@ -68,8 +69,10 @@ def verify(o):
         public_refs.update(external)
         if routine["security_definer"] and external:
             external_definers+=1
-        if routine["security_definer"] and not re.search(r"\bSET\s+search_path\s*=",definition,re.I):
+        if routine["security_definer"] and not re.search(r"\bSET\s+search_path\s*(?:=|TO)\s*",definition,re.I):
             no_explicit_search_path+=1
+        if routine["security_definer"] and re.search(r"\bsearch_path\b",definition,re.I):
+            has_search_path_token+=1
         if re.search(r"\bauth\.",definition,re.I):
             auth_referencing+=1
         if re.search(r"\bstorage\.",definition,re.I):
@@ -81,6 +84,7 @@ def verify(o):
         "static_external_public_object_refs":dict(public_refs.most_common(40)),
         "definer_functions_referencing_external_public":external_definers,
         "definer_without_explicit_set_search_path_heuristic":no_explicit_search_path,
+        "definer_mentioning_search_path":has_search_path_token,
         "routines_text_referencing_auth":auth_referencing,
         "routines_text_referencing_storage":storage_referencing,
         "origin_project_confirmed":True,
