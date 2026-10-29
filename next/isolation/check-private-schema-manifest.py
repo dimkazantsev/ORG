@@ -62,17 +62,17 @@ def verify(o):
     storage_referencing=0
     for routine in o["routines"]:
         definition=routine["definition"]
-        references=set(re.findall(r'\\bpublic\\.(?:"([^"]+)"|([A-Za-z_][A-Za-z_0-9]*))',definition,re.I))
+        references=set(re.findall(r'\bpublic\.(?:"([^"]+)"|([A-Za-z_][A-Za-z_0-9]*))',definition,re.I))
         external={next((x for x in pair if x),"").lower() for pair in references}
         external={n for n in external if n and not n.startswith(FAMILIES) and n not in EXPECTED_HELPERS}
         public_refs.update(external)
         if routine["security_definer"] and external:
             external_definers+=1
-        if routine["security_definer"] and not re.search(r"\\bSET\\s+search_path\\s*=",definition,re.I):
+        if routine["security_definer"] and not re.search(r"\bSET\s+search_path\s*=",definition,re.I):
             no_explicit_search_path+=1
-        if re.search(r"\\bauth\\.",definition,re.I):
+        if re.search(r"\bauth\.",definition,re.I):
             auth_referencing+=1
-        if re.search(r"\\bstorage\\.",definition,re.I):
+        if re.search(r"\bstorage\.",definition,re.I):
             storage_referencing+=1
     # Only names of referenced SQL objects are published (never SQL bodies).
     # Text matching is a heuristic, not transitive or dynamic-SQL dependency analysis.
