@@ -2,7 +2,7 @@
 BEGIN;
 DO $qa$
 DECLARE v_room uuid; v_quiz uuid; v_owner uuid; u1 uuid;u2 uuid; t1 uuid;t2 uuid;p1 uuid;p2 uuid;
- v_code text:='QA'||upper(substring(md5(gen_random_uuid()::text),1,6));
+ v_code text:='AA'||upper(substring(md5(gen_random_uuid()::text),1,6));
  started timestamptz:=clock_timestamp()-interval '10 seconds';
  v_kind text; v_phase text; progressed boolean;
 BEGIN
