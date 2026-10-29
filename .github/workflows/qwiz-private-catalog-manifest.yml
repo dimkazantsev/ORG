@@ -1,0 +1,47 @@
+name: QWIZ / full metadata catalog snapshot without table locks
+on:
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - 'next/isolation/source-schema-catalog-private.sql'
+      - 'next/isolation/check-private-schema-manifest.py'
+      - '.github/workflows/qwiz-private-catalog-manifest.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-catalog:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Private catalog definitions from GOS.ID, SELECT-only
+        shell: bash
+        env:
+          GOS_SOURCE_DB_URL: ${{ secrets.GOS_SOURCE_DB_URL }}
+          PGSSLMODE: require
+          PGCONNECT_TIMEOUT: '8'
+        run: |
+          set -euo pipefail
+          umask 077
+          : "${GOS_SOURCE_DB_URL:?Missing encrypted GOS_SOURCE_DB_URL}"
+          temp_dir="$(mktemp -d "$RUNNER_TEMP/qwiz-private-schema.XXXXXXXX")"
+          trap 'rm -rf "$temp_dir"' EXIT
+          python3 - <<'PY'
+          from urllib.parse import urlsplit,unquote
+          from os import environ
+          u=urlsplit(environ["GOS_SOURCE_DB_URL"])
+          if (u.scheme not in ('postgresql','postgres') or
+              not (u.hostname or '').endswith('.pooler.supabase.com') or
+              unquote(u.username or '')!='qwiz_catalog_reader.bderfrcfuhnutuoyudje' or
+              u.port!=5432 or not u.password):
+              raise SystemExit('Wrong project/role: only GOS.ID catalog reader allowed')
+          PY
+          # All source bodies and definitions go to the temporary private file;
+          # NEVER upload it as an artifact, copy into repository, or print to logs.
+          psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password \
+            -v ON_ERROR_STOP=1 --quiet -At \
+            -f next/isolation/source-schema-catalog-private.sql \
+            > "$temp_dir/manifest.json"
+          python3 next/isolation/check-private-schema-manifest.py "$temp_dir/manifest.json"
+          echo "Source catalog snapshot validated; private definition file removed at job end." >> "$GITHUB_STEP_SUMMARY"
