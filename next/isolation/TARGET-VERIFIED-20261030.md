@@ -353,3 +353,82 @@ Python проверяет hostname/username/ref, запрещает источн
 Когда Secret обновлён, `qwiz-dual-db-readonly.yml` нужно повторно запустить на **последнем коммите ветки**, а не повторять старую попытку прошлой версии. При успешной авторизации можно активировать отдельно проверенный guarded schema-only gate; до этого **никаких DDL/DML в Free target и source не было**. Старый QWIZ сайт и ГОС.ID работают на общем исходном Supabase.
 
 Промежуточный блокер — неверная авторизация новой БД, а не состояние её вычислений, наличия проекта или RLS.
+
+
+## 18. QWIZ Free: schema-only import actually COMMITTED — independently verified (30.10.2026)
+
+**Это первая успешная реальная запись QWIZ-объектов в отдельный Supabase Free проект `vwsoergltegncrretxnz`. Старый production ГОС.ID `bderfrcfuhnutuoyudje` не менялся.**
+
+### 18.1. Исправлена действительная причина GitHub connection failure
+
+Новая target PostgreSQL connection URI содержала обрамление вокруг пароля; прежний read-only Actions показал 42 символа вместо ожидаемых 40, а post-wrapper read-only auth проверка успешно прошла **без изменения GitHub Secrets**:
+https://github.com/dimkazantsev/ORG/actions/runs/40946853807
+
+Эта исправленная обработка касается только строго проверенного pooler user `postgres.vwsoergltegncrretxnz` и текущего пустого Free QWIZ project. Пароль и secret URI не печатаются и не коммитятся.
+
+### 18.2. Реальный импорт структуры
+
+Первый gate run https://github.com/dimkazantsev/ORG/actions/runs/40947103680 был остановлен по client-side 25s Python subprocess timeout (не SQL-синтаксис); транзакция была откатана. Supabase SELECT подтвердил после остановки **0** public tables, Auth users и private schema. Adapter ограничен 330s для полного импорта при 25s для SELECT-only probes.
+
+Второй gate run **SUCCESS**:
+https://github.com/dimkazantsev/ORG/actions/runs/40947528961
+
+Был использован:
+- `GOS_SOURCE_DB_URL` как read-only каталоговый источник PostgreSQL 17.6;
+- `QWIZ_TARGET_DB_URL` как ограниченный конкретным project-ref destination PostgreSQL 17.11;
+- `build-guarded-target-schema.py` как генератор одной SQL-транзакции, с fail-closed проверкой пустой target;
+- подтверждённый private catalog manifest, без вывода SQL definitions в публичные логи.
+
+**Независимый SQL через Supabase MCP к Free target** после успешного GitHub run:
+
+| Объект | Фактическое число |
+|---|---:|
+| `public` QWIZ/legacy tables | 57 |
+| `quiz_private` tables | 2 |
+| публичные QWIZ + 2 helper routines | 139 |
+| `quiz_private` functions | 9 |
+| source RLS policies, `public` | 20 |
+| legacy views | 4 |
+| 57 таблиц с RLS enabled | 57 |
+| columns | 420 |
+| column defaults | 151 |
+| constraints | 283 |
+| indexes | 111 |
+| user triggers | 9 |
+| SECURITY DEFINER, public 139 functions | 116 |
+| function ACL entries | 390 |
+| table/view ACL entries | 1173, source count exactly matched |
+| `auth.users` | **0** |
+| `storage.buckets` | **0** |
+| НЕ-QWIZ public tables | **0** |
+
+**No game/user rows or Storage files imported.** Supabase Auth internal schema was never overwritten; frontend endpoint was NOT changed; source ГОС.ID untouched.
+
+### 18.3. Supabase Realtime publication independently matched source
+
+Read-only source catalog job https://github.com/dimkazantsev/ORG/actions/runs/40948568742 identified exactly these 5 source `supabase_realtime` members:
+`public.org_quiz_answers`, `public.org_quiz_participants`, `public.org_quiz_power_uses`, `public.org_quiz_sessions`, `public.org_quiz_teams`.
+
+Applied **directly to QWIZ Free target** with official Supabase `apply_migration` API, migration `qwiz_source_realtime_five_tables_20261030`. Subsequent target SELECT from `pg_publication_tables` confirmed exactly those five tables published. This is replication **configuration only**, not a live 40-user WS test.
+
+### 18.4. Security/performance linter on actual target
+
+Security advisor:
+- 4 `security_definer_view` findings at **ERROR** severity. These views inherited original source behavior and need an explicit RLS/permissions decision before exposing target to users: https://supabase.com/docs/guides/database/database-linter?lint=0010_security_definer_view
+- 14 `anon_security_definer_function_executable` WARN; 83 `authenticated_security_definer_function_executable` WARN. These originate from source ACLs and require RPC-by-RPC authorization review, not blanket revoke (would break game).
+- 46 `rls_enabled_no_policy` INFO — fail-closed tables, not immediate data leaks.
+
+Performance advisor:
+- 60 `unindexed_foreign_keys` INFO, 33 `unused_index` INFO (new empty target), 7 `multiple_permissive_policies` WARN. Revisit after data load and workload test.
+
+The warnings are **not claims of exploitation**. Existing source permissions were duplicated, target is empty. Avoid premature promotion to production, never grant broad PUBLIC access as a workaround.
+
+### 18.5. Still required to finish physical separation
+
+1. Target data migration: limited source export permissions to **only** 57 QWIZ public tables; current technical catalog reader cannot SELECT user rows due grants/RLS. Exclude unrelated ГОС.ID tables and secret-bearing private tables.
+2. Preserve linked user identity UUIDs and decide safe subset of Supabase Auth users/identities with explicit verification of 13 FK. No full cross-project auth copy.
+3. Migrate only QWIZ Storage bucket contents, secrets and Realtime channels after privacy review. New target remains 0 Auth users and 0 Storage buckets.
+4. Staging client pointing to QWIZ Free plus 40 players, projectors, all game modes, reconnect and WebSocket load tests; fix linter/security issues.
+5. Controlled cutover and rollback. Only then remove or archive old source QWIZ objects.
+
+**Do not claim QWIZ is operational on new Free solely because the schema and Realtime publication are now present.**
