@@ -10,10 +10,24 @@ for(const [width,height] of [[320,480],[360,640],[390,844],[430,932]]){
   await expect(map).toBeVisible();
   const choices=page.locator('.geo-map-toolbar button');
   await expect(choices).toHaveCount(3);
-  await page.locator('.geo-map-svg [data-region]').first().click({force:true});
   const confirm=page.locator('.geo-confirm');
   await expect(confirm).toBeVisible();
+  await expect(confirm).toBeDisabled();
+  await expect(confirm).toHaveText('Подтвердить выбор');
+  const before=await confirm.boundingBox();
+  await page.locator('.geo-map-svg [data-region]').first().click({force:true});
+  await expect(confirm).toBeVisible();
   await expect(confirm).toBeEnabled();
+  const after=await confirm.boundingBox();
+  expect(Math.abs(after.y-before.y)).toBeLessThanOrEqual(1);
+  expect(Math.abs(after.height-before.height)).toBeLessThanOrEqual(1);
+  await confirm.click();
+  await expect(confirm).toBeVisible();
+  await expect(confirm).toBeDisabled();
+  await expect(confirm).toHaveText('Подтвердить выбор');
+  const pending=await confirm.boundingBox();
+  expect(Math.abs(pending.y-before.y)).toBeLessThanOrEqual(1);
+  expect(Math.abs(pending.height-before.height)).toBeLessThanOrEqual(1);
   const report=await page.evaluate(()=>{
    const card=document.querySelector('#gameContent').getBoundingClientRect();
    const footer=document.querySelector('.geo-footer').getBoundingClientRect();
