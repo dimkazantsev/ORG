@@ -23,6 +23,17 @@ BEGIN
  PERFORM public.qwiz_secret_code_ensure(v_room,0);
  IF (SELECT count(*) FROM public.qwiz_secret_code_sessions s WHERE s.room_id=v_room AND s.card_position=0)<>1
  THEN RAISE EXCEPTION 'Session duplication'; END IF;
+ -- Challenge 30 must also resolve without ambiguous columns.
+ UPDATE public.qwiz_room_activity SET card_position=1,
+   settings='{"arcade_mode":"sequence_memory","secret_challenge":30}'::jsonb
+ WHERE room_id=v_room;
+ INSERT INTO public.qwiz_arcade_runs(room_id,card_position,mode,started_at)
+ VALUES(v_room,1,'sequence_memory',started);
+ PERFORM public.qwiz_secret_code_ensure(v_room,1);
+ SELECT * INTO v_session FROM public.qwiz_secret_code_sessions s
+  WHERE s.room_id=v_room AND s.card_position=1;
+ IF v_session.template_no<>30 OR jsonb_array_length(v_session.code)<2
+ THEN RAISE EXCEPTION 'Final challenge 30 did not initialize';END IF;
  RAISE NOTICE 'Secret Code: catalogue lookup, code creation and repeat ensure PASSED';
 END $qa$;
 ROLLBACK;
