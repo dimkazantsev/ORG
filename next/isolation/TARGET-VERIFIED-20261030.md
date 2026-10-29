@@ -554,3 +554,27 @@ https://github.com/dimkazantsev/ORG/actions/runs/40953297479 — `SUCCESS`. Ис
 ## 22. QWIZ Free: устранены четыре ошибки security-definer views
 
 В отдельной целевой БД `vwsoergltegncrretxnz` применена миграция `qwiz_security_invoker_views_before_data_cutover_20261030`: `org_quiz_open_results`, `org_quiz_question_stats`, `org_quiz_session_stats`, `org_quiz_student_stats` получили `security_invoker=true`. Повторный Supabase Security Advisor не показал ни одного `security_definer_view` finding. Изменение сделано только на новом сервере, не на ГОС.ID. До cutover проверить доступность результатов и статистики с реальными RLS ролями. Данные 2 344 строк не перенесены на этом этапе; после миграции по-прежнему 89 географических записей и 30 секретных кодов.
+
+
+## 23. Реальный приватный перенос игровых строк (30.10.2026): COMMITTED, проверен независимым запросом
+
+**Важное отличие от раздела 21: теперь 2 344 строки действительно находятся в отдельном QWIZ Free Supabase, а не только во временном GitHub runner.** Production GOS.ID, Auth и рабочий frontend не изменены.
+
+Применён fail-closed workflow `.github/workflows/qwiz-gated-private-staging.yml`, активированный только отдельным commit message `QWIZ_PRIVATE_STAGE_APPROVED`. Он выполняет `pg_dump --data-only --enable-row-security --column-inserts` только по 57 QWIZ public таблицам через `qwiz_catalog_reader`, фиксирует source snapshot, проверяет достаточное число записей и собирает SQL по `build-private-qwiz-row-stage.py`. Затем в новом QWIZ Free выполняется одна транзакция `BEGIN…COMMIT` создания `qwiz_transfer_stage` и вставки данных, со строгим target project-ref, нулём Auth users, отсутствием повторной staging и проверкой числа строк. Исходный dump и SQL не печатаются в Actions и удаляются из temporary runner.
+
+- Gated реальное выполнение **SUCCESS**: https://github.com/dimkazantsev/ORG/actions/runs/40956755170
+- Синтетическое disposable PostgreSQL 17 подтверждение генератора staging и отзыва API-ролей **SUCCESS**: https://github.com/dimkazantsev/ORG/actions/runs/40956477814
+- **Независимый SELECT через официальный Supabase MCP** после завершения GitHub:
+  - `qwiz_transfer_stage`: **57** таблиц; **2 344** строк суммарно; **36** таблиц непустые;
+  - `qwiz_transfer_stage.qwiz_bank`: **716** строк;
+  - `qwiz_transfer_stage.org_quiz_questions`: **927** строк;
+  - `qwiz_transfer_stage.qwiz_run_members`: **110** строк;
+  - все **57/57** приватных таблиц с `relrowsecurity=true`;
+  - `anon`, `authenticated`, `service_role` — `has_schema_privilege(...,'USAGE')=false` для `qwiz_transfer_stage`;
+  - `auth.users=0`, 57 исходных public игровых таблиц по-прежнему существуют; их данные кроме уже восстановленных статических справочников ещё НЕ обновлены.
+- Snapshot verified aggregate of unique UUIDs referenced by 13 FK in 57 game tables = **11**. Source reader has **no** `SELECT` on `auth.users`/`auth.identities` and must not be silently upgraded.
+- Student login accounts `qwiz_student_accounts` и `qwiz_student_links` в snapshot пусты; `org_quiz_questions.media_storage_path` все пустые, но 870 `config` JSON содержат признаки media и требуют выборочного инвентаря ссылок перед Storage migration.
+
+**Не объявлять полноценный cutover до реального ограниченного переноса 11 Auth users/identities (или согласованной миграции с повторным логином), пользовательских media в Storage, проверки 13 FK, загрузки в live public таблицы и E2E 40 игроков.** Внешний production сайт всё ещё использует старый GOS Supabase. JWT старого проекта не должен переиспользоваться как secret новой базы.
+
+**Оставшийся технический блокер:** официальный Supabase connector авторизован только для нового QWIZ Free; старый GOS проект другой организации. В GitHub Actions есть только временно разрешённый `qwiz_catalog_reader` с доступом 57 public игровых таблиц, но **нет разрешения на source Auth и Storage**. Копирование старой auth целиком неприемлемо из-за чужих пользователей. Запросить отдельный owner-authorized канал к исходным `auth.users`/identities только для 11 QWIZ FK, и доступ к выбранным Storage blobs; до этого не заполнять target Auth фиктивными аккаунтами. После source data read запустить `REVOKE-QWIZ-DATA-EXPORT.sql` в старом SQL Editor; политика сама истекает через 24h, но SQL-привилегии отзываются скриптом.
