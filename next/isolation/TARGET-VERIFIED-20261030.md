@@ -331,3 +331,25 @@ Python проверяет hostname/username/ref, запрещает источн
 Прямой SELECT через подключённый Supabase подтвердил: Free target `vwsoergltegncrretxnz` **по-прежнему пуст** (`public` 0 таблиц, `auth.users` 0, `qwiz` functions 0, `quiz_private` отсутствует). GOS.ID работает на прежнем `bderfrcfuhnutuoyudje`, квиз пока использует его же.
 
 **Для следующего шага требуется конкретное пользовательское действие:** создать только `QWIZ_TARGET_DB_URL` в https://github.com/dimkazantsev/ORG/settings/secrets/actions с URL PostgreSQL **нового** QWIZ Free проекта. Пароль PostgreSQL нового проекта можно задать/сбросить, если он не известен (новый проект пустой; не трогать пароль старого GOS.ID). После этого сделать read-only проверки подключения из GitHub и лишь затем явно активировать schema-only gate. Не пытаться выполнять data/auth cutover без отдельного защищённого экспорта и backup.
+
+## 17. 30.10.2026: пользователь добавил `QWIZ_TARGET_DB_URL` — целевая авторизация пока не проходит
+
+**Правдивый статус:** новый GitHub Actions Secret `QWIZ_TARGET_DB_URL` присутствует, однако пароль PostgreSQL в нём сервер отклоняет. Заявлять об импортированной схеме или переключении QWIZ нельзя.
+
+Проверки:
+- Target Free `vwsoergltegncrretxnz`: Supabase API и read-only SQL подтверждают `ACTIVE_HEALTHY`, PostgreSQL 17.11, **0 public таблиц, 0 auth users, 0 Storage buckets, 0 quiz_private**. Проект не повреждён.
+- Повторный запуск старого GitHub Actions workflow использовал устаревшую версию скрипта, поэтому тот результат не применим к текущему состоянию.
+- Текущий код ветки, https://github.com/dimkazantsev/ORG/actions/runs/40944078536: `URI_PARSE_FAILED [QWIZ_TARGET_DB_URL]` при стандартном URI parser. Соответствующий источник ранее работал.
+- Новый `next/isolation/safe-session-pooler.py` парсит строго project-bound Session pooler URI, передаёт пароль в `PGPASSWORD`, а не в командной строке и не выводит исходную строку.
+- https://github.com/dimkazantsev/ORG/actions/runs/40944335053 — `GOS_SOURCE_DB_URL` SELECT-only **SUCCESS**, `QWIZ_TARGET_DB_URL` psql login **FAILURE**.
+- https://github.com/dimkazantsev/ORG/actions/runs/40944432084 — причина конкретизирована как `PASSWORD_AUTHENTICATION_FAILED`.
+- https://github.com/dimkazantsev/ORG/actions/runs/40944635492 — перепроверены два способа интерпретации процентов (`%xx`) в пароле, итог тот же: **`PASSWORD_AUTHENTICATION_FAILED`**. Значение URL/пароля не отображалось.
+- `.github/workflows/qwiz-gated-schema-import.yml` обновлён: перед записью вызывает **оба** SELECT-only probes; если пароль новой базы не принимается, SQL импорт не начинается. Для самого импорта использует безопасный in-memory PGPASSWORD adapter; нет ложных «успехов» и нет утечки secrets.
+
+**Блокер, который нельзя снять средствами установленного подключения:** в GitHub Actions secret новый пароль не совпадает с действующим PostgreSQL-паролем проекта QWIZ-PARTY, либо там неверно вставлен пароль, несмотря на правильную структуру имени проекта и pooler URI. Никакое изменение SQL старого ГОС.ID не исправит пароль новой базы.
+
+**Корректирующий шаг владельца:** в Dashboard именно новой базы `vwsoergltegncrretxnz` установить или подтвердить её текущий Database password; для устранения ошибок кодирования выбрать **сильный случайный пароль из латинских букв и цифр** (например, 32+ символа) через парольный менеджер. В `Connect → Session pooler → URI` заменить `[YOUR-PASSWORD]` на точно этот пароль и обновить только `QWIZ_TARGET_DB_URL` в GitHub Actions Secrets. Старый секрет `GOS_SOURCE_DB_URL` не трогать. Не присылать пароль в чат.
+
+Когда Secret обновлён, `qwiz-dual-db-readonly.yml` нужно повторно запустить на **последнем коммите ветки**, а не повторять старую попытку прошлой версии. При успешной авторизации можно активировать отдельно проверенный guarded schema-only gate; до этого **никаких DDL/DML в Free target и source не было**. Старый QWIZ сайт и ГОС.ID работают на общем исходном Supabase.
+
+Промежуточный блокер — неверная авторизация новой БД, а не состояние её вычислений, наличия проекта или RLS.
