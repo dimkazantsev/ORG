@@ -1,5 +1,10 @@
 name: QWIZ / scoped GOS data read readiness and source-vs-target seed hashes
 on:
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - 'next/isolation/source-qwiz-data-readiness-private.sql'
+      - '.github/workflows/qwiz-source-data-readiness.yml'
   workflow_dispatch:
 permissions:
   contents: read
