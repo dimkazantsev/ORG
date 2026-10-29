@@ -90,3 +90,22 @@
 Для следующего этапа владелец репозитория должен добавить два названных секрета через `ORG → Settings → Secrets and variables → Actions`. Источники значений — безопасные PostgreSQL connection strings из соответствующих Supabase Dashboard → Connect, предпочтительно session pooler port 5432 с ограниченным читательским аккаунтом; строки не должны попадать в лог, исходный код или чат. Workflow сравнивает ref `bderfrcfuhnutuoyudje` и `vwsoergltegncrretxnz`. После добавления запускается отдельная проверка. Только успешный реальный SELECT из обоих проектов даст право начать детальное планирование выборочного экспорта.
 
 **Важное ограничение:** проверка metadata не делает резервную копию. Чтобы перенести Auth и игровые данные, понадобится отдельно утверждённый защищённый экспорт/импорт с контрольными суммами и snapshot, без публикации чужих пользовательских данных в общедоступном репозитории.
+
+## 9. Режим с одним секретом и фактический результат 30.10.2026
+
+Для первого этапа в GitHub Actions теперь **достаточно одного** секрета `GOS_SOURCE_DB_URL`, потому что целевой QWIZ доступен напрямую через Supabase connector и проверен read-only SQL. `QWIZ_TARGET_DB_URL` оставлен **необязательным**: пригодится для будущей сквозной проверки двух баз, но не должен задерживать исследование старой.
+
+Workflow `.github/workflows/qwiz-dual-db-readonly.yml` обновлён. Bash-скрипт `next/isolation/verify-two-databases-readonly.sh` строго проверяет **hostname и username** обеих URI (postgres direct или официальный session pooler 5432), project refs, TLS, включённые ограничители `default_transaction_read_only=on` и время SQL; содержимое URI не выводится.
+
+**Контрольный запуск:** https://github.com/dimkazantsev/ORG/actions/runs/40932017810. GitHub Actions завершился успешно только для синтаксиса, а реальная проверка source **SKIPPED**, поскольку секрет `GOS_SOURCE_DB_URL` ещё не обнаружен. Workflow специально пишет явное предупреждение о непроверенном источнике. Не считать этот запуск свидетельством доступа к обоим серверам.
+
+**Один требуемый шаг в веб-интерфейсе:**
+
+1. Перейти в https://github.com/dimkazantsev/ORG/settings/secrets/actions
+2. Нажать **New repository secret**.
+3. Name: `GOS_SOURCE_DB_URL`.
+4. Secret: защищённая PostgreSQL URI **старой базы** `bderfrcfuhnutuoyudje` из https://supabase.com/dashboard/project/bderfrcfuhnutuoyudje (кнопка **Connect**, способ **Session pooler**, порт 5432). Пароль должен содержаться в URI и быть URL-encoded, если включает специальные символы.
+5. Нажать **Add secret**. Не писать саму URI в чат или PR/Issues. При возможности использовать отдельно созданную read-only роль без прав изменения, а не основного `postgres`.
+6. Перейти https://github.com/dimkazantsev/ORG/actions/workflows/qwiz-dual-db-readonly.yml и запустить **Run workflow**, выбрав ветку `isolation/qwiz-independent-supabase-20261030`.
+
+Отдельный источник без изменений: GoS.ID рабочий postgres; данные и пользователи **не** выгружались. В новом QWIZ на момент повторного SELECT по-прежнему `0` таблиц, `0` auth.users, `0` buckets и `0` игровых функций. Исходную базу нельзя модифицировать до согласованного экспорта и контрольного восстановления.
