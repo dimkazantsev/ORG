@@ -90,6 +90,27 @@ SELECT jsonb_build_object(
     ) ORDER BY f.proname,f.identity_arguments)
     FROM target_functions f
   ),'[]'::jsonb),
+  'table_grants',COALESCE((
+     SELECT jsonb_agg(jsonb_build_object(
+       'table',r.relname,
+       'grantee',CASE WHEN a.grantee=0 THEN 'PUBLIC' ELSE (SELECT rolname FROM pg_roles WHERE oid=a.grantee) END,
+       'privilege',a.privilege_type,'grantable',a.is_grantable
+     ) ORDER BY r.relname,a.grantee,a.privilege_type)
+     FROM target_rel r
+     JOIN pg_class c ON c.oid=r.oid
+     CROSS JOIN LATERAL aclexplode(COALESCE(c.relacl,acldefault('r',c.relowner))) a
+     WHERE r.relkind IN ('r','p')
+  ),'[]'::jsonb),
+  'routine_grants',COALESCE((
+     SELECT jsonb_agg(jsonb_build_object(
+       'name',f.proname,'arguments',f.identity_arguments,
+       'grantee',CASE WHEN a.grantee=0 THEN 'PUBLIC' ELSE (SELECT rolname FROM pg_roles WHERE oid=a.grantee) END,
+       'privilege',a.privilege_type,'grantable',a.is_grantable
+     ) ORDER BY f.proname,f.identity_arguments,a.grantee,a.privilege_type)
+     FROM target_functions f
+     JOIN pg_proc p ON p.oid=f.oid
+     CROSS JOIN LATERAL aclexplode(COALESCE(p.proacl,acldefault('f',p.proowner))) a
+  ),'[]'::jsonb),
   'required_auth_fk',COALESCE((
     SELECT jsonb_agg(jsonb_build_object('table',r.relname,'constraint',k.conname,
      'referenced_schema',n.nspname,'referenced_table',c.relname)
