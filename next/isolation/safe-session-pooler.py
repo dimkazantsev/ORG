@@ -98,6 +98,14 @@ COMMIT;"""
     passwords=[password]
     if a.mode=="probe" and raw_password!=password:
         passwords.append(raw_password)
+    # A common dashboard-copy mistake is replacing YOUR-PASSWORD but leaving
+    # its surrounding square brackets. Try removing wrappers in PROBE mode.
+    wrapper_detected=(len(password)>=2 and (password[0],password[-1]) in
+                      (("[","]"),('"','"'),("'","'")))
+    if a.mode=="probe" and wrapper_detected:
+        passwords.append(password[1:-1])
+        print("TARGET_PASSWORD_HAS_REMOVABLE_WRAPPER="+str(
+              a.connection=="QWIZ_TARGET_DB_URL").lower())
     # Compare known EU-West session pooler endpoints in read-only diagnostic
     # mode only; never override the configured host during schema import.
     hosts=[host]
