@@ -5,6 +5,7 @@ import {readFileSync} from 'node:fs';
 const read=file=>readFileSync(new URL(file,import.meta.url),'utf8');
 const migration=read('./migrations/20261029_early_advance_when_all_finished.sql');
 const acl=read('./migrations/20261029_early_advance_internal_acl.sql');
+const optimized=read('./migrations/20261029_early_advance_eligibility_optimized.sql');
 
 test('All finite quiz activities have server-side completion detection',()=>{
  for(const mode of ['question','russia_map','sequence_memory','captain','blitz','rocket'])
@@ -41,9 +42,18 @@ test('Internal functions cannot be called directly by anonymous or player roles'
  assert.match(acl,/REVOKE EXECUTE ON FUNCTION public\.qwiz_arcade_vote_start\(uuid,integer\) FROM PUBLIC, anon, authenticated/);
 });
 
-test('Both database lifecycle fixtures are explicit rollback-only tests',()=>{
+test('Completion checks stay efficient with 40 concurrent participants',()=>{
+ assert.match(optimized,/WITH eligible_players AS MATERIALIZED/);
+ assert.match(optimized,/LEFT JOIN public\\.org_next_answers ans/);
+ assert.match(optimized,/RETURN eligible>0 AND eligible=answered/);
+ assert.match(optimized,/IF NOT EXISTS\\(SELECT 1 FROM public\\.org_next_answers ans/);
+ assert.match(optimized,/REVOKE EXECUTE ON FUNCTION/);
+});
+
+test('Database lifecycle fixtures are rollback-only and cover bonus voting',()=>{
  for(const path of ['./migrations/qa_early_advance_transaction_rollback.sql',
-                    './migrations/qa_early_advance_full_lifecycle_rollback.sql']){
+                    './migrations/qa_early_advance_full_lifecycle_rollback.sql',
+                    './migrations/qa_early_advance_bonus_rollback.sql']){
   const sql=read(path);
   assert.match(sql,/^BEGIN;/);
   assert.match(sql,/ROLLBACK;\s*$/);
