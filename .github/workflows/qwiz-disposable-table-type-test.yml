@@ -5,6 +5,7 @@ on:
     paths:
       - 'next/isolation/disposable-table-types.py'
       - 'next/isolation/disposable-table-integrity.py'
+      - 'next/isolation/disposable-rpc-definitions.py'
       - '.github/workflows/qwiz-disposable-table-type-test.yml'
   workflow_dispatch:
 permissions:
@@ -76,5 +77,19 @@ jobs:
             grep -E '(ERROR:|DETAIL:|HINT:)' "$tmp/fixture-integrity-error.txt" | head -8 || true
             exit 1
           fi
-          echo 'PASS: QWIZ schema bare columns, constraints and index definitions applied in disposable PostgreSQL 17; NO production DDL or rows transferred.'
-          echo 'Disposable table, constraints and index type compatibility passed. RPC, full policies, Auth data, defaults and real migrations remain untested.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'PASS: QWIZ schema bare columns, constraints and index definitions applied in disposable PostgreSQL 17.'
+          # Reconstruct routine CREATE FUNCTION DDL from authenticated source catalog
+          # without printing SQL bodies or invoking any routine. Local service only.
+          python3 next/isolation/disposable-rpc-definitions.py "$tmp/manifest.json" "$tmp/disposable-routines.sql"
+          if ! psql -X --no-psqlrc -h 127.0.0.1 -p 5432 -U postgres -d postgres \
+            -v ON_ERROR_STOP=1 -f "$tmp/disposable-routines.sql" \
+            > "$tmp/fixture-routines-out.txt" 2> "$tmp/fixture-routines-error.txt"; then
+            echo 'DISPOSABLE RPC DEFINITION PARSE: failed; no source or target modifications.'
+            grep -E '(ERROR:|DETAIL:|HINT:)' "$tmp/fixture-routines-error.txt" | head -8 || true
+            exit 1
+          fi
+          funcs="$(psql -XAt -h 127.0.0.1 -p 5432 -U postgres -d postgres -v ON_ERROR_STOP=1 \
+            -c "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and (p.proname like 'qwiz_%' or p.proname like 'org_next_%' or p.proname like 'org_quiz_%' or p.proname in ('org_party_create_set_from_questions','org_party_set_life_state'));")"
+          test "$funcs" = '139'
+          echo 'PASS: 139 routine definitions registered in disposable PG17 (check_function_bodies=off, no routine execution).'
+          echo 'SUCCESS in scratch: table column types, 283 constraints, indexes and 139 function definitions. NOT yet tested: function bodies, rights, RLS policies, Auth data, realtime or production cutover.' >> "$GITHUB_STEP_SUMMARY"
