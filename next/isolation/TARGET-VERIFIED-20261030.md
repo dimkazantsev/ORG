@@ -259,3 +259,18 @@ https://github.com/dimkazantsev/ORG/actions/runs/40937511477
 **Состояние реализации:** схема QWIZ реконструируется и тестируется только в одноразовой среде, реальная миграция пока не начиналась. Следующий этап — безопасная проверка SQL-функций и политик в disposable Supabase, формирование обратимого пакета, после чего отдельная защищённая выборочная передача данных, Auth и Storage; только потом перевод frontend.
 
 **Cleanup after experiment:** disabled and removed the failed `qwiz-schema-only-preflight.yml` pg_dump workflow and its unused TOC selector from the PR branch. This prevents further accidental full-public-schema LOCK attempts against GOS.ID. Only the proven catalog-only extraction and disposable PostgreSQL tests remain active; historical failed run is retained in GitHub Actions for audit.
+
+
+## 15. Все определения 139 SQL-функций зарегистрированы в disposable PostgreSQL 17
+
+Добавлен `next/isolation/disposable-rpc-definitions.py`: собирает через приватный каталоговый manifest ровно **137** функций QWIZ/legacy и **2** относящихся к квизу `org_party_*` helper, выбрасывает неожиданные функции ГОС.ID. Тела SQL не печатаются, хранятся только в одноразовой директории runner.
+
+Проверка https://github.com/dimkazantsev/ORG/actions/runs/40939585837 **SUCCESS**:
+- 57 bare таблиц (420 столбцов) зарегистрированы, все с включённым RLS.
+- 283 ограничения и 34 дополнительных индекса (остальные индексы создаются constraints) применены.
+- **Все 139 `CREATE OR REPLACE FUNCTION` / связанных определений приняты PostgreSQL 17.**
+- Ни одна из функций **не вызывалась**; включён `SET check_function_bodies = off`, поэтому **внутренние SQL-зависимости и корректность тел в этом тесте НЕ проверены**.
+- **Никаких реальных пользовательских строк, Auth identities и Storage файлов не переносилось**, секреты не попадали в лог. Единственная БД, куда добавлялись SQL-объекты, — disposable PostgreSQL сервис GitHub Actions, удалённый после job.
+- Перед переносом в настоящий QWIZ Supabase необходимо дополнить сценарий точными `DEFAULT/GENERATED/IDENTITY`, sequences, view/RLS/GRANT, установить роли, проверить фактическое исполнение RPC и откаты, 40 соединений и 40 ответов.
+
+Состояние после успешного теста: рабочий `gos-sim` и новый `vwsoergltegncrretxnz` **не переключались и не изменялись**. Публикация текущих временных файлов как миграции строго запрещена: они не содержат всего контракта.
