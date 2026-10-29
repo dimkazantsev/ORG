@@ -121,3 +121,21 @@ Workflow `.github/workflows/qwiz-dual-db-readonly.yml` обновлён. Bash-с
 **Следующее действие владельца:** GitHub → ORG → Settings → Secrets and variables → Actions → редактирование существующего `GOS_SOURCE_DB_URL` (карандаш) → заменить `[YOUR-PASSWORD]` внутри URI на реальный пароль старого PostgreSQL с URL-encoding спецсимволов → **Update secret**. Не сообщать пароль в чат и не использовать кнопку `Reset database password` без отдельного анализа действующих клиентов. После обновления секрет можно проверить повторно тем же безопасным workflow.
 
 **Не выполнено:** подключение к старой базе; экспорт; миграция. Рабочий ГОС.ID и QWIZ не изменены; в логи пароли не выводились.
+
+
+## 11. Создание отдельного каталожного читателя без пароля postgres
+
+Подготовлен `next/isolation/CREATE-GOS-CATALOG-READER.sql`. Этот скрипт **должен быть запущен владельцем вручную в SQL Editor СТАРОГО GOS.ID**, поскольку текущее ChatGPT Supabase соединение авторизовано только в отдельной Free организации QWIZ.
+
+- Создаёт/при повторном запуске меняет **только** `qwiz_catalog_reader`.
+- Новый URL-safe пароль генерируется на сервере из двух `gen_random_uuid()` (64 hex символа), не содержится в SQL-исходнике или GitHub.
+- Роль: LOGIN, NOINHERIT, NOSUPERUSER, NOCREATEDB, NOCREATEROLE, NOREPLICATION, NOBYPASSRLS, CONNECTION LIMIT 2; нет явных прав SELECT на игровые таблицы или Auth. Это **читатель системных каталогов**, не готовая роль для дампа пользовательских данных.
+- Для защиты установлены default_transaction_read_only, statement_timeout 10s и lock_timeout 2s; также workflow использует явную PostgreSQL READ ONLY transaction.
+- SQL выводит **одно значение секрета**: `postgresql://qwiz_catalog_reader.bderfrcfuhnutuoyudje:...@aws-0-eu-central-1.pooler.supabase.com:5432/postgres`. Хост сверить с Supabase Connect; пароль никому не отправлять.
+- Роль в принципе может иметь унаследованные PUBLIC права EXECUTE на отдельные функции; ограничения роли не являются абсолютной защитой от всех SECURITY DEFINER побочных эффектов. Тестовый workflow выполняет только catalog SELECT в read-only transaction.
+- Изменён `next/isolation/verify-two-databases-readonly.sh`: источник допускает **только** custom role `qwiz_catalog_reader.PROJECT_REF` на session pooler 5432 и отвергает `postgres`, чтобы не хранить основной пароль в GitHub.
+- Пройден изолированный тест на PostgreSQL 17 (не в ГОС.ID): https://github.com/dimkazantsev/ORG/actions/runs/40935400933 — роль создана, её атрибуты проверены, подключение работает, записать таблицу нельзя. Это **не** свидетельство доступа к реальной базе.
+
+Далее пользователь должен скопировать `github_secret_GOS_SOURCE_DB_URL` **из своего SQL Editor** в GitHub repository secret `GOS_SOURCE_DB_URL`, заменив прежнее значение (карандаш). Не отправлять результат SQL в чат, screenshots, issues или PR. При необходимости сверить pooler hostname в Supabase Connect.
+
+После этого безопасный source read-only workflow `qwiz-dual-db-readonly.yml` может проверить каталог и запустить следующий этап проектирования выборочного QWIZ экспорта. **Дамп данных, Auth, Storage и реальная миграция ещё не выполнены.**
