@@ -550,3 +550,7 @@ https://github.com/dimkazantsev/ORG/actions/runs/40953297479 — `SUCCESS`. Ис
 Важно: исходная 24-часовая RLS grant завершится по времени; `REVOKE-QWIZ-DATA-EXPORT.sql` после законченного чтения/выгрузки нужно выполнить вручную в old GOS SQL Editor, чтобы удалить остающиеся GRANT, даже если временное RLS-условие истекло.
 
 **Ни source GOS.ID production data, ни рабочий QWIZ frontend не переключались или изменялись.**
+
+## 22. QWIZ Free: устранены четыре ошибки security-definer views
+
+В отдельной целевой БД `vwsoergltegncrretxnz` применена миграция `qwiz_security_invoker_views_before_data_cutover_20261030`: `org_quiz_open_results`, `org_quiz_question_stats`, `org_quiz_session_stats`, `org_quiz_student_stats` получили `security_invoker=true`. Повторный Supabase Security Advisor не показал ни одного `security_definer_view` finding. Изменение сделано только на новом сервере, не на ГОС.ID. До cutover проверить доступность результатов и статистики с реальными RLS ролями. Данные 2 344 строк не перенесены на этом этапе; после миграции по-прежнему 89 географических записей и 30 секретных кодов.
