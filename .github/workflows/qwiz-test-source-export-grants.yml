@@ -1,0 +1,62 @@
+name: QWIZ / test temporary source export grants on disposable PG17
+on:
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - 'next/isolation/ENABLE-QWIZ-DATA-EXPORT-24H.sql'
+      - 'next/isolation/REVOKE-QWIZ-DATA-EXPORT.sql'
+      - '.github/workflows/qwiz-test-source-export-grants.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  fixture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: isolated-only-do-not-use
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 14
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: isolated-only-do-not-use
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build 57 dummy RLS-enabled tables and unprivileged role
+        run: |
+          set -euo pipefail
+          psql -X -v ON_ERROR_STOP=1 -q <<'SQL'
+          CREATE ROLE qwiz_catalog_reader LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS NOINHERIT;
+          DO $test$
+          BEGIN
+            FOR i IN 1..57 LOOP
+              EXECUTE format('CREATE TABLE public.qwiz_fixture_%s (id integer primary key)',lpad(i::text,2,'0'));
+              EXECUTE format('ALTER TABLE public.qwiz_fixture_%s ENABLE ROW LEVEL SECURITY',lpad(i::text,2,'0'));
+              EXECUTE format('INSERT INTO public.qwiz_fixture_%s(id) VALUES (1)',lpad(i::text,2,'0'));
+            END LOOP;
+          END;
+          $test$;
+          SQL
+      - name: Grant time-limited QWIZ-only SELECT, then prove and revoke
+        run: |
+          set -euo pipefail
+          psql -X -v ON_ERROR_STOP=1 -q -f next/isolation/ENABLE-QWIZ-DATA-EXPORT-24H.sql
+          test "$(psql -XAt -v ON_ERROR_STOP=1 -c "select count(*) from pg_policy p join pg_class c on c.oid=p.polrelid where p.polname='qwiz_temporary_migration_reader';")" = "57"
+          test "$(psql -XAt -v ON_ERROR_STOP=1 -c "set role qwiz_catalog_reader; select count(*) from public.qwiz_fixture_01;")" = "1"
+          psql -X -v ON_ERROR_STOP=1 -q -f next/isolation/REVOKE-QWIZ-DATA-EXPORT.sql
+          test "$(psql -XAt -v ON_ERROR_STOP=1 -c "select count(*) from pg_policy where polname='qwiz_temporary_migration_reader';")" = "0"
+          if psql -X -v ON_ERROR_STOP=1 -c "set role qwiz_catalog_reader; select count(*) from public.qwiz_fixture_01;" > /dev/null 2>&1; then
+            echo 'ERROR: migration role could still read fixture after cleanup' >&2
+            exit 1
+          fi
+          echo 'PASS: 57 QWIZ-only SELECT grants + expiry policy work; cleanup fully revokes access.'
