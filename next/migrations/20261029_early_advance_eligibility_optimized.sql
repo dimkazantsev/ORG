@@ -84,7 +84,7 @@ BEGIN
    END IF;
  END IF;
  RETURN false;
-END $function$
+END $function$;
 
 REVOKE EXECUTE ON FUNCTION public.qwiz_stage_everyone_done(uuid) FROM PUBLIC, anon, authenticated;
 COMMIT;
