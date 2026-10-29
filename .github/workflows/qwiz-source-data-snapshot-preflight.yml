@@ -1,0 +1,56 @@
+name: QWIZ / validate scoped data-only snapshot without publishing records
+on:
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - '.github/workflows/qwiz-source-data-snapshot-preflight.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-data-export-test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+      - name: PostgreSQL17 QWIZ data-only snapshot from temporary 57-table grant
+        shell: bash
+        env:
+          GOS_SOURCE_DB_URL: ${{ secrets.GOS_SOURCE_DB_URL }}
+          PGSSLMODE: require
+          PGCONNECT_TIMEOUT: '8'
+        run: |
+          set -euo pipefail
+          umask 077
+          : "${GOS_SOURCE_DB_URL:?Missing restricted source reader secret}"
+          scratch="$(mktemp -d "$RUNNER_TEMP/qwiz-source-data.XXXXXXXX")"
+          trap 'rm -rf "$scratch"' EXIT
+          python3 - <<'PY'
+          from os import environ
+          from urllib.parse import urlsplit,unquote
+          u=urlsplit(environ['GOS_SOURCE_DB_URL'])
+          if (u.scheme not in ('postgresql','postgres') or
+            unquote(u.username or '')!='qwiz_catalog_reader.bderfrcfuhnutuoyudje'
+            or not (u.hostname or '').endswith('.pooler.supabase.com') or u.port!=5432):
+            raise SystemExit('Refusing unscoped source credentials')
+          PY
+          # Only the three explicitly scoped table families; no auth,
+          # storage, quiz_private, or unrelated GOS relations.
+          docker run --rm --network host --user "$(id -u):$(id -g)" \
+            -e GOS_SOURCE_DB_URL -e PGSSLMODE -e PGCONNECT_TIMEOUT \
+            -v "$scratch:/work" postgres:17 sh -ec '
+              pg_dump --dbname="$GOS_SOURCE_DB_URL" \
+                --data-only --enable-row-security --column-inserts \
+                --no-owner --no-acl --no-comments \
+                --table="public.qwiz_*" --table="public.org_next_*" \
+                --table="public.org_quiz_*" \
+                --file=/work/qwiz-data-only.sql
+            '
+          test -s "$scratch/qwiz-data-only.sql"
+          bytes="$(wc -c < "$scratch/qwiz-data-only.sql")"
+          if (( bytes > 52428800 )); then
+            echo 'ERROR: Private snapshot exceeded 50 MiB safety cap'
+            exit 1
+          fi
+          echo "PASS: scoped QWIZ data-only snapshot generated within private ephemeral runner; size_bytes=$bytes"
+          echo 'No source changes, no Auth/Storage rows, no artifact uploads. Scratch snapshot deleted.' >> "$GITHUB_STEP_SUMMARY"
