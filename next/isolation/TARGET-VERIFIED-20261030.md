@@ -106,6 +106,6 @@ Workflow `.github/workflows/qwiz-dual-db-readonly.yml` обновлён. Bash-с
 3. Name: `GOS_SOURCE_DB_URL`.
 4. Secret: защищённая PostgreSQL URI **старой базы** `bderfrcfuhnutuoyudje` из https://supabase.com/dashboard/project/bderfrcfuhnutuoyudje (кнопка **Connect**, способ **Session pooler**, порт 5432). Пароль должен содержаться в URI и быть URL-encoded, если включает специальные символы.
 5. Нажать **Add secret**. Не писать саму URI в чат или PR/Issues. При возможности использовать отдельно созданную read-only роль без прав изменения, а не основного `postgres`.
-6. Перейти https://github.com/dimkazantsev/ORG/actions/workflows/qwiz-dual-db-readonly.yml и запустить **Run workflow**, выбрав ветку `isolation/qwiz-independent-supabase-20261030`.
+6. После создания секрета сообщить **«Секрет GOS_SOURCE_DB_URL добавлен»**, не присылая значение. Workflow запускается при изменении файлов в ветке `isolation/qwiz-independent-supabase-20261030`; я внесу безопасную контрольную фиксацию в эту ветку, чтобы инициировать read-only проверку. Кнопка **Run workflow** для нового workflow может быть скрыта, пока файл не присутствует в ветке `main`, поэтому не следует рассчитывать только на ручной запуск.
 
 Отдельный источник без изменений: GoS.ID рабочий postgres; данные и пользователи **не** выгружались. В новом QWIZ на момент повторного SELECT по-прежнему `0` таблиц, `0` auth.users, `0` buckets и `0` игровых функций. Исходную базу нельзя модифицировать до согласованного экспорта и контрольного восстановления.
