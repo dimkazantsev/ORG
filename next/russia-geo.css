@@ -258,3 +258,13 @@
 .geo-game .geo-map-frame .geo-map-svg path.geo-region{
  filter:none!important;-webkit-tap-highlight-color:transparent;
 }
+
+
+/* Geography confirmation is always visible; before selecting a region it is disabled,
+   not hidden, so the same tap target occupies the same coordinates throughout. */
+.geo-game .geo-confirm:disabled{
+ background:#eee8f8!important;color:#786c92!important;
+ border-color:#d8cbed!important;box-shadow:none!important;
+ opacity:1!important;cursor:not-allowed;
+}
+.geo-game .geo-confirm[aria-busy="true"]{pointer-events:none}
