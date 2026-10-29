@@ -54,9 +54,9 @@ def main():
         if kind is None:raise ValueError("Unknown PostgreSQL policy command")
         roles=p.get("role_names") or []
         if not roles or not set(roles).issubset(ALLOWED_ROLES):raise ValueError("Policy role missing/not permitted")
-        sql="CREATE POLICY "+qi(p["name"])+" ON public."+qi(p["table"])+
+        sql=("CREATE POLICY "+qi(p["name"])+" ON public."+qi(p["table"])+
             (" AS PERMISSIVE" if p["permissive"] else " AS RESTRICTIVE")+
-            " FOR "+kind+" TO "+", ".join(role if role=="PUBLIC" else qi(role) for role in roles)
+            " FOR "+kind+" TO "+", ".join(role if role=="PUBLIC" else qi(role) for role in roles))
         if p["using"] is not None:sql+=" USING ("+p["using"]+")"
         if p["with_check"] is not None:sql+=" WITH CHECK ("+p["with_check"]+")"
         lines.append(sql+";")
