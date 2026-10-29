@@ -67,7 +67,10 @@ SELECT jsonb_build_object(
   'policies',COALESCE((
     SELECT jsonb_agg(jsonb_build_object(
      'table',r.relname,'name',p.polname,'command',p.polcmd,
-     'permissive',p.polpermissive,'roles',p.polroles,
+     'permissive',p.polpermissive,'role_names',
+     (SELECT array_agg(CASE WHEN v.role_oid=0 THEN 'PUBLIC'
+      ELSE (SELECT rolname FROM pg_roles WHERE oid=v.role_oid) END)
+       FROM unnest(p.polroles) v(role_oid)),
      'using',pg_get_expr(p.polqual,p.polrelid),
      'with_check',pg_get_expr(p.polwithcheck,p.polrelid)
     ) ORDER BY r.relname,p.polname)
