@@ -36,3 +36,19 @@ jobs:
           grep -Fq 'https://qwiz-test.example.org' visual-artifacts/qwiz-selfhost-preview/ORG/next/app.js
           ! grep -Fq 'https://qwiz-test.example.org' next/app.js
 
+      - name: Simulate 40 Realtime connections offline (mock transport, no server)
+        env:
+          QWIZ_LOAD_TARGET: selfhost
+          QWIZ_LOAD_CONFIRM: ISOLATED_SELFHOST_ONLY
+          QWIZ_LOAD_URL: https://qwiz-test.example.org
+          QWIZ_LOAD_KEY: sb_publishable_synthetic_ci_only
+          QWIZ_LOAD_ROOM: A1B2C3D4
+          QWIZ_WS_HOLD_MS: "0"
+          QWIZ_WS_EVENTS: "2"
+        run: |
+          mkdir -p next/selfhost/node_modules/@supabase/supabase-js
+          cp next/selfhost/test-fixtures/mock-supabase.mjs next/selfhost/node_modules/@supabase/supabase-js/index.mjs
+          printf '%s\n' '{"type":"module","exports":"./index.mjs"}' > next/selfhost/node_modules/@supabase/supabase-js/package.json
+          node next/selfhost/realtime-40.mjs | tee /tmp/qwiz-ws-mock-result.log
+          grep -q '"ok":true' /tmp/qwiz-ws-mock-result.log
+          grep -q '"clients":40' /tmp/qwiz-ws-mock-result.log
