@@ -1139,3 +1139,101 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
   min-height:35px;
  }
 }
+
+/* 2026-10-29: concise player results: top leaders, own place, no 40-row wall. */
+@media(max-width:680px){
+ .player-compact #gameView #gameContent>.round-results-page{
+  overflow:hidden!important;gap:clamp(6px,1dvh,10px)!important;
+  padding:clamp(9px,1.8dvh,16px) 12px 10px!important;
+  justify-content:flex-start;
+  background:radial-gradient(ellipse at 50% 0%,#f0e9ff,#fff 72%);
+ }
+ .player-compact #gameView .round-results-page>.eyebrow{
+  font-size:clamp(10px,1.5dvh,12px)!important;letter-spacing:.11em;
+  text-align:center;margin:0!important;
+ }
+ .player-compact #gameView .round-results-page>h1{
+  font-size:clamp(23px,4.5dvh,34px)!important;
+  line-height:1.1!important;text-align:center;flex:none;margin:0!important;
+ }
+ .player-compact #gameView .round-results-orbit{display:none!important}
+ .player-compact #gameView .round-self-summary{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:7px!important;padding:0!important;border:0!important;
+  background:none!important;box-shadow:none!important;
+ }
+ .player-compact #gameView .round-self-summary>div{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:2px!important;min-width:0;min-height:clamp(78px,15dvh,115px);
+  padding:8px!important;background:#f1eaff;border:1px solid #dbcbf7;
+  border-radius:15px;text-align:center;
+ }
+ .player-compact #gameView .round-self-summary>div:nth-child(2){
+  background:#f8f5ff;border-color:#e7ddf7;
+ }
+ .player-compact #gameView .round-self-summary span{
+  font-size:clamp(9px,1.4dvh,11px)!important;
+  line-height:1.2!important;letter-spacing:.02em;
+ }
+ .player-compact #gameView .round-self-summary strong{
+  color:#6435ca;font-size:clamp(25px,5.5dvh,38px)!important;
+  line-height:1!important;font-weight:900;
+ }
+ .player-compact #gameView .round-self-summary small{
+  font-size:clamp(10px,1.5dvh,12px)!important;
+ }
+ .player-compact #gameView .round-results-grid{
+  display:grid!important;grid-template-columns:minmax(0,1fr)!important;
+  gap:clamp(6px,1dvh,10px)!important;min-height:0!important;
+  flex:1 1 auto!important;overflow:hidden;align-content:stretch!important;
+  grid-template-rows:repeat(2,minmax(0,1fr));
+ }
+ .player-compact #gameView .round-results-grid>section{
+  display:flex;flex-direction:column;min-height:0!important;
+  padding:clamp(8px,1.4dvh,13px)!important;margin:0!important;
+  background:#fff;border:1px solid #e5dbf4;border-radius:15px;
+  overflow:hidden;
+ }
+ .player-compact #gameView .round-results-grid h2{
+  font-size:clamp(13px,2.1dvh,17px)!important;margin:0 0 5px!important;
+  padding:0;color:#503393;
+ }
+ .player-compact #gameView .round-score-list{
+  display:grid;align-content:start;gap:0!important;min-height:0;
+  overflow:hidden;margin:0;padding:0;
+ }
+ .player-compact #gameView .round-score-list li{
+  padding:clamp(3px,.8dvh,6px) 7px!important;gap:6px!important;
+  grid-template-columns:23px minmax(0,1fr) auto!important;
+  border:0;border-radius:8px!important;box-shadow:none!important;
+  min-height:24px!important;
+ }
+ .player-compact #gameView .round-score-list li:nth-child(even){background:#faf8fe}
+ .player-compact #gameView .round-score-list li.is-mine{
+  background:#f0e8ff!important;outline:1px solid #d6c1f8;
+ }
+ .player-compact #gameView .round-score-list li strong{
+  font-size:clamp(11px,1.8dvh,14px)!important;
+  line-height:1.15!important;overflow:hidden!important;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:1;
+ }
+ .player-compact #gameView .round-score-list li b{
+  font-size:clamp(12px,2.2dvh,17px)!important;line-height:1!important;
+ }
+ .player-compact #gameView .round-score-list li b small{
+  font-size:9px!important;display:inline!important;
+ }
+ .player-compact #gameView .round-more-count{
+  margin:auto 0 0;text-align:right;color:#81718f;font-size:10px;
+ }
+ .player-compact #gameView .round-results-note,
+ .player-compact #gameView .round-reward-banner{
+  padding:4px 7px!important;margin:0!important;
+  font-size:10px!important;line-height:1.2!important;border-radius:8px!important;
+ }
+ .player-compact #gameView .round-results-next{
+  flex:none!important;min-height:19px!important;
+  font-size:clamp(11px,1.8dvh,14px)!important;
+  line-height:1.15!important;margin:0!important;padding:2px!important;
+ }
+}
