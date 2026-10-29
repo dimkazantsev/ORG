@@ -432,3 +432,36 @@ The warnings are **not claims of exploitation**. Existing source permissions wer
 5. Controlled cutover and rollback. Only then remove or archive old source QWIZ objects.
 
 **Do not claim QWIZ is operational on new Free solely because the schema and Realtime publication are now present.**
+
+
+## 19. Исходный объём игровых данных и 13 Auth FK: только оценки из каталогов
+
+Read-only job https://github.com/dimkazantsev/ORG/actions/runs/40949056109 — SUCCESS. Он обращался **только** к системным `pg_class.reltuples`, `pg_total_relation_size`, `pg_constraint` и `pg_attribute`. Настоящих пользовательских строк не читал, не копировал и не публиковал.
+
+Крупнейшие игровые таблицы по статистическим оценкам PostgreSQL (не точные COUNT):
+- `org_quiz_questions` около 927 строк;
+- `qwiz_bank` около 728;
+- `qwiz_run_members` около 110;
+- `qwiz_arcade_tap_batches` около 97;
+- `qwiz_geo_regions` около 89;
+- `qwiz_question_runs` около 71;
+- `org_next_answers` около 53.
+
+Выделены **13 источников FK к `auth.users`**, чтобы подготовить перенос только задействованных аккаунтов (без всех ГОС.ID пользователей):
+`org_next_players.user_id`,
+`org_next_quizzes.owner_id`,
+`org_next_rooms.owner_id`,
+`org_quiz_participants.user_id`,
+`org_quiz_sessions.created_by`,
+`org_quiz_sets.created_by`,
+`qwiz_archived_rooms.owner_id`,
+`qwiz_bank.owner_id`,
+`qwiz_builds.owner_id`,
+`qwiz_player_device_access.user_id`,
+`qwiz_student_links.user_id`,
+`qwiz_student_profiles.user_id`,
+`qwiz_topics.owner_id`.
+
+**Data/Auth/Storage перенос ещё не выполнен**. `qwiz_catalog_reader` целенаправленно не имеет SELECT данных, и эти оценки НЕ доказывают готовности к экспорту. Следующий этап требует строго ограниченного правами доступа механизма выгрузки 57 QWIZ таблиц и безопасного выборочного Auth transfer, согласования связанных UUID, строгой приватности и отключения временных доступов после миграции. Не повышать роль до `pg_read_all_data` и не копировать весь `auth` старой ГОС.ID.
+
+В новом Free уже реально создана схема и настроены 5 Realtime publication members, но вход преподавателей, сохранённые банки вопросов и игровые данные пока остаются в исходной базе.
