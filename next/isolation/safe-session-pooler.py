@@ -96,7 +96,18 @@ COMMIT;"""
     if result.returncode:
         # Don't print raw libpq errors that may inadvertently echo a URI.
         print("DB_PROBE_FAILED" if a.mode=="probe" else "SCHEMA_IMPORT_FAILED",file=sys.stderr)
-        print("pgcode="+str(result.returncode),file=sys.stderr)
+        detail=result.stderr.lower()
+        category=(
+            "PASSWORD_AUTHENTICATION_FAILED" if "password authentication failed" in detail else
+            "INVALID_POOLER_TENANT_OR_USER" if ("tenant or user not found" in detail or
+                                               "tenant not found" in detail) else
+            "DNS_RESOLUTION_FAILED" if "could not translate host name" in detail else
+            "CONNECT_TIMEOUT" if "timeout expired" in detail or "timed out" in detail else
+            "CONNECTION_REFUSED" if "connection refused" in detail else
+            "TLS_OR_SSL_FAILURE" if "ssl" in detail or "certificate" in detail else
+            "OTHER_CONNECTION_ERROR"
+        )
+        print("connection="+a.connection+" category="+category+" pgcode="+str(result.returncode),file=sys.stderr)
         return 1
     if a.mode=="probe":
         if result.stdout.strip():print("READ_ONLY_PROBE_SUCCESS "+a.connection+" "+result.stdout.strip())
