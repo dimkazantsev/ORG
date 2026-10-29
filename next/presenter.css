@@ -1804,3 +1804,43 @@ body:fullscreen .projection-shell{height:100dvh}
   min-width:0;overflow-wrap:anywhere;
  }
 }
+
+
+/* 2026-10-29: assembly projector shows only the colour palette during questions.
+   The order is intentionally alphabetical, never the correct solution. */
+#projectionMain .projection-assembly-colors{
+ width:min(740px,85%);min-width:0;align-self:center;display:grid;
+ grid-template-columns:minmax(0,1fr);gap:clamp(6px,1.4dvh,13px);
+ padding:clamp(10px,1.4dvh,18px);margin:0 auto;
+ border:1px solid #e5dcf3;border-radius:20px;background:#fcfaff;
+}
+#projectionMain .projection-assembly-color{
+ display:flex;align-items:center;justify-content:flex-start;gap:clamp(12px,2vw,25px);
+ min-height:clamp(44px,7.6dvh,82px);min-width:0;
+ padding:5px clamp(13px,2vw,24px);border-radius:13px;background:#fff;
+ border:1px solid #eae5f2;box-sizing:border-box;
+}
+#projectionMain .projection-assembly-color i{
+ width:clamp(29px,4.4dvh,50px);height:clamp(29px,4.4dvh,50px);
+ flex:none;border-radius:11px;background:var(--stripe);
+ border:2px solid #c8bed9;box-shadow:0 3px 8px #1f143c14;
+}
+#projectionMain .projection-assembly-color strong{
+ color:var(--color-label);font-weight:900;
+ font-size:clamp(22px,min(2.5vw,4dvh),43px);line-height:1.15;
+ overflow-wrap:anywhere;
+}
+#projectionMain .projection-question-only:has(.projection-assembly-colors) .projection-question-flow{
+ gap:clamp(8px,1.3dvh,18px);
+}
+#projectionMain .projection-question-only.is-result:has(.correct-flag-art) .projection-answer-single{
+ max-height:min(37dvh,295px);min-height:0;
+}
+#projectionMain .projection-question-only.is-result:has(.correct-flag-art) .projection-answer-single .correct-flag-art{
+ max-height:min(27dvh,215px)!important;
+}
+@media(max-height:650px){
+ #projectionMain .projection-assembly-colors{gap:5px;padding:7px}
+ #projectionMain .projection-assembly-color{min-height:34px;padding:3px 9px}
+ #projectionMain .projection-assembly-color strong{font-size:clamp(17px,2.5vw,25px)}
+}
