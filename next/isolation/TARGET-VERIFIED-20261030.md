@@ -578,3 +578,10 @@ https://github.com/dimkazantsev/ORG/actions/runs/40953297479 — `SUCCESS`. Ис
 **Не объявлять полноценный cutover до реального ограниченного переноса 11 Auth users/identities (или согласованной миграции с повторным логином), пользовательских media в Storage, проверки 13 FK, загрузки в live public таблицы и E2E 40 игроков.** Внешний production сайт всё ещё использует старый GOS Supabase. JWT старого проекта не должен переиспользоваться как secret новой базы.
 
 **Оставшийся технический блокер:** официальный Supabase connector авторизован только для нового QWIZ Free; старый GOS проект другой организации. В GitHub Actions есть только временно разрешённый `qwiz_catalog_reader` с доступом 57 public игровых таблиц, но **нет разрешения на source Auth и Storage**. Копирование старой auth целиком неприемлемо из-за чужих пользователей. Запросить отдельный owner-authorized канал к исходным `auth.users`/identities только для 11 QWIZ FK, и доступ к выбранным Storage blobs; до этого не заполнять target Auth фиктивными аккаунтами. После source data read запустить `REVOKE-QWIZ-DATA-EXPORT.sql` в старом SQL Editor; политика сама истекает через 24h, но SQL-привилегии отзываются скриптом.
+
+
+### 23.1. Независимый полный аудит FK для реально перенесённого снимка
+
+После COMMIT был выполнен динамический SQL аудит всех `pg_constraint.contype='f'` из 57 QWIZ tables, проверяющий каждую внутреннюю ссылку `qwiz_transfer_stage.child → qwiz_transfer_stage.parent`, включая составные ключи и SQL `MATCH SIMPLE`-семантику NULL.
+
+**Итог прямого SQL Supabase Free:** `validated_internal_fks=110`, `orphan_rows=0`, `broken_constraints=0`. Ещё 13 FK ссылаются на внешнюю управляемую `auth.users`, для них перед загрузкой в `public` необходимо выборочно восстановить точно 11 исходных Auth UUID. В source AUTH техническая роль не имеет SELECT и нельзя создавать фиктивные аккаунты лишь ради удовлетворения FK.
