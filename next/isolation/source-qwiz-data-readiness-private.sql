@@ -33,5 +33,20 @@ SELECT
  (SELECT md5(coalesce(jsonb_agg(to_jsonb(t) ORDER BY t.id)::text,'[]'))
     FROM public.qwiz_geo_regions t) AS geography_digest,
  (SELECT md5(coalesce(jsonb_agg(to_jsonb(t) ORDER BY t.n)::text,'[]'))
-    FROM public.qwiz_secret_code_catalog t) AS secret_code_digest;
+    FROM public.qwiz_secret_code_catalog t) AS secret_code_digest,
+ (SELECT count(*) FROM (
+     SELECT user_id AS uid FROM public.org_next_players WHERE user_id IS NOT NULL
+     UNION SELECT owner_id FROM public.org_next_quizzes WHERE owner_id IS NOT NULL
+     UNION SELECT owner_id FROM public.org_next_rooms WHERE owner_id IS NOT NULL
+     UNION SELECT user_id FROM public.org_quiz_participants WHERE user_id IS NOT NULL
+     UNION SELECT created_by FROM public.org_quiz_sessions WHERE created_by IS NOT NULL
+     UNION SELECT created_by FROM public.org_quiz_sets WHERE created_by IS NOT NULL
+     UNION SELECT owner_id FROM public.qwiz_archived_rooms WHERE owner_id IS NOT NULL
+     UNION SELECT owner_id FROM public.qwiz_bank WHERE owner_id IS NOT NULL
+     UNION SELECT owner_id FROM public.qwiz_builds WHERE owner_id IS NOT NULL
+     UNION SELECT user_id FROM public.qwiz_player_device_access WHERE user_id IS NOT NULL
+     UNION SELECT user_id FROM public.qwiz_student_links WHERE user_id IS NOT NULL
+     UNION SELECT user_id FROM public.qwiz_student_profiles WHERE user_id IS NOT NULL
+     UNION SELECT owner_id FROM public.qwiz_topics WHERE owner_id IS NOT NULL
+  ) source_qwiz_auth_ids) AS distinct_required_auth_user_ids;
 COMMIT;
