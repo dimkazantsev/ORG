@@ -1,0 +1,48 @@
+name: QWIZ / separate databases read-only preflight
+on:
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - 'next/isolation/verify-two-databases-readonly.sh'
+      - '.github/workflows/qwiz-dual-db-readonly.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-two-databases:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate shell syntax without connecting to either project
+        run: bash -n next/isolation/verify-two-databases-readonly.sh
+      - name: Check for two authorized source and target database credentials
+        id: envcheck
+        shell: bash
+        env:
+          SOURCE: ${{ secrets.GOS_SOURCE_DB_URL }}
+          TARGET: ${{ secrets.QWIZ_TARGET_DB_URL }}
+        run: |
+          if [[ -z "$SOURCE" || -z "$TARGET" ]]; then
+            echo 'configured=false' >> "$GITHUB_OUTPUT"
+            echo 'NOT_READY: both repository Actions secrets GOS_SOURCE_DB_URL and QWIZ_TARGET_DB_URL are required.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'configured=true' >> "$GITHUB_OUTPUT"
+            echo 'Secrets are configured; read-only connectivity check follows.' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Read only metadata from both independent projects
+        if: steps.envcheck.outputs.configured == 'true'
+        shell: bash
+        env:
+          GOS_SOURCE_DB_URL: ${{ secrets.GOS_SOURCE_DB_URL }}
+          QWIZ_TARGET_DB_URL: ${{ secrets.QWIZ_TARGET_DB_URL }}
+        run: bash next/isolation/verify-two-databases-readonly.sh
+      - name: Document test state
+        if: always()
+        shell: bash
+        run: |
+          if [[ "${{ steps.envcheck.outputs.configured }}" != "true" ]]; then
+            echo 'RESULT: SKIPPED (credentials missing); NO live source/target access demonstrated.' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo 'RESULT: check logs above for PASS/FAIL; no migration or production writes performed.' >> "$GITHUB_STEP_SUMMARY"
+          fi
