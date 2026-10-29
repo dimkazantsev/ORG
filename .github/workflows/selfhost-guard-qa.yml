@@ -1,0 +1,24 @@
+name: QWIZ self-host target guard (offline)
+on:
+  pull_request:
+    paths:
+      - 'next/selfhost/**'
+      - 'next/live-40-supabase.mjs'
+      - '.github/workflows/selfhost-guard-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  target-guard:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test target guard without network or test accounts
+        run: |
+          node --check next/live-40-supabase.mjs
+          node --check next/selfhost/prepare-preview.mjs
+          node --test next/selfhost/target.test.mjs
