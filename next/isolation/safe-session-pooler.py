@@ -40,9 +40,13 @@ def credentials(key):
     if not HOST_RE.fullmatch(host):
         raise ValueError(key+": invalid Supabase session pooler hostname")
     # URI escapes, if any, are decoded before supplying to libpq via PGPASSWORD.
-    password=unquote(password)
+    # The URI may have either percent-encoded or literal '%' characters in
+    # its password. Try the interpreted URI password first; a literal fallback
+    # is permitted only in SELECT-only probes, never for an import.
+    raw_password=password
+    password=unquote(raw_password)
     if not password:raise ValueError(key+": empty PostgreSQL password")
-    return user,password,host
+    return user,password,host,raw_password
 
 def main():
     p=argparse.ArgumentParser()
@@ -51,7 +55,7 @@ def main():
     p.add_argument("--schema-file")
     a=p.parse_args()
     try:
-        user,password,host=credentials(a.connection)
+        user,password,host,raw_password=credentials(a.connection)
     except ValueError as e:
         print("CONNECTION_CONFIG_ERROR: "+str(e),file=sys.stderr)
         return 2
@@ -86,16 +90,23 @@ COMMIT;"""
     env=os.environ.copy()
     env.pop("GOS_SOURCE_DB_URL",None)
     env.pop("QWIZ_TARGET_DB_URL",None)
-    env.update({"PGPASSWORD":password,"PGSSLMODE":"require","PGCONNECT_TIMEOUT":"8"})
+    env.update({"PGSSLMODE":"require","PGCONNECT_TIMEOUT":"8"})
     args=["psql","-X","--no-psqlrc","--no-password","-v","ON_ERROR_STOP=1",
           "-h",host,"-p","5432","-U",user,"-d","postgres"]
-    if a.mode=="probe": args.extend(["-q","-A","-t","-c",sql])
-    else: args.extend(["-q","-f",str(sqlfile)])
-    # Never put a URI/password on the command line or print it to logs.
-    result=subprocess.run(args,env=env,capture_output=True,text=True,timeout=150)
+    if a.mode=="probe":args.extend(["-q","-A","-t","-c",sql])
+    else:args.extend(["-q","-f",str(sqlfile)])
+    passwords=[password]
+    if a.mode=="probe" and raw_password!=password:
+        passwords.append(raw_password)
+    result=None
+    for candidate in passwords:
+        env["PGPASSWORD"]=candidate
+        # All output is captured, and no URL/password is passed as an argument.
+        result=subprocess.run(args,env=env,capture_output=True,text=True,timeout=150)
+        if result.returncode==0:break
+        if "password authentication failed" not in result.stderr.lower():
+            break
     if result.returncode:
-        # Don't print raw libpq errors that may inadvertently echo a URI.
-        print("DB_PROBE_FAILED" if a.mode=="probe" else "SCHEMA_IMPORT_FAILED",file=sys.stderr)
         detail=result.stderr.lower()
         category=(
             "PASSWORD_AUTHENTICATION_FAILED" if "password authentication failed" in detail else
@@ -107,6 +118,7 @@ COMMIT;"""
             "TLS_OR_SSL_FAILURE" if "ssl" in detail or "certificate" in detail else
             "OTHER_CONNECTION_ERROR"
         )
+        print("DB_PROBE_FAILED" if a.mode=="probe" else "SCHEMA_IMPORT_FAILED",file=sys.stderr)
         print("connection="+a.connection+" category="+category+" pgcode="+str(result.returncode),file=sys.stderr)
         return 1
     if a.mode=="probe":
