@@ -7,6 +7,7 @@ on:
       - 'next/isolation/disposable-table-integrity.py'
       - 'next/isolation/disposable-rpc-definitions.py'
       - 'next/isolation/disposable-schema-tail.py'
+      - 'next/isolation/disposable-acls.py'
       - 'next/isolation/source-quiz-private-catalog.sql'
       - 'next/isolation/disposable-quiz-private.py'
       - '.github/workflows/qwiz-disposable-table-type-test.yml'
@@ -118,5 +119,14 @@ jobs:
           policy_count="$(psql -XAt -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c "select count(*) from pg_policies where schemaname='public' and (tablename like 'qwiz_%' or tablename like 'org_next_%' or tablename like 'org_quiz_%');")"
           trigger_count="$(psql -XAt -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c "select count(*) from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and not t.tgisinternal and (c.relname like 'qwiz_%' or c.relname like 'org_next_%' or c.relname like 'org_quiz_%');")"
           test "$view_count:$policy_count:$trigger_count" = '4:20:9'
+          python3 next/isolation/disposable-acls.py "$tmp/manifest.json" "$tmp/disposable-grants.sql"
+          if ! psql -X --no-psqlrc -h 127.0.0.1 -p 5432 -U postgres -d postgres \
+            -v ON_ERROR_STOP=1 -f "$tmp/disposable-grants.sql" \
+            > "$tmp/fixture-grants-out.txt" 2> "$tmp/fixture-grants-error.txt"; then
+            echo 'DISPOSABLE ACL RESTORE FAILED; no actual GOS or QWIZ DB modified.'
+            grep -E '(ERROR:|DETAIL:|HINT:)' "$tmp/fixture-grants-error.txt" | head -8 || true
+            exit 1
+          fi
+          echo 'PASS: exact source table/view and RPC ACL declarations accepted by scratch PG17.'
           echo "PASS: scratch QWIZ 151 defaults, 4 views, 20 RLS policies, 9 triggers"
           echo 'SUCCESS in scratch: 57 tables, 283 constraints, indexes, 139 declarations, 151 defaults, 4 views, 20 RLS policies, 9 triggers. Does not verify RPC execution, Auth data or production cutover.' >> "$GITHUB_STEP_SUMMARY"
