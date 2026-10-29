@@ -5,3 +5,7 @@ The schema-only migration has **NOT** been executed against the live Free Supaba
 ## User-authorized isolated schema-only import
 
 The user explicitly requested continuation of QWIZ separation. Two read-only CI probes have succeeded, and direct Supabase SQL has verified the independent Free QWIZ target is empty. This gate authorizes ONLY the single-transaction empty-target schema-only import in workflow `qwiz-gated-schema-import.yml`. It authorizes no transfer of personal game data, Auth identities, Storage objects, no public frontend cutover and no changes to old GOS.ID. Gate run must verify target SQL counts and remain reversible by transaction rollback on failure.
+
+## Approved retry after protected transaction timeout
+
+The first schema-only import exceeded the local 25-second Python subprocess wait and was canceled; direct Supabase SELECT confirmed zero target tables afterward. The adapter now allows up to 330 seconds for the schema-only transaction. Both source and target read-only probes passed. No Auth rows, game data, or Storage files are imported, and live GOS.ID/QWIZ connections are unchanged.
