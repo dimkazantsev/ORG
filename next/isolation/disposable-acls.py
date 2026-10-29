@@ -26,6 +26,12 @@ def main():
     fs={(x["name"],x["arguments"]) for x in o["routines"]}
     if len(tables)!=61 or len(fs)!=139:raise ValueError("Unexpected source QWIZ table/view/function count")
     out=[]
+    # Supabase-managed roles are pre-existing in managed projects, but the
+    # disposable vanilla PostgreSQL fixture needs harmless NOLOGIN stubs.
+    for role in ("anon","authenticated","service_role"):
+        out.append("DO $scratch$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname='"+
+                   role+"') THEN CREATE ROLE "+quote_id(role)+
+                   " NOLOGIN; END IF; END $scratch$;")
     for t in sorted(tables):
         if not t.startswith(("qwiz_","org_next_","org_quiz_")):raise ValueError("External table")
         out.append("REVOKE ALL PRIVILEGES ON TABLE public."+quote_id(t)+
