@@ -98,14 +98,31 @@ COMMIT;"""
     passwords=[password]
     if a.mode=="probe" and raw_password!=password:
         passwords.append(raw_password)
+    # Compare known EU-West session pooler endpoints in read-only diagnostic
+    # mode only; never override the configured host during schema import.
+    hosts=[host]
+    if a.mode=="probe" and a.connection=="QWIZ_TARGET_DB_URL":
+        print("TARGET_POOLER_REGION_MATCHES_PROJECT="+str("eu-west-1" in host).lower())
+        for candidate_host in ("aws-0-eu-west-1.pooler.supabase.com",
+                               "aws-1-eu-west-1.pooler.supabase.com"):
+            if candidate_host not in hosts:hosts.append(candidate_host)
     result=None
-    for candidate in passwords:
-        env["PGPASSWORD"]=candidate
-        # All output is captured, and no URL/password is passed as an argument.
-        result=subprocess.run(args,env=env,capture_output=True,text=True,timeout=150)
-        if result.returncode==0:break
-        if "password authentication failed" not in result.stderr.lower():
-            break
+    matched_host=None
+    for test_host in hosts:
+        args[args.index("-h")+1]=test_host
+        for candidate in passwords:
+            env["PGPASSWORD"]=candidate
+            result=subprocess.run(args,env=env,capture_output=True,text=True,timeout=25)
+            if result.returncode==0:
+                matched_host=test_host
+                break
+            if "password authentication failed" not in result.stderr.lower():
+                break
+        if matched_host:break
+    if a.mode=="probe" and a.connection=="QWIZ_TARGET_DB_URL":
+        print("TARGET_POOLER_DIAGNOSTIC: configured_host_authenticated="+
+              str(matched_host==host).lower()+", regional_host_authenticated="+
+              str(bool(matched_host and "eu-west-1" in matched_host)).lower())
     if result.returncode:
         detail=result.stderr.lower()
         category=(
