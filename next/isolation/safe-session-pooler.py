@@ -103,6 +103,10 @@ COMMIT;"""
     hosts=[host]
     if a.mode=="probe" and a.connection=="QWIZ_TARGET_DB_URL":
         print("TARGET_POOLER_REGION_MATCHES_PROJECT="+str("eu-west-1" in host).lower())
+        print("TARGET_SECRET_PASSWORD_FORMAT: chars="+str(len(password))+
+              " alphanumeric="+str(password.isascii() and password.isalnum()).lower()+
+              " contains_percent_escape="+str(raw_password!=password).lower()+
+              " contains_surrounding_space="+str(password!=password.strip()).lower())
         for candidate_host in ("aws-0-eu-west-1.pooler.supabase.com",
                                "aws-1-eu-west-1.pooler.supabase.com"):
             if candidate_host not in hosts:hosts.append(candidate_host)
