@@ -513,3 +513,40 @@ https://github.com/dimkazantsev/ORG/actions/runs/40950632011 — до отзыв
 Дальнейший настоящий transfer игровых записей нужно делать с целостной транзакцией, согласованным снимком, точными сохранёнными UUID и отдельным выборочным переносом **Auth identities**. Прямая запись `qwiz_bank` до переноса связанных `auth.users` нарушит 13 FK; перенос всех `auth.users` из общей базы ГОС.ID запрещён без доказанного разделения. Не копировать случайно приватные ключи `quiz_private.org_quiz_keys`. Storage-файлы требуют байтового переноса отдельно от PostgreSQL.
 
 **Текущий блокер для source game DATA, а не source SCHEMA:** один ручной SQL Editor шаг владельца для временного доступа на 24h, затем контрольный агрегатный аудит. Секреты и пароли менять не требуется. Пока же в новом QWIZ есть схема + 5 Realtime members + два не персональных справочника (119 строк).
+
+
+## 21. Реальный source-grant подтверждён; QWIZ data-only snapshot и staging SQL успешно построены (30.10.2026)
+
+Пользователь запустил `ENABLE-QWIZ-DATA-EXPORT-24H.sql` вручную в SQL Editor **старой** `bderfrcfuhnutuoyudje` и показал результат `temporary_policies=57; granted_tables=57`. Скриншот содержит только числовую проверку, без секретов. Это временный GRANT/SELECT и RLS на 57 QWIZ public tables, а не копирование данных. **Cleanup после завершения/отмены: `next/isolation/REVOKE-QWIZ-DATA-EXPORT.sql`**; срок дополнительной SELECT-политики 24 часа с момента выдачи.
+
+### 21.1. Фактический read-only source аудит, без PII в логах
+
+https://github.com/dimkazantsev/ORG/actions/runs/40952326907 — `SUCCESS`. В source 57 активных grant+policy проверены, прочитаны **только** агрегаты, 0 Auth/Storage данных:
+- `qwiz_geo_regions` **89** строк; digest `5421bf4c1e06404f131927574e967f7f`;
+- `qwiz_secret_code_catalog` **30** строк; digest `c9d26c6b9022b2c85614521a1f2a37ce`;
+- оба digest **точно совпали** с уже перенесёнными в QWIZ Free справочниками;
+- `qwiz_bank` **716** записей; `org_quiz_questions` **927** записей; `qwiz_run_members` **110**;
+- **11 уникальных Auth UUID** встречаются в колонках 13 FK игровых таблиц; сами UUID, emails, имена и хеши в логах не отображались.
+
+### 21.2. Настоящий приватный data-only dump исходных 57 таблиц
+
+https://github.com/dimkazantsev/ORG/actions/runs/40952896812 — `SUCCESS`. `pg_dump` версии PostgreSQL 17 с ограниченной читательской ролью выполнил **только чтение** данных `public.qwiz_*`, `public.org_next_*`, `public.org_quiz_*`, с `--enable-row-security`, `--column-inserts`. Архив SQL `2,062,996` байт сформирован **только** в 0700/0600 temp runner. Не прикладывался к Actions, PR, репозиторию и не отображался в логах; после завершения job удалён. Старый GOS.ID не изменён, Auth/Storage/private objects не включены.
+
+### 21.3. SQL для безопасной будущей промежуточной загрузки
+
+Добавлен `next/isolation/build-private-qwiz-row-stage.py` и validation CI
+https://github.com/dimkazantsev/ORG/actions/runs/40953297479 — `SUCCESS`. Исходный dump успешно преобразован **в приватный временный SQL-пакет** для отдельной, не публикуемой схемы `qwiz_transfer_stage` на QWIZ Free:
+- ровно **57 таблиц**, **2 344 строк**, **36 непустых таблиц** (срез на момент данного run);
+- пакету предусмотрены транзакция, проверка `auth.users=0`, запрет повторной staging, RLS на всех временных таблицах, `REVOKE` доступа для `PUBLIC`, `anon`, `authenticated` и `service_role`, контроль числа строк;
+- в прототипе staging копируются только колонки и NOT NULL из базовых таблиц, **без FK**, что позволяет сохранить записи до отдельного безопасного переноса 11 Auth users;
+- построенный пакет **не применён к target** и удалён после проверки.
+
+Независимая прямая проверка target Supabase после run подтвердила: 57 QWIZ таблиц, 89 + 30 справочных строк, `qwiz_bank=0`, `org_quiz_questions=0`, `auth.users=0`, `qwiz_transfer_stage` **НЕ существует**. Запрещено заявлять, что все 2 344 строки уже мигрированы!
+
+### 21.4. Следующий реальный блок
+
+Безопасно исполнить подготовленную схему staging **на новом** Free QWIZ с серверным подтверждением отсутствия доступа `anon/authenticated/service_role`, затем проверкой количества 2 344 строк по snapshot и отсутствия Auth/users. После этого решить перенос **11 выборочных Auth идентичностей**, password/identity migration, Storage и финальную загрузку в `public` с FK. Текущая исходная read-only роль не имеет `SELECT` на `auth.users` и `storage.objects` и **не должна** получать широкие права.
+
+Важно: исходная 24-часовая RLS grant завершится по времени; `REVOKE-QWIZ-DATA-EXPORT.sql` после законченного чтения/выгрузки нужно выполнить вручную в old GOS SQL Editor, чтобы удалить остающиеся GRANT, даже если временное RLS-условие истекло.
+
+**Ни source GOS.ID production data, ни рабочий QWIZ frontend не переключались или изменялись.**
