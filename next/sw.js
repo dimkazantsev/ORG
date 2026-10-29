@@ -1,6 +1,6 @@
 /* QWIZ-PARTY PWA v1: static shell only; never cache Supabase, RPC or private answers. */
 'use strict';
-const VERSION='qwiz-pwa-shell-20261029-v49';
+const VERSION='qwiz-pwa-shell-20261029-v50';
 const STATIC=VERSION+'-static';
 const PAGES=VERSION+'-pages';
 const SDK='https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
