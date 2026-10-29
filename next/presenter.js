@@ -226,7 +226,8 @@ function projectionAssemblyPalette(question){
  const ink={белый:'#55515f',white:'#55515f',жёлтый:'#977000',желтый:'#977000',
   yellow:'#977000',голубой:'#1476a3',blue:'#205fc7',синий:'#2054be',
   green:'#137c48',зелёный:'#137b48',red:'#c12738',красный:'#c12738',
-  чёрный:'#2c2932',черный:'#2c2932',black:'#2c2932'};
+  чёрный:'#2c2932',черный:'#2c2932',black:'#2c2932',
+  оранжевый:'#b45309',orange:'#b45309',светло-синий:'#245ea1'};
  return '<div class="projection-assembly-colors" aria-label="Доступные цвета флага">'+
   entries.map(([name,hex])=>{
    const color=ink[name.toLocaleLowerCase('ru')]||hex;
