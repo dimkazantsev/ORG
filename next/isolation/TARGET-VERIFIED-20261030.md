@@ -257,3 +257,5 @@ https://github.com/dimkazantsev/ORG/actions/runs/40937511477
 Последняя повторная проверка через прямое подключение Supabase показала новый проект `vwsoergltegncrretxnz` в статусе `ACTIVE_HEALTHY` и по-прежнему **0 user tables, 0 auth users, 0 storage buckets, 0 qwiz functions**.
 
 **Состояние реализации:** схема QWIZ реконструируется и тестируется только в одноразовой среде, реальная миграция пока не начиналась. Следующий этап — безопасная проверка SQL-функций и политик в disposable Supabase, формирование обратимого пакета, после чего отдельная защищённая выборочная передача данных, Auth и Storage; только потом перевод frontend.
+
+**Cleanup after experiment:** disabled and removed the failed `qwiz-schema-only-preflight.yml` pg_dump workflow and its unused TOC selector from the PR branch. This prevents further accidental full-public-schema LOCK attempts against GOS.ID. Only the proven catalog-only extraction and disposable PostgreSQL tests remain active; historical failed run is retained in GitHub Actions for audit.
