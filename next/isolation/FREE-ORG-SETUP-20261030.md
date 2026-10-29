@@ -1,3 +1,13 @@
+## 30.10.2026 — подтверждение созданного проекта и ошибка доступа соединения
+
+Пользователь предоставил адрес Dashboard: `https://supabase.com/dashboard/project/vwsoergltegncrretxnz`; его скриншот показывает организацию **QWIZ-PARTY / Free**, один проект **Nano** в `eu-west-1`. Никакого нового проекта создавать не требуется.
+
+Прямые запросы подключённого Supabase connector к `get_project(id="vwsoergltegncrretxnz")` и `get_project_url(project_id="vwsoergltegncrretxnz")` завершились ошибкой: `You do not have permission to perform this action`. В `list_organizations` и `list_projects` по-прежнему виден только старый Pro проект `gos-sim`. Следовательно, **проблема именно в разрешениях/авторизации подключения**, а не в том, создал ли пользователь проект. Не делать иных предположений.
+
+Ожидается пользовательское действие: повторно авторизовать подключение Supabase для аккаунта/организации QWIZ-PARTY через ChatGPT Settings → Plugins (или чат sidebar → Supabase). Затем повторить только read-only `get_project` и `list_projects`; проверить: новый project ref соответствует предоставленному, organization не равна старой, план Free, регион `eu-west-1`, статус healthy.
+
+**Не продолжать перенос данных, Auth или SQL до подтверждения прав на целевой проект, безопасной резервной копии, полного dependency closure и согласованного cutover. Не удалять текущие объекты ГОС.ID.**
+
 # QWIZ-PARTY: создание независимой бесплатной организации Supabase
 
 **Решение пользователя: 30 октября 2026 — отдельная организация Free, без платного Pro и без создания дополнительных проектов в текущей Pro-организации.**
