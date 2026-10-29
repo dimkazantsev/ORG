@@ -20,7 +20,7 @@ def check(key, ref):
     # Detect the placeholder displayed in the Supabase Dashboard before parsing:
     # square brackets can make a standard URL parser reject the authority.
     if '[YOUR-PASSWORD]' in value or '[YOUR_PASSWORD]' in value or '[PASSWORD]' in value:
-        raise SystemExit('ERROR: PASSWORD_PLACEHOLDER — the Supabase URI still contains [YOUR-PASSWORD]. Replace it locally in the GitHub secret with the actual DB password; do not share it in chat.')
+        raise SystemExit('ERROR: PASSWORD_PLACEHOLDER [' + key + '] — replace the dashboard placeholder with the real database password in the GitHub secret.')
     if not value.startswith(('postgresql://', 'postgres://')):
         raise SystemExit('ERROR: NOT_POSTGRES_URI — copy the URI from Supabase Connect > Direct > Session pooler > Type URI. Do not paste the API URL, connection parameters or code snippets.')
     if any(ch in value for ch in ('\\n', '\\r', '\\t')):
@@ -31,9 +31,9 @@ def check(key, ref):
         user = unquote(u.username or '')
         port = u.port
     except (ValueError, TypeError):
-        raise SystemExit('ERROR: URI_PARSE_FAILED — re-copy the URI; URL-encode reserved characters in the password, and never include [YOUR-PASSWORD].')
+        raise SystemExit('ERROR: URI_PARSE_FAILED [' + key + '] — URI cannot be parsed. URL-encode reserved password characters; no URI or password was printed.')
     if u.scheme not in ('postgres', 'postgresql') or not u.password:
-        raise SystemExit('ERROR: PASSWORD_NOT_PRESENT — the PostgreSQL URI needs a real encoded database password (not the account password or publishable key).')
+        raise SystemExit('ERROR: PASSWORD_NOT_PRESENT [' + key + '] — the URI lacks a database password.')
     # Allow only the dedicated, non-admin GOS catalog reader on the source.
     # Custom Supabase shared-pooler usernames are ROLE.PROJECT_REF.
     if key == 'GOS_SOURCE_DB_URL':
