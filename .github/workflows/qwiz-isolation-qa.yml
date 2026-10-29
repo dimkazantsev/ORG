@@ -1,0 +1,39 @@
+name: QWIZ / verify independent Supabase staging config
+on:
+  pull_request:
+    paths:
+      - 'next/isolation/**'
+      - '.github/workflows/qwiz-isolation-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Offline boundary guards
+        run: |
+          node --check next/isolation/boundary.mjs
+          node --check next/isolation/build-preview.mjs
+          node --test next/isolation/boundary.test.mjs
+      - name: Generate both public QWIZ frontends for synthetic isolated backend
+        env:
+          GOS_SUPABASE_URL: https://bderfrcfuhnutuoyudje.supabase.co
+          QWIZ_NEW_SUPABASE_URL: https://independent-qwiz-example.supabase.co
+          QWIZ_NEW_SUPABASE_PUBLISHABLE_KEY: sb_publishable_synthetic_test_only
+        run: |
+          node next/isolation/build-preview.mjs
+          test -f .local/qwiz-isolation-preview/ORG/index.html
+          test -f .local/qwiz-isolation-preview/ORG/next/index.html
+          grep -Fq 'independent-qwiz-example.supabase.co' .local/qwiz-isolation-preview/ORG/app.js
+          grep -Fq 'independent-qwiz-example.supabase.co' .local/qwiz-isolation-preview/ORG/next/app.js
+          grep -Fq 'bderfrcfuhnutuoyudje.supabase.co' next/app.js
+          if grep -R --include='*.js' -Fq 'bderfrcfuhnutuoyudje.supabase.co' .local/qwiz-isolation-preview/ORG; then
+            echo "stale shared backend in staged JavaScript"
+            exit 1
+          fi
