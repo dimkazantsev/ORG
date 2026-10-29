@@ -22,3 +22,15 @@ jobs:
           node --check next/live-40-supabase.mjs
           node --check next/selfhost/prepare-preview.mjs
           node --test next/selfhost/target.test.mjs
+      - name: Prepare an isolated preview with synthetic URL and API key
+        env:
+          QWIZ_LOAD_TARGET: selfhost
+          QWIZ_LOAD_CONFIRM: ISOLATED_SELFHOST_ONLY
+          QWIZ_LOAD_URL: https://qwiz-test.example.org
+          QWIZ_LOAD_KEY: sb_publishable_synthetic_ci_only
+        run: |
+          node next/selfhost/prepare-preview.mjs
+          test -f visual-artifacts/qwiz-selfhost-preview/ORG/next/index.html
+          grep -Fq 'https://qwiz-test.example.org' visual-artifacts/qwiz-selfhost-preview/ORG/next/app.js
+          ! grep -Fq 'https://qwiz-test.example.org' next/app.js
+
