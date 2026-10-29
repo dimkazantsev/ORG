@@ -54,6 +54,10 @@ def verify(o):
     helpers = {x["name"] for x in o["routines"] if x["name"] in EXPECTED_HELPERS}
     if helpers != EXPECTED_HELPERS:
         raise ValueError("Missing QWIZ legacy helper routine")
+    default_count=sum(bool(x.get("default")) for x in o["columns"])
+    identity_count=sum(bool(x.get("identity")) for x in o["columns"])
+    generated_count=sum(bool(x.get("generated")) for x in o["columns"])
+    external_type_columns=sum(not bool(re.match(r"(?i)^(?:character|varchar|text|json|integer|bigint|smallint|uuid|boolean|numeric|timestamp|date|time|double|real|bytea|inet|interval|money|bit|citext|regclass|oid|int|bool)", x.get("type",""))) for x in o["columns"])
     definer=sum(1 for x in o["routines"] if x["security_definer"])
     public_refs=collections.Counter()
     external_definers=0
@@ -87,6 +91,10 @@ def verify(o):
         "definer_mentioning_search_path":has_search_path_token,
         "routines_text_referencing_auth":auth_referencing,
         "routines_text_referencing_storage":storage_referencing,
+        "columns_with_defaults":default_count,
+        "identity_columns":identity_count,
+        "generated_columns":generated_count,
+        "unrecognized_column_types_preliminary":external_type_columns,
         "origin_project_confirmed":True,
         "postgres_version":o["postgres"],
         "tables_by_family":dict(rel),
