@@ -1,0 +1,47 @@
+name: Mobile viewport visual QA
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "next/mobile-viewport-visual.spec.mjs"
+      - "next/mobile-viewport-qa-fixture.html"
+      - "next/player-layout.css"
+      - "next/arcade.js"
+      - "next/russia-geo.js"
+      - ".github/workflows/mobile-viewport-visual.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mobile-viewport:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install pinned Playwright browser
+        run: |
+          npm install --no-save --no-package-lock @playwright/test@1.56.1
+          npx playwright install chromium --with-deps
+      - name: Check Geography and bonus dialog at four viewport sizes
+        run: |
+          python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/qwiz-viewport-server.log 2>&1 &
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:8080/next/mobile-viewport-qa-fixture.html >/dev/null; then break; fi
+            sleep 1
+          done
+          npx playwright test next/mobile-viewport-visual.spec.mjs --workers=1 --reporter=line
+      - name: Save browser artifacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-viewport-debug
+          path: |
+            test-results
+            playwright-report
+          if-no-files-found: ignore
