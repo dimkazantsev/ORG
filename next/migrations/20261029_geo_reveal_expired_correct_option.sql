@@ -174,6 +174,6 @@ begin
  when 'detective' then (run.tasks->run.current_index)-'answer'-'name'-'region'-'flag'
  else (run.tasks->run.current_index)-'answer'-'region'-'capital'-'district'-'region_type'-'flag'
  end else null end);
-end $function$
+end $function$;
 
 COMMIT;
