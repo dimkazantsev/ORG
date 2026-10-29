@@ -104,7 +104,7 @@
    const q=feedbackActive?(t.revealQuestion||v.question):v.question,done=!q||(!v.open&&!feedbackActive);
    const key=[v.index,q?.mode,q?.name,q?.region,feedbackActive].join(':');
    const taskKey=[v.index,q?.mode,q?.name,q?.region].join(':');
-   if(t.taskKey!==undefined&&t.taskKey!==taskKey&&!feedbackActive){t.selectedRegion=null;t.confirmRevealed=false;t.message='';}
+   if(t.taskKey!==undefined&&t.taskKey!==taskKey&&!feedbackActive){t.selectedRegion=null;t.message='';}
    if(!feedbackActive)t.taskKey=taskKey;
    if(t.renderKey===key&&root.querySelector('.geo-game')){
      const time=root.querySelector('.geo-footer>span');if(time)time.textContent='Осталось '+Math.max(0,v.remaining)+' сек.';
@@ -130,7 +130,7 @@
    (showMap?(t.mapError?'<div class="geo-map-loading">Не удалось загрузить карту. <button type="button" data-geo-map-retry>Повторить загрузку</button></div>':(geometry&&qmode==='silhouette'?mapMarkup(q.region,false,true):mapMarkup(qmode==='identify'?q.region:null,interactive&&!feedbackActive))):'')+
    (showMap&&qmode!=='silhouette'?'<div class="geo-map-toolbar" aria-label="Масштаб карты"><button type="button" data-geo-zoom="in" aria-label="Увеличить">＋</button><button type="button" data-geo-zoom="out" aria-label="Уменьшить">−</button><button type="button" data-geo-zoom="reset">Вся карта</button></div>':'')+
    (interactive?'<p class="geo-tip">Коснитесь региона и подтвердите выбор. Карту можно перемещать одним пальцем, увеличивать двумя.</p>'+
-    '<button type="button" class="geo-confirm" data-geo-confirm '+(!t.selectedRegion||feedbackActive?'hidden disabled':'')+'>Подтвердить</button>':options(q,t,feedbackActive)))+
+    '<button type="button" class="geo-confirm" data-geo-confirm '+(!t.selectedRegion||feedbackActive||t.busy?'disabled':'')+' aria-label="Подтвердить выбранный регион">Подтвердить выбор</button>':options(q,t,feedbackActive)))+
    '<p class="geo-message" role="status" aria-live="polite">'+esc(t.message||'')+'</p>'+
    '<div class="geo-footer"><span>Осталось '+v.remaining+' сек.</span><small>Результат каждого игрока индивидуален</small></div></section>';
   const nextSvg=root.querySelector('.geo-map-frame .geo-map-svg');
@@ -226,13 +226,10 @@
   t.selectedRegion=selected;
   t.root.querySelectorAll('.geo-region').forEach(p=>p.classList.toggle('geo-selected',p.dataset.region===selected));
   const button=t.root.querySelector('[data-geo-confirm]');
-  if(button){button.disabled=false;button.hidden=false;button.textContent='Подтвердить выбор';button.setAttribute('aria-label','Подтвердить выбранный регион');}
+  if(button){button.disabled=false;button.textContent='Подтвердить выбор';button.setAttribute('aria-label','Подтвердить выбранный регион');}
   t.message='Регион выбран. Нажмите «Подтвердить».';
   const label=t.root.querySelector('.geo-message');if(label)label.textContent=t.message;
-  if(button&&!t.confirmRevealed){
-    t.confirmRevealed=true;
-    requestAnimationFrame(()=>{if(!t.closed&&button.isConnected)revealTarget(t,'[data-geo-confirm]')});
-  }
+  // Keep confirmation fixed in the same place; selection must never scroll or reveal it.
   return true;
  }
  function mountPlayer(root,s,ctx){
@@ -240,7 +237,7 @@
   const key=s.code+':player',existing=sessions.get(key);
   if(existing&&!existing.closed&&existing.root===root)return true;
   stop('player');
-  const t={root,client:ctx.client||ctx.db,roomId:s.room_id,kind:'player',closed:false,view:null,busy:false,message:'',mapPending:false,pointers:new Map(),suppressUntil:0,zoomBox:null,selectedRegion:null,lastAnswer:null,feedbackUntil:0,revealQuestion:null,renderKey:null,gestureMoved:false,focusKey:null,confirmRevealed:false};sessions.set(key,t);
+  const t={root,client:ctx.client||ctx.db,roomId:s.room_id,kind:'player',closed:false,view:null,busy:false,message:'',mapPending:false,pointers:new Map(),suppressUntil:0,zoomBox:null,selectedRegion:null,lastAnswer:null,feedbackUntil:0,revealQuestion:null,renderKey:null,gestureMoved:false,focusKey:null};sessions.set(key,t);
   root.innerHTML='<section class="geo-game"><h2>Карта России</h2><p>Готовим вашу индивидуальную карту…</p></section>';
   t.onClick=e=>{
    if(e.target.closest('[data-geo-map-retry]')){t.mapError=false;t.message='Повторяем загрузку карты…';roundState(t);return}
@@ -262,7 +259,8 @@
    if(confirm){
      if(t.selectedRegion&&t.view?.open&&!confirm.disabled){
        confirm.disabled=true;confirm.setAttribute('aria-busy','true');
-       confirm.textContent='Проверяем…';fetchView(t,t.selectedRegion);
+       const status=root.querySelector('.geo-message');if(status)status.textContent='Проверяем ответ…';
+       fetchView(t,t.selectedRegion);
      }
      return;
    }
