@@ -3,12 +3,15 @@
 // No service secrets; the publishable key is already embedded in the public website.
 import {readFileSync} from 'node:fs';
 import {createClient} from '@supabase/supabase-js';
+import {resolveLoadTarget} from './selfhost/target.mjs';
 const ROOM=process.env.QWIZ_LOAD_ROOM;
 const MODE=process.env.QWIZ_LOAD_MODE||'public';
 const TAG=process.env.QWIZ_LOAD_TAG||'qwiz_perf_40_20261026';
-const SUPABASE_URL='https://bderfrcfuhnutuoyudje.supabase.co';
+const CLOUD_URL='https://bderfrcfuhnutuoyudje.supabase.co';
 const source=readFileSync(new URL('./app.js',import.meta.url),'utf8');
-const KEY=source.match(/const KEY_SUPABASE='([^']+)'/)?.[1];
+const cloudKey=source.match(/const KEY_SUPABASE='([^']+)'/)?.[1];
+const {target,url:SUPABASE_URL,key:KEY}=resolveLoadTarget(process.env,CLOUD_URL,cloudKey);
+console.log('QWIZ LOAD target:',target,'host:',new URL(SUPABASE_URL).host);
 if(!KEY||!/^[A-F0-9]{8}$/.test(ROOM||'')||!['public','full'].includes(MODE))throw Error('Dedicated fixture, publishable key and run mode required');
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function client(){return createClient(SUPABASE_URL,KEY,{auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}})}

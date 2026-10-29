@@ -1,0 +1,54 @@
+name: QWIZ self-host target guard (offline)
+on:
+  pull_request:
+    paths:
+      - 'next/selfhost/**'
+      - 'next/live-40-supabase.mjs'
+      - '.github/workflows/selfhost-guard-qa.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  target-guard:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test target guard without network or test accounts
+        run: |
+          node --check next/live-40-supabase.mjs
+          node --check next/selfhost/prepare-preview.mjs
+          node --check next/selfhost/realtime-40.mjs
+          bash -n next/selfhost/check-host.sh
+          node --test next/selfhost/target.test.mjs
+      - name: Prepare an isolated preview with synthetic URL and API key
+        env:
+          QWIZ_LOAD_TARGET: selfhost
+          QWIZ_LOAD_CONFIRM: ISOLATED_SELFHOST_ONLY
+          QWIZ_LOAD_URL: https://qwiz-test.example.org
+          QWIZ_LOAD_KEY: sb_publishable_synthetic_ci_only
+        run: |
+          node next/selfhost/prepare-preview.mjs
+          test -f visual-artifacts/qwiz-selfhost-preview/ORG/next/index.html
+          grep -Fq 'https://qwiz-test.example.org' visual-artifacts/qwiz-selfhost-preview/ORG/next/app.js
+          ! grep -Fq 'https://qwiz-test.example.org' next/app.js
+
+      - name: Simulate 40 Realtime connections offline (mock transport, no server)
+        env:
+          QWIZ_LOAD_TARGET: selfhost
+          QWIZ_LOAD_CONFIRM: ISOLATED_SELFHOST_ONLY
+          QWIZ_LOAD_URL: https://qwiz-test.example.org
+          QWIZ_LOAD_KEY: sb_publishable_synthetic_ci_only
+          QWIZ_LOAD_ROOM: A1B2C3D4
+          QWIZ_WS_HOLD_MS: "0"
+          QWIZ_WS_EVENTS: "2"
+        run: |
+          mkdir -p next/selfhost/node_modules/@supabase/supabase-js
+          cp next/selfhost/test-fixtures/mock-supabase.mjs next/selfhost/node_modules/@supabase/supabase-js/index.mjs
+          printf '%s\n' '{"type":"module","exports":"./index.mjs"}' > next/selfhost/node_modules/@supabase/supabase-js/package.json
+          node next/selfhost/realtime-40.mjs | tee /tmp/qwiz-ws-mock-result.log
+          grep -q '"ok":true' /tmp/qwiz-ws-mock-result.log
+          grep -q '"clients":40' /tmp/qwiz-ws-mock-result.log
