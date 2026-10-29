@@ -3,8 +3,8 @@
 <title>QWIZ-PARTY · viewport QA</title>
 <link rel="stylesheet" href="./theme.css">
 <link rel="stylesheet" href="./arcade.css?v=secret-code-live-20261028-1">
-<link rel="stylesheet" href="./russia-geo.css?v=geo-native-20261028-1">
-<link rel="stylesheet" href="./player-layout.css?v=viewport-fit-20261029-1">
+<link rel="stylesheet" href="./russia-geo.css?v=geo-confirm-stable-20261029-1">
+<link rel="stylesheet" href="./player-layout.css?v=viewport-confirm-20261029-1">
 <script defer src="./arcade.js?v=bonus-modal-20261029-1"></script>
 <style>body{margin:0;background:#f5f0fc;font:14px system-ui,sans-serif}#gameView{display:block}#gameContent{min-width:0}#qaMode{position:fixed;top:3px;right:3px;z-index:1;background:#fff;padding:2px;font-size:10px;opacity:.85}.game-top .game-name{color:#2c2240}.game-top .player-more{display:inline-flex}</style>
 </head><body>
@@ -27,13 +27,15 @@ window.showGeoFixture=()=>{
  '<div class="geo-map-frame"><svg class="geo-map-svg" viewBox="0 0 1120 480" preserveAspectRatio="xMidYMid meet"><g>'+paths+'</g></svg></div>'+
  '<div class="geo-map-toolbar"><button type="button">＋</button><button type="button">−</button><button type="button">Вся карта</button></div>'+
  '<p class="geo-tip">Коснитесь региона и подтвердите выбор. Карту можно перемещать одним пальцем, увеличивать двумя.</p>'+
- '<button type="button" class="geo-confirm" data-geo-confirm hidden disabled>Подтвердить</button>'+
+ '<button type="button" class="geo-confirm" data-geo-confirm disabled>Подтвердить выбор</button>'+
  '<p class="geo-message" role="status"></p><div class="geo-footer"><span>Осталось 20 сек.</span><small>Результат каждого игрока индивидуален</small></div></section>';
  document.querySelector('.geo-map-svg').addEventListener('click',event=>{
   const node=event.target.closest('[data-region]');if(!node)return;
   document.querySelectorAll('.geo-region').forEach(n=>n.classList.toggle('geo-selected',n===node));
-  const button=document.querySelector('[data-geo-confirm]');button.hidden=false;button.disabled=false;
+  const button=document.querySelector('[data-geo-confirm]');button.disabled=false;
  });
+ const confirm=document.querySelector('[data-geo-confirm]');
+ confirm.addEventListener('click',()=>{if(!confirm.disabled){confirm.disabled=true;confirm.setAttribute('aria-busy','true');document.querySelector('.geo-message').textContent='Проверяем ответ…';}});
 };
 window.showBonusFixture=(stage='effects')=>{
  const now=new Date();
