@@ -55,8 +55,34 @@ def verify(o):
     if helpers != EXPECTED_HELPERS:
         raise ValueError("Missing QWIZ legacy helper routine")
     definer=sum(1 for x in o["routines"] if x["security_definer"])
+    public_refs=collections.Counter()
+    external_definers=0
+    no_explicit_search_path=0
+    auth_referencing=0
+    storage_referencing=0
+    for routine in o["routines"]:
+        definition=routine["definition"]
+        references=set(re.findall(r'\\bpublic\\.(?:"([^"]+)"|([A-Za-z_][A-Za-z_0-9]*))',definition,re.I))
+        external={next((x for x in pair if x),"").lower() for pair in references}
+        external={n for n in external if n and not n.startswith(FAMILIES) and n not in EXPECTED_HELPERS}
+        public_refs.update(external)
+        if routine["security_definer"] and external:
+            external_definers+=1
+        if routine["security_definer"] and not re.search(r"\\bSET\\s+search_path\\s*=",definition,re.I):
+            no_explicit_search_path+=1
+        if re.search(r"\\bauth\\.",definition,re.I):
+            auth_referencing+=1
+        if re.search(r"\\bstorage\\.",definition,re.I):
+            storage_referencing+=1
+    # Only names of referenced SQL objects are published (never SQL bodies).
+    # Text matching is a heuristic, not transitive or dynamic-SQL dependency analysis.
     digest=hashlib.sha256(json.dumps(o,sort_keys=True,ensure_ascii=False).encode()).hexdigest()
     return {
+        "static_external_public_object_refs":dict(public_refs.most_common(40)),
+        "definer_functions_referencing_external_public":external_definers,
+        "definer_without_explicit_set_search_path_heuristic":no_explicit_search_path,
+        "routines_text_referencing_auth":auth_referencing,
+        "routines_text_referencing_storage":storage_referencing,
         "origin_project_confirmed":True,
         "postgres_version":o["postgres"],
         "tables_by_family":dict(rel),
