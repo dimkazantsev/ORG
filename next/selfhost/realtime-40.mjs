@@ -37,7 +37,7 @@ function client(){
   realtime:{params:{eventsPerSecond:10}}
  });
 }
-const clients=[],channels=new Map(),drops=[],received=new Map(),sentAt=new Map();
+const clients=[],channels=new Map(),drops=[],received=new Map(),sentAt=new Map(),plannedDisconnects=new Set();
 let shuttingDown=false;
 async function join(index){
  const c=clients[index];
@@ -62,7 +62,7 @@ async function join(index){
     if(status==='SUBSCRIBED')finish();
     else if(['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status)){
      if(!done)finish(new Error(index+' status '+status+' '+(error?.message||'')));
-     else if(!shuttingDown) drops.push({client:index,status});
+     else if(!shuttingDown&&!plannedDisconnects.has(index)) drops.push({client:index,status});
     }
    });
   });
@@ -83,7 +83,8 @@ async function oneBroadcast(seq){
  if(status!=='ok'&&status?.status!=='ok')throw Error('Broadcast request was not accepted: '+String(status));
  const until=performance.now()+DELIVERY_TIMEOUT;
  while(samples.size<CLIENTS&&performance.now()<until)await sleep(25);
- const result={sequence:seq,received:samples.size,missing:CLIENTS-samples.size,...stats([...samples.values()])};
+ const latencies=[...samples.values()];
+ const result={sequence:seq,received:samples.size,missing:CLIENTS-samples.size,...stats(latencies),_latencies:latencies};
  received.delete(seq);sentAt.delete(seq);
  return result;
 }
@@ -95,7 +96,8 @@ async function burst(start,count){
  }
  return {attempted:count,delivered:reports.reduce((n,x)=>n+x.received,0),
   expected:CLIENTS*count,missing:reports.reduce((n,x)=>n+x.missing,0),
-  ...stats(reports.flatMap(x=>x.count?Array.from({length:0}):[])),per_event:reports};
+  ...stats(reports.flatMap(x=>x._latencies)),
+  per_event:reports.map(({_latencies,...result})=>result)};
 }
 async function main(){
  if(typeof globalThis.WebSocket!=='function')throw Error('Node 22+ with WebSocket support is required');
@@ -116,10 +118,13 @@ async function main(){
  // Recreate 10 independent socket subscriptions; this is resubscription, not a physical Wi-Fi outage.
  const indices=Array.from({length:Math.min(10,CLIENTS)},(_,i)=>i);
  const reconnect=await Promise.allSettled(indices.map(async i=>{
+  plannedDisconnects.add(i);
   const old=channels.get(i);
-  await clients[i].removeChannel(old);
-  channels.delete(i);
-  return join(i);
+  try{
+   await clients[i].removeChannel(old);
+   channels.delete(i);
+   return await join(i);
+  } finally {plannedDisconnects.delete(i)}
  }));
  const failures=reconnect.filter(x=>x.status==='rejected');
  console.log('QWIZ_WS_REJOIN '+JSON.stringify({attempted:indices.length,successful:indices.length-failures.length,failed:failures.length,...stats(reconnect.filter(x=>x.status==='fulfilled').map(x=>x.value))}));
@@ -129,10 +134,10 @@ async function main(){
  const result={ok:before.missing===0&&after.missing===0&&drops.length===0,
   clients:CLIENTS,topic:TOPIC,join:stats(joins),
   initial_broadcast:{expected:before.expected,delivered:before.delivered,missing:before.missing,
-   p95_ms:percentile(before.per_event.map(e=>e.p95_ms).filter(x=>x!==null),.95)},
+   p95_ms:before.p95_ms},
   rejoin:{count:indices.length,failures:0},
   after_rejoin:{expected:after.expected,delivered:after.delivered,missing:after.missing,
-   p95_ms:percentile(after.per_event.map(e=>e.p95_ms).filter(x=>x!==null),.95)},
+   p95_ms:after.p95_ms},
   unexpected_channel_closures:drops.length};
  console.log('QWIZ_WS_SUMMARY '+JSON.stringify(result));
  if(!result.ok)process.exitCode=1;
