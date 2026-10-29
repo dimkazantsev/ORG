@@ -4,7 +4,7 @@ DO $qa$
 DECLARE v_room uuid; v_quiz uuid; v_owner uuid; u1 uuid; u2 uuid;
 t1 uuid; t2 uuid; p1 uuid; p2 uuid;
 started timestamptz:=clock_timestamp()-interval '10 seconds';
-v_code text:='QA'||upper(substring(md5(gen_random_uuid()::text),1,6));
+v_code text:='AA'||upper(substring(md5(gen_random_uuid()::text),1,6));
 BEGIN
 SELECT q.id,q.owner_id INTO v_quiz,v_owner FROM public.org_next_quizzes q LIMIT 1;
 SELECT p.user_id INTO u1 FROM public.org_next_players p ORDER BY p.user_id LIMIT 1;
