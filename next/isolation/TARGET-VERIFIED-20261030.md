@@ -465,3 +465,51 @@ Read-only job https://github.com/dimkazantsev/ORG/actions/runs/40949056109 — S
 **Data/Auth/Storage перенос ещё не выполнен**. `qwiz_catalog_reader` целенаправленно не имеет SELECT данных, и эти оценки НЕ доказывают готовности к экспорту. Следующий этап требует строго ограниченного правами доступа механизма выгрузки 57 QWIZ таблиц и безопасного выборочного Auth transfer, согласования связанных UUID, строгой приватности и отключения временных доступов после миграции. Не повышать роль до `pg_read_all_data` и не копировать весь `auth` старой ГОС.ID.
 
 В новом Free уже реально создана схема и настроены 5 Realtime publication members, но вход преподавателей, сохранённые банки вопросов и игровые данные пока остаются в исходной базе.
+
+
+## 20. Начало безопасного переноса содержимого, 30.10.2026
+
+### 20.1. Созданы первые данные в отдельной Free QWIZ базе
+
+**Не персональные записи из old GOS, а воспроизведённые неизменяемые справочники из исходного кода миграций**:
+- `next/migrations/20261023_geo_russia_first_seven.sql` — строго извлечено исходное `INSERT` c 89 географическими объектами;
+- `next/migrations/20261028_secret_code_engine.sql` — строго извлечено исходное `INSERT` с 30 шаблонами секретного кода.
+
+В Supabase `vwsoergltegncrretxnz` выполнена **реальная** атомарная миграция `qwiz_public_geo_and_secret_code_catalog_seeds_20261030` с проверкой пустых таблиц и 0 Auth users, затем с postconditions `89` и `30`. Прямой повторный SELECT target подтвердил **89 географических записей и 30 шаблонов**, `auth.users=0`, `qwiz_bank=0`, `org_quiz_questions=0`.
+
+Контрольные digest (MD5 только для сверки идентичности набора записей, **не криптографическая защита**):
+- `qwiz_geo_regions`: `5421bf4c1e06404f131927574e967f7f`;
+- `qwiz_secret_code_catalog`: `c9d26c6b9022b2c85614521a1f2a37ce`.
+
+Эти справочники — **reseed из отслеживаемых SQL миграций**, их идентичность с **текущими** source данными не доказана до включения чтения source (впоследствии сравнить digest). Остальные данные QWIZ и аккаунты не перенесены.
+
+### 20.2. Доказано отсутствие SELECT прав технического source reader
+
+Source GitHub Actions https://github.com/dimkazantsev/ORG/actions/runs/40949656026 (SUCCESS, only catalog SELECT) подтвердил:
+- 57 public QWIZ игровых таблиц; **0 имеют SELECT** для `qwiz_catalog_reader`;
+- две private таблицы, 0 SELECT;
+- `auth.users`, `auth.identities`, `storage.buckets`, `storage.objects` — 0 SELECT;
+- сам PostgreSQL source-role и соединение работают.
+
+Это правильно по предыдущей модели доступа. Нельзя копировать PII без отдельного временного разрешения и RLS. Старый source не менялся.
+
+### 20.3. Готов одноразовый ограниченный доступ на 24 часа
+
+`next/isolation/ENABLE-QWIZ-DATA-EXPORT-24H.sql` — **ещё НЕ применялся к старому GOS.ID**. Предназначен для запуска владельцем *в SQL Editor именно старого проекта* `bderfrcfuhnutuoyudje`:
+- в одной транзакции сверяет техническую роль (нет SUPERUSER/BYPASSRLS/CREATEROLE/CREATEDB), 57 игровых таблиц и наличие RLS на всех;
+- выдаёт **только** `SELECT` на эти 57 public таблиц роли `qwiz_catalog_reader`, не grant на Auth/Storage/private tables, не `pg_read_all_data` и не `BYPASSRLS`;
+- создаёт на каждой из 57 таблиц дополнительную **role-scoped** политику `qwiz_temporary_migration_reader` с expiry `CURRENT_TIMESTAMP < now_at_grant + 24h`, не меняя остальные RLS policies;
+- проверяет количество политик и прав после выполнения. Ожидаемый ответ **57, 57**;
+- не выполняет DML и не меняет пароли, но временно делает PII внутри игровых таблиц доступными в защищённой роли GitHub — использовать исключительно для согласованного экспорта, затем своевременно убрать.
+- `next/isolation/REVOKE-QWIZ-DATA-EXPORT.sql` полностью удаляет эти временные политики и SELECT grants, оставляя каталоговый доступ.
+
+**Изолированное испытание на disposable PostgreSQL 17, где было 57 фиктивных таблиц с RLS и ограниченной ролью, прошло SUCCESS:**
+https://github.com/dimkazantsev/ORG/actions/runs/40950632011 — до отзыва читатель видел тестовую запись, после отзыва SELECT отвергался. Предыдущая неуспешная попытка была вызвана исключительно лишним выводом `SET ROLE` в psql test, а не SQL правами.
+
+### 20.4. После выполнения владельцем временного source grant
+
+Подготовлен `next/isolation/source-qwiz-data-readiness-private.sql` и opt-in GitHub Actions `.github/workflows/qwiz-source-data-readiness.yml` для **только агрегатных** source `COUNT` и digest двух справочников; ни одной строки/UUID/email в логах. **Workflow пока не выполнялся**, поскольку временный source grant не применялся.
+
+Дальнейший настоящий transfer игровых записей нужно делать с целостной транзакцией, согласованным снимком, точными сохранёнными UUID и отдельным выборочным переносом **Auth identities**. Прямая запись `qwiz_bank` до переноса связанных `auth.users` нарушит 13 FK; перенос всех `auth.users` из общей базы ГОС.ID запрещён без доказанного разделения. Не копировать случайно приватные ключи `quiz_private.org_quiz_keys`. Storage-файлы требуют байтового переноса отдельно от PostgreSQL.
+
+**Текущий блокер для source game DATA, а не source SCHEMA:** один ручной SQL Editor шаг владельца для временного доступа на 24h, затем контрольный агрегатный аудит. Секреты и пароли менять не требуется. Пока же в новом QWIZ есть схема + 5 Realtime members + два не персональных справочника (119 строк).
