@@ -34,6 +34,11 @@ def main():
         sql.append("CREATE TABLE quiz_private."+qi(table)+" ("+
           ", ".join(qi(c["column"])+" "+c["type"]+(" NOT NULL" if c["not_null"] else "") for c in columns)+");")
         sql.append("ALTER TABLE quiz_private."+qi(table)+" ENABLE ROW LEVEL SECURITY;")
+        # Preserve defaults on the two private tables; no private rows exported.
+        for c in columns:
+            if c.get("default"):
+                sql.append("ALTER TABLE quiz_private."+qi(table)+" ALTER COLUMN "+
+                           qi(c["column"])+" SET DEFAULT "+c["default"]+";")
     for c in doc["constraints"]:
         if c["table"] not in t:raise ValueError("Unexpected private constraint")
         sql.append("ALTER TABLE quiz_private."+qi(c["table"])+" ADD CONSTRAINT "+
