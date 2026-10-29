@@ -7,6 +7,8 @@ on:
       - 'next/isolation/disposable-table-integrity.py'
       - 'next/isolation/disposable-rpc-definitions.py'
       - 'next/isolation/disposable-schema-tail.py'
+      - 'next/isolation/source-quiz-private-catalog.sql'
+      - 'next/isolation/disposable-quiz-private.py'
       - '.github/workflows/qwiz-disposable-table-type-test.yml'
   workflow_dispatch:
 permissions:
@@ -54,6 +56,8 @@ jobs:
           PY
           psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -qAt -v ON_ERROR_STOP=1 \
             -f next/isolation/source-schema-catalog-private.sql > "$tmp/manifest.json"
+          psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -qAt -v ON_ERROR_STOP=1 \
+            -f next/isolation/source-quiz-private-catalog.sql > "$tmp/private.json"
           python3 next/isolation/disposable-table-types.py "$tmp/manifest.json" "$tmp/disposable-tables.sql"
           # Critical: all SQL DDL is executed ONLY on the ephemeral GitHub service.
           unset GOS_SOURCE_DB_URL PGSSLMODE PGCONNECT_TIMEOUT
@@ -78,6 +82,15 @@ jobs:
             grep -E '(ERROR:|DETAIL:|HINT:)' "$tmp/fixture-integrity-error.txt" | head -8 || true
             exit 1
           fi
+          python3 next/isolation/disposable-quiz-private.py "$tmp/private.json" "$tmp/disposable-private.sql"
+          if ! psql -X --no-psqlrc -h 127.0.0.1 -p 5432 -U postgres -d postgres \
+            -v ON_ERROR_STOP=1 -f "$tmp/disposable-private.sql" \
+            > "$tmp/private-run-out.txt" 2> "$tmp/private-run-error.txt"; then
+            echo 'DISPOSABLE quiz_private reconstruction failed.'
+            grep -E '(ERROR:|DETAIL:|HINT:)' "$tmp/private-run-error.txt" | head -8 || true
+            exit 1
+          fi
+          echo 'PASS: 2 quiz_private tables and 9 function definitions registered on disposable PG17.'
           echo 'PASS: QWIZ schema bare columns, constraints and index definitions applied in disposable PostgreSQL 17.'
           # Reconstruct routine CREATE FUNCTION DDL from authenticated source catalog
           # without printing SQL bodies or invoking any routine. Local service only.
