@@ -72,12 +72,10 @@
  }
  function options(q,t=null,feedbackActive=false){
   const correct=feedbackActive?String(t?.lastAnswer?.correct_text||'').trim():null;
-  const chosen=feedbackActive?t?.chosenAnswerId:null;
   return '<div class="geo-options'+(feedbackActive?' is-revealed':'')+'">'+(q.options||[]).map((x,index)=>{
     const right=Boolean(correct&&String(x.text||'').trim()===correct);
-    const wrong=false; // Only the correct option is highlighted after the answer deadline.
     const css=right?'geo-option-correct':'';
-    const explanation=right?'Правильный ответ':wrong?'Ваш ответ':'Вариант ответа';
+    const explanation=right?'Правильный ответ':'Вариант ответа';
     return '<button type="button" data-geo-answer="'+esc(x.id)+'" class="'+css+'" aria-label="'+explanation+': '+esc(x.text)+'"'+
       (feedbackActive?' disabled':'')+'><span class="geo-choice-number" aria-hidden="true">'+String.fromCharCode(65+index)+'</span><span class="geo-choice-label">'+esc(x.text)+(right?' ✓':'')+'</span></button>';
    }).join('')+'</div>';
@@ -122,7 +120,7 @@
   if(q?.mode==='detective')hint='<div class="geo-clues"><span>Подсказка 1: '+esc(q.region_type)+'</span><span>Подсказка 2: '+esc(q.district)+'</span><span>Подсказка 3: центр — '+esc(q.capital)+'</span></div>';
   const img=q?.mode==='flag'&&q.flag?'<img class="geo-flag" loading="lazy" decoding="async" alt="Флаг субъекта России" src="https://raw.githubusercontent.com/russian-flags/regions/3c411c7b305c678c49798cc610538c66108adbde/assets/'+encodeURIComponent(q.flag)+'/index.svg">':'';
   const qmode=q?.mode||'locate';const interactive=qmode==='locate',silhouette=qmode==='silhouette';const showMap=['locate','identify','silhouette'].includes(qmode);
-  const feedback=feedbackActive?'<div class="geo-answer-feedback '+(t.lastAnswer.correct?'':'is-wrong')+'" role="status">'+(t.lastAnswer.correct?'Верно':'Ответ принят')+'</div>':'';
+  const feedback=feedbackActive?'<span class="geo-result-label '+(t.lastAnswer.correct?'is-correct':'is-wrong')+'">'+(t.lastAnswer.correct?'Верно!':'Правильный вариант выделен')+'</span>':'';
   // The image box stays mounted at a constant size for the whole question.
   // Only the correct answer tile changes its appearance during reveal.
   const visual=(qmode==='flag'||qmode==='silhouette')?'<div class="geo-visual-slot is-'+qmode+'">'+
