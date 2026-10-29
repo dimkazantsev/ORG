@@ -78,3 +78,15 @@
 - Официальная миграция Supabase: https://supabase.com/docs/guides/platform/migrating-within-supabase/backup-restore
 
 **Следующее состояние, которое разрешено объявить: «экспорт исходной схемы QWIZ проверен». Не «обе базы окончательно разделены».**
+
+## 8. Проверка независимого канала GitHub Actions, 30.10.2026
+
+Для предотвращения постоянной смены авторизации Supabase подготовлен минимальный безопасный канал read-only проверки двух баз:
+- `next/isolation/verify-two-databases-readonly.sh` — читает только агрегированные каталожные метрики двух PostgreSQL, выполняет проверку expected project ref, ограничивает SQL в параметрах `default_transaction_read_only=on`, `statement_timeout=10000`, `lock_timeout=2000`. Не печатает SQL-соединения, пользователей или секретные ключи.
+- `.github/workflows/qwiz-dual-db-readonly.yml` — workflow с `contents:read`. Значения connection string ожидаются **только** в encrypted GitHub Actions secrets `GOS_SOURCE_DB_URL` и `QWIZ_TARGET_DB_URL`. Их нельзя отправлять в чат, хранить в исходных файлах или писать в issue/PR. Желательно использовать наименьшие достаточные привилегии, а не сервисный ключ с административными правами.
+
+**Фактический запуск:** https://github.com/dimkazantsev/ORG/actions/runs/40930793181 — syntax check SUCCESS; шаг `Read only metadata from both independent projects` SKIPPED: одна либо обе Secret variables отсутствуют. Следовательно, **доступ к старой базе через GitHub Actions пока НЕ работает** и внешняя миграция не выполнялась.
+
+Для следующего этапа владелец репозитория должен добавить два названных секрета через `ORG → Settings → Secrets and variables → Actions`. Источники значений — безопасные PostgreSQL connection strings из соответствующих Supabase Dashboard → Connect, предпочтительно session pooler port 5432 с ограниченным читательским аккаунтом; строки не должны попадать в лог, исходный код или чат. Workflow сравнивает ref `bderfrcfuhnutuoyudje` и `vwsoergltegncrretxnz`. После добавления запускается отдельная проверка. Только успешный реальный SELECT из обоих проектов даст право начать детальное планирование выборочного экспорта.
+
+**Важное ограничение:** проверка metadata не делает резервную копию. Чтобы перенести Auth и игровые данные, понадобится отдельно утверждённый защищённый экспорт/импорт с контрольными суммами и snapshot, без публикации чужих пользовательских данных в общедоступном репозитории.
