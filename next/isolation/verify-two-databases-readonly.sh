@@ -1,28 +1,46 @@
 #!/usr/bin/env bash
-# QWIZ/GOS migration: READ-ONLY authorized connectivity smoke test.
-# Never prints connection URIs, secrets, records, usernames, or user identifiers.
+# Read-only metadata check for the source GOS.ID project. Target is optional.
+# Never prints database URIs, keys, password, or personal information.
 set -euo pipefail
 umask 077
-: "${GOS_SOURCE_DB_URL:?GOS_SOURCE_DB_URL is required}"
-: "${QWIZ_TARGET_DB_URL:?QWIZ_TARGET_DB_URL is required}"
+: "${GOS_SOURCE_DB_URL:?Encrypted Actions secret GOS_SOURCE_DB_URL is required}"
+command -v python3 >/dev/null || { echo "Python3 is required" >&2; exit 2; }
+command -v psql >/dev/null || { echo "psql is required" >&2; exit 2; }
 
-# Verify both secrets point at the intended, different projects.
-case "$GOS_SOURCE_DB_URL" in
-  *bderfrcfuhnutuoyudje*) ;;
-  *) echo "ERROR: GOS_SOURCE_DB_URL is not bound to expected legacy project ref" >&2; exit 2 ;;
-esac
-case "$QWIZ_TARGET_DB_URL" in
-  *vwsoergltegncrretxnz*) ;;
-  *) echo "ERROR: QWIZ_TARGET_DB_URL is not bound to expected free QWIZ project ref" >&2; exit 2 ;;
-esac
-if [[ "$GOS_SOURCE_DB_URL" == "$QWIZ_TARGET_DB_URL" ]]; then
- echo "ERROR: two database URIs are identical" >&2
- exit 2
-fi
-command -v psql >/dev/null || { echo "ERROR: PostgreSQL psql is not installed" >&2;exit 2; }
+# Parse the actual hostname/username. Reject a project ref appearing only in a password.
+# Both direct database and official session pooler URLs are supported.
+python3 - <<'PY'
+from os import environ
+from urllib.parse import urlsplit, unquote
 
-# Every query is SELECT-only and has a bounded lock/statement timeout.
-export PGSSLMODE=require PGCONNECT_TIMEOUT=7 PGOPTIONS="-c default_transaction_read_only=on -c statement_timeout=10000 -c lock_timeout=2000"
+def check(key, ref):
+    value = environ.get(key, '')
+    if not value:
+        raise SystemExit('ERROR: missing database URL for ' + key)
+    try:
+        u = urlsplit(value)
+        host = (u.hostname or '').lower()
+        user = unquote(u.username or '')
+        port = u.port
+    except (ValueError, TypeError):
+        raise SystemExit('ERROR: invalid database URL for ' + key)
+    if u.scheme not in ('postgres', 'postgresql') or not u.password:
+        raise SystemExit('ERROR: expected an authenticated PostgreSQL URI in ' + key)
+    direct = host == f'db.{ref}.supabase.co' and user in ('postgres', f'postgres.{ref}')
+    pool = (host.endswith('.pooler.supabase.com') and user == f'postgres.{ref}' and port == 5432)
+    if not (direct or pool):
+        raise SystemExit('ERROR: database host/user is not the expected project for ' + key)
+    if u.path not in ('', '/', '/postgres'):
+        raise SystemExit('ERROR: expected postgres database for ' + key)
+
+check('GOS_SOURCE_DB_URL', 'bderfrcfuhnutuoyudje')
+if environ.get('QWIZ_TARGET_DB_URL'):
+    check('QWIZ_TARGET_DB_URL', 'vwsoergltegncrretxnz')
+PY
+
+# Every SQL query is SELECT-only; the PostgreSQL session additionally defaults to read-only.
+export PGSSLMODE=require PGCONNECT_TIMEOUT=7
+export PGOPTIONS="-c default_transaction_read_only=on -c statement_timeout=10000 -c lock_timeout=2000"
 query="
 select
   (select count(*) from pg_tables where schemaname='public' and tablename like 'qwiz_%') as qwiz_tables,
@@ -31,8 +49,12 @@ select
   (select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname like 'qwiz_%') as qwiz_functions,
   current_setting('server_version') as pg_version;
 "
-echo "Verifying legacy GOS Supabase metadata (read only)..."
+echo "Verifying legacy GOS.ID PostgreSQL (read-only catalog counts)..."
 psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -v ON_ERROR_STOP=1 -A -t -q -c "$query"
-echo "Verifying isolated QWIZ Supabase metadata (read only)..."
-psql "$QWIZ_TARGET_DB_URL" -X --no-psqlrc --no-password -v ON_ERROR_STOP=1 -A -t -q -c "$query"
-echo "PASS: both project refs verified and database read-only queries succeeded. No changes were made."
+if [[ -n "${QWIZ_TARGET_DB_URL:-}" ]]; then
+  echo "Verifying the separate QWIZ PostgreSQL (read-only catalog counts)..."
+  psql "$QWIZ_TARGET_DB_URL" -X --no-psqlrc --no-password -v ON_ERROR_STOP=1 -A -t -q -c "$query"
+  echo "PASS: read-only SQL succeeded on both independent projects; no records changed."
+else
+  echo "PASS: source GOS.ID metadata is accessible. QWIZ target checked separately through Supabase connector; NOT verified by this job."
+fi
