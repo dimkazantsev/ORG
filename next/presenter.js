@@ -215,6 +215,26 @@ function projectionOption(value,index){
  }
  return '<span>'+escapeText(typeof value==='object'?value?.label||'':value)+'</span>';
 }
+
+// Show an unordered colour KEY on the audience screen, never the correct order.
+// Sorted labels deliberately avoid disclosing the answer sequence to the room.
+function projectionAssemblyPalette(question){
+ const entries=Object.entries(question.flag_assembly?.colors||{})
+  .filter(([name,hex])=>name&&/^#[0-9a-f]{6}$/i.test(hex))
+  .sort(([a],[b])=>a.localeCompare(b,'ru'));
+ if(!entries.length)return '';
+ const ink={белый:'#55515f',white:'#55515f',жёлтый:'#977000',желтый:'#977000',
+  yellow:'#977000',голубой:'#1476a3',blue:'#205fc7',синий:'#2054be',
+  green:'#137c48',зелёный:'#137b48',red:'#c12738',красный:'#c12738',
+  чёрный:'#2c2932',черный:'#2c2932',black:'#2c2932'};
+ return '<div class="projection-assembly-colors" aria-label="Доступные цвета флага">'+
+  entries.map(([name,hex])=>{
+   const color=ink[name.toLocaleLowerCase('ru')]||hex;
+   return '<div class="projection-assembly-color" style="--stripe:'+escapeText(hex)+
+    ';--color-label:'+escapeText(color)+'"><i aria-hidden="true"></i><strong>'+
+    escapeText(name.charAt(0).toLocaleUpperCase('ru')+name.slice(1))+'</strong></div>';
+  }).join('')+'</div>';
+}
 function questionScene(state){
  const q=state.question;
  const media=typeof q.media_url==='string'&&/^https:\/\//i.test(q.media_url)&&['audio','video'].includes(q.kind)
@@ -228,7 +248,8 @@ function questionScene(state){
  // Avoid the generic, purely decorative book drawing on audience questions.
  // Real media, assembly and masked flags retain their full question art.
  const hasVisual=Boolean(q.media_url||q.illustration_url||q.flag_visual?.type||q.flag_assembly);
- const frame=selectingFlag||hideFiller||!hasVisual?'':QwizStage.illustration(q,state.phase==='result'?state.answer:null);
+ const frame=selectingFlag||hideFiller||q.flag_assembly||!hasVisual?'':QwizStage.illustration(q,state.phase==='result'?state.answer:null);
+ const assemblyColors=state.phase==='question'&&q.flag_assembly?projectionAssemblyPalette(q):'';
  const top='<div class="projection-topline"><div><span class="projection-count">'+escapeText(q.round_title||q.topic||'Раунд вопросов')+
   '</span><p class="question-step">Вопрос '+(state.index+1)+' <span>/ '+state.total+'</span></p></div>'+
   QwizStage.clockMarkup(state)+'</div>';
@@ -250,10 +271,10 @@ function questionScene(state){
    '<div class="projection-answer-heading"><span>ПРАВИЛЬНЫЙ ОТВЕТ</span></div>'+
    '<div class="projection-answer-single">'+answerLetter+
     '<div class="projection-answer-primary">'+answerArt+
-      (answerArt&&q.kind==='flag'?'':'<strong class="projection-answer-text">'+escapeText(answerText)+'</strong>')+'</div>'+
+      (answerArt&&(q.kind==='flag'||q.flag_assembly)?'':'<strong class="projection-answer-text">'+escapeText(answerText)+'</strong>')+'</div>'+
     '<span class="projection-answer-success" aria-hidden="true">✓</span>'+
    '</div>'+
-   (explanation?'<p class="projection-answer-explanation">'+escapeText(explanation)+'</p>':'')+
+   (explanation&&!q.flag_assembly?'<p class="projection-answer-explanation">'+escapeText(explanation)+'</p>':'')+
   '</section>':'';
  // Public-screen answer variants are visible, but only server-authorized answer
  // reveal contains the correct indices. Do not add answer markers here.
@@ -268,7 +289,7 @@ function questionScene(state){
     'Ответьте на задание на своём устройстве.')+'</div>';
  return '<section class="projection-question projection-question-only'+(state.phase==='result'?' is-result':'')+'">'+top+
   '<div class="projection-question-viewport"><div class="projection-question-flow">'+
-   '<h1>'+escapeText(q.prompt)+'</h1>'+frame+media+
+   '<h1>'+escapeText(q.prompt)+'</h1>'+frame+media+assemblyColors+
    '<div class="projection-question-outcome">'+(finished?reveal:publicChoices)+'</div>'+
   '</div></div>'+
   (!finished?'<div class="projection-response-count" id="teamAnswerCount">'+
