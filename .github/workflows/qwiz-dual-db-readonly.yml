@@ -4,6 +4,7 @@ on:
     branches: [isolation/qwiz-independent-supabase-20261030]
     paths:
       - 'next/isolation/verify-two-databases-readonly.sh'
+      - 'next/isolation/safe-session-pooler.py'
       - '.github/workflows/qwiz-dual-db-readonly.yml'
   workflow_dispatch:
 permissions:
@@ -37,8 +38,9 @@ jobs:
           GOS_SOURCE_DB_URL: ${{ secrets.GOS_SOURCE_DB_URL }}
           QWIZ_TARGET_DB_URL: ${{ secrets.QWIZ_TARGET_DB_URL }}
         run: |
-          bash next/isolation/verify-two-databases-readonly.sh
-          echo 'BOTH_DATABASES_VERIFIED: yes; no migration or modifications executed.' >> "$GITHUB_STEP_SUMMARY"
+          python3 next/isolation/safe-session-pooler.py --connection GOS_SOURCE_DB_URL --mode probe
+          python3 next/isolation/safe-session-pooler.py --connection QWIZ_TARGET_DB_URL --mode probe
+          echo 'BOTH_DATABASES_VERIFIED: yes (project-scoped, SELECT-only); no migration or modifications executed.' >> "$GITHUB_STEP_SUMMARY"
       - name: Mark verification unproven if either encrypted connection is absent
         if: steps.check.outputs.configured != 'true'
         run: echo "::warning title=Source not verified::Both GOS_SOURCE_DB_URL and QWIZ_TARGET_DB_URL must exist for live read-only verification."
