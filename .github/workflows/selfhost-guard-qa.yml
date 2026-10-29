@@ -21,6 +21,7 @@ jobs:
         run: |
           node --check next/live-40-supabase.mjs
           node --check next/selfhost/prepare-preview.mjs
+          node --check next/selfhost/realtime-40.mjs
           node --test next/selfhost/target.test.mjs
       - name: Prepare an isolated preview with synthetic URL and API key
         env:
