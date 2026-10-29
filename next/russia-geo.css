@@ -95,8 +95,7 @@
 
 
 /* Map interaction: confirmation is revealed by one tap, not a disabled footnote. */
-.geo-game .geo-confirm[hidden]{display:none!important}
-.geo-game .geo-confirm:not([hidden]){
+.geo-game .geo-confirm{
  display:block;position:sticky;bottom:6px;z-index:8;
  width:100%;min-height:54px;margin:10px 0 6px;
  border:2px solid #6d39cb;border-radius:15px;
