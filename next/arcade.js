@@ -73,7 +73,7 @@ window.QwizArcade=(()=>{
   (kind==='player'?(['tug','rocket'].includes(mode)?'':(['captain','blitz','sequence_memory'].includes(mode)?'':'<button type="button" class="arcade-tap-btn" data-arcade-tap disabled>'+escape(m.cta)+'</button>'))+(['captain','blitz','sequence_memory'].includes(mode)?'':'<span class="arcade-tap-caption" data-arcade-personal>Синхронизация с игровым сервером…</span>'):'')+
   '<div class="arcade-alert" role="status" aria-live="polite" data-arcade-alert>Подключаем результаты…</div><div class="arcade-badges" data-arcade-badges></div><section class="arcade-vote" data-arcade-vote hidden></section></div>';
  }
- function stop(kind){const tr=ui[kind];if(!tr)return;if(tr.interval)clearTimeout(tr.interval);if(tr.clock)clearInterval(tr.clock);if(tr.flushTimer)clearTimeout(tr.flushTimer);window.QwizSecretCode?.stop(tr);if(tr.onClick)tr.root?.removeEventListener('click',tr.onClick);if(tr.onPointerDown)tr.root?.removeEventListener('pointerdown',tr.onPointerDown);if(tr.memory)tr.memory.runId+=1;tr.closed=true;ui[kind]=null;}
+ function stop(kind){const tr=ui[kind];if(!tr)return;if(tr.interval)clearTimeout(tr.interval);if(tr.clock)clearInterval(tr.clock);if(tr.flushTimer)clearTimeout(tr.flushTimer);window.QwizSecretCode?.stop(tr);if(tr.onClick)tr.root?.removeEventListener('click',tr.onClick);if(tr.onPointerDown)tr.root?.removeEventListener('pointerdown',tr.onPointerDown);if(tr.memory)tr.memory.runId+=1;if(tr.voteDialog){if(tr.voteDialog.open)tr.voteDialog.close();tr.voteDialog.remove();tr.voteDialog=null;}tr.closed=true;ui[kind]=null;}
  async function fetchState(tr){if(tr.closed||tr.fetching||!navigator.onLine)return;tr.fetching=true;const id=tr.key;
   try{
    // Abort a stalled snapshot read; otherwise 'fetching' could stay true forever.
@@ -349,7 +349,7 @@ window.QwizArcade=(()=>{
     if(personal)personal.textContent=v.mode==='captain'?(v.extra?.captain?'Переворачивайте по две плитки.':'Наблюдайте за вашим капитаном.'):v.mode==='rocket'?(v.extra?.selected?(v.extra.alive?'Вы бегун! Прыгайте перед препятствием.':'Столкновение. Сравниваем результаты.'):'От команды выбран один случайный бегун.'):v.mode==='blitz'&&!claim?(canAnswer?'Ваша команда выиграла захват! Выберите ответ.':'Захват завершён. Смотрите рейтинг.'):(tr.localTaps?'Нажатия: '+tr.localTaps+' · счёт команды обновляется сервером':'Все игроки нажимают. До 8 нажатий в секунду на человека.');
   }
   const badges=tr.root.querySelector('[data-arcade-badges]');if(badges)badges.innerHTML=(v.awards||[]).slice(0,12).map(a=>'<span class="arcade-award">'+escape(a.title)+'</span>').join('');
-  const vote=v.vote,ballot=tr.root.querySelector('[data-arcade-vote]');
+  const vote=v.vote,ballot=tr.kind==='player'?tr.voteDialog?.querySelector('[data-arcade-vote]'):tr.root.querySelector('[data-arcade-vote]');
   // The ballot replaces the spent arcade scene on a player's phone; never send it below the viewport.
   tr.root.querySelector('.arcade-shell.arcade-player')?.classList.toggle('is-boost-voting',Boolean(vote&&tr.kind==='player'&&vote.can_vote));
   if(ballot){
@@ -364,7 +364,7 @@ window.QwizArcade=(()=>{
     const tone=vote.strategy==='sabotage'?'harm':'boost';
     const title=strategyStage?'Что выбирает команда?':vote.strategy==='sabotage'?'Выберите ограничение сопернику':'Выберите усиление своей команде';
     const subtitle=strategyStage?'ЭТАП 1 / 2 · СТРАТЕГИЯ': 'ЭТАП 2 / 2 · КОНКРЕТНЫЙ ЭФФЕКТ';
-    ballot.setAttribute('role','dialog');ballot.setAttribute('aria-label','Голосование за командное преимущество');
+    ballot.setAttribute('role',tr.kind==='player'?'group':'region');ballot.setAttribute('aria-label','Голосование за командное преимущество');
     ballot.className='arcade-vote '+(strategyStage?'arcade-vote-strategy ':'arcade-vote-effects ')+(vote.strategy==='sabotage'?'is-harm':'is-boost');
     ballot.innerHTML='<div class="arcade-vote-title"><span>'+subtitle+' · 🏆 '+escape(champion?.name||'Лидеры')+'</span>'+
       '<strong>'+escape(title)+'</strong>'+
@@ -379,6 +379,13 @@ window.QwizArcade=(()=>{
        vote.can_vote?'Ожидаем голосования команды…':'Голосуют только участники команды-лидера.')+'</p>';
 
    }
+  }
+  // Native modal stays in the top layer, independent from the arcade scene and bottom player bar.
+  // Only the winning team's eligible participants see the ballot; no duplicate DOM votes.
+  if(tr.voteDialog){
+   const open=Boolean(vote?.can_vote&&vote?.open&&Date.parse(vote.vote_ends_at)>currentTime(tr));
+   if(open&&!tr.voteDialog.open)tr.voteDialog.showModal();
+   else if(!open&&tr.voteDialog.open)tr.voteDialog.close();
   }
   const status=v.awarded_at?'Результат зафиксирован. Награды зачислены.':
    !v.running?'Соревнование завершено.':
@@ -403,7 +410,23 @@ window.QwizArcade=(()=>{
   stop(kind);
   const tr={kind,key,root,code,roomId,client,mode,offset:0,closed:false,fetching:false,pending:0,batch:null,sending:false,view:null,flushTimer:null,qkey:'',secretAnswer:[],secretState:null,secretBusy:false};
   ui[kind]=tr;root.innerHTML=rootMarkup(mode,kind);
-  if(kind==='player'){tr.onClick=e=>{
+  if(kind==='player'){
+   // A dedicated browser top-layer dialog prevents bonus cards from being cut off
+   // by the previous mini-game, any scroll container or the bottom stats bar.
+   const voteDialog=document.createElement('dialog');
+   voteDialog.className='arcade-boost-dialog';
+   voteDialog.setAttribute('aria-label','Выбор командного усиления или штрафа');
+   voteDialog.innerHTML='<section class="arcade-vote" data-arcade-vote hidden></section>';
+   document.body.append(voteDialog);tr.voteDialog=voteDialog;
+   voteDialog.addEventListener('click',event=>{
+    const choice=event.target.closest('[data-boost-choice]');
+    if(choice&&!choice.disabled)void voteBoost(tr,choice.dataset.boostChoice);
+   });
+   voteDialog.addEventListener('cancel',event=>{
+    // Keep the timed collective decision visible while voting is still open.
+    if(tr.view?.vote?.can_vote&&tr.view?.vote?.open)event.preventDefault();
+   });
+   tr.onClick=e=>{
      if(window.QwizSecretCode?.click(tr,e))return;
     if(e.target.closest('[data-arcade-tap]')){
       if(tr.mode!=='tug'||e.detail===0||Date.now()-(tr.lastPointerTapAt||0)>700)tap(tr);
