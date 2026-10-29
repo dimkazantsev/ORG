@@ -129,7 +129,15 @@ COMMIT;"""
         args[args.index("-h")+1]=test_host
         for candidate in passwords:
             env["PGPASSWORD"]=candidate
-            result=subprocess.run(args,env=env,capture_output=True,text=True,timeout=25)
+            try:
+                # Schema-only transaction can legitimately take minutes because
+                # 148 RPC declarations, 283 constraints and 1173 ACLs are sent.
+                result=subprocess.run(args,env=env,capture_output=True,text=True,
+                                      timeout=(330 if a.mode=="apply-schema" else 25))
+            except subprocess.TimeoutExpired:
+                print("SCHEMA_IMPORT_TIMEOUT" if a.mode=="apply-schema" else
+                      "READ_ONLY_PROBE_TIMEOUT",file=sys.stderr)
+                return 124
             if result.returncode==0:
                 matched_host=test_host
                 break
