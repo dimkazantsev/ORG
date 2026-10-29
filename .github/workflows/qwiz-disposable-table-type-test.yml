@@ -4,6 +4,7 @@ on:
     branches: [isolation/qwiz-independent-supabase-20261030]
     paths:
       - 'next/isolation/disposable-table-types.py'
+      - 'next/isolation/disposable-table-integrity.py'
       - '.github/workflows/qwiz-disposable-table-type-test.yml'
   workflow_dispatch:
 permissions:
@@ -64,5 +65,16 @@ jobs:
           total="$(psql -XAt -h 127.0.0.1 -p 5432 -U postgres -d postgres -v ON_ERROR_STOP=1 \
             -c "select count(*) from pg_tables where schemaname='public' and (tablename like 'qwiz_%' or tablename like 'org_next_%' or tablename like 'org_quiz_%');")"
           test "$total" = '57'
-          echo 'PASS: all 57 QWIZ table columns accepted by disposable PostgreSQL 17; NO production DDL or rows transferred.'
-          echo 'Test includes only bare columns and RLS enabled; full migrations still require constraints, RPC, Auth, grants and data.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'PASS: all 57 QWIZ table columns accepted by disposable PostgreSQL 17.'
+          # All 283 constraint definitions and non-constraint index DDL below are
+          # executed ONLY against disposable localhost PostgreSQL; never source/target.
+          python3 next/isolation/disposable-table-integrity.py "$tmp/manifest.json" "$tmp/disposable-integrity.sql"
+          if ! psql -X --no-psqlrc -h 127.0.0.1 -p 5432 -U postgres -d postgres \
+            -v ON_ERROR_STOP=1 -f "$tmp/disposable-integrity.sql" \
+            > "$tmp/fixture-integrity-out.txt" 2> "$tmp/fixture-integrity-error.txt"; then
+            echo 'DISPOSABLE CONSTRAINT/INDEX COMPATIBILITY: failed; source and target untouched.'
+            grep -E '(ERROR:|DETAIL:|HINT:)' "$tmp/fixture-integrity-error.txt" | head -8 || true
+            exit 1
+          fi
+          echo 'PASS: QWIZ schema bare columns, constraints and index definitions applied in disposable PostgreSQL 17; NO production DDL or rows transferred.'
+          echo 'Disposable table, constraints and index type compatibility passed. RPC, full policies, Auth data, defaults and real migrations remain untested.' >> "$GITHUB_STEP_SUMMARY"
