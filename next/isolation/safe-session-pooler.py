@@ -102,6 +102,11 @@ COMMIT;"""
     # its surrounding square brackets. Try removing wrappers in PROBE mode.
     wrapper_detected=(len(password)>=2 and (password[0],password[-1]) in
                       (("[","]"),('"','"'),("'","'")))
+    # The exact wrapper-free credential was already proven by READ ONLY probe.
+    # In apply mode we must use that verified credential, not the literal
+    # dashboard placeholder brackets. The SQL remains separately guarded.
+    if a.mode=="apply-schema" and wrapper_detected:
+        passwords=[password[1:-1]]
     if a.mode=="probe" and wrapper_detected:
         passwords.append(password[1:-1])
         print("TARGET_PASSWORD_HAS_REMOVABLE_WRAPPER="+str(
