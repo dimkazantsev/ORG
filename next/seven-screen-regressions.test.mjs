@@ -52,7 +52,7 @@ test('Backend migrations are checked by rollback-only integration tests',()=>{
  for(const path of ['./migrations/qa_secret_code_ambiguous_n_rollback.sql',
                     './migrations/qa_geo_expired_correct_rollback.sql']){
   const sql=read(path);
-  assert.match(sql,/(?:^|\\n)BEGIN;/);
+  assert.match(sql,/(?:^|\n)BEGIN;/);
   assert.match(sql,/ROLLBACK;\s*$/);
  }
 });
