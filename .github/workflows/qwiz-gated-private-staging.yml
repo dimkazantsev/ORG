@@ -1,0 +1,91 @@
+name: QWIZ / gated private row staging in independent Supabase Free
+on:
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - 'next/isolation/PRIVATE-STAGE-GATE.md'
+      - '.github/workflows/qwiz-gated-private-staging.yml'
+permissions:
+  contents: read
+concurrency:
+  group: qwiz-private-stage-singleflight
+  cancel-in-progress: false
+jobs:
+  stage-qwiz-rows:
+    if: "${{ github.event.head_commit.message == 'QWIZ_PRIVATE_STAGE_APPROVED' }}"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Snapshot only 57 scoped QWIZ source tables and commit private staging to separate QWIZ Free
+        shell: bash
+        env:
+          GOS_SOURCE_DB_URL: ${{ secrets.GOS_SOURCE_DB_URL }}
+          QWIZ_TARGET_DB_URL: ${{ secrets.QWIZ_TARGET_DB_URL }}
+          PGSSLMODE: require
+          PGCONNECT_TIMEOUT: '8'
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          : "${GOS_SOURCE_DB_URL:?Missing source technical reader}"
+          : "${QWIZ_TARGET_DB_URL:?Missing independent Free target}"
+          work="$(mktemp -d "$RUNNER_TEMP/qwiz-private-stage.XXXXXXXX")"
+          trap 'rm -rf "$work"' EXIT
+          # Refuse cross-project or wrong credentials before ANY row access.
+          python3 - <<'PY'
+          import importlib.util
+          from pathlib import Path
+          from os import environ
+          loc=Path("next/isolation/safe-session-pooler.py")
+          spec=importlib.util.spec_from_file_location("pooler",loc)
+          p=importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(p)
+          su,sp,sh,_=p.credentials("GOS_SOURCE_DB_URL")
+          tu,tp,th,_=p.credentials("QWIZ_TARGET_DB_URL")
+          if su!="qwiz_catalog_reader.bderfrcfuhnutuoyudje" or tu!="postgres.vwsoergltegncrretxnz":
+              raise SystemExit("Refusing mismatched projects")
+          if "eu-central-1" not in sh or "eu-west-1" not in th:
+              raise SystemExit("Refusing unexpected session pooler region")
+          PY
+          echo 'Source: 57-table QWIZ-only metadata and 24h access check.'
+          psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -qAt -v ON_ERROR_STOP=1 \
+            -c "SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind='r' AND (c.relname LIKE 'qwiz_%' OR c.relname LIKE 'org_next_%' OR c.relname LIKE 'org_quiz_%') ORDER BY c.relname" > "$work/tables.txt"
+          test "$(wc -l < "$work/tables.txt")" -eq 57
+          psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -qAt -v ON_ERROR_STOP=1 \
+            -c "SELECT (SELECT count(*) FROM pg_policy WHERE polname='qwiz_temporary_migration_reader'), (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind='r' AND (c.relname LIKE 'qwiz_%' OR c.relname LIKE 'org_next_%' OR c.relname LIKE 'org_quiz_%') AND has_table_privilege(current_user,c.oid,'SELECT'))" > "$work/authorization.txt"
+          test "$(cat "$work/authorization.txt")" = "57|57"
+          echo 'Source snapshot begins (no row logs or downloadable artifacts).'
+          docker run --rm --network host --user "$(id -u):$(id -g)" \
+            -e GOS_SOURCE_DB_URL -e PGSSLMODE -e PGCONNECT_TIMEOUT \
+            -v "$work:/work" postgres:17 sh -ec '
+              pg_dump --dbname="$GOS_SOURCE_DB_URL" \
+                --data-only --enable-row-security --column-inserts \
+                --no-owner --no-acl --no-comments \
+                --table="public.qwiz_*" --table="public.org_next_*" \
+                --table="public.org_quiz_*" --file=/work/source.sql
+            '
+          test -s "$work/source.sql"
+          test "$(wc -c < "$work/source.sql")" -lt 52428800
+          python3 next/isolation/build-private-qwiz-row-stage.py \
+            "$work/source.sql" "$work/tables.txt" "$work/staging.sql" > "$work/build-summary.txt"
+          # Fail closed if temporary RLS has expired: an empty or partial dump
+          # must never be misrepresented as a full migration.
+          python3 - "$work/build-summary.txt" <<'PY'
+          import re,sys,pathlib
+          data=pathlib.Path(sys.argv[1]).read_text()
+          m=re.search(r"tables=(\d+) inserted_rows=(\d+) nonempty_tables=(\d+)",data)
+          if not m:raise SystemExit("Missing staged snapshot aggregate summary")
+          tables,rows,nonempty=map(int,m.groups())
+          if tables!=57 or rows<2000 or nonempty<30:
+              raise SystemExit("Source RLS snapshot incomplete or expired. No target changes.")
+          print("Source complete: tables="+str(tables)+
+                " rows="+str(rows)+" nonempty="+str(nonempty))
+          PY
+          # Confirm empty destination schema and zero Auth users before transaction.
+          python3 next/isolation/safe-session-pooler.py --connection QWIZ_TARGET_DB_URL --mode probe > /dev/null
+          echo 'Applying one guarded transaction ONLY on the new Free QWIZ database.'
+          python3 next/isolation/execute-private-qwiz-stage-guarded.py "$work/staging.sql"
+          # The SQL transaction itself checks counts, RLS, and role restrictions.
+          # No user identifiers, row contents, or schema data uploaded to GitHub.
+          echo 'Private QWIZ staging committed to the new Free project. No Auth/Storage accounts or live frontend changed.' >> "$GITHUB_STEP_SUMMARY"
