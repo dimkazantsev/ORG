@@ -43,12 +43,31 @@ VALUES(v_room,0,p1,'[{"mode":"locate"}]'::jsonb,1),(v_room,0,p2,'[{"mode":"locat
 IF public.qwiz_stage_everyone_done(v_room) THEN RAISE EXCEPTION 'Geo ended with one unfinished';END IF;
 UPDATE public.qwiz_geo_runs SET current_index=1 WHERE room_id=v_room AND player_id=p2;
 IF NOT public.qwiz_stage_everyone_done(v_room) THEN RAISE EXCEPTION 'Geo did not end';END IF;
+UPDATE public.qwiz_room_activity SET settings='{"arcade_mode":"blitz","arcade_seconds":110}'::jsonb WHERE room_id=v_room;
+UPDATE public.qwiz_arcade_runs SET mode='blitz',awarded_at=NULL WHERE room_id=v_room;
+IF public.qwiz_stage_everyone_done(v_room) THEN RAISE EXCEPTION 'Blitz ended without captain choices';END IF;
+INSERT INTO public.qwiz_consensus_decisions(room_id,card_position,team_id,choice,captain_id)
+VALUES(v_room,0,t1,1,p1);
+IF public.qwiz_stage_everyone_done(v_room) THEN RAISE EXCEPTION 'Blitz ended with one missing team';END IF;
+INSERT INTO public.qwiz_consensus_decisions(room_id,card_position,team_id,choice,captain_id)
+VALUES(v_room,0,t2,2,p2);
+IF NOT public.qwiz_stage_everyone_done(v_room) THEN RAISE EXCEPTION 'Blitz did not end after captains';END IF;
+UPDATE public.qwiz_room_activity SET settings='{"arcade_mode":"rocket","arcade_seconds":110}'::jsonb WHERE room_id=v_room;
+UPDATE public.qwiz_arcade_runs SET mode='rocket' WHERE room_id=v_room;
+INSERT INTO public.qwiz_arcade_runner_players(room_id,card_position,team_id,player_id,eliminated_at)
+VALUES(v_room,0,t1,p1,clock_timestamp()),(v_room,0,t2,p2,NULL);
+IF public.qwiz_stage_everyone_done(v_room) THEN RAISE EXCEPTION 'Runner ended while one still active';END IF;
+UPDATE public.qwiz_arcade_runner_players SET eliminated_at=clock_timestamp() WHERE room_id=v_room AND player_id=p2;
+IF NOT public.qwiz_stage_everyone_done(v_room) THEN RAISE EXCEPTION 'Runner did not end after all eliminated';END IF;
+UPDATE public.qwiz_room_activity SET settings='{"arcade_mode":"tug","arcade_seconds":110}'::jsonb WHERE room_id=v_room;
+UPDATE public.qwiz_arcade_runs SET mode='tug' WHERE room_id=v_room;
+IF public.qwiz_stage_everyone_done(v_room) THEN RAISE EXCEPTION 'Continuous Tap Battle must use timer';END IF;
 UPDATE public.org_next_rooms SET phase='question',question_index=0,ends_at=clock_timestamp()+interval '90 seconds' WHERE id=v_room;
 IF public.qwiz_stage_everyone_done(v_room) THEN RAISE EXCEPTION 'Question ended with no answers';END IF;
 INSERT INTO public.org_next_answers(room_id,player_id,question_index,choice,correct,points) VALUES(v_room,p1,0,0,false,0);
 IF public.qwiz_stage_everyone_done(v_room) THEN RAISE EXCEPTION 'Question ended with one missing';END IF;
 INSERT INTO public.org_next_answers(room_id,player_id,question_index,choice,correct,points) VALUES(v_room,p2,0,0,false,0);
 IF NOT public.qwiz_stage_everyone_done(v_room) THEN RAISE EXCEPTION 'Question did not end';END IF;
-RAISE NOTICE 'QA PASS: all participants, missing participant, Memory, Secret, Geography, Question, Bonus';
+RAISE NOTICE 'QA PASS: all participants, missing participant, Memory, Secret, Geography, Blitz, Runner, Tap Battle, Question, Bonus';
 END $qa$;
 ROLLBACK;
