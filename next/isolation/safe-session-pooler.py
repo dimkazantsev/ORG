@@ -67,8 +67,9 @@ SET LOCAL statement_timeout = '10000ms';
 SET LOCAL lock_timeout = '2000ms';
 SELECT current_setting('server_version'),
  (SELECT count(*) FROM pg_tables WHERE schemaname='public' AND
-  (tablename LIKE 'qwiz_%' OR tablename LIKE 'org_next_%' OR tablename LIKE 'org_quiz_%')),
- (SELECT count(*) FROM auth.users);
+  (tablename LIKE 'qwiz_%' OR tablename LIKE 'org_next_%' OR tablename LIKE 'org_quiz_%'))""" + (
+  """,(SELECT count(*) FROM auth.users);""" if a.connection=="QWIZ_TARGET_DB_URL"
+  else """;""") + """
 COMMIT;"""
     else:
         from pathlib import Path
