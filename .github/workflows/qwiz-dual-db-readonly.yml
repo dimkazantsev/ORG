@@ -1,4 +1,4 @@
-name: QWIZ / separate databases read-only preflight
+name: QWIZ / legacy GOS read-only source preflight
 on:
   push:
     branches: [isolation/qwiz-independent-supabase-20261030]
@@ -9,40 +9,35 @@ on:
 permissions:
   contents: read
 jobs:
-  verify-two-databases:
+  verify-source:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Validate shell syntax without connecting to either project
+      - name: Validate script syntax without accessing databases
         run: bash -n next/isolation/verify-two-databases-readonly.sh
-      - name: Check for two authorized source and target database credentials
-        id: envcheck
+      - name: Confirm private source connection is configured
+        id: check
         shell: bash
         env:
           SOURCE: ${{ secrets.GOS_SOURCE_DB_URL }}
-          TARGET: ${{ secrets.QWIZ_TARGET_DB_URL }}
         run: |
-          if [[ -z "$SOURCE" || -z "$TARGET" ]]; then
+          if [[ -z "$SOURCE" ]]; then
             echo 'configured=false' >> "$GITHUB_OUTPUT"
-            echo 'NOT_READY: both repository Actions secrets GOS_SOURCE_DB_URL and QWIZ_TARGET_DB_URL are required.' >> "$GITHUB_STEP_SUMMARY"
+            echo 'BLOCKED: GOS_SOURCE_DB_URL is not configured in repository Actions secrets; NO source database read happened.' >> "$GITHUB_STEP_SUMMARY"
           else
             echo 'configured=true' >> "$GITHUB_OUTPUT"
-            echo 'Secrets are configured; read-only connectivity check follows.' >> "$GITHUB_STEP_SUMMARY"
+            echo 'Source DB credential is present; proceeding to SELECT-only catalog checks.' >> "$GITHUB_STEP_SUMMARY"
           fi
-      - name: Read only metadata from both independent projects
-        if: steps.envcheck.outputs.configured == 'true'
+      - name: Query GOS source and optional QWIZ target metadata
+        if: steps.check.outputs.configured == 'true'
         shell: bash
         env:
           GOS_SOURCE_DB_URL: ${{ secrets.GOS_SOURCE_DB_URL }}
           QWIZ_TARGET_DB_URL: ${{ secrets.QWIZ_TARGET_DB_URL }}
-        run: bash next/isolation/verify-two-databases-readonly.sh
-      - name: Document test state
-        if: always()
-        shell: bash
         run: |
-          if [[ "${{ steps.envcheck.outputs.configured }}" != "true" ]]; then
-            echo 'RESULT: SKIPPED (credentials missing); NO live source/target access demonstrated.' >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo 'RESULT: check logs above for PASS/FAIL; no migration or production writes performed.' >> "$GITHUB_STEP_SUMMARY"
-          fi
+          bash next/isolation/verify-two-databases-readonly.sh
+          echo 'SOURCE_DATABASE_VERIFIED: yes; no migration or modifications executed.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Mark source verification unproven when connection absent
+        if: steps.check.outputs.configured != 'true'
+        run: echo "::warning title=Source not verified::Add a restricted GOS_SOURCE_DB_URL Actions secret to run live read-only verification. Workflow success here means only shell syntax validated."
