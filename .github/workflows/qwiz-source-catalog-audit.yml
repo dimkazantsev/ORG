@@ -1,0 +1,53 @@
+name: QWIZ / catalog-only source dependency audit
+on:
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - 'next/isolation/inspect-source-catalog-readonly.sql'
+      - '.github/workflows/qwiz-source-catalog-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  catalog-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require only the independent least-privilege reader connection
+        id: check
+        shell: bash
+        env:
+          SOURCE: ${{ secrets.GOS_SOURCE_DB_URL }}
+        run: |
+          if [[ -z "$SOURCE" ]]; then
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "BLOCKED: missing encrypted GOS_SOURCE_DB_URL" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Catalog-only READ ONLY source inventory
+        if: steps.check.outputs.configured == 'true'
+        shell: bash
+        env:
+          GOS_SOURCE_DB_URL: ${{ secrets.GOS_SOURCE_DB_URL }}
+          PGSSLMODE: require
+          PGCONNECT_TIMEOUT: '7'
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from os import environ
+          from urllib.parse import urlsplit, unquote
+          u = urlsplit(environ['GOS_SOURCE_DB_URL'])
+          if (u.scheme not in ('postgres','postgresql')
+              or (not u.hostname or not u.hostname.endswith('.pooler.supabase.com'))
+              or unquote(u.username or '') != 'qwiz_catalog_reader.bderfrcfuhnutuoyudje'
+              or u.port != 5432
+              or not u.password):
+              raise SystemExit('ERROR: GOS_SOURCE_DB_URL is not the expected restricted source Session pooler URI')
+          PY
+          psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -v ON_ERROR_STOP=1 -A -q             -f next/isolation/inspect-source-catalog-readonly.sql
+          echo "PASS: inspected QWIZ-only catalog metadata from original GOS.ID; no data rows, credentials or function bodies exported." >> "$GITHUB_STEP_SUMMARY"
+      - name: Never misreport skipped checks as successful
+        if: steps.check.outputs.configured != 'true'
+        run: echo "::warning::The encrypted database connection has not been configured. Source metadata was not read."
