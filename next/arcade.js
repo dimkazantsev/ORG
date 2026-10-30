@@ -71,7 +71,8 @@ window.QwizArcade=(()=>{
   '<p class="arcade-lead">'+escape(m.desc)+'</p><div class="arcade-scene">'+art(mode)+(kind==='player'&&['tug','rocket'].includes(mode)?'<button type="button" class="arcade-tap-btn '+(mode==='tug'?'arcade-tap-center':'arcade-runner-jump-btn')+'" data-arcade-tap disabled>'+escape(m.cta)+'</button>':'')+'</div>'+
   '<div data-arcade-question hidden></div>'+(mode==='sequence_memory'?'<section class="arcade-secret-panel" data-secret-panel role="region" aria-label="Восстановление секретного кода"></section>':'')+(mode==='captain'&&kind==='player'?'<div class="arcade-memory-info" data-memory-info role="status"></div><div class="arcade-memory-board" data-arcade-memory role="group" aria-label="Поле Мэмори"></div>':'')+'<div class="arcade-ranks" data-arcade-ranks></div>'+
   (kind==='player'?(['tug','rocket'].includes(mode)?'':(['captain','blitz','sequence_memory'].includes(mode)?'':'<button type="button" class="arcade-tap-btn" data-arcade-tap disabled>'+escape(m.cta)+'</button>'))+(['captain','blitz','sequence_memory'].includes(mode)?'':'<span class="arcade-tap-caption" data-arcade-personal>Синхронизация с игровым сервером…</span>'):'')+
-  '<div class="arcade-alert" role="status" aria-live="polite" data-arcade-alert>Подключаем результаты…</div><div class="arcade-badges" data-arcade-badges></div><section class="arcade-vote" data-arcade-vote hidden></section></div>';
+  '<div class="arcade-alert" role="status" aria-live="polite" data-arcade-alert>Подключаем результаты…</div><div class="arcade-badges" data-arcade-badges></div><section class="arcade-vote" data-arcade-vote hidden></section></div>'+
+  (kind==='screen'?'<section class="arcade-vote-projection" data-arcade-vote-screen hidden role="region" aria-label="Голосование за бонус или штраф"></section>':'');
  }
  function stop(kind){const tr=ui[kind];if(!tr)return;if(tr.interval)clearTimeout(tr.interval);if(tr.clock)clearInterval(tr.clock);if(tr.flushTimer)clearTimeout(tr.flushTimer);if(tr.voteTimer)clearTimeout(tr.voteTimer);window.QwizSecretCode?.stop(tr);if(tr.onClick)tr.root?.removeEventListener('click',tr.onClick);if(tr.onPointerDown)tr.root?.removeEventListener('pointerdown',tr.onPointerDown);if(tr.memory)tr.memory.runId+=1;if(tr.voteDialog){if(tr.voteDialog.open)tr.voteDialog.close();tr.voteDialog.remove();tr.voteDialog=null;}tr.closed=true;ui[kind]=null;}
  async function fetchState(tr){if(tr.closed||tr.fetching||!navigator.onLine)return;tr.fetching=true;const id=tr.key;
@@ -324,6 +325,56 @@ window.QwizArcade=(()=>{
    }
   }
  }
+
+ // On the audience display the whole vote occupies a dedicated scene.
+ // The authoritative clock, eligible team and ballot options come from the server,
+ // not from a client-side guess about when the next round should begin.
+ function paintProjectionVote(tr,v,vote){
+  if(tr.kind!=='screen')return;
+  const panel=tr.root.querySelector('[data-arcade-vote-screen]');
+  const arcade=tr.root.querySelector('.arcade-shell');
+  if(!panel||!arcade)return;
+  const visible=Boolean(vote?.open&&(vote.stage==='strategy'||vote.stage==='option')&&
+    Date.parse(vote.full_vote_ends_at||vote.vote_ends_at)>currentTime(tr));
+  panel.hidden=!visible;
+  arcade.hidden=visible;
+  if(!visible){tr.projectionVoteKey='';return;}
+  const stage1=vote.stage==='strategy';
+  const winning=(v.teams||[]).find(x=>String(x.id)===String(vote.winner_team));
+  const team=winning?.name||'Команда-победитель';
+  const entries=stage1?(vote.target_name?STRATEGIES:STRATEGIES.filter(x=>x[0]==='support')):
+   vote.strategy==='sabotage'?HINDRANCES:vote.strategy==='support'?BOOSTS:[];
+  const key=[v.card_position,vote.stage,vote.strategy,vote.winner_team,vote.target_name].join(':');
+  if(tr.projectionVoteKey!==key){
+   tr.projectionVoteKey=key;
+   const label=stage1?'Выбор стратегии':vote.strategy==='sabotage'?'Выбор штрафа':'Выбор бонуса';
+   const heading=stage1?'Как поступит команда-победитель?':
+    vote.strategy==='sabotage'?'Какое ограничение получит соперник?':'Какое усиление получит команда?';
+   const copy=stage1?'Зелёный маршрут усиливает свою команду. Красный манёвр ограничивает соперника.':
+    vote.strategy==='sabotage'?'Команда определяет штраф для '+(vote.target_name||'соперника')+'.':
+    'Команда определяет преимущество для следующего раунда.';
+   panel.className='arcade-vote-projection '+(vote.strategy==='sabotage'?'is-harm':'is-boost');
+   panel.innerHTML='<div class="arcade-projection-vote-top"><span class="arcade-projection-vote-kicker">QWIZ-PARTY · РЕШЕНИЕ КОМАНДЫ</span>'+
+    '<span class="arcade-projection-vote-step">'+(stage1?'ЭТАП 1 ИЗ 2':'ЭТАП 2 ИЗ 2')+'</span></div>'+
+    '<div class="arcade-projection-vote-heading"><span>'+escape(label)+'</span>'+
+      '<h1>'+escape(heading)+'</h1><p>'+escape(copy)+'</p></div>'+
+    '<div class="arcade-projection-vote-champion"><span aria-hidden="true">✦</span><strong>'+escape(team)+'</strong><small>Выбор делает победившая команда со своих телефонов</small></div>'+
+    '<div class="arcade-projection-vote-options" role="list">'+
+     (entries.length?entries.map(([id,title,description])=>
+      '<article class="arcade-projection-vote-option" role="listitem" data-projection-vote-option="'+escape(id)+'" data-vote-tone="'+(id==='sabotage'||HINDRANCES.some(x=>x[0]===id)?'harm':'boost')+'">'+
+      strategyIcon(id)+'<strong>'+escape(title)+'</strong><span>'+escape(description)+'</span>'+
+      '<div class="arcade-projection-vote-count"><b data-projection-vote-count="'+escape(id)+'">0</b><span>голосов</span></div></article>').join(''):
+      '<p class="arcade-projection-vote-wait">Ожидаем окончательного решения команды.</p>')+'</div>'+
+    '<div class="arcade-projection-vote-bottom"><span>Голосование проходит на телефонах участников</span>'+
+    '<div class="arcade-projection-vote-timer" role="timer" aria-live="off"><strong data-projection-vote-seconds>—</strong><small>секунд осталось</small></div></div>';
+  }
+  const counts=vote.counts||{};
+  panel.querySelectorAll('[data-projection-vote-count]').forEach(el=>{
+   el.textContent=String(Math.max(0,Number(counts[el.dataset.projectionVoteCount])||0));
+  });
+  const seconds=panel.querySelector('[data-projection-vote-seconds]');
+  if(seconds)seconds.textContent=String(left(vote.vote_ends_at,tr));
+ }
  function paint(tr){const v=tr.view;if(!v?.mode||tr.closed)return;const now=currentTime(tr),capture=Date.parse(v.capture_until||'')||0,end=Date.parse(v.ends_at||'')||0;
   const valid=v.running&&now<end,claim=v.mode==='blitz'&&now<capture;
   const list=tr.root.querySelector('[data-arcade-ranks]');if(list)list.innerHTML=rankMarkup(v);
@@ -395,6 +446,7 @@ window.QwizArcade=(()=>{
 
    }
   }
+  paintProjectionVote(tr,v,vote);
   // Native modal stays in the top layer, independent from the arcade scene and bottom player bar.
   // Only the winning team's eligible participants see the ballot; no duplicate DOM votes.
   if(tr.voteDialog){
@@ -413,6 +465,10 @@ window.QwizArcade=(()=>{
  function tick(tr){const v=tr.view;if(!v||tr.closed)return;
   const clock=tr.root.querySelector('[data-arcade-clock]');const sec=left(v.ends_at,tr);
   if(clock){clock.textContent=sec+' сек.';clock.dataset.urgent=String(sec<=3);}
+  if(tr.kind==='screen'&&v.vote){
+   const projectionSeconds=tr.root.querySelector('[data-projection-vote-seconds]');
+   if(projectionSeconds)projectionSeconds.textContent=String(left(v.vote.vote_ends_at,tr));
+  }
   const consentClock=tr.root.querySelector('[data-consensus-clock]');if(consentClock){const at=tr.view?.consensus?.stage==='voting'?tr.view?.consensus?.vote_ends_at:tr.view?.consensus?.ends_at;consentClock.textContent=left(at,tr)+' сек.';}
   if(v.mode==='rocket'){const obstacle=tr.root.querySelector('[data-runner-obstacle]');if(obstacle&&!obstacle.hidden){const dt=(Date.parse(v.extra?.next_at)-currentTime(tr))/1000;obstacle.style.left=(20+78*Math.max(0,Math.min(1,dt/2.25)))+'%';}}
   const button=tr.root.querySelector('[data-arcade-tap]');
