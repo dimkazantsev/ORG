@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="ru" class="player-compact"><head><meta charset="utf-8">
+<html lang="ru"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="./theme.css"><link rel="stylesheet" href="./arcade.css?v=secret-code-live-20261028-1"><link rel="stylesheet" href="./player-layout.css?v=secret-mobile-vote-20261030-1">
 <style>body{margin:0;background:#faf9fd;font-family:system-ui,sans-serif}main{max-width:900px;margin:0 auto;padding:16px;box-sizing:border-box}html.fixture-player #gameView #gameContent{height:calc(100dvh - 90px);min-height:0;overflow:hidden;box-sizing:border-box}html.fixture-player main{padding:8px}</style>
@@ -9,9 +9,9 @@
 const fake={mode:'captain',running:true,card_position:1,started_at:new Date(Date.now()-4000).toISOString(),ends_at:new Date(Date.now()+60000).toISOString(),server_now:new Date().toISOString(),teams:[{id:'team1',name:'Команда первая',points:0,taps:0,place:1}],mine:{team_id:'team1',player_id:'player1',captain:true,credits:0,achievements:[]},awards:[],extra:{}};
 const accepted=[];
 const batches=new Set();
-window.mountExample=mode=>{
+window.mountExample=(mode,withVote=false)=>{
  QwizArcade.stop('player');
- fake.mode=mode;fake.running=true;fake.card_position+=1;fake.vote=null;
+ fake.mode=mode;fake.running=true;fake.card_position+=1;fake.vote=withVote?{can_vote:true,open:true,stage:'strategy',strategy:null,counts:{},my_choice:null,winner_team:'team1',target_name:'Команда 2',vote_ends_at:new Date(Date.now()+25000).toISOString()}:null;
  fake.secret_code=mode==='sequence_memory'?{phase:'answer',template:'Четыре цвета',level:1,length:4,choices:['red','blue','yellow','green'],answer_count:0,submitted:false}:null;
  fake.extra=mode==='captain'?{captain:true,tiles:Array.from({length:12},(_,index)=>({index,icon:null,matched:false,open:false})),pairs:0,moves:0,players:[{team_id:'team1',pairs:0,moves:0,completed_ms:null}]}:
  mode==='rocket'?{selected:true,alive:true,cleared:0,next_at:new Date(Date.now()+1600).toISOString(),players:[{team_id:'team1',cleared:0}]}:{};
@@ -40,6 +40,6 @@ window.mountExample=mode=>{
  QwizArcade.mountPlayer(root,{phase:'intermission',code:'1A2B3C4D',room_id:'room-id',activity:{settings:{arcade_mode:mode}}},{client});
 };
 window.accepted=accepted;
-window.setFixturePlayer=()=>document.documentElement.classList.add('fixture-player');
+window.setFixturePlayer=()=>document.documentElement.classList.add('player-compact','fixture-player');
 window.setFixtureVote=()=>{fake.vote={can_vote:true,open:true,stage:'strategy',strategy:null,counts:{},my_choice:null,winner_team:'team1',target_name:'Команда 2',vote_ends_at:new Date(Date.now()+25000).toISOString()};};
 </script></body></html>
