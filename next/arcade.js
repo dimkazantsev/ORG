@@ -68,7 +68,7 @@ window.QwizArcade=(()=>{
  }
  function rootMarkup(mode,kind='player'){const m=META[mode];return '<div class="arcade-shell arcade-'+kind+'" data-arcade-root="'+mode+'">'+
   '<div class="arcade-head"><div><span class="arcade-kicker">QWIZ-PARTY · КОМАНДНОЕ ИСПЫТАНИЕ</span><h2>'+escape(m.title)+'</h2></div><span class="arcade-countdown" data-arcade-clock>—</span></div>'+
-  '<p class="arcade-lead">'+escape(m.desc)+'</p><div class="arcade-scene">'+art(mode)+(kind==='player'&&['tug','rocket'].includes(mode)?'<button type="button" class="arcade-tap-btn '+(mode==='tug'?'arcade-tap-center':'arcade-runner-jump-btn')+'" data-arcade-tap disabled>'+escape(m.cta)+'</button>':'')+'</div>'+
+  '<p class="arcade-lead">'+escape(m.desc)+'</p><div class="arcade-scene">'+art(mode)+(kind==='screen'&&mode==='tug'?'<div class="arcade-audience-tap-hero" role="img" aria-label="ЖМИ! — нажимайте на телефонах"><span>ЖМИ!</span></div>':'')+(kind==='player'&&['tug','rocket'].includes(mode)?'<button type="button" class="arcade-tap-btn '+(mode==='tug'?'arcade-tap-center':'arcade-runner-jump-btn')+'" data-arcade-tap disabled>'+escape(m.cta)+'</button>':'')+'</div>'+
   '<div data-arcade-question hidden></div>'+(mode==='sequence_memory'?'<section class="arcade-secret-panel" data-secret-panel role="region" aria-label="Восстановление секретного кода"></section>':'')+(mode==='captain'&&kind==='player'?'<div class="arcade-memory-info" data-memory-info role="status"></div><div class="arcade-memory-board" data-arcade-memory role="group" aria-label="Поле Мэмори"></div>':'')+'<div class="arcade-ranks" data-arcade-ranks></div>'+
   (kind==='player'?(['tug','rocket'].includes(mode)?'':(['captain','blitz','sequence_memory'].includes(mode)?'':'<button type="button" class="arcade-tap-btn" data-arcade-tap disabled>'+escape(m.cta)+'</button>'))+(['captain','blitz','sequence_memory'].includes(mode)?'':'<span class="arcade-tap-caption" data-arcade-personal>Синхронизация с игровым сервером…</span>'):'')+
   '<div class="arcade-alert" role="status" aria-live="polite" data-arcade-alert>Подключаем результаты…</div><div class="arcade-badges" data-arcade-badges></div><section class="arcade-vote" data-arcade-vote hidden></section></div>'+
@@ -400,7 +400,8 @@ window.QwizArcade=(()=>{
     if(personal)personal.textContent=v.mode==='captain'?(v.extra?.captain?'Переворачивайте по две плитки.':'Наблюдайте за вашим капитаном.'):v.mode==='rocket'?(v.extra?.selected?(v.extra.alive?'Вы бегун! Прыгайте перед препятствием.':'Столкновение. Сравниваем результаты.'):'От команды выбран один случайный бегун.'):v.mode==='blitz'&&!claim?(canAnswer?'Ваша команда выиграла захват! Выберите ответ.':'Захват завершён. Смотрите рейтинг.'):(tr.localTaps?'Нажатия: '+tr.localTaps+' · счёт команды обновляется сервером':'Все игроки нажимают. До 8 нажатий в секунду на человека.');
   }
   const badges=tr.root.querySelector('[data-arcade-badges]');if(badges)badges.innerHTML=(v.awards||[]).slice(0,12).map(a=>'<span class="arcade-award">'+escape(a.title)+'</span>').join('');
-  const vote=v.vote,ballot=tr.kind==='player'?tr.voteDialog?.querySelector('[data-arcade-vote]'):tr.root.querySelector('[data-arcade-vote]');
+  const vote=v.vote,ballot=tr.kind==='player'?tr.voteDialog?.querySelector('[data-arcade-vote]'):null;
+  // Projector voting lives in its own scene, never below the old arcade.
   // Each voting stage is independent. Closing one ballot must not hide the next stage.
   const voteKey=vote?.open&&vote?.can_vote?[tr.roomId,v.card_position,vote.stage,vote.vote_ends_at].join(':'):'';
   if(voteKey!==tr.voteKey){
@@ -570,7 +571,7 @@ window.QwizArcade=(()=>{
   tr.flushTimer=null;
   if(!tr.batch){
    if(!tr.pending)return;
-   const count=Math.min(5,tr.pending);
+   const count=Math.min(4,tr.pending);
    tr.pending-=count;
    // One stable UUID per batch: HTTP retries never create duplicate points.
    tr.batch={id:crypto.randomUUID(),count,attempts:0,card:tr.view?.card_position};
@@ -605,7 +606,7 @@ window.QwizArcade=(()=>{
    const age=Date.now()+(tr.offset||0)-(Date.parse(tr.view?.ends_at)||0);
    const rejected=/Время нажатий истекло|Испытание сейчас не проводится|Здесь нет активной|Некорректный пакет|не найдена|засчитана/i.test(String(e.message||''));
    if(rejected||age>15000||batch.attempts>6){
-    tr.batch=null;showMessage(tr,'Не удалось подтвердить часть нажатий. Неподтверждённые очки не начислены.',true);
+    tr.batch=null;showMessage(tr,'Не все нажатия удалось засчитать. Подтверждённые очки сохранены.',true);
    }else{
     showMessage(tr,'Восстанавливаем связь и повторяем пакет без двойного начисления…',true);
    }
@@ -613,7 +614,7 @@ window.QwizArcade=(()=>{
   }finally{
    tr.sending=false;
    if(!tr.closed&&(tr.batch||tr.pending)&&!tr.flushTimer){
-    const wait=tr.batch?Math.min(5000,500*Math.pow(2,Math.min(3,batch.attempts))):790;
+    const wait=tr.batch?Math.min(3200,450*Math.pow(2,Math.min(3,batch.attempts))):490;
     tr.flushTimer=setTimeout(()=>flush(tr),wait+Math.floor(Math.random()*250));
    }
   }
