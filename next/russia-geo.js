@@ -193,7 +193,7 @@
     const notice=t.root?.querySelector('.geo-message');
     if(notice)notice.textContent=t.message;
     const buttons=t.root?.querySelectorAll('[data-geo-answer], [data-geo-confirm]');
-    buttons?.forEach(button=>{button.disabled=false;button.removeAttribute('aria-busy');button.classList.remove('geo-option-pending')});
+    buttons?.forEach(button=>{button.disabled=false;button.removeAttribute('aria-busy');button.classList.remove('geo-option-pending');if(button.matches('[data-geo-confirm]'))button.textContent='Подтвердить выбор'});
   }
   finally{t.busy=false}
  }
@@ -260,7 +260,7 @@
    const confirm=e.target.closest('[data-geo-confirm]');
    if(confirm){
      if(t.selectedRegion&&t.view?.open&&!confirm.disabled){
-       confirm.disabled=true;confirm.setAttribute('aria-busy','true');
+       confirm.disabled=true;confirm.setAttribute('aria-busy','true');confirm.textContent='Проверяем…';confirm.classList.add('geo-option-pending');
        const status=root.querySelector('.geo-message');if(status)status.textContent='Проверяем ответ…';
        fetchView(t,t.selectedRegion);
      }
