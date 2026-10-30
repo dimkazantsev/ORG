@@ -1,7 +1,7 @@
 'use strict';
 // QWIZ-PARTY 3 — no dependency on old app.js and no client-side answer checking.
-const URL_SUPABASE='https://bderfrcfuhnutuoyudje.supabase.co';
-const KEY_SUPABASE='sb_publishable_Hv7NgYuVsfKhFuhX_9pl0Q_qXWA2wOr';
+const URL_SUPABASE='https://vwsoergltegncrretxnz.supabase.co';
+const KEY_SUPABASE='sb_publishable_7R9F_vBvgg2AsfgRJyRIsQ_j2nljGKI';
 const $=id=>document.getElementById(id);
 const q=(selector,root=document)=>root.querySelector(selector);
 const qa=(selector,root=document)=>[...root.querySelectorAll(selector)];
