@@ -32,7 +32,11 @@ jobs:
           test -f .local/qwiz-isolation-preview/ORG/next/index.html
           grep -Fq 'independent-qwiz-example.supabase.co' .local/qwiz-isolation-preview/ORG/app.js
           grep -Fq 'independent-qwiz-example.supabase.co' .local/qwiz-isolation-preview/ORG/next/app.js
-          grep -Fq 'bderfrcfuhnutuoyudje.supabase.co' next/app.js
+          grep -Fq 'vwsoergltegncrretxnz.supabase.co' next/app.js
+          grep -Fq 'vwsoergltegncrretxnz.supabase.co' app.js
+          for path in app.js next/app.js next/workspace.js next/presenter.js next/profile.js next/live-40-supabase.mjs; do
+            if grep -Fq 'bderfrcfuhnutuoyudje.supabase.co' "$path"; then echo "Old GOS connection survives in $path"; exit 1; fi
+          done
           if grep -R --include='*.js' -Fq 'bderfrcfuhnutuoyudje.supabase.co' .local/qwiz-isolation-preview/ORG; then
             echo "stale shared backend in staged JavaScript"
             exit 1
