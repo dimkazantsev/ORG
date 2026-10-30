@@ -98,8 +98,9 @@
   const v=t.view;if(!v)return;
   const root=t.root;
   if(!root?.isConnected){stop(t.kind);return}
-  if(!v.active){root.innerHTML='<div class="geo-wait">Раунд карты завершён.</div>';return}
   const feedbackActive=Boolean(t.lastAnswer&&Date.now()<t.feedbackUntil);
+  // The final answer must be revealed even when the server closes the round.
+  if(!v.active&&!feedbackActive){root.innerHTML='<div class="geo-wait">Раунд карты завершён.</div>';return}
    const q=feedbackActive?(t.revealQuestion||v.question):v.question,done=!q||(!v.open&&!feedbackActive);
    const key=[v.index,q?.mode,q?.name,q?.region,feedbackActive].join(':');
    const taskKey=[v.index,q?.mode,q?.name,q?.region].join(':');
@@ -121,7 +122,9 @@
   if(q?.mode==='detective')hint='<div class="geo-clues"><span>Подсказка 1: '+esc(q.region_type)+'</span><span>Подсказка 2: '+esc(q.district)+'</span><span>Подсказка 3: центр — '+esc(q.capital)+'</span></div>';
   const img=q?.mode==='flag'&&q.flag?'<img class="geo-flag" loading="lazy" decoding="async" alt="Флаг субъекта России" src="https://raw.githubusercontent.com/russian-flags/regions/3c411c7b305c678c49798cc610538c66108adbde/assets/'+encodeURIComponent(q.flag)+'/index.svg">':'';
   const qmode=q?.mode||'locate';const interactive=qmode==='locate',silhouette=qmode==='silhouette';const showMap=['locate','identify','silhouette'].includes(qmode);
-  const feedback=feedbackActive?'<span class="geo-result-label '+(t.lastAnswer.correct?'is-correct':'is-wrong')+'">'+(t.lastAnswer.correct?'Верно!':'Правильный вариант выделен')+'</span><span class="geo-answer-feedback '+(t.lastAnswer.correct?'':'is-wrong')+'">'+(t.lastAnswer.correct?'Ответ подтверждён':'Правильный ответ: '+esc(t.lastAnswer.correct_text||'см. выделенный регион'))+'</span>':'';
+  const correctName=String(t.lastAnswer?.correct_text||((q?.mode==='locate')?q?.name:'')||'').trim();
+  const feedback=feedbackActive?
+   '<span class="geo-result-label '+(t.lastAnswer.correct?'is-correct':'is-wrong')+'">'+(t.lastAnswer.correct?'Верно!':'Неверно')+'</span>':'';
   // The image box stays mounted at a constant size for the whole question.
   // Only the correct answer tile changes its appearance during reveal.
   const visual=(qmode==='flag'||qmode==='silhouette')?'<div class="geo-visual-slot is-'+qmode+'">'+
@@ -133,8 +136,12 @@
    '<h2>'+esc(prompt(q))+'</h2>'+hint+visual+
    (showMap&&qmode!=='silhouette'?'<div class="geo-map-toolbar" aria-label="Масштаб карты"><button type="button" data-geo-zoom="in" aria-label="Увеличить">＋</button><button type="button" data-geo-zoom="out" aria-label="Уменьшить">−</button><button type="button" data-geo-zoom="reset">Вся карта</button></div>':'')+
    (interactive?'<p class="geo-tip">Коснитесь региона и подтвердите выбор. Карту можно перемещать одним пальцем, увеличивать двумя.</p>'+
-    '<button type="button" class="geo-confirm" data-geo-confirm '+(!t.selectedRegion||feedbackActive||t.busy?'disabled':'')+' aria-label="Подтвердить выбранный регион">Подтвердить выбор</button>':options(q,t,feedbackActive)))+
-   '<p class="geo-message" role="status" aria-live="polite">'+(feedbackActive?feedback:esc(t.message||''))+'</p>'+
+    (feedbackActive?'<div class="geo-confirm-result '+(t.lastAnswer.correct?'is-correct':'is-wrong')+'" role="status" aria-live="assertive">'+
+      '<span class="geo-confirm-result-icon" aria-hidden="true">'+(t.lastAnswer.correct?'✓':'✕')+'</span>'+
+      '<span><strong>'+(t.lastAnswer.correct?'Верно!':'Неверно!')+'</strong><small>Правильный ответ: '+esc(correctName||'выделенный зелёным регион')+'</small></span></div>':
+     '<button type="button" class="geo-confirm" data-geo-confirm '+(!t.selectedRegion||t.busy?'disabled':'')+' aria-label="Подтвердить выбранный регион">Подтвердить выбор</button>')
+    :options(q,t,feedbackActive)))+
+   '<p class="geo-message" role="status" aria-live="polite">'+(feedbackActive?(interactive?'':feedback+' Правильный ответ: '+esc(correctName||'см. выделенный вариант')):esc(t.message||''))+'</p>'+
    '<div class="geo-footer"><span>Осталось '+v.remaining+' сек.</span><small>Результат каждого игрока индивидуален</small></div></section>';
   const nextSvg=root.querySelector('.geo-map-frame .geo-map-svg');
    if(nextSvg&&!nextSvg.classList.contains('geo-silhouette')){
@@ -179,12 +186,12 @@
    if(error)throw error;
    if(data.last_answer&&(answer!==null||data.timed_out===true)){
      t.revealQuestion=t.view?.question;
-     t.lastAnswer=data.last_answer;t.feedbackUntil=Date.now()+1000;
+     t.lastAnswer=data.last_answer;t.feedbackUntil=Date.now()+1750;
      if(t.feedbackTimer)clearTimeout(t.feedbackTimer);
      t.feedbackTimer=setTimeout(()=>{if(!t.closed&&Date.now()>=t.feedbackUntil){
        t.lastAnswer=null;t.revealQuestion=null;t.renderKey=null;t.feedbackScrollKey=null;
        roundState(t);
-     }},1015);
+     }},1770);
    }
    t.view=data;
    t.message=answer===null?'':data.last_correct?'Верно! +10 очков':'Нет, этот ответ неверный.';
