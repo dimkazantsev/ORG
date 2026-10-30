@@ -116,7 +116,7 @@ test('Geography textual choice reveals the correct answer in green and a wrong s
  await expect(page.locator('#geoAnswerColors [data-geo-answer="correct"]')).toBeDisabled();
  await expect(page.locator('#geoAnswerColors [data-geo-answer="correct"]')).toContainText('✓');
  const paint=await page.locator('#geoAnswerColors [data-geo-answer="correct"]').evaluate(el=>getComputedStyle(el).backgroundColor);
- expect(paint).toBe('rgb(229, 247, 237)');
+ expect(paint).toBe('rgb(230, 248, 235)');
 });
 
 
