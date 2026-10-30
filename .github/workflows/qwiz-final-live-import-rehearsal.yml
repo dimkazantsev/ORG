@@ -1,0 +1,169 @@
+name: QWIZ / final 2344-row cutover rehearsal on disposable PostgreSQL17
+on:
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - 'next/isolation/FINAL-QWIZ-LIVE-IMPORT-AFTER-AUTH.sql'
+      - '.github/workflows/qwiz-final-live-import-rehearsal.yml'
+permissions:
+  contents: read
+jobs:
+  rehearsal:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: scratch-only
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rebuild source schema and private data entirely in disposable PG17
+        shell: bash
+        env:
+          GOS_SOURCE_DB_URL: ${{ secrets.GOS_SOURCE_DB_URL }}
+          PGSSLMODE: require
+          PGCONNECT_TIMEOUT: '8'
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          : "${GOS_SOURCE_DB_URL:?Source read-only secret is missing}"
+          dir="$(mktemp -d "$RUNNER_TEMP/qwiz-cutover-rehearsal.XXXXXXXX")"
+          trap 'rm -rf "$dir"' EXIT
+          psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -qAt -v ON_ERROR_STOP=1 \
+            -f next/isolation/source-schema-catalog-private.sql > "$dir/public.json"
+          psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -qAt -v ON_ERROR_STOP=1 \
+            -f next/isolation/source-quiz-private-catalog.sql > "$dir/private.json"
+          psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -qAt -v ON_ERROR_STOP=1 \
+            -c "SELECT c.relname FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind='r' AND (c.relname LIKE 'qwiz_%' OR c.relname LIKE 'org_next_%' OR c.relname LIKE 'org_quiz_%') ORDER BY c.relname;" > "$dir/tables.txt"
+          test "$(wc -l < "$dir/tables.txt")" = 57
+          docker run --rm --network host --user "$(id -u):$(id -g)" \
+            -e GOS_SOURCE_DB_URL -e PGSSLMODE -e PGCONNECT_TIMEOUT \
+            -v "$dir:/work" postgres:17 sh -ec '
+              pg_dump --dbname="$GOS_SOURCE_DB_URL" \
+                --data-only --enable-row-security --column-inserts \
+                --no-owner --no-acl --no-comments \
+                --table="public.qwiz_*" --table="public.org_next_*" \
+                --table="public.org_quiz_*" --file=/work/source.sql
+            '
+          python3 next/isolation/build-private-qwiz-row-stage.py \
+            "$dir/source.sql" "$dir/tables.txt" "$dir/staging.sql" > "$dir/stage-summary.txt"
+          grep -q "inserted_rows=2344" "$dir/stage-summary.txt" || {
+            echo 'Source snapshot row count changed; refuse rehearsal until rebaselined.'
+            exit 1
+          }
+          python3 next/isolation/build-guarded-target-schema.py \
+            "$dir/public.json" "$dir/private.json" "$dir/schema.sql" > "$dir/schema-summary.txt"
+          unset GOS_SOURCE_DB_URL PGSSLMODE PGCONNECT_TIMEOUT
+          export PGPASSWORD=scratch-only
+          psql -X -q -v ON_ERROR_STOP=1 -h 127.0.0.1 -U postgres -d postgres \
+            -c 'CREATE DATABASE qwiz_scratch;' >/dev/null
+          cat > "$dir/auth-schema.sql" <<'SQL'
+          CREATE SCHEMA auth;
+          CREATE TABLE auth.users (
+           id uuid PRIMARY KEY,instance_id uuid,aud varchar(255),role varchar(255),
+           email varchar(255),encrypted_password varchar(255),email_confirmed_at timestamptz,
+           phone text,phone_confirmed_at timestamptz,raw_app_meta_data jsonb,
+           raw_user_meta_data jsonb,created_at timestamptz,updated_at timestamptz,
+           last_sign_in_at timestamptz,is_sso_user boolean,is_anonymous boolean,
+           deleted_at timestamptz,banned_until timestamptz
+          );
+          CREATE TABLE auth.identities (
+           id uuid PRIMARY KEY,user_id uuid NOT NULL REFERENCES auth.users(id),
+           provider_id text,identity_data jsonb,provider text,created_at timestamptz,
+           updated_at timestamptz,last_sign_in_at timestamptz
+          );
+          CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$SELECT NULL::uuid$$;
+          CREATE FUNCTION auth.jwt() RETURNS jsonb LANGUAGE sql STABLE AS $$SELECT '{}'::jsonb$$;
+          SQL
+          for role in anon authenticated service_role; do
+            psql -X -q -h 127.0.0.1 -U postgres -d postgres \
+               -v ON_ERROR_STOP=1 -c "CREATE ROLE $role NOLOGIN" >/dev/null
+          done
+          psql -X -q -h 127.0.0.1 -U postgres -d qwiz_scratch \
+            -v ON_ERROR_STOP=1 -f "$dir/auth-schema.sql" >/dev/null
+          psql -X -q -h 127.0.0.1 -U postgres -d qwiz_scratch \
+            -v ON_ERROR_STOP=1 -f "$dir/schema.sql" > "$dir/schema.log" 2> "$dir/error.log" || {
+              echo 'SCRATCH_SCHEMA_FAILED'
+              exit 1
+            }
+          psql -X -q -h 127.0.0.1 -U postgres -d qwiz_scratch \
+            -v ON_ERROR_STOP=1 -f "$dir/staging.sql" > "$dir/staging.log" 2> "$dir/error.log" || {
+              echo 'SCRATCH_PRIVATE_STAGE_FAILED'
+              exit 1
+            }
+          cat > "$dir/synthetic-auth.sql" <<'SQL'
+          BEGIN;
+          INSERT INTO public.qwiz_geo_regions SELECT * FROM qwiz_transfer_stage.qwiz_geo_regions;
+          INSERT INTO public.qwiz_secret_code_catalog SELECT * FROM qwiz_transfer_stage.qwiz_secret_code_catalog;
+          CREATE SCHEMA qwiz_auth_snapshot;
+          REVOKE ALL ON SCHEMA qwiz_auth_snapshot FROM PUBLIC,anon,authenticated,service_role;
+          CREATE TABLE qwiz_auth_snapshot.users AS
+          WITH needed AS (
+            SELECT user_id id FROM qwiz_transfer_stage.org_next_players WHERE user_id IS NOT NULL
+            UNION SELECT owner_id FROM qwiz_transfer_stage.org_next_quizzes WHERE owner_id IS NOT NULL
+            UNION SELECT owner_id FROM qwiz_transfer_stage.org_next_rooms WHERE owner_id IS NOT NULL
+            UNION SELECT user_id FROM qwiz_transfer_stage.org_quiz_participants WHERE user_id IS NOT NULL
+            UNION SELECT created_by FROM qwiz_transfer_stage.org_quiz_sessions WHERE created_by IS NOT NULL
+            UNION SELECT created_by FROM qwiz_transfer_stage.org_quiz_sets WHERE created_by IS NOT NULL
+            UNION SELECT owner_id FROM qwiz_transfer_stage.qwiz_archived_rooms WHERE owner_id IS NOT NULL
+            UNION SELECT owner_id FROM qwiz_transfer_stage.qwiz_bank WHERE owner_id IS NOT NULL
+            UNION SELECT owner_id FROM qwiz_transfer_stage.qwiz_builds WHERE owner_id IS NOT NULL
+            UNION SELECT user_id FROM qwiz_transfer_stage.qwiz_player_device_access WHERE user_id IS NOT NULL
+            UNION SELECT user_id FROM qwiz_transfer_stage.qwiz_student_links WHERE user_id IS NOT NULL
+            UNION SELECT user_id FROM qwiz_transfer_stage.qwiz_student_profiles WHERE user_id IS NOT NULL
+            UNION SELECT owner_id FROM qwiz_transfer_stage.qwiz_topics WHERE owner_id IS NOT NULL
+          )
+          SELECT
+            id,NULL::uuid instance_id,
+            'authenticated'::varchar(255) aud,'authenticated'::varchar(255) role,
+            ('fixture-'||row_number() over(order by id)||'@example.invalid')::varchar(255) email,
+            NULL::varchar(255) encrypted_password, now() email_confirmed_at,NULL::text phone,
+            NULL::timestamptz phone_confirmed_at,'{}'::jsonb raw_app_meta_data,
+            '{}'::jsonb raw_user_meta_data,now() created_at,now() updated_at,
+            NULL::timestamptz last_sign_in_at,false is_sso_user,false is_anonymous,
+            NULL::timestamptz deleted_at,NULL::timestamptz banned_until
+          FROM needed;
+          CREATE TABLE qwiz_auth_snapshot.identities AS
+          SELECT id,id AS user_id,id::text AS provider_id,
+            '{}'::jsonb AS identity_data,'email'::text AS provider,
+            now() AS created_at,now() AS updated_at,NULL::timestamptz last_sign_in_at
+          FROM qwiz_auth_snapshot.users;
+          ALTER TABLE qwiz_auth_snapshot.users ENABLE ROW LEVEL SECURITY;
+          ALTER TABLE qwiz_auth_snapshot.identities ENABLE ROW LEVEL SECURITY;
+          REVOKE ALL ON ALL TABLES IN SCHEMA qwiz_auth_snapshot FROM PUBLIC,anon,authenticated,service_role;
+          DO $$BEGIN IF (SELECT count(*) FROM qwiz_auth_snapshot.users)<>11 THEN
+            RAISE EXCEPTION 'Synthetic Auth count mismatch';
+          END IF;END$$;
+          COMMIT;
+          SQL
+          psql -X -q -h 127.0.0.1 -U postgres -d qwiz_scratch \
+            -v ON_ERROR_STOP=1 -f "$dir/synthetic-auth.sql" > "$dir/auth-fixture.log" 2> "$dir/error.log" || {
+              echo 'SCRATCH_AUTH_FIXTURE_FAILED'
+              exit 1
+            }
+          echo 'Running full live migration DDL/DML against disposable PostgreSQL ONLY.'
+          if ! psql -X -q -h 127.0.0.1 -U postgres -d qwiz_scratch \
+             -v ON_ERROR_STOP=1 -f next/isolation/FINAL-QWIZ-LIVE-IMPORT-AFTER-AUTH.sql \
+             > "$dir/final.log" 2> "$dir/error.log"; then
+            echo 'SCRATCH_FINAL_IMPORT_FAILED. No real Supabase changes.'
+            # Avoid logging user UUIDs, SQL strings or personal game records.
+            grep -E 'SQL state:|syntax error|unrecognized configuration|permission denied' "$dir/error.log" | head -5 || true
+            exit 1
+          fi
+          counts="$(psql -XAtq -h 127.0.0.1 -U postgres -d qwiz_scratch \
+             -v ON_ERROR_STOP=1 -c "SELECT
+              (SELECT count(*) FROM auth.users),
+              (SELECT count(*) FROM public.qwiz_bank),
+              (SELECT count(*) FROM public.org_quiz_questions),
+              (SELECT count(*) FROM pg_constraint k JOIN pg_class c ON c.oid=k.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace
+                WHERE k.contype='f' AND n.nspname='public' AND k.condeferrable);" )"
+          test "$counts" = '11|716|927|0'
+          echo 'PASS: full QWIZ restore rehearsal committed in scratch PostgreSQL: 11 dummy Auth accounts, 2344 original game rows, 123 constraints restored; no real projects modified.'
