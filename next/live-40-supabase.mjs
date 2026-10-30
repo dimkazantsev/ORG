@@ -6,7 +6,7 @@ import {createClient} from '@supabase/supabase-js';
 const ROOM=process.env.QWIZ_LOAD_ROOM;
 const MODE=process.env.QWIZ_LOAD_MODE||'public';
 const TAG=process.env.QWIZ_LOAD_TAG||'qwiz_perf_40_20261026';
-const SUPABASE_URL='https://bderfrcfuhnutuoyudje.supabase.co';
+const SUPABASE_URL='https://vwsoergltegncrretxnz.supabase.co';
 const source=readFileSync(new URL('./app.js',import.meta.url),'utf8');
 const KEY=source.match(/const KEY_SUPABASE='([^']+)'/)?.[1];
 if(!KEY||!/^[A-F0-9]{8}$/.test(ROOM||'')||!['public','full'].includes(MODE))throw Error('Dedicated fixture, publishable key and run mode required');
