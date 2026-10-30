@@ -9,17 +9,22 @@ import {validateBoundary} from './boundary.mjs';
 const repo=resolve(fileURLToPath(new URL('../../',import.meta.url)));
 const rootApp=await readFile(join(repo,'app.js'),'utf8');
 const nextApp=await readFile(join(repo,'next/app.js'),'utf8');
-const legacyUrl=rootApp.match(/const SUPABASE_URL\s*=\s*["']([^"']+)["']/)?.[1];
-const legacyKey=rootApp.match(/const SUPABASE_KEY\s*=\s*["']([^"']+)["']/)?.[1];
+const currentUrl=rootApp.match(/const SUPABASE_URL\s*=\s*["']([^"']+)["']/)?.[1];
+const currentKey=rootApp.match(/const SUPABASE_KEY\s*=\s*["']([^"']+)["']/)?.[1];
 const nextUrl=nextApp.match(/const URL_SUPABASE\s*=\s*["']([^"']+)["']/)?.[1];
 const nextKey=nextApp.match(/const KEY_SUPABASE\s*=\s*["']([^"']+)["']/)?.[1];
-if(!legacyUrl||!legacyKey||!nextUrl||!nextKey||legacyUrl!==nextUrl||legacyKey!==nextKey)
+if(!currentUrl||!currentKey||!nextUrl||!nextKey||currentUrl!==nextUrl||currentKey!==nextKey)
  throw Error('Current QWIZ entrypoints use mismatched/unknown backend config; refusing build');
+const oldGosUrl=process.env.GOS_SUPABASE_URL;
+const newQwizUrl=process.env.QWIZ_NEW_SUPABASE_URL || currentUrl;
+const newQwizKey=process.env.QWIZ_NEW_SUPABASE_PUBLISHABLE_KEY || currentKey;
+if(!oldGosUrl)throw Error('GOS_SUPABASE_URL required to prove new QWIZ is physically isolated');
 const cfg=validateBoundary({
- gosUrl:process.env.GOS_SUPABASE_URL||legacyUrl,oldQwizUrl:legacyUrl,
- newQwizUrl:process.env.QWIZ_NEW_SUPABASE_URL,
- newQwizKey:process.env.QWIZ_NEW_SUPABASE_PUBLISHABLE_KEY
+ gosUrl:oldGosUrl,oldQwizUrl:oldGosUrl,
+ newQwizUrl,newQwizKey
 });
+if(currentUrl!==oldGosUrl && currentUrl!==cfg.next)
+ throw Error('Current QWIZ backend is neither verified GOS legacy nor approved QWIZ Free');
 const output=join(repo,'.local','qwiz-isolation-preview');
 const dest=join(output,'ORG');
 await rm(output,{recursive:true,force:true});
@@ -41,13 +46,13 @@ async function patch(directory){
   if(ent.isDirectory()){await patch(file);continue}
   if(!safeExtensions.has(extname(file)))continue;
   const src=await readFile(file,'utf8');
-  const rewritten=src.replaceAll(legacyUrl,cfg.next).replaceAll(legacyKey,process.env.QWIZ_NEW_SUPABASE_PUBLISHABLE_KEY);
+  const rewritten=src.replaceAll(currentUrl,cfg.next).replaceAll(currentKey,newQwizKey);
   if(rewritten!==src){await writeFile(file,rewritten);changed++}
   scanned++;
-  if(rewritten.includes(legacyUrl))throw Error('A stale legacy endpoint survived in '+ent.name);
+  if(rewritten.includes(oldGosUrl))throw Error('A stale GOS endpoint survived in '+ent.name);
  }
 }
 await patch(dest);
-if(changed<3)throw Error('Unexpectedly few backend references updated; preview not trustworthy');
-console.log(JSON.stringify({preview:output,frontend:'both QWIZ versions',oldHost:new URL(legacyUrl).host,newHost:new URL(cfg.next).host,scanned,changed},null,2));
+if(currentUrl!==cfg.next && changed<5)throw Error('Unexpectedly few backend references updated; preview not trustworthy');
+console.log(JSON.stringify({preview:output,frontend:'both QWIZ versions',oldHost:new URL(oldGosUrl).host,newHost:new URL(cfg.next).host,scanned,changed},null,2));
 console.log('Staging preview only: no production files or existing Supabase data have changed.');
