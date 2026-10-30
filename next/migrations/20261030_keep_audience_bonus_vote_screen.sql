@@ -19,7 +19,7 @@ BEGIN
     RAISE EXCEPTION 'qwiz_boost_view stage logic does not match expected source';
   END IF;
   updated := regexp_replace(original,
-    'stage:=CASE WHEN elapsed>=first_window OR[\\s\\S]*?THEN ''option'' ELSE ''strategy'' END;',
+    '(?s)stage:=CASE WHEN elapsed>=first_window OR.*?THEN ''option'' ELSE ''strategy'' END;',
     'stage:=CASE WHEN elapsed>=first_window THEN ''option'' ELSE ''strategy'' END;');
   IF updated=original OR position('stage:=CASE WHEN elapsed>=first_window OR' IN updated)>0 THEN
     RAISE EXCEPTION 'qwiz_boost_view stage replacement failed';
@@ -31,7 +31,7 @@ BEGIN
     RAISE EXCEPTION 'qwiz_vote_boost stage logic does not match expected source';
   END IF;
   updated := regexp_replace(original,
-    'stage:=CASE WHEN elapsed>=first_window OR[\\s\\S]*?THEN ''option'' ELSE ''strategy'' END;',
+    '(?s)stage:=CASE WHEN elapsed>=first_window OR.*?THEN ''option'' ELSE ''strategy'' END;',
     'stage:=CASE WHEN elapsed>=first_window THEN ''option'' ELSE ''strategy'' END;');
   IF updated=original OR position('stage:=CASE WHEN elapsed>=first_window OR' IN updated)>0 THEN
     RAISE EXCEPTION 'qwiz_vote_boost stage replacement failed';
