@@ -12,14 +12,20 @@ const playerArcadeActivity=a=>{const mode=a?.settings?.arcade_mode||a?.settings?
 const storage={get(k){try{return sessionStorage.getItem('org2:'+k)}catch{return null}},set(k,v){try{sessionStorage.setItem('org2:'+k,v)}catch{}},del(k){try{sessionStorage.removeItem('org2:'+k)}catch{}}};
 const ctx={client:null,role:'player',roomCode:null,room:null,quizzes:[],channel:null,refreshing:false,lastRefresh:0,releaseAttemptAt:0,refreshTimer:null,clock:null,mode:'home',visibleTab:'library',clockOffset:0,gameCue:''};
 function text(id,value){if($(id))$(id).textContent=value==null?'':String(value)}
+const noticeTimers=new WeakMap();
 function notice(id,value,type=''){
  const el=$(id);if(!el)return;
+ if(noticeTimers.has(el)){clearTimeout(noticeTimers.get(el));noticeTimers.delete(el)}
  // There must be NO pending/sent/accepted notification above the choices.
  // The single persistent footer inside #gameContent is the only receipt.
  const suppress=id==='gameNotice'&&/^(?:отправляем(?:ся)?\s+ответ|отправка\s+ответа|ответ\s+(?:записан|сохран[её]н|принят))/iu.test(String(value||'').trim());
  el.textContent=suppress?'':(value||'');
  el.classList.toggle('error',!suppress&&type==='error');
  el.classList.toggle('success',!suppress&&type==='success');
+ if(id==='gameNotice'&&!suppress&&type==='error'&&String(value||'').trim()){
+  const timer=setTimeout(()=>{if(!el.isConnected)return;el.textContent='';el.classList.remove('error','success');noticeTimers.delete(el)},3800);
+  noticeTimers.set(el,timer);
+ }
 }
 function showScreen(name){ctx.mode=name;for(const id of ['home','studio','game'])$(id+'View').hidden=id!==name;window.scrollTo({top:0,behavior:'auto'})}
 function setRole(role){ctx.role=role;storage.set('entry-role',role);for(const [name,id] of [['player','rolePlayer'],['host','roleHost']]){$(id).setAttribute('aria-selected',String(role===name));$(id).tabIndex=role===name?0:-1}$('playerEntry').hidden=role!=='player';$('hostEntry').hidden=role!=='host'}
@@ -404,7 +410,7 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  QwizTeams.playerPanel($('playerTeamPanel'),s);
  // Random team creation uses one single full-height scene; the legacy header
  // previously repeated the infinity icon or team-confirmation panel above it.
- $('playerTeamPanel').hidden=s.phase==='lobby'&&s.team_lobby?.mode==='random';
+ $('playerTeamPanel').hidden=s.phase==='lobby'&&(s.team_lobby?.mode==='random'||(s.team_lobby?.mode==='captain'&&!s.team_lobby.captains_ready));
  const el=$('gameContent');
  const cue=s.phase+':'+s.index;if(cue!==ctx.gameCue){ctx.gameCue=cue;if(s.phase==='result')QwizStage.audio.play('reveal');else if(s.phase==='finished')QwizStage.audio.play(s.activity?.sound||'fanfare');else if(s.phase==='question')QwizStage.audio.play('pop')}
  $('playerTeamProgress').hidden=s.phase!=='question';if(s.phase==='question')QwizStage.progress($('playerTeamProgress'),s.public_stats?.teams||[]);
@@ -428,7 +434,10 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
    (complete&&myTeam?'<div class="team-confirm-card"><span class="team-confirm-emoji" aria-hidden="true">'+QwizStage.icon(myTeam,true)+'</span><div><small>ВАША КОМАНДА</small><strong>'+esc(myTeam.name)+'</strong></div></div>':'')+
    '<div class="team-building-center"><span class="eyebrow">QWIZ-PARTY · КОМАНДЫ</span>'+
    '<div class="team-building-glow" aria-hidden="true">'+(complete?checkSvg:'<svg class="team-infinity-svg" viewBox="0 0 240 146" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="infinityLavender" x1="24" y1="0" x2="220" y2="150"><stop stop-color="#7c3ee6"/><stop offset="1" stop-color="#a34af4"/></linearGradient></defs><path d="M120 74C97 39 75 24 51 24 23 24 12 48 12 73c0 30 15 48 42 48 28 0 50-27 66-47Zm0 0c24-34 47-50 69-50 27 0 40 20 40 47 0 29-17 50-42 50-27 0-48-22-67-47Z" stroke="url(#infinityLavender)" stroke-width="19" stroke-linecap="round" stroke-linejoin="round"/></svg>')+'</div>'+
-   '<h1>'+title+'</h1><p>'+desc+'</p></div></section>';
+   '<h1>'+title+'</h1><p>'+desc+'</p>'+
+   (lb.mode==='captain'&&!lb.captains_ready&&lb.can_claim&&!myTeam?'<button type="button" class="team-captain-hero-action" data-captain-claim-hero>Я капитан</button>':'')+
+   '</div></section>';
+  const claim=el.querySelector('[data-captain-claim-hero]');if(claim)claim.onclick=()=>window.QwizLobbyAction?.('claim',{});
   text('playerStatus',title);return;
  }
  if(s.phase==='lobby'){el.innerHTML='<section class="game-empty game-lobby-wait" aria-label="Ожидание начала игры">'+
