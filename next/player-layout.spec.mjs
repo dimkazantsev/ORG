@@ -104,7 +104,7 @@ test('Finished arcade boost ballot stays entirely visible and accepts a vote at 
   await page.locator('[data-boost-choice="support"]').click();
   await expect(page.locator('[data-boost-choice]')).toHaveCount(3);
   const bounds=await page.evaluate(()=>{
-   const container=document.querySelector('#gameContent').getBoundingClientRect();
+   const container=document.querySelector('dialog.arcade-boost-dialog[open]').getBoundingClientRect();
    return [...document.querySelectorAll('[data-boost-choice]')].map(b=>{
     const r=b.getBoundingClientRect();
     return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,hostTop:container.top,hostBottom:container.bottom,
@@ -119,7 +119,8 @@ test('Finished arcade boost ballot stays entirely visible and accepts a vote at 
   }
   await expect(page.locator('[data-boost-choice="headstart"]')).toBeEnabled();
   await page.locator('[data-boost-choice="headstart"]').click();
-  await expect(page.locator('[data-boost-choice="headstart"]')).toHaveClass(/selected/);
+  await expect(page.locator('dialog.arcade-boost-dialog')).not.toBeVisible();
+  await expect.poll(()=>page.evaluate(()=>window.voteChoiceFixture)).toBe('headstart');
  }
 });
 
@@ -198,15 +199,11 @@ test('Two-stage penalty vote opens a red majority choice then lets players choos
   await expect(page.locator('[data-boost-choice="storm"]')).toBeVisible();
   await expect(page.locator('[data-boost-choice="drain"]')).toBeVisible();
   await page.locator('[data-boost-choice="storm"]').click();
-  await expect(page.locator('[data-boost-choice="storm"]')).toHaveClass(/selected/);
+  await expect(page.locator('dialog.arcade-boost-dialog')).not.toBeVisible();
   const calls=await page.evaluate(()=>window.penaltyCalls);
   expect(calls).toEqual(['sabotage','storm']);
-  const bounds=await page.locator('dialog.arcade-boost-dialog[open] .arcade-vote-effects').boundingBox();
-  expect(bounds).not.toBeNull();
-  expect(bounds.x).toBeGreaterThanOrEqual(0);
-  expect(bounds.y).toBeGreaterThanOrEqual(0);
-  expect(bounds.x+bounds.width).toBeLessThanOrEqual(width+2);
-  expect(bounds.y+bounds.height).toBeLessThanOrEqual(height+2);
+  // The completed choice closes the modal; it must not remain stuck over the game.
+  await expect(page.locator('dialog.arcade-boost-dialog[open]')).toHaveCount(0);
  }
 });
 
@@ -437,4 +434,31 @@ test('Legacy sending or saved status cannot create a top answer notification',as
  await page.evaluate(()=>notice('gameNotice','Неверный формат ответа.','error'));
  await expect(page.locator('#gameNotice')).toContainText('Неверный формат ответа.');
  await expect(page.locator('#gameNotice')).toBeVisible();
+});
+
+test('Captain selection uses one responsive scene, with the claim action inside it',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await setup(page);
+ await page.evaluate(()=>{
+  ctx.room={code:'ABCDEF12',room_id:'00000000-0000-4000-8000-000000000091',
+   title:'Квиз',phase:'lobby',index:0,teams:[],me:{id:'player-a',team_id:null},
+   team_lobby:{mode:'captain',captains_ready:false,can_claim:true,captain_count:0,team_count:1,
+    captain_started_at:new Date(Date.now()-1500).toISOString()}};
+  ctx.gameRenderKey='';showScreen('game');renderGame();
+ });
+ await expect(page.locator('#gameContent .player-team-building')).toBeVisible();
+ await expect(page.locator('#gameContent .team-captain-hero-action')).toHaveCount(1);
+ await expect(page.locator('#playerTeamPanel')).toBeHidden();
+ await expect(page.locator('#gameContent .team-building-center')).toContainText('Выбираем капитанов');
+});
+
+test('Invalid multi-choice warning disappears instead of blocking the next card',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await setup(page);
+ await question(page,{kind:'multi',prompt:'Выберите несколько вариантов',options:['Раз','Два','Три']});
+ await page.locator('[data-submit-rich]').click();
+ await expect(page.locator('#gameNotice')).toContainText('Отметьте хотя бы один вариант');
+ await page.waitForTimeout(3950);
+ await expect(page.locator('#gameNotice')).toBeEmpty();
+ await expect(page.locator('#gameNotice')).not.toHaveClass(/error/);
 });

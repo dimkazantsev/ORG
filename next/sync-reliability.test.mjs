@@ -12,8 +12,8 @@ test('all resilience code parses and new builds are referenced',()=>{
   ['index.html','arcade.js?v='],
   ['workspace.html','workspace.js?v='],
   ['presenter.html','presenter.js?v='],
-  ['workspace.html','card-sandbox.js?v=geo-full-question-20261028-1'],
-  ['workspace.html','card-geo-preview.js?v=geo-full-question-20261028-1']];
+  ['workspace.html','card-sandbox.js?v='],
+  ['workspace.html','card-geo-preview.js?v=']];
  for(const [page,asset] of pages) assert.ok(read(page).includes(asset),page+' missing '+asset);
  assert.match(read('workspace.html'),/workspace\.js\?v=[a-z0-9-]+/i);
  // Content-hashed/dated versions change routinely; the QA gate must test presence and parsing, not an obsolete fixed value.
@@ -68,7 +68,7 @@ test('tap batches are server-idempotent and client reuses stable UUID',()=>{
  assert.match(js,/tr\.batch=\{id:crypto\.randomUUID\(\),count/);
  assert.match(js,/p_batch:batch\.id,p_count:batch\.count/);
  assert.match(js,/tr\.batch=null/);
- assert.match(js,/Math\.min\(5000,500\*Math\.pow\(2/);
+ assert.match(js,/Math\.min\(3200,450\*Math\.pow\(2/);
  assert.doesNotMatch(js,/p_action:'tap',p_count:count/);
 });
 test('host and projector RPCs cannot block recovery indefinitely',()=>{

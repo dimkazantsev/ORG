@@ -142,3 +142,54 @@ test('Secret Code is playable: all four choices can be repeated and one server s
  await expect(page.locator('.arcade-secret-done')).toContainText('Ответ принят');
  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
 });
+
+test('Audience Tap-battle shows a static readable ЖМИ! button, never a tappable control',async({page})=>{
+ for(const [width,height] of [[390,844],[1280,720]]){
+  await page.setViewportSize({width,height});
+  await page.goto('http://127.0.0.1:8080/next/arcade-qa-fixture.html');
+  await page.evaluate(()=>window.mountProjectorWithoutVote());
+  await expect(page.locator('#projectionMain .arcade-shell')).toBeVisible();
+  await expect(page.locator('#projectionMain [data-arcade-vote-screen]')).toBeHidden();
+  const marker=page.locator('#projectionMain .arcade-audience-tap-hero');
+  await expect(marker).toBeVisible();
+  await expect(marker).toHaveText('ЖМИ!');
+  await expect(page.locator('#projectionMain [data-arcade-tap]')).toHaveCount(0);
+  const bounds=await marker.evaluate(el=>{
+   const scene=el.closest('.arcade-scene'),screen=scene.getBoundingClientRect();
+   const node=el.querySelector('span'),text=node.getBoundingClientRect();
+   const hero=el.getBoundingClientRect();
+   return {gap:Math.abs((screen.left+screen.width/2)-(text.left+text.width/2)),
+    width:text.width,screenWidth:screen.width,
+    screenLeft:screen.left,screenMid:screen.left+screen.width/2,heroLeft:hero.left,heroWidth:hero.width,
+    spanLeft:text.left,spanMid:text.left+text.width/2,
+    spanPosition:getComputedStyle(node).position,
+    spanTransform:getComputedStyle(node).transform,
+    spanLeftCSS:getComputedStyle(node).left,
+    heroPosition:getComputedStyle(el).position,
+    sceneDisplay:getComputedStyle(scene).display};
+  });
+  console.log('TAP_HERO_GEOMETRY',JSON.stringify({width,height,...bounds}));
+  expect(bounds.gap).toBeLessThanOrEqual(3);
+  expect(bounds.width).toBeGreaterThan(85);
+  expect(bounds.width).toBeLessThan(bounds.screenWidth+2);
+ }
+});
+
+test('Solo-team strategy choice is visually centered on the public voting screen',async({page})=>{
+ await page.setViewportSize({width:1280,height:720});
+ await page.goto('http://127.0.0.1:8080/next/arcade-qa-fixture.html');
+ await page.evaluate(()=>{
+  window.mountProjectionVote('strategy');
+  fake.vote.target_name='';
+  window.dispatchEvent(new Event('online'));
+ });
+ await expect(page.locator('#projectionMain .arcade-projection-vote-option')).toHaveCount(1);
+ const layout=await page.evaluate(()=>{
+  const item=document.querySelector('.arcade-projection-vote-option').getBoundingClientRect();
+  const screen=document.querySelector('.arcade-projection-vote-options').getBoundingClientRect();
+  return {difference:Math.abs((item.left+item.width/2)-(screen.left+screen.width/2)),
+   size:item.width,screen:screen.width};
+ });
+ expect(layout.difference).toBeLessThanOrEqual(3);
+ expect(layout.size).toBeLessThan(layout.screen);
+});

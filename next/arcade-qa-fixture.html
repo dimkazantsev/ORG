@@ -57,6 +57,16 @@ window.mountProjectionVote=(stage='strategy',strategy=null)=>{
   QwizArcade.mountProjector(document.getElementById('projectionMain'),
    {phase:'intermission',code:'1A2B3C4D',activity:{settings:{arcade_mode:'tug'}}},client);
 };
+window.mountProjectorWithoutVote=()=>{
+  QwizArcade.stop('screen');
+  document.documentElement.classList.add('fixture-projection');
+  fake.mode='tug';fake.running=true;fake.vote=null;fake.card_position+=1;
+  fake.server_now=new Date().toISOString();
+  fake.ends_at=new Date(Date.now()+30000).toISOString();
+  const client={rpc:async()=>({data:{...fake,server_now:new Date().toISOString()},error:null})};
+  QwizArcade.mountProjector(document.getElementById('projectionMain'),
+    {phase:'intermission',code:'1A2B3C4D',activity:{settings:{arcade_mode:'tug'}}},client);
+};
 window.updateProjectionVote=(stage,strategy,counts)=>{
   fake.vote={...fake.vote,stage,strategy,counts};
   fake.vote.vote_ends_at=new Date(Date.now()+9000).toISOString();

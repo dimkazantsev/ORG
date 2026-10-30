@@ -1541,3 +1541,66 @@
 @media(prefers-reduced-motion:reduce){
  #projectionMain .arcade-vote-projection{animation:none!important;transition:none!important}
 }
+
+
+/* Audience Tap-battle: static instruction, never a clickable projector control. */
+#projectionMain .arcade-screen[data-arcade-root="tug"] .arcade-scene{
+ position:relative;display:grid;place-items:center;isolation:isolate;
+ width:min(100%,980px);max-width:100%;height:clamp(156px,29dvh,350px);
+ min-height:150px;margin:clamp(4px,1dvh,14px) auto;padding:clamp(7px,1.2dvh,20px);
+ overflow:hidden;border:1px solid #e0cff6;border-radius:clamp(18px,2.3vw,32px);
+ background:radial-gradient(circle at 50% 40%,#f5dcff,#c18beb 60%,#8f54d8);
+}
+#projectionMain .arcade-screen[data-arcade-root="tug"] .arcade-audience-tap-hero{
+ position:absolute;z-index:4;inset:0;display:grid;place-items:center;
+ pointer-events:none;user-select:none;
+}
+#projectionMain .arcade-screen[data-arcade-root="tug"] .arcade-audience-tap-hero span{
+ display:grid;place-items:center;width:clamp(122px,23dvh,270px);
+ aspect-ratio:1;border-radius:50%;color:white;letter-spacing:.025em;
+ font-weight:950;font-size:clamp(35px,min(5.2vw,7dvh),72px);line-height:1;
+ text-shadow:0 3px 8px #602a9c8c;
+ border:clamp(6px,1dvh,11px) solid #ffffffd9;
+ background:radial-gradient(circle at 38% 25%,#ffddff,#d780dc 56%,#9340b8);
+ box-shadow:inset 0 6px 18px #fff8, inset 0 -12px 28px #6b2c9970,
+            0 9px 0 #6e3891,0 22px 36px #48247156;
+}
+#projectionMain .arcade-screen[data-arcade-root="tug"] .arcade-audience-tap-hero+*{
+ pointer-events:none;
+}
+#projectionMain .arcade-screen[data-arcade-root="tug"] .arcade-ranks{
+ width:min(100%,980px);margin:clamp(5px,1.2dvh,16px) auto;min-width:0;
+}
+@media(max-height:600px){
+ #projectionMain .arcade-screen[data-arcade-root="tug"] .arcade-scene{
+  height:clamp(125px,24dvh,195px);min-height:125px;
+ }
+ #projectionMain .arcade-screen[data-arcade-root="tug"] .arcade-audience-tap-hero span{
+  width:clamp(106px,21dvh,170px);font-size:clamp(29px,5dvh,48px);
+ }
+}
+/* One eligible team: the single bonus card must be centered, not stuck to the left. */
+#projectionMain .arcade-projection-vote-options:has(>.arcade-projection-vote-option:only-child){
+ display:flex;align-items:center;justify-content:center;width:100%;margin-inline:auto;
+}
+#projectionMain .arcade-projection-vote-options>.arcade-projection-vote-option:only-child{
+ box-sizing:border-box;width:min(100%,530px);max-width:100%;
+}
+#projectionMain .arcade-projection-vote-champion{margin-inline:auto;text-align:center}
+
+#projectionMain .arcade-screen[data-arcade-root="tug"] .arcade-audience-tap-hero span{
+ position:absolute!important;left:50%!important;top:50%!important;
+ transform:translate(-50%,-50%)!important;margin:0!important;
+}
+
+/* The consensus illustration is part of the question's identity. Legacy rules
+   used to hide the entire illustration on the projector. Preserve it. */
+#projectionMain .arcade-shell[data-arcade-root="blitz"] .arcade-scene{
+ display:grid!important;place-items:center;flex:0 0 auto;
+ min-height:clamp(100px,17dvh,180px)!important;
+ height:clamp(100px,17dvh,180px)!important;
+ max-height:180px;box-sizing:border-box;overflow:hidden;
+}
+#projectionMain .arcade-shell[data-arcade-root="blitz"] .consensus-hero{
+ display:grid!important;width:100%;height:100%;min-height:0;
+}

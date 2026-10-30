@@ -1311,3 +1311,43 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
  .player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-secret-slot{height:32px}
  .player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-secret-choices button{min-height:44px}
 }
+
+
+/* Captain selection is a single scene with the action in the same visual focus. */
+.player-compact #gameContent .team-captain-hero-action{
+ display:flex;align-items:center;justify-content:center;
+ width:min(100%,370px);min-height:clamp(50px,8dvh,63px);
+ margin:clamp(5px,1.2dvh,12px) auto 0;padding:12px 24px;
+ border:1px solid #d8c6ee;border-radius:16px;background:#fff;
+ color:#6e37b8;font-family:inherit;font-weight:900;font-size:clamp(16px,4vw,21px);line-height:1.2;
+ box-shadow:0 8px 24px #734a9d17;cursor:pointer;
+ transition:transform .16s,background-color .16s;
+}
+.player-compact #gameContent .team-captain-hero-action:active{transform:scale(.985)}
+.player-compact #gameContent .team-captain-hero-action:focus-visible{
+ outline:3px solid #8d58e2;outline-offset:3px;
+}
+.player-compact #gameView #playerTeamPanel[hidden]{display:none!important}
+/* Preserve real content on short displays; never crop a whole transition panel. */
+.player-compact #gameView .game-card:has(.round-results-page),
+.player-compact #gameView .game-card:has(.round-intro),
+.player-compact #gameView .game-card:has(.player-team-building){
+ min-height:0!important;
+}
+.player-compact #gameView .round-results-page,
+.player-compact #gameView .game-empty.round-intro{
+ max-height:100%;overflow-y:auto;overscroll-behavior:contain;
+ -webkit-overflow-scrolling:touch;
+}
+
+
+/* Voting is a top-layer dialog: fit its entire contents into narrow viewports.
+   On the completed second choice it closes rather than leaving a frozen overlay. */
+@media(max-width:420px){
+ dialog.arcade-boost-dialog[open]{width:calc(100vw - 16px)!important;max-width:calc(100vw - 16px)!important;
+  height:min(455px,calc(100dvh - 20px))!important;max-height:calc(100dvh - 20px)!important;
+  padding:0!important;overflow:hidden;box-sizing:border-box}
+ dialog.arcade-boost-dialog .arcade-vote{padding:clamp(8px,1.5dvh,12px)!important;gap:4px}
+ dialog.arcade-boost-dialog .arcade-boost-grid{gap:4px}
+ dialog.arcade-boost-dialog .arcade-boost-grid button{padding:5px 9px!important;min-height:43px;box-sizing:border-box}
+}
