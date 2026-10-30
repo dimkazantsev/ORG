@@ -147,9 +147,12 @@ test('One region touch exposes confirm; server correct region appears highlighte
  await expect(button).toBeEnabled();
  await expect(button).toHaveText('Подтвердить выбор');
  await button.click();
- await expect(page.locator('#geoTapConfirm .geo-answer-feedback')).toContainText('Субъект 1');
+ await expect(page.locator('#geoTapConfirm [data-geo-confirm]')).toHaveCount(0);
+ await expect(page.locator('#geoTapConfirm .geo-confirm-result.is-wrong')).toContainText('Правильный ответ: Субъект 1');
  await expect(page.locator('#geoTapConfirm [data-region="region-1"]')).toHaveClass(/geo-correct-answer/);
  await expect(page.locator('#geoTapConfirm [data-region="region-3"]')).toHaveClass(/geo-wrong-answer/);
+ const paint=await page.locator('#geoTapConfirm [data-region="region-3"]').evaluate(el=>getComputedStyle(el).fill);
+ expect(paint).toBe('rgb(223, 101, 118)');
 });
 
 test('Four Russia geography choices are compact neutral tiles, not huge empty panels',async({page})=>{
@@ -189,4 +192,58 @@ test('Four Russia geography choices are compact neutral tiles, not huge empty pa
  expect(heights.width).toBeLessThanOrEqual(390);
  expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(2);
  await page.screenshot({path:'visual-artifacts/geography-indie-choices-390.png',fullPage:true});
+});
+
+test('Correct map choice replaces Confirm with green server-approved region name',async({page})=>{
+ await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:'window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}})}})};'}));
+ await page.route('**/data/regions.topojson',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(topology())}));
+ await page.setViewportSize({width:390,height:760});
+ await page.goto(HOME);
+ await page.evaluate(()=>{
+  const el=document.createElement('div');el.id='geoCorrectTest';document.body.append(el);
+  const q={mode:'locate',name:'Субъект 1',region:'region-1',options:[]};
+  const client={rpc:async(_,args)=>({data:{
+   active:true,open:true,remaining:80,index:args.p_answer===null?0:1,total:5,score:10,correct:1,question:q,
+   last_answer:args.p_answer===null?null:{correct:true,correct_text:'Субъект 1',correct_region_id:'region-1',selected_region_id:args.p_answer}
+  },error:null})};
+  QwizGeo.mountPlayer(el,{code:'CORRECT1',room_id:'00000000-0000-4000-8000-000000000456',
+   phase:'intermission',activity:{settings:{arcade_mode:'russia_map'}}},{client});
+ });
+ await expect(page.locator('#geoCorrectTest .geo-region')).toHaveCount(89);
+ await page.locator('#geoCorrectTest [data-region="region-1"]').click();
+ await page.locator('#geoCorrectTest [data-geo-confirm]').click();
+ await expect(page.locator('#geoCorrectTest .geo-confirm-result.is-correct')).toContainText('Субъект 1');
+ await expect(page.locator('#geoCorrectTest [data-geo-confirm]')).toHaveCount(0);
+ await expect(page.locator('#geoCorrectTest [data-region="region-1"]')).toHaveClass(/geo-correct-answer/);
+ const background=await page.locator('#geoCorrectTest .geo-confirm-result').evaluate(el=>getComputedStyle(el).backgroundColor);
+ expect(background).toBe('rgb(226, 247, 233)');
+});
+
+test('Final map answer remains visible even when geography game finishes on the server',async({page})=>{
+ await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({status:200,contentType:'application/javascript',body:'window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}})}})};'}));
+ await page.route('**/data/regions.topojson',route=>route.fulfill({status:200,contentType:'application/json',body:JSON.stringify(topology())}));
+ await page.setViewportSize({width:320,height:568});
+ await page.goto(HOME);
+ await page.evaluate(()=>{
+  const el=document.createElement('div');el.id='geoLastReveal';document.body.append(el);
+  const q={mode:'locate',name:'Субъект 1',region:'region-1',options:[]};
+  const client={rpc:async(_,args)=>({data:{
+   active:args.p_answer===null,open:args.p_answer===null,finished:args.p_answer!==null,
+   remaining:args.p_answer===null?80:0,index:args.p_answer===null?0:1,total:1,score:0,correct:0,
+   question:args.p_answer===null?q:null,
+   last_answer:args.p_answer===null?null:{correct:false,correct_text:'Субъект 1',correct_region_id:'region-1',selected_region_id:args.p_answer}
+  },error:null})};
+  QwizGeo.mountPlayer(el,{code:'FINISH01',room_id:'00000000-0000-4000-8000-000000000888',
+   phase:'intermission',activity:{settings:{arcade_mode:'russia_map'}}},{client});
+ });
+ await expect(page.locator('#geoLastReveal .geo-region')).toHaveCount(89);
+ // On a 320px phone, part of the zoomed map is outside the visible crop.
+ // Use its real keyboard entry point, rather than clicking an offscreen path.
+ await page.locator('#geoLastReveal [data-region="region-3"]').focus();
+ await page.keyboard.press('Enter');
+ await expect(page.locator('#geoLastReveal [data-geo-confirm]')).toBeEnabled();
+ await page.locator('#geoLastReveal [data-geo-confirm]').click();
+ await expect(page.locator('#geoLastReveal .geo-confirm-result.is-wrong')).toContainText('Правильный ответ: Субъект 1');
+ await expect(page.locator('#geoLastReveal [data-geo-confirm]')).toHaveCount(0);
+ await expect(page.locator('#geoLastReveal .geo-region.geo-correct-answer')).toHaveCount(1);
 });
