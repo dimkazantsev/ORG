@@ -25,7 +25,11 @@ DO $guard$ BEGIN
     END IF;
     REVOKE ALL ON SCHEMA qwiz_auth_export FROM qwiz_catalog_reader;
     REVOKE SELECT ON qwiz_auth_export.users,qwiz_auth_export.identities FROM qwiz_catalog_reader;
-    DROP SCHEMA qwiz_auth_export CASCADE;
+    -- Fail closed if the temporary export is referenced from outside the schema.
+    -- No external objects may be removed by this cleanup.
+    DROP TABLE qwiz_auth_export.identities RESTRICT;
+    DROP TABLE qwiz_auth_export.users RESTRICT;
+    DROP SCHEMA qwiz_auth_export RESTRICT;
   END IF;
 END;
 $guard$;
