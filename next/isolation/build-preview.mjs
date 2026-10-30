@@ -23,8 +23,9 @@ const cfg=validateBoundary({
  gosUrl:oldGosUrl,oldQwizUrl:oldGosUrl,
  newQwizUrl,newQwizKey
 });
-if(currentUrl!==oldGosUrl && currentUrl!==cfg.next)
- throw Error('Current QWIZ backend is neither verified GOS legacy nor approved QWIZ Free');
+if(currentUrl!==oldGosUrl && currentUrl!==cfg.next &&
+ currentUrl!=='https://vwsoergltegncrretxnz.supabase.co')
+ throw Error('Current QWIZ backend is neither verified GOS legacy nor independent Free QWIZ');
 const output=join(repo,'.local','qwiz-isolation-preview');
 const dest=join(output,'ORG');
 await rm(output,{recursive:true,force:true});
