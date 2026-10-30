@@ -104,7 +104,7 @@ test('Finished arcade boost ballot stays entirely visible and accepts a vote at 
   await page.locator('[data-boost-choice="support"]').click();
   await expect(page.locator('[data-boost-choice]')).toHaveCount(3);
   const bounds=await page.evaluate(()=>{
-   const container=document.querySelector('#gameContent').getBoundingClientRect();
+   const container=document.querySelector('.arcade-boost-dialog[open]').getBoundingClientRect();
    return [...document.querySelectorAll('[data-boost-choice]')].map(b=>{
     const r=b.getBoundingClientRect();
     return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,hostTop:container.top,hostBottom:container.bottom,
