@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <base href="../">
+<link rel="icon" type="image/svg+xml" href="./favicon.svg?v=qwiz-2">
+
+<meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f8fafc">
+  <meta name="color-scheme" content="light">
+  <title>QWIZ-PARTY — квиз-платформа</title>
+  <link rel="preload" href="./next/assets/manrope-variable.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="stylesheet" href="./next/theme.css?v=lavender-2">
+  <link rel="stylesheet" href="./styles.css?v=20261009-1">
+    <link rel="stylesheet" href="./studio-2026.css?v=20261022-4">
+  <link rel="stylesheet" href="./ui-ux-pro-max.css?v=20261022-6">
+  <link rel="stylesheet" href="./next/motion.css?v=2">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="./lib/d3.v7.min.js"></script>
+  <script src="./lib/topojson-client.min.js"></script>
+</head>
+<body class="studio-rebuild">
+    <div id="transitionLayer" class="transition-layer"><span>QWIZ-PARTY</span></div>
+  <div id="toast" class="toast hidden"></div>
+
+  <header class="topbar">
+    <button class="brand" id="brandHome" aria-label="На главную">
+      <span class="brand-sigil" aria-hidden="true"><svg viewBox="0 0 32 32" fill="none"><circle cx="16" cy="16" r="9" stroke="currentColor" stroke-width="3.8"/><path d="M16 7v18" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/></svg></span>
+      <span class="brand-copy"><strong>QWIZ<span class="brand-slash">-</span>PARTY</strong><small>Квиз-платформа</small></span>
+    </button>
+    <div class="top-actions"><a href="./next/" class="new-studio-link">QWIZ-PARTY ↗</a>
+      <button id="soundToggle" class="icon-btn" title="Включить или выключить звук" aria-label="Переключить звук">♫</button>
+      <span class="live-chip"><i></i> ИГРА В РЕАЛЬНОМ ВРЕМЕНИ</span>
+      <button id="teacherToggle" class="soft-btn">Модератор</button>
+      <span id="releaseVersion" class="release-version" data-build="20261022.7" title="Версия ORG Studio / 22.10.2026">v2026.10.22.7</span>
+    </div>
+  </header>
+
+  <main class="shell" id="mainContent">
+    <section id="homeView" class="home-redesign">
+      <div class="landing-grid">
+        <article class="hero-card">
+          <div class="hero-eyebrow"><span class="hero-eyebrow-line"></span> КОМАНДНЫЙ КВИЗ В РЕАЛЬНОМ ВРЕМЕНИ</div>
+          <h1>Ваша команда.<br><em>Ваша игра.</em></h1>
+          <p>Вопросы, которые объединяют. Отвечайте, обсуждайте и побеждайте вместе.</p>
+          <div class="home-hero-actions">
+            <button class="primary" id="heroJoin" type="button">Присоединиться <span aria-hidden="true">↗</span></button>
+            <button class="button-secondary" id="heroHost" type="button">Провести игру <span aria-hidden="true">→</span></button>
+          </div>
+          <div class="home-hero-bottom"><span><span class="home-hero-dot"></span> БЕЗ УСТАНОВКИ</span><span>КОМАНДНЫЕ РАУНДЫ</span><span>ЖИВЫЕ РЕЗУЛЬТАТЫ</span></div>
+          <div class="home-illustration" aria-hidden="true">
+            <div class="illustration-window">
+              <div class="illustration-toolbar"><span class="illustration-logo"></span><span class="illustration-lines"><i></i><i></i></span><b>● LIVE</b></div>
+              <div class="illustration-body">
+                <small>ВОПРОС 04 / 12</small><div class="illustration-title"><i></i><i></i></div>
+                <div class="illustration-options"><span><b>A</b><i></i></span><span><b>B</b><i></i></span><span><b>C</b><i></i></span><span><b>D</b><i></i></span></div>
+                <div class="illustration-progress"><span></span></div>
+              </div>
+            </div>
+            <div class="illustration-stamp"><span>ORG</span><strong>QUIZ</strong></div>
+          </div>
+        </article>
+        <article class="access-card" id="homeAccess">
+          <div class="home-access-eyebrow">НАЧНИТЕ ЗДЕСЬ</div>
+          <div class="role-switch" role="group" aria-label="Роль в игре">
+            <button class="role-tab active" data-role-tab="participant" type="button">Участник</button>
+            <button class="role-tab" data-role-tab="moderator" type="button">Преподаватель</button>
+          </div>
+          <div id="participantAccess">
+            <div class="access-heading"><div><div class="access-kicker">ВХОД В КОМНАТУ</div><h2>Присоединяйтесь</h2><p class="access-intro">Введите код преподавателя и свои данные.</p></div></div>
+            <form id="joinForm" class="stack">
+              <label>Код комнаты<input id="joinCode" maxlength="8" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="Например, ORG123" required></label>
+              <label>Имя и фамилия<input id="joinName" autocomplete="name" placeholder="Иван Иванов" required></label>
+              <label>Группа<input id="joinGroup" placeholder="Например, ПУ-231" required></label>
+              <button class="primary big-btn" type="submit">Войти в игру <span aria-hidden="true">→</span></button>
+              <p id="joinMessage" class="message" role="status" aria-live="polite"></p>
+            </form>
+          </div>
+          <div id="moderatorAccess" class="hidden">
+            <div class="access-heading"><div><div class="access-kicker">КАБИНЕТ ПРЕПОДАВАТЕЛЯ</div><h2>Провести игру</h2></div></div>
+            <p class="subcopy">Создавайте наборы вопросов, распределяйте команды и управляйте игрой из единого кабинета.</p>
+            <button id="openModerator" class="primary big-btn" type="button">Открыть кабинет <span aria-hidden="true">→</span></button>
+          </div>
+          <div class="access-support"><span aria-hidden="true">✓</span> Поддерживаются компьютер, планшет и телефон</div>
+        </article>
+      </div>
+      <div class="home-value-grid" aria-label="Как работает ORG">
+        <div><span class="value-index">01</span><strong>Подготовьте</strong><p>Выберите вопросы и настройте раунды.</p></div>
+        <div><span class="value-index">02</span><strong>Пригласите</strong><p>Раздайте код комнаты участникам.</p></div>
+        <div><span class="value-index">03</span><strong>Играйте</strong><p>Смотрите ответы и командный рейтинг.</p></div>
+      </div>
+      <details class="mode-disclosure"><summary>Игровые форматы <span aria-hidden="true">↗</span></summary><section class="mode-showcase">
+        <div class="section-title"><div><div class="kicker">ВОЗМОЖНОСТИ</div><h2>Разные форматы вопросов</h2></div></div>
+        <div class="mode-grid">
+          <article class="mode-card c-blue"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V3m0 2c5-4 9 3 15 0v11c-6 3-10-3-15 0"/></svg></span><h3>Флаги</h3><p>Узнайте страну по флагу.</p></article>
+          <article class="mode-card c-violet"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l12-2v13M9 9l12-2"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span><h3>Гимны</h3><p>Определите страну по аудио.</p></article>
+          <article class="mode-card c-green"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 5 6-2 6 3 6-2v15l-6 2-6-3-6 2V5Zm6-2v15m6-12v15"/></svg></span><h3>Карта</h3><p>Найдите регион на карте.</p></article>
+          <article class="mode-card c-peach"><span><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3-7 8-7s8 3 8 7"/></svg></span><h3>Портреты</h3><p>Назовите человека по фото.</p></article>
+          <article class="mode-card c-cyan"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 6-8 12-8 12S4 16 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/></svg></span><h3>Места</h3><p>Угадайте достопримечательность.</p></article>
+          <article class="mode-card c-yellow"><span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="m8 12 3 3 5-6"/></svg></span><h3>Голосование</h3><p>Выбор делает аудитория.</p></article>
+          <article class="mode-card c-red"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg></span><h3>Выбывание</h3><p>Раунд без права на ошибку.</p></article>
+          <article class="mode-card c-lilac"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.6 6.4L21 11l-6.4 2.6L12 20l-2.6-6.4L3 11l6.4-2.6L12 2Z"/></svg></span><h3>Дуэль</h3><p>Командное противостояние.</p></article>
+        </div>
+      </section></details>
+    </section>
+
+    <section id="studentView" class="hidden">
+      <div class="game-header">
+        <div class="player-profile">
+          <span id="playerAvatar" class="avatar">У</span>
+          <div><div class="kicker">Участник</div><h2 id="studentQuizTitle">ORG Party</h2></div>
+        </div>
+        <div class="player-statuses">
+          <span id="lifeBadge" class="life-badge alive">● В игре</span>
+          <span id="comboBadge" class="combo-badge">Серия 0</span>
+          <span class="team-pill" id="studentTeam">Без команды</span>
+        </div>
+      </div>
+
+      <div class="game-layout">
+        <article id="questionCard" class="question-stage">
+          <div class="question-topline">
+            <span id="questionCounter">Ожидание</span>
+            <span id="questionTypeBadge" class="type-badge">Раунд</span>
+            <span id="questionTimer" class="timer-chip">—</span>
+          </div>
+          <div id="mediaStage" class="media-stage hidden"></div>
+          <h1 id="questionPrompt">Модератор готовит следующий уровень.</h1>
+          <p id="questionHelper" class="question-helper">Выберите ответ. Время ограничено.</p>
+          <div id="answerOptions" class="answer-grid"></div>
+          <p id="answerFeedback" class="feedback"></p>
+        </article>
+
+        <section id="studentDuel" class="hidden" aria-live="polite"></section>
+        <aside class="side-stack">
+          <article class="mini-card">
+            <div class="kicker">Командный зачёт</div>
+            <div id="studentLeaderboard" class="leaderboard"></div>
+          </article>
+          <article class="mini-card rules-card">
+            <div class="kicker">Статус игрока</div>
+            <p id="lifeExplanation">Ваши баллы идут в общий счёт команды.</p>
+            <p id="rescueStatus" class="rescue-status">Спасение команды: доступно.</p>
+            <p id="comboExplanation" class="combo-explanation">Серия правильных ответов увеличивает множитель.</p>
+          </article>
+          <article id="powerBankCard" class="mini-card power-bank-card">
+            <div class="power-bank-head">
+              <div><div class="kicker">Банк силы</div><strong id="powerBankValue">0 / 100</strong></div>
+              <span id="powerBankLevel" class="power-level">0%</span>
+            </div>
+            <div class="power-meter"><span id="powerMeterFill"></span></div>
+            <div class="power-actions">
+              <button type="button" data-power="hint"><span>Подсказка</span><small>20</small></button>
+              <button type="button" data-power="freeze"><span>+3 сек</span><small>30</small></button>
+              <button type="button" data-power="double"><span>×2 очков</span><small>50</small></button>
+            </div>
+            <p id="powerBankMessage" class="power-message">Серия из 3+ правильных ответов заряжает команду.</p>
+          </article>
+          <article id="stealStudentCard" class="mini-card steal-card hidden">
+            <div class="kicker">Перехват</div>
+            <strong id="stealStudentTitle">Шанс забрать вопрос</strong>
+            <p id="stealStudentText">Первая другая команда с правильным ответом получает половину базовых очков.</p>
+          </article>
+        </aside>
+      </div>
+
+      <div id="studentEventPanel" class="party-event-stage hidden" role="status" aria-live="polite">
+        <div class="party-event-inner">
+          <span id="studentEventKicker" class="party-event-kicker">СЮРПРИЗ РАУНДА</span>
+          <span id="studentEventSymbol" class="party-event-symbol">✦</span>
+          <h2 id="studentEventTitle">Новый поворот</h2>
+          <p id="studentEventDescription">Правила этого вопроса изменились.</p>
+          <div class="party-event-progress"><span></span></div>
+          <strong id="studentEventCountdown" class="party-event-countdown">5</strong>
+        </div>
+      </div>
+      <div id="studentPhaseOverlay" class="phase-overlay hidden" aria-live="polite">
+        <div class="phase-overlay-card">
+          <span id="phaseEyebrow" class="section-kicker">Подготовка</span>
+          <strong id="phaseCountdown" class="phase-countdown">3</strong>
+          <h2 id="phaseTitle">Игра начинается</h2>
+          <p id="phaseText">Приготовьтесь. Первый раунд откроется автоматически.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="teacherView" class="hidden">
+      <article id="teacherLoginCard" class="auth-card">
+        <div class="auth-brand">
+          <span class="auth-mark">O</span>
+          <div><strong>ORG / СТУДИЯ</strong><small>Панель модератора</small></div>
+        </div>
+        <div class="auth-copy">
+          <span class="section-kicker">Авторизация</span>
+          <h1>Войдите в рабочее пространство</h1>
+          <p>Управление банком вопросов, наборами игр, сессиями и аналитикой.</p>
+        </div>
+        <form id="teacherLoginForm" class="form-stack">
+          <label>Email<input id="teacherEmail" type="email" autocomplete="username" required></label>
+          <label>Пароль<input id="teacherPassword" type="password" autocomplete="current-password" required></label>
+          <button class="primary-action" type="submit">Войти в ORG / СТУДИЯ</button>
+          <p id="teacherLoginMessage" class="form-message"></p>
+        </form>
+      </article>
+
+      <div id="teacherDashboard" class="studio-shell hidden">
+        <aside class="studio-flowbar" aria-label="Навигация преподавателя">
+            <div class="flowbar-brand">
+              <span class="studio-mark" aria-hidden="true">✦</span>
+              <div><strong>ORG / СТУДИЯ</strong><small>Кабинет преподавателя</small></div>
+            </div>
+            <nav class="flow-steps" aria-label="Основной маршрут">
+              <button class="flow-step active" data-studio-view="questions"><span>01</span><div><b>Библиотека</b><small id="sidebarQuestionCount">0 заданий</small></div></button>
+              <button class="flow-step" data-studio-view="live"><span>02</span><div><b>Провести игру</b><small>Комната и команды</small></div></button>
+              <button class="flow-step" data-studio-view="analytics"><span>03</span><div><b>Результаты</b><small>Статистика игры</small></div></button>
+            </nav>
+            <div class="flowbar-actions">
+              <button id="viewAsParticipant" class="button-secondary">Проверить как игрок</button>
+              <button id="teacherLogout" class="button-secondary hidden">Выйти</button>
+            </div>
+          </aside>
+        <section class="studio-main">
+          
+          <header class="studio-topbar">
+            <div>
+              <span id="studioBreadcrumb" class="section-kicker">Рабочее пространство</span>
+              <h1 id="studioPageTitle">Игровые банки</h1>
+            </div>
+            
+          </header>
+
+          
+
+          <div id="studioLive" class="studio-view hidden">
+            <div class="section-toolbar calm-toolbar">
+              <div>
+                <span class="section-kicker">Шаг 2 из 3</span>
+                <h2>Подготовка и проведение игры</h2>
+                <p>Идите слева направо: сначала комната, затем команды, затем готовность. Пульт ведущего появляется только после запуска.</p>
+              </div>
+            </div>
+
+            <div class="session-stepper" aria-label="Этапы запуска">
+              <button class="session-step active" data-session-step="room"><span>1</span><div><b>Комната</b><small>Набор и код</small></div></button>
+              <button class="session-step" data-session-step="teams"><span>2</span><div><b>Команды</b><small>Распределение</small></div></button>
+              <button class="session-step" data-session-step="ready"><span>3</span><div><b>Готовность</b><small>Проверка и отсчёт</small></div></button>
+              <button class="session-step" data-session-step="live"><span>4</span><div><b>Игра</b><small>Пульт ведущего</small></div></button>
+            </div>
+
+            <div id="teacherGamePanel" class="teacher-panel">
+              <div class="live-metrics soft-metrics">
+                <article><span>Код комнаты</span><strong id="metricCode">—</strong></article>
+                <article><span>Участники</span><strong id="metricParticipants">0</strong></article>
+                <article><span>Команды</span><strong id="metricTeams">0</strong></article>
+                <article><span>Статус</span><strong id="metricStatus">—</strong></article>
+              </div>
+
+              <section id="setupRoomPanel" class="setup-panel">
+                <div class="setup-panel-head">
+                  <div><span class="section-kicker">Этап 1</span><h3>Создайте комнату</h3><p>Выберите готовый набор или сгенерированную игру. После создания студенты смогут подключаться по коду.</p></div>
+                </div>
+                <form id="createSessionForm" class="setup-form">
+                  <label class="field-wide">Набор игры<select id="quizSelect"></select></label>
+                  <label>Режим<select id="gameMode"><option value="party">Party</option><option value="classic">Классический</option><option value="elimination">На выбывание</option><option value="seminar">Семинар</option></select></label>
+                  <label>Команд<input id="teamCount" type="number" min="1" max="16" value="4"></label><label>События раундов<select id="sessionEventChance"><option value="0">Выключить</option><option value="15">Редко · 15%</option><option value="30" selected>Нормально · 30%</option><option value="45">Часто · 45%</option><option value="60">Безумие · 60%</option></select></label>
+                  <label class="field-wide">Название занятия<input id="sessionTitle" placeholder="Например, История кино · группа 102"></label>
+                  <button class="button-primary setup-primary" type="submit">Создать комнату и открыть вход →</button>
+                </form>
+                <p id="teacherActionMessage" class="form-message"></p>
+              </section>
+
+              <section id="setupTeamsPanel" class="setup-panel hidden">
+                <div class="setup-panel-head">
+                  <div><span class="section-kicker">Этап 2</span><h3>Соберите команды</h3><p>Сначала дождитесь участников. Затем распределите автоматически или перетащите вручную. Запуск игры здесь недоступен.</p></div>
+                  <div class="setup-actions">
+                    <button id="randomizeTeams" class="button-secondary strong">Перемешать случайно</button>
+                    <button id="lockTeams" class="button-primary">Зафиксировать команды →</button>
+                  </div>
+                </div>
+                <article class="workspace-card team-workspace">
+                  <div class="workspace-card-head"><div><span class="section-kicker">Участники</span><h3>Распределение по командам</h3></div><span class="info-badge">Drag & drop</span></div>
+                  <div id="participantsBoard" class="participants-board"></div>
+                </article>
+              </section>
+
+              <section id="setupReadyPanel" class="setup-panel hidden">
+                <div class="ready-grid">
+                  <article class="ready-card">
+                    <span class="section-kicker">Этап 3</span>
+                    <h3>Всё готово?</h3>
+                    <div class="readiness-list">
+                      <div><span>Набор игры</span><strong id="readyQuizName">—</strong></div>
+                      <div><span>Участников</span><strong id="readyParticipants">0</strong></div>
+                      <div><span>Команд</span><strong id="readyTeams">0</strong></div>
+                      <div><span>Seed</span><strong id="readySeed">—</strong></div>
+                    </div>
+                  </article>
+                  <article class="ready-card accent">
+                    <span class="section-kicker">Перед стартом</span>
+                    <h3>Обратный отсчёт</h3>
+                    <p>После нажатия студенты увидят единый трёхсекундный отсчёт. Затем первый раунд откроется автоматически.</p>
+                    <div class="setup-actions vertical">
+                      <button id="returnToTeams" class="button-secondary">← Вернуться к командам</button>
+                      <button id="startGame" class="button-primary launch-button">Запустить игру</button>
+                    </div>
+                  </article>
+                </div>
+              </section>
+
+              <section id="setupLivePanel" class="setup-panel hidden">
+                <div class="director-bar">
+                  <div>
+                    <span class="section-kicker">Этап 4 · Режим ведущего</span>
+                    <h3 id="directorRoundTitle">Раунд</h3>
+                    <p id="directorRoundMeta">Вопрос и таймер синхронизированы у преподавателя и участников.</p>
+                  </div>
+                  <div class="director-controls">
+                    <button id="prevQuestion" class="button-secondary">← Назад</button>
+                    <button id="nextQuestion" class="button-primary">Следующий вопрос <span aria-hidden="true">→</span></button>
+                    <button id="openVoting" class="button-secondary">Голосование</button>
+                    <button id="showResults" class="button-secondary">Результат</button>
+                    <button id="openSteal" class="button-secondary steal-control">Перехват</button>
+                    <button id="finishGame" class="button-danger">Завершить</button>
+                  </div>
+                </div>
+
+<section class="duel-admin-section"><details class="duel-builder"><summary><span>✦ Финальная дуэль</span><small>Топ-2 команды · 3 вопроса · голосование</small></summary><div class="duel-builder-body"><p>Перед запуском укажите три вопроса. Два лидера выбираются автоматически по текущему рейтингу. После запуска состав участников фиксируется.</p><fieldset data-duel-question><legend>Вопрос 1 · 100 очков</legend><label>Формулировка<textarea rows="2" placeholder="Текст вопроса 1"></textarea></label><div class="duel-editor-options"><label>Вариант A<input type="text" placeholder="Вариант ответа"></label><label>Вариант B<input type="text" placeholder="Вариант ответа"></label><label>Вариант C<input type="text" placeholder="Вариант ответа"></label><label>Вариант D<input type="text" placeholder="Вариант ответа"></label></div><label>Правильный вариант<select><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label></fieldset><fieldset data-duel-question><legend>Вопрос 2 · 200 очков</legend><label>Формулировка<textarea rows="2" placeholder="Текст вопроса 2"></textarea></label><div class="duel-editor-options"><label>Вариант A<input type="text" placeholder="Вариант ответа"></label><label>Вариант B<input type="text" placeholder="Вариант ответа"></label><label>Вариант C<input type="text" placeholder="Вариант ответа"></label><label>Вариант D<input type="text" placeholder="Вариант ответа"></label></div><label>Правильный вариант<select><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label></fieldset><fieldset data-duel-question><legend>Вопрос 3 · 300 очков</legend><label>Формулировка<textarea rows="2" placeholder="Текст вопроса 3"></textarea></label><div class="duel-editor-options"><label>Вариант A<input type="text" placeholder="Вариант ответа"></label><label>Вариант B<input type="text" placeholder="Вариант ответа"></label><label>Вариант C<input type="text" placeholder="Вариант ответа"></label><label>Вариант D<input type="text" placeholder="Вариант ответа"></label></div><label>Правильный вариант<select><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label></fieldset><button type="button" id="startDuel" class="button-primary">Открыть голосование финала</button></div></details><div id="teacherDuel" class="hidden" aria-live="polite"></div></section>
+                <article id="directorEventNotice" class="director-event-notice hidden">
+                  <div class="director-event-mark">✦</div>
+                  <div class="director-event-copy"><span>СОБЫТИЕ ВОПРОСА</span><h3 id="directorEventTitle">Новый поворот</h3><p id="directorEventDescription">Особые правила</p></div>
+                  <button id="directorEventContinue" type="button" class="button-primary">Продолжить</button>
+                </article>
+                <article class="workspace-card stage-card">
+                  <div class="workspace-card-head">
+                    <div><span class="section-kicker">Сцена</span><h3>Экран аудитории</h3></div>
+                    <button id="fullscreenQuestion" class="button-secondary">На весь экран</button>
+                  </div>
+                  <div id="teacherQuestionStage" class="presenter-stage">
+                    <div class="presenter-top"><span id="presenterCounter">Ожидание</span><strong id="presenterTimer">—</strong></div>
+                    <div id="presenterMedia" class="media-stage hidden"></div>
+                    <h2 id="presenterPrompt">Игра ещё не запущена.</h2>
+                    <div id="presenterOptions" class="presenter-options"></div>
+                    <div id="optionDistribution" class="distribution"></div>
+                  </div>
+                </article>
+
+                <details class="host-extras"><summary><strong>Командные механики и дополнительные инструменты</strong><span>Развернуть ↗</span></summary><div class="host-extras-body">
+                <div class="mechanics-strip">
+                  <div class="mechanic-chip"><span>Combo</span><strong id="mechanicCombo">Вкл.</strong></div>
+                  <div class="mechanic-chip"><span>Спасение</span><strong id="mechanicRescue">1 на команду</strong></div>
+                  <div class="mechanic-chip"><span>Перехват</span><strong id="mechanicSteal">Готов</strong></div>
+                  <div class="mechanic-chip"><span>События</span><strong id="mechanicEvents">30%</strong></div><div class="mechanic-chip"><span>Банк силы</span><strong id="mechanicPower">Активен</strong></div>
+                  <div class="mechanic-chip secret"><span>Секретный раунд</span><strong id="mechanicSecret">Скрыт</strong></div>
+                </div>
+
+                <article id="livePowerPanel" class="workspace-card power-workspace">
+                  <div class="workspace-card-head">
+                    <div><span class="section-kicker">Командная механика</span><h3>Банк силы команд</h3></div>
+                    <span class="info-badge">0–100</span>
+                  </div>
+                  <div id="livePowerList" class="live-power-list"></div>
+                </article>
+
+                <article id="liveRescuePanel" class="workspace-card rescue-workspace">
+                  <div class="workspace-card-head">
+                    <div><span class="section-kicker">Командная механика</span><h3>Спасение выбывшего</h3></div>
+                    <span class="info-badge">1 раз на команду</span>
+                  </div>
+                  <div id="liveRescueList" class="live-rescue-list"></div>
+                </article>
+                </div></details>
+
+
+                <div class="two-workspace">
+                  <article class="workspace-card"><span class="section-kicker">Команды</span><h3>Рейтинг команд</h3><div id="teacherLeaderboard" class="leaderboard"></div></article>
+                  <article class="workspace-card"><span class="section-kicker">Игроки</span><h3>Личный рейтинг</h3><div id="studentRanking" class="leaderboard"></div></article>
+                </div>
+              </section>
+            </div>
+          </div>
+
+          <div id="studioQuestions" class="studio-view">
+            <div class="section-toolbar">
+              <div><span class="section-kicker">КОНТЕНТ / 01</span><h2>Каталог заданий</h2><p>Все форматы вопросов, поиск и проверка заданий перед игрой.</p></div>
+              <div class="toolbar-actions">
+                <button id="openSetComposer" class="button-secondary">Собрать микс</button>
+                <button id="openQuestionEditor" class="button-secondary">+ Свой вопрос</button>
+                <button class="button-primary" data-open-view="live">Запустить игру →</button>
+              </div>
+            </div>
+            <details class="pack-disclosure">
+              <summary><span class="pack-summary-icon">▧</span><span><strong>Наборы и коллекции</strong><small>Актуальные коллекции и черновики. Нажмите для просмотра.</small></span><span class="pack-summary-arrow">↗</span></summary>
+            <section class="game-pack-section compact-packs">
+              <div class="game-pack-head">
+                <div><span class="section-kicker">ПОДБОРКИ</span><h3>Готовые наборы</h3><p>Выберите набор для просмотра или запуска.</p></div>
+              </div>
+              <div id="overviewGamePacks" class="game-pack-grid"></div>
+            </section>
+            </details>
+            <div class="library-head"><div><span class="section-kicker">01 / Библиотека</span><h3>Все задания <span class="library-heading-mark">↗</span></h3><p id="librarySummary" aria-live="polite">Загрузка вопросов из банка…</p></div><div class="library-view-note">Ничего не скрыто · фильтры необязательны</div></div>
+            <div class="filter-bar">
+              <div class="search-field"><span aria-hidden="true">⌕</span><input id="questionSearch" aria-label="Поиск заданий" placeholder="Найти вопрос или тег…"></div>
+              <select id="questionSetFilter"><option value="">Все наборы</option></select>
+              <select id="questionTypeFilter"><option value="">Все типы</option><option value="single">Тест</option><option value="flag">Флаг</option><option value="anthem">Гимн</option><option value="person_photo">Фото человека</option><option value="place_photo">Фото места</option><option value="region_map">Карта</option><option value="vote">Голосование</option><option value="elimination">Выбывание</option><option value="duel">Баттл</option></select>
+              <select id="questionDifficultyFilter"><option value="">Любая сложность</option><option value="1">1 — легко</option><option value="2">2</option><option value="3">3 — средне</option><option value="4">4</option><option value="5">5 — сложно</option></select>
+              <span id="questionBankCount" class="info-badge">0 вопросов</span>
+            </div>
+            <div class="library-controls" aria-label="Фильтры качества библиотеки">
+              <label class="library-check"><input id="questionUniqueOnly" type="checkbox" checked><span>Скрывать повторы</span></label>
+              <label class="library-check"><input id="questionShowDrafts" type="checkbox"><span>Только опубликованные</span></label>
+              <label class="library-check"><input id="questionDuplicateOnly" type="checkbox"><span>Только повторы</span></label>
+              <button id="questionClearFilters" class="library-clear" type="button">Сбросить фильтры</button>
+            </div>
+            <div id="bulkQuestionBar" class="bulk-bar hidden">
+              <strong><span id="bulkSelectedCount">0</span> выбрано</strong>
+              <select id="bulkTargetSet"><option value="">Переместить в набор…</option></select>
+              <input id="bulkTag" placeholder="Добавить тег">
+              <button id="bulkAddTag" class="button-secondary">Добавить тег</button>
+              <button id="bulkMove" class="button-secondary">Переместить</button>
+              <button id="bulkDelete" class="button-danger">Удалить</button>
+              <button id="bulkClear" class="text-button">Снять выбор</button>
+            </div>
+
+            <div id="questionBank" class="question-library"></div>
+            <div class="library-pagination"><button id="questionBankMore" class="button-secondary hidden" type="button">Показать ещё 96 вопросов ↓</button><button id="questionShowAll" class="text-button hidden" type="button">Показать все вопросы</button></div>
+            <details class="generator-disclosure">
+              <summary><span><strong>Собрать собственную игру</strong><small>Настройте seed, раунды и банки вопросов</small></span><span class="disclosure-symbol">↗</span></summary>
+            <section class="generator-card">
+              <div class="generator-copy">
+                <span class="section-kicker">Случайная игра</span>
+                <h3>Собрать игру по seed</h3>
+                <p>Одинаковый seed всегда собирает одну и ту же структуру раундов. Выберите банки, количество раундов и вопросов — система сама соберёт последовательность.</p>
+              </div>
+              <form id="randomGameForm" class="generator-form">
+                <div class="seed-field"><label>Seed<input id="randomSeed" type="number" min="1" max="2147483647" value="482731"></label><button id="randomizeSeed" type="button" class="button-secondary seed-button" title="Случайное число">↻ Случайный</button></div>
+                <label>Раундов<input id="randomRounds" type="number" min="1" max="12" value="5"></label>
+                <label>Вопросов в раунде<input id="randomQuestions" type="number" min="1" max="20" value="5"></label>
+                <div class="generator-banks field-wide">
+                  <span>Банки для генерации</span>
+                  <div id="randomBankList" class="bank-choice-grid"></div>
+                </div>
+                <button class="button-primary generator-submit" type="submit">Собрать случайную игру →</button>
+              </form>
+              <div id="randomGameResult" class="generator-result hidden"></div>
+            </section>
+            </details>
+          </div>
+
+          
+
+          
+
+          
+
+          
+
+          <div id="studioAnalytics" class="studio-view hidden">
+            <div class="section-toolbar">
+              <div><span class="section-kicker">Шаг 3 из 3</span><h2>Результаты</h2><p>После занятия здесь будут история, точность, сложные вопросы и экспорт.</p></div>
+              <div class="toolbar-actions"><button id="exportCsv" class="button-secondary">CSV</button><button id="exportXlsx" class="button-secondary">XLSX</button><button id="refreshAnalytics" class="button-secondary">Обновить</button></div>
+            </div>
+            <div class="analytics-metrics">
+              <article class="metric-card"><span>Средняя точность</span><strong id="analyticsAccuracy">—</strong></article>
+              <article class="metric-card"><span>Ответов</span><strong id="analyticsAnswers">0</strong></article>
+            </div>
+            <article class="workspace-card"><div class="workspace-card-head"><div><span class="section-kicker">История</span><h3>Проведённые сессии</h3></div><div class="history-actions"><button type="button" id="archiveEmptyHistory" class="button-secondary">Убрать пустые</button><button type="button" id="archiveFinishedHistory" class="button-secondary">Архивировать завершённые</button></div></div><div id="sessionHistory" class="history-list"></div></article>
+            <div class="two-workspace">
+              <article class="workspace-card"><span class="section-kicker">По студентам</span><h3>Рейтинг и точность</h3><div id="analyticsStudentRanking" class="leaderboard"></div></article>
+              <article class="workspace-card"><span class="section-kicker">По вопросам</span><h3>Сложность вопросов</h3><div id="analyticsQuestionStats" class="question-analytics"></div></article>
+            </div>
+          </div>
+        </section>
+
+        <div id="questionEditorDrawer" class="editor-drawer hidden" aria-hidden="true">
+          <div class="drawer-backdrop" data-close-drawer="question"></div>
+          <aside class="drawer-panel">
+            <div class="drawer-head"><div><span class="section-kicker">Банк вопросов</span><h2 id="questionEditorTitle">Новый вопрос</h2></div><button class="drawer-close" data-close-drawer="question">×</button></div>
+            <form id="createQuestionForm" class="form-stack">
+              <label>Набор<select id="editorQuizSelect"></select></label>
+              <label>Тип задания<select id="questionType">
+                <option value="single">Обычный тест</option><option value="multiple">Несколько ответов</option><option value="flag">Угадать флаг</option><option value="anthem">Угадать гимн</option><option value="person_photo">Человек по фото</option><option value="place_photo">Место по фото</option><option value="region_map">Регион на карте</option><option value="vote">Голосование</option><option value="elimination">На выбывание</option><option value="matching">Сопоставление</option><option value="ordering">Порядок</option><option value="duel">Баттл ответов</option><option value="split">Кейс</option><option value="scale">Шкала позиции</option><option value="wordcloud">Облако мнений</option><option value="ranking">Ранжирование</option><option value="team_pitch">Защита позиции</option>
+              </select></label>
+              <div id="questionTypeHint" class="editor-hint">Выберите механику уровня.</div>
+              <input id="editingQuestionId" type="hidden">
+              <label>Вопрос<textarea id="newQuestionPrompt" rows="4" placeholder="Введите формулировку вопроса" required></textarea></label>
+              <div id="mediaConfig" class="form-grid">
+                <label>URL изображения / аудио<input id="mediaUrl" placeholder="https://…"></label>
+                <label>Загрузить файл<input id="mediaUpload" type="file" accept="image/*,audio/*"></label>
+                <label>Целевой регион<input id="targetRegion" placeholder="altai-kray"></label>
+              </div>
+              <div class="form-grid">
+                <label>Вариант A<input id="optionA"></label><label>Вариант B<input id="optionB"></label>
+                <label>Вариант C<input id="optionC"></label><label>Вариант D<input id="optionD"></label>
+              </div>
+              <div class="form-grid">
+                <label id="correctOptionLabel">Правильный ответ<select id="correctOption"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label>
+                <label id="correctMultiLabel" class="hidden">Правильные варианты<input id="correctMulti" placeholder="A, B"></label>
+                <label>Время, сек.<input id="questionTime" type="number" min="5" max="300" value="30"></label>
+                <label>Баллы<input id="questionPoints" type="number" min="0" max="10000" value="100"></label>
+                <label>Сложность<select id="questionDifficulty"><option value="1">1 — легко</option><option value="2" selected>2</option><option value="3">3 — средне</option><option value="4">4</option><option value="5">5 — сложно</option></select></label>
+                <label>Теги<input id="questionTags" placeholder="география, флаги, easy"></label>
+              </div>
+              <label class="check-row"><input id="eliminateOnWrong" type="checkbox"><span>Ошибка выбивает игрока из командного зачёта</span></label>
+              <label>Пояснение<textarea id="newQuestionExplanation" rows="3" placeholder="Показывается после ответа"></textarea></label>
+              <div class="drawer-actions"><button type="button" class="button-secondary" data-close-drawer="question">Отмена</button><button class="button-primary" type="submit">Сохранить вопрос</button></div>
+              <p id="editorMessage" class="form-message"></p>
+            </form>
+          </aside>
+        </div>
+
+        <div id="setEditorDrawer" class="editor-drawer hidden" aria-hidden="true">
+          <div class="drawer-backdrop" data-close-drawer="set"></div>
+          <aside class="drawer-panel small">
+            <div class="drawer-head"><div><span class="section-kicker">Наборы игр</span><h2>Новый набор</h2></div><button class="drawer-close" data-close-drawer="set">×</button></div>
+            <form id="createQuizForm" class="form-stack">
+              <label>Название<input id="newQuizTitle" placeholder="Например, Россия и мир" required></label>
+              <label>Тема<input id="newQuizTopic" placeholder="Раздел курса" required></label>
+              <label>Описание<textarea id="newQuizDescription" rows="5" placeholder="Что входит в этот набор"></textarea></label>
+              <div class="drawer-actions"><button type="button" class="button-secondary" data-close-drawer="set">Отмена</button><button class="button-primary" type="submit">Создать набор</button></div>
+            </form>
+          </aside>
+        </div>
+        <div id="setComposerDrawer" class="editor-drawer hidden" aria-hidden="true">
+          <div class="drawer-backdrop" data-close-drawer="composer"></div>
+          <aside class="drawer-panel preview-panel">
+            <div class="drawer-head"><div><span class="section-kicker">Наборы игр</span><h2>Собрать набор из банка</h2></div><button class="drawer-close" data-close-drawer="composer">×</button></div>
+            <form id="setComposerForm" class="form-stack">
+              <div class="form-grid"><label>Название<input id="composerTitle" required placeholder="Новый игровой набор"></label><label>Тема<input id="composerTopic" required placeholder="ОРГ / География"></label></div>
+              <label>Описание<textarea id="composerDescription" rows="2"></textarea></label>
+              <div class="composer-toolbar"><input id="composerSearch" placeholder="Поиск вопросов"><select id="composerType"><option value="">Все типы</option><option value="flag">Флаги</option><option value="anthem">Гимны</option><option value="person_photo">Люди</option><option value="place_photo">Места</option><option value="region_map">Карта</option><option value="elimination">Выбывание</option></select></div>
+              <div class="composer-columns"><div><h3>Банк</h3><div id="composerBank" class="composer-list"></div></div><div><h3>В наборе <span id="composerCount">0</span></h3><div id="composerSelected" class="composer-list selected"></div></div></div>
+              <div class="drawer-actions"><button type="button" class="button-secondary" data-close-drawer="composer">Отмена</button><button class="button-primary" type="submit">Создать набор</button></div>
+            </form>
+          </aside>
+        </div>
+
+        <div id="setOrderDrawer" class="editor-drawer hidden" aria-hidden="true">
+          <div class="drawer-backdrop" data-close-drawer="setorder"></div>
+          <aside class="drawer-panel">
+            <div class="drawer-head"><div><span class="section-kicker">Наборы игр</span><h2 id="setOrderTitle">Порядок вопросов</h2></div><button class="drawer-close" data-close-drawer="setorder">×</button></div>
+            <p class="drawer-copy">Перетаскивайте вопросы мышью или пальцем. Порядок сохраняется в наборе и используется в живой игре.</p>
+            <div id="setOrderList" class="set-order-list"></div>
+            <div class="drawer-actions"><button type="button" class="button-secondary" data-close-drawer="setorder">Отмена</button><button id="saveSetOrder" class="button-primary" type="button">Сохранить порядок</button></div>
+          </aside>
+        </div>
+
+        <div id="questionPreviewDrawer" class="editor-drawer hidden" aria-hidden="true">
+          <div class="drawer-backdrop" data-close-drawer="preview"></div>
+          <aside class="drawer-panel preview-panel">
+            <div class="drawer-head"><div><span id="previewType" class="section-kicker">Предпросмотр</span><h2 id="previewTitle">Вопрос</h2></div><button class="drawer-close" data-close-drawer="preview">×</button></div>
+            <div id="previewMeta" class="preview-meta"></div>
+            <div id="previewMedia" class="preview-media hidden"></div>
+            <div class="preview-play-notice">Тестирование не меняет очки и прогресс игроков.</div>
+            <div id="previewOptions" class="preview-options"></div>
+            <div id="previewFeedback" class="preview-play-feedback" role="status" aria-live="polite"></div>
+            <div id="previewExplanation" class="preview-explanation"></div>
+          </aside>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script type="module" src="./app.js?v=20261022-motion1"></script>
+</body>
+</html>
