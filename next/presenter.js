@@ -459,7 +459,7 @@ function render(state){
  $('projectionPlay').hidden=!state.code;$('projectionPlay').href=link(state.code);
  // Public display always has a single QR during lobby, including existing rooms.
  if(state.phase==='lobby'&&!state.team_lobby)state={...state,team_lobby:{mode:'legacy',confirmed:false,team_count:(state.lobby_teams||[]).length,captain_count:0,captains_ready:false}};
- const key=[state.code,state.phase,state.index,state.activity?.title,state.activity?.type,state.activity?.settings?.arcade_mode,state.team_lobby?.mode,state.team_lobby?.team_count,state.team_lobby?.confirmed,state.team_lobby?.captains_ready,state.team_lobby?.captain_count,state.question?.prompt,state.question?.kind].join(':');
+ const key=[state.code,state.phase,state.index,state.activity?.title,state.activity?.type,state.activity?.settings?.arcade_mode,state.team_lobby?.mode,state.team_lobby?.team_count,state.team_lobby?.confirmed,state.team_lobby?.captains_ready,state.team_lobby?.captain_count,state.question?.prompt,state.question?.kind, ...(state.phase==='lobby'?(state.lobby_teams||[]).map(t=>[t.id,t.name,t.members??t.players].join('/')):[])].join(':');
  if(key===ctx.renderKey){
   if(state.phase==='intermission'&&state.activity?.type==='round_stats'&&$('projectorResultCountdown')){
    $('projectorResultCountdown').textContent=state.ends_at?seconds(state.ends_at):'—';
