@@ -1,0 +1,88 @@
+name: QWIZ / test eleven-user scoped Auth snapshot on isolated PG17
+on:
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - '.github/workflows/qwiz-11-auth-scope-fixture.yml'
+      - 'next/isolation/ENABLE-QWIZ-SCOPED-AUTH-24H.sql'
+      - 'next/isolation/CLEANUP-QWIZ-SCOPED-AUTH-SNAPSHOT.sql'
+permissions:
+  contents: read
+jobs:
+  auth-fixture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    services:
+      postgres:
+        image: postgres:17
+        env: {POSTGRES_PASSWORD: disposable-only}
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 12
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGUSER: postgres
+      PGPASSWORD: disposable-only
+      PGDATABASE: postgres
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fixture 57 QWIZ tables, 11 referenced users, 2 unrelated users
+        shell: bash
+        run: |
+          set -euo pipefail
+          work="$(mktemp -d)"
+          trap 'rm -rf "$work"' EXIT
+          cat > "$work/base.sql" <<'SQL'
+          CREATE ROLE anon NOLOGIN;
+          CREATE ROLE authenticated NOLOGIN;
+          CREATE ROLE service_role NOLOGIN;
+          CREATE ROLE qwiz_catalog_reader LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS;
+          CREATE SCHEMA auth;
+          CREATE TABLE auth.users(
+            id uuid PRIMARY KEY,instance_id uuid,aud varchar(255),role varchar(255),
+            email varchar(255),encrypted_password varchar(255),email_confirmed_at timestamptz,
+            phone text,phone_confirmed_at timestamptz,raw_app_meta_data jsonb,
+            raw_user_meta_data jsonb,created_at timestamptz,updated_at timestamptz,
+            last_sign_in_at timestamptz,is_sso_user boolean,is_anonymous boolean,
+            deleted_at timestamptz,banned_until timestamptz
+          );
+          CREATE TABLE auth.identities(
+            id uuid PRIMARY KEY,user_id uuid REFERENCES auth.users(id),
+            provider_id text,identity_data jsonb,provider text,created_at timestamptz,
+            updated_at timestamptz,last_sign_in_at timestamptz,email text
+          );
+          SQL
+          python3 - "$work/base.sql" <<'PY'
+          from pathlib import Path
+          import sys
+          p=Path(sys.argv[1])
+          tables={'org_next_players':'user_id','org_next_quizzes':'owner_id','org_next_rooms':'owner_id','org_quiz_participants':'user_id','org_quiz_sessions':'created_by','org_quiz_sets':'created_by','qwiz_archived_rooms':'owner_id','qwiz_bank':'owner_id','qwiz_builds':'owner_id','qwiz_player_device_access':'user_id','qwiz_student_links':'user_id','qwiz_student_profiles':'user_id','qwiz_topics':'owner_id'}
+          with p.open('a') as f:
+            for table,col in tables.items(): f.write(f"CREATE TABLE public.{table}({col} uuid);\n")
+            for i in range(44):f.write(f"CREATE TABLE public.qwiz_fixture_{i:02d}(id integer);\n")
+            for i in range(1,14):
+              uid=f'00000000-0000-4000-8000-{i:012d}'
+              f.write("INSERT INTO auth.users(id,email,encrypted_password,is_sso_user,is_anonymous) VALUES ('"+uid+"', 'fixture"+str(i)+"@example.invalid','$2a$10$fixture-hash',false,false);\n")
+              f.write("INSERT INTO auth.identities(id,user_id,provider_id,identity_data,provider,email) VALUES ('"+uid+"','"+uid+"','"+uid+"','{}','email','fixture"+str(i)+"@example.invalid');\n")
+              if i<=11:f.write("INSERT INTO public.qwiz_bank(owner_id) VALUES ('"+uid+"');\n")
+          PY
+          psql -X -q -v ON_ERROR_STOP=1 -f "$work/base.sql"
+          psql -X -q -v ON_ERROR_STOP=1 -f next/isolation/ENABLE-QWIZ-SCOPED-AUTH-24H.sql
+          result="$(psql -XAtq -v ON_ERROR_STOP=1 -c "SELECT (SELECT count(*) FROM qwiz_auth_export.users),(SELECT count(*) FROM qwiz_auth_export.identities)")"
+          test "$result" = "11|11"
+          restricted="$(psql -XAtq -v ON_ERROR_STOP=1 -c "SET ROLE qwiz_catalog_reader;SELECT count(*) FROM qwiz_auth_export.users")"
+          test "$restricted" = "11"
+          if psql -XAtq -v ON_ERROR_STOP=1 -c "SET ROLE qwiz_catalog_reader;SELECT count(*) FROM auth.users" >/dev/null 2>&1; then
+            echo "ERROR: Reader can read full old Auth table" >&2
+            exit 1
+          fi
+          api_check="$(psql -XAtq -v ON_ERROR_STOP=1 -c "SELECT has_schema_privilege('anon','qwiz_auth_export','USAGE')::int,has_schema_privilege('authenticated','qwiz_auth_export','USAGE')::int,has_schema_privilege('service_role','qwiz_auth_export','USAGE')::int")"
+          test "$api_check" = "0|0|0"
+          psql -X -q -v ON_ERROR_STOP=1 -f next/isolation/CLEANUP-QWIZ-SCOPED-AUTH-SNAPSHOT.sql
+          test "$(psql -XAtq -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM pg_namespace WHERE nspname='qwiz_auth_export'")" = "0"
+          test "$(psql -XAtq -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM auth.users")" = "13"
+          echo 'PASS: exactly 11 of 13 synthetic Auth users isolated, identities copied, reader limited, original users untouched, cleanup complete.'
