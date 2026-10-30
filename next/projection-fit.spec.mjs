@@ -332,7 +332,7 @@ test('Competitive mini-games fit screen and Blitz Consensus prioritizes readable
     server_now:new Date().toISOString(),teams:[{id:'a',name:'Альфа',points:10,place:1}],mine:null,awards:[]},error:null})};
    QwizArcade.mountProjector(area,{code:'A1B2C3D4',activity:{settings:{arcade_mode:mode}}},client);
   },mode);
-  if(mode==='tug')await expect(page.locator('.arcade-tap-stage')).toBeVisible();
+  if(mode==='tug')await expect(page.locator('.arcade-projection-tap-button')).toBeVisible();
   else if(mode==='captain')await expect(page.locator('.arcade-memory-hero')).toBeVisible();
   else {await expect(page.locator('.arcade-projection[data-arcade-root="blitz"]')).toBeVisible();await expect(page.locator('.consensus-progress')).toBeVisible();await expect(page.locator('.consensus-hero')).toBeHidden();}
   await expect(page.locator('[data-arcade-clock]')).toContainText('с');
