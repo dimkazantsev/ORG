@@ -1237,3 +1237,77 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
   line-height:1.15!important;margin:0!important;padding:2px!important;
  }
 }
+
+
+/* 2026-10-30: Secret Code must never inherit the 70px generic arcade crop.
+   Keep the game inside the mobile viewport, with its own reachable scroll area. */
+.player-compact #gameView #gameContent.game-card:has(.arcade-player[data-arcade-root="sequence_memory"]){
+ display:block!important;overflow-y:auto!important;overflow-x:hidden!important;
+ -webkit-overflow-scrolling:touch;overscroll-behavior:contain;
+ padding:clamp(7px,1.6dvh,14px)!important;scroll-padding-bottom:16px;
+}
+.player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"]{
+ display:flex;flex-direction:column;gap:clamp(5px,1.1dvh,10px);
+ width:100%;max-width:100%;min-height:100%;box-sizing:border-box;
+ padding:0;margin:0;overflow:visible;
+}
+.player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-head{
+ flex:0 0 auto;min-width:0;
+}
+.player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-head h2{
+ font-size:clamp(15px,3.1dvh,22px);line-height:1.15;
+}
+.player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-lead{
+ margin:0;font-size:clamp(10px,1.65dvh,12px);line-height:1.25;
+}
+.player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-scene{
+ height:clamp(90px,18dvh,150px)!important;min-height:90px!important;
+ max-height:none!important;flex:0 0 auto;margin:0!important;padding:0;
+}
+.player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-scene>*{
+ height:100%!important;min-height:0!important;max-height:none!important;
+}
+.player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-secret-scene{
+ gap:3px;padding:5px;box-sizing:border-box;
+}
+.player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-secret-symbol{
+ min-height:0;font-size:clamp(35px,8dvh,60px);line-height:1;
+}
+.player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-secret-progress{
+ font-size:11px;line-height:1.2;
+}
+.player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-secret-panel{
+ display:grid;gap:clamp(5px,1dvh,9px);min-width:0;flex:0 0 auto;
+}
+.player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-secret-slots{
+ display:flex;flex-wrap:wrap;gap:4px;min-width:0;
+}
+.player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-secret-slot{
+ box-sizing:border-box;min-width:0;width:clamp(28px,8.5vw,40px);
+ height:clamp(34px,6dvh,46px);font-size:clamp(15px,4.3vw,21px);
+}
+.player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-secret-choices{
+ grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(5px,1.2vw,9px);
+ max-width:100%;min-width:0;
+}
+.player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-secret-choices button{
+ min-width:0;min-height:clamp(44px,8dvh,58px);
+ font-size:clamp(24px,6vw,34px);border-radius:12px;
+}
+.player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-secret-actions{
+ grid-template-columns:minmax(0,1fr) minmax(0,1.7fr);gap:7px;min-width:0;
+}
+.player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-secret-actions button{
+ min-width:0;min-height:44px;
+}
+@media (max-height:540px){
+ .player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-lead{display:none}
+ .player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-scene{
+  height:clamp(75px,19dvh,104px)!important;min-height:75px!important;
+ }
+ .player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-secret-symbol{
+  font-size:clamp(31px,8dvh,45px);
+ }
+ .player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-secret-slot{height:32px}
+ .player-compact #gameContent .arcade-player[data-arcade-root="sequence_memory"] .arcade-secret-choices button{min-height:44px}
+}
