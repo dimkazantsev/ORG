@@ -585,3 +585,25 @@ https://github.com/dimkazantsev/ORG/actions/runs/40953297479 — `SUCCESS`. Ис
 После COMMIT был выполнен динамический SQL аудит всех `pg_constraint.contype='f'` из 57 QWIZ tables, проверяющий каждую внутреннюю ссылку `qwiz_transfer_stage.child → qwiz_transfer_stage.parent`, включая составные ключи и SQL `MATCH SIMPLE`-семантику NULL.
 
 **Итог прямого SQL Supabase Free:** `validated_internal_fks=110`, `orphan_rows=0`, `broken_constraints=0`. Ещё 13 FK ссылаются на внешнюю управляемую `auth.users`, для них перед загрузкой в `public` необходимо выборочно восстановить точно 11 исходных Auth UUID. В source AUTH техническая роль не имеет SELECT и нельзя создавать фиктивные аккаунты лишь ради удовлетворения FK.
+
+
+## 24. Подготовлена выборочная миграция 11 Supabase Auth пользователей — источник требует разрешения владельца
+
+30.10.2026 официальный подключённый Supabase API подтвердил доступ **только** к новому `vwsoergltegncrretxnz`, проект old GOS `bderfrcfuhnutuoyudje` возвращает `You do not have permission to perform this action`. В GitHub Actions технический `qwiz_catalog_reader` не имеет SELECT на old `auth.users` и `auth.identities` — это сознательная защита общей базы ГОС.ID. Старые Auth данные не прочитаны и не изменены.
+
+### Действительно применено в новом Supabase Free
+
+Миграция `qwiz_private_exact_11_auth_snapshot_schema_20261030` создала отдельную **не публикуемую** схему `qwiz_auth_snapshot` с `users` (только необходимое для сохранения ID, email, хеша и метаданных) и `identities` (provider/identity_data) со строгим FK. Обе таблицы RLS-enabled, все таблицы и схема без grants `anon/authenticated/service_role`. Прямой target SQL после миграции подтвердил: две таблицы, **0** staged users, **0** identities, **0** live users, schema USAGE для трёх API ролей = false. Ни одного фиктивного Auth аккаунта создано не было.
+
+### Реально протестирован разрешающий SQL для OLD GOS (не применён к production!)
+
+- `ENABLE-QWIZ-SCOPED-AUTH-24H.sql`: owner-authorized SQL, формирует **только** снимок 11 `auth.users`, связанных с 13 FK QWIZ tables, и их `auth.identities`, в unexposed schema `qwiz_auth_export`. Никаких GRANT технической роли напрямую на `auth.users`/identities, никаких DELETE/UPDATE старых учётных записей. RLS и временная SELECT-политика для `qwiz_catalog_reader` действуют 24 часа, затем fail-closed. SQL выводит только агрегаты, без UUID, email, паролей и токенов.
+- `CLEANUP-QWIZ-SCOPED-AUTH-SNAPSHOT.sql`: удаляет только эту ограниченную копию после завершения transfer, нет изменений в оригинальных `auth.users`/identities.
+- Изолированная GitHub CI на PostgreSQL 17: https://github.com/dimkazantsev/ORG/actions/runs/41010307015 — **SUCCESS**. Из 13 синтетических Auth users были доступны ровно 11 привязанных к QWIZ, оригинальная `auth.users` оставалась недоступной restricted reader, все 3 API роли без доступа к export schema, cleanup не затронул 13 originals.
+- `next/isolation/transfer-exact-11-auth-snapshot.py` + `.github/workflows/qwiz-scoped-11-auth-stage.yml`: приватное source READ ONLY → target `qwiz_auth_snapshot` (не real auth.users), TLS, две временные CSV только в Actions runner, пароли и PII не печатаются, строгий 11-of-11 FK scope guard, RLS, транзакция и проверка counts. Workflow gated commit message `QWIZ_AUTH_11_STAGE_APPROVED`. **Пока не запускался**, пока old GOS owner не разрешил scoped Auth export.
+
+### Storage/media triage
+
+Из 927 `org_quiz_questions`: 519 JSON configs содержат прямые ссылки на изображения, однако 0 содержат `supabase.co/storage/v1/object` или `/storage/v1/object`, и 0 `media_storage_path` заполнены. `qwiz_student_accounts` и `qwiz_student_profiles` не содержат аватаров. Не утверждать, что старый Storage вообще пуст, до read-only инвентаризации исходных buckets; но пока нет доказанных QWIZ медиа-файлов, требующих bytes copy.
+
+**Следующая развилка: единственный необходимый ручной owner authorization — применить `ENABLE-QWIZ-SCOPED-AUTH-24H.sql` в SQL Editor OLD GOS.** Затем gated workflow может приватно скопировать только 11 user/identity records в QWIZ Free, проверить password/email/provider readiness и продолжить перенос в real Auth/public. Без этого нельзя безопасно восстановить 13 Auth FK. Важно не мержить PR и не переключать UI до live Auth/public/FK E2E.
