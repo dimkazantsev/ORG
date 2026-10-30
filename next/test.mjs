@@ -1000,8 +1000,12 @@ test('QWIZ favicon is provided on all entry and moderator pages',()=>{
   const markup=readFileSync(new URL('./'+page,import.meta.url),'utf8');
   assert.match(markup,/rel="icon" type="image\/svg\+xml" href="\.\.\/favicon\.svg\?v=qwiz-2"/);
  }
- const legacy=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ const legacy=readFileSync(new URL('../legacy/index.html',import.meta.url),'utf8');
  assert.match(legacy,/rel="icon" type="image\/svg\+xml" href="\.\/favicon\.svg\?v=qwiz-2"/);
+ assert.match(legacy,/<base href="\.\.\/">/);
+ const mainEntry=readFileSync(new URL('../index.html',import.meta.url),'utf8');
+ assert.match(mainEntry,/legacy \? '\.\/legacy\/' : '\.\/next\/'/);
+ assert.doesNotMatch(legacy,/data-org-canonical-entry/);
 });
 test('Round editor opens mechanics by default with vector arrow and even selection outline',()=>{
  const markup=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
