@@ -343,3 +343,42 @@
 .geo-game .geo-message .geo-result-label{display:inline-block;padding:0;font-size:11px;line-height:1.2;font-weight:800}
 .geo-game .geo-message .geo-result-label.is-correct{color:#167849}
 .geo-game .geo-message .geo-result-label.is-wrong{color:#655184}
+
+
+/* After map confirmation, replace the action in the same fixed slot
+   with the server-authoritative answer; no second click required. */
+.geo-game .geo-confirm-result{
+ box-sizing:border-box;display:flex;align-items:center;justify-content:center;
+ gap:12px;position:sticky;bottom:6px;z-index:8;
+ width:100%;min-height:60px;padding:9px 14px;margin:10px 0 6px;
+ border:2px solid;border-radius:15px;font-size:clamp(13px,3.6vw,17px);
+ box-shadow:0 6px 20px #251b3720;overflow-wrap:anywhere;
+}
+.geo-game .geo-confirm-result>span:last-child{display:flex;flex-direction:column;gap:3px;min-width:0}
+.geo-game .geo-confirm-result strong{font-weight:900;line-height:1.12}
+.geo-game .geo-confirm-result small{font-size:clamp(12px,3.2vw,15px);line-height:1.25;font-weight:750}
+.geo-game .geo-confirm-result-icon{flex:none;font-size:23px;line-height:1}
+.geo-game .geo-confirm-result.is-correct{
+ border-color:#228954;background:#e2f7e9;color:#11613d;
+}
+.geo-game .geo-confirm-result.is-wrong{
+ border-color:#c44c65;background:#ffebef;color:#a22246;
+}
+/* Wrong selected region is red even if it retained the purple 'selected'
+   class. The authoritative right region is always green. */
+.geo-game .geo-map-svg .geo-region.geo-wrong-answer{
+ fill:#df6576!important;stroke:#a92c48!important;stroke-width:4!important;
+ filter:none!important;
+}
+.geo-game .geo-map-svg .geo-region.geo-correct-answer{
+ fill:#2eb875!important;stroke:#0a713f!important;
+}
+/* Keep the chosen incorrect textual answer red instead of overriding it
+   with the neutral style applied to other, unselected variants. */
+.geo-game .geo-options.is-revealed .geo-option-wrong{
+ color:#a22246!important;background:#ffebef!important;
+ border:2px solid #c44c65!important;box-shadow:none!important;opacity:1!important;
+}
+.geo-game .geo-options.is-revealed .geo-option-wrong .geo-choice-number{
+ background:#c44c65!important;color:white!important;
+}
