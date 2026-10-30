@@ -79,3 +79,57 @@ test('Captain selection is one unified mobile card with a working claim button',
  expect(rect.x).toBeGreaterThanOrEqual(0);
  expect(rect.x+rect.width).toBeLessThanOrEqual(392);
 });
+
+for(const [width,height] of [[390,844],[1280,720]]){
+ test('Audience captain roster shows named teams in one screen at '+width+'x'+height,async({page})=>{
+  await mockSdk(page);
+  await page.setViewportSize({width,height});
+  await page.goto(ORIGIN+'presenter.html?room=A1B2C3D4',{waitUntil:'domcontentloaded'});
+  await page.waitForFunction(()=>typeof render==='function'&&typeof QwizStage!=='undefined');
+  await page.evaluate(()=>{
+   ctx.renderKey='';
+   render({code:'A1B2C3D4',phase:'lobby',title:'Проверка',
+    team_lobby:{mode:'captain',team_count:2,captain_count:2,captains_ready:true,confirmed:true},
+    lobby_teams:[
+     {id:'a',name:'Некрутимые',position:1,members:3,score:0},
+     {id:'b',name:'Искатели',position:2,members:4,score:0}
+    ],
+    teams:[],players:[],paused:false,screen_settings:{sound_enabled:false,volume:0}});
+  });
+  const scene=page.locator('#projectionMain .projection-captains-ready');
+  await expect(scene).toBeVisible();
+  await expect(scene.locator('.projection-ready-team')).toHaveCount(2);
+  await expect(scene).toContainText('Некрутимые');
+  await expect(scene).toContainText('Искатели');
+  await expect(scene.locator('h1')).toHaveText('Команды готовы!');
+  await expect(page.locator('#projectionMain .lobby-cinematic')).toHaveCount(0);
+  const dims=await scene.evaluate(el=>{
+   const r=el.getBoundingClientRect(),root=document.getElementById('projectionMain').getBoundingClientRect();
+   return {sceneBottom:r.bottom,rootBottom:root.bottom,
+     docWidth:document.documentElement.scrollWidth,innerWidth};
+  });
+  expect(dims.sceneBottom).toBeLessThanOrEqual(dims.rootBottom+3);
+  expect(dims.docWidth).toBeLessThanOrEqual(dims.innerWidth+2);
+ });
+}
+test('One captain team is centered on the shared screen',async({page})=>{
+ await mockSdk(page);
+ await page.setViewportSize({width:1280,height:720});
+ await page.goto(ORIGIN+'presenter.html?room=A1B2C3D4',{waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>typeof render==='function'&&typeof QwizStage!=='undefined');
+ await page.evaluate(()=>{
+  ctx.renderKey='';
+  render({code:'A1B2C3D4',phase:'lobby',title:'Проверка',
+   team_lobby:{mode:'captain',team_count:1,captain_count:1,captains_ready:true,confirmed:true},
+   lobby_teams:[{id:'a',name:'Одна команда',position:1,members:1,score:0}],
+   teams:[],players:[],paused:false,screen_settings:{sound_enabled:false,volume:0}});
+ });
+ const card=page.locator('#projectionMain .projection-ready-team');
+ await expect(card).toHaveCount(1);
+ await expect(card).toContainText('Одна команда');
+ const g=await page.locator('#projectionMain .projection-ready-teams').evaluate(el=>{
+  const parent=el.getBoundingClientRect(),card=el.firstElementChild.getBoundingClientRect();
+  return {left:card.left-parent.left,right:parent.right-card.right};
+ });
+ expect(Math.abs(g.left-g.right)).toBeLessThan(5);
+});
