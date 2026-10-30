@@ -200,7 +200,7 @@ test('Two-stage penalty vote opens a red majority choice then lets players choos
   await expect(page.locator('[data-boost-choice="storm"]')).toHaveClass(/selected/);
   const calls=await page.evaluate(()=>window.penaltyCalls);
   expect(calls).toEqual(['sabotage','storm']);
-  const bounds=await page.locator('#gameContent .arcade-vote-effects:visible').boundingBox();
+  const bounds=await page.locator('dialog.arcade-boost-dialog[open] .arcade-vote-effects').boundingBox();
   expect(bounds).not.toBeNull();
   expect(bounds.x).toBeGreaterThanOrEqual(0);
   expect(bounds.y).toBeGreaterThanOrEqual(0);
