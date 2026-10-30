@@ -1,0 +1,36 @@
+name: QWIZ / inspect old GOS Auth snapshot catalog readiness only
+on:
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - '.github/workflows/qwiz-old-auth-readiness-check.yml'
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read source catalogs only, no Auth rows or secrets
+        shell: bash
+        env:
+          GOS_SOURCE_DB_URL: ${{ secrets.GOS_SOURCE_DB_URL }}
+          PGSSLMODE: require
+          PGCONNECT_TIMEOUT: '8'
+        run: |
+          set -euo pipefail
+          : "${GOS_SOURCE_DB_URL:?Restricted GOS source credential missing}"
+          psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -v ON_ERROR_STOP=1 -Atq -c "
+          SELECT current_user,
+           (SELECT count(*) FROM pg_namespace WHERE nspname='qwiz_auth_export') AS auth_export_schema,
+           (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+             WHERE n.nspname='qwiz_auth_export' AND c.relname IN ('users','identities')) AS auth_export_tables,
+           (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+             WHERE n.nspname='qwiz_auth_export' AND c.relname IN ('users','identities')
+             AND has_table_privilege(current_user,c.oid,'SELECT')) AS auth_export_readable,
+           (SELECT count(*) FROM pg_policy p JOIN pg_class c ON c.oid=p.polrelid
+             JOIN pg_namespace n ON n.oid=c.relnamespace
+             WHERE n.nspname='qwiz_auth_export' AND p.polname='qwiz_auth_migration_ttl') AS auth_expiration_policies;
+          "
+          echo 'Catalog-only Auth grant preflight completed; no Auth rows queried.' >> "$GITHUB_STEP_SUMMARY"
