@@ -191,17 +191,19 @@ BEGIN
      RAISE EXCEPTION 'QWIZ table % row count differs after restore',t.tablename;
     END IF;
  END LOOP;
+END $copy$;
+-- Force evaluation of all 123 actual FK constraints after all rows exist.
+-- IMPORTANT: this statement MUST run outside the DO $copy$ block. PostgreSQL
+-- rejects ALTER TABLE ENABLE TRIGGER while deferred FK events are pending.
+SET CONSTRAINTS ALL IMMEDIATE;
+DO $restore_fk$
+DECLARE f record; t record;
+BEGIN
  FOR t IN SELECT tablename FROM pg_tables WHERE schemaname='public'
   AND (tablename LIKE 'qwiz_%' OR tablename LIKE 'org_next_%'
       OR tablename LIKE 'org_quiz_%') ORDER BY tablename LOOP
     EXECUTE format('ALTER TABLE public.%I ENABLE TRIGGER USER',t.tablename);
  END LOOP;
-END $copy$;
--- Force evaluation of all 123 actual FK constraints after all rows exist.
-SET CONSTRAINTS ALL IMMEDIATE;
-DO $restore_fk$
-DECLARE f record;
-BEGIN
  FOR f IN SELECT c.relname AS child,k.conname AS name
   FROM pg_constraint k JOIN pg_class c ON c.oid=k.conrelid
   JOIN pg_namespace n ON n.oid=c.relnamespace
