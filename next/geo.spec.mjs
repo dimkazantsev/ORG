@@ -229,7 +229,7 @@ test('Final map answer remains visible even when geography game finishes on the 
   const q={mode:'locate',name:'Субъект 1',region:'region-1',options:[]};
   const client={rpc:async(_,args)=>({data:{
    active:args.p_answer===null,open:args.p_answer===null,finished:args.p_answer!==null,
-   remaining:0,index:args.p_answer===null?0:1,total:1,score:0,correct:0,
+   remaining:args.p_answer===null?80:0,index:args.p_answer===null?0:1,total:1,score:0,correct:0,
    question:args.p_answer===null?q:null,
    last_answer:args.p_answer===null?null:{correct:false,correct_text:'Субъект 1',correct_region_id:'region-1',selected_region_id:args.p_answer}
   },error:null})};
@@ -237,7 +237,11 @@ test('Final map answer remains visible even when geography game finishes on the 
    phase:'intermission',activity:{settings:{arcade_mode:'russia_map'}}},{client});
  });
  await expect(page.locator('#geoLastReveal .geo-region')).toHaveCount(89);
- await page.locator('#geoLastReveal [data-region="region-3"]').click();
+ // On a 320px phone, part of the zoomed map is outside the visible crop.
+ // Use its real keyboard entry point, rather than clicking an offscreen path.
+ await page.locator('#geoLastReveal [data-region="region-3"]').focus();
+ await page.keyboard.press('Enter');
+ await expect(page.locator('#geoLastReveal [data-geo-confirm]')).toBeEnabled();
  await page.locator('#geoLastReveal [data-geo-confirm]').click();
  await expect(page.locator('#geoLastReveal .geo-confirm-result.is-wrong')).toContainText('Правильный ответ: Субъект 1');
  await expect(page.locator('#geoLastReveal [data-geo-confirm]')).toHaveCount(0);
