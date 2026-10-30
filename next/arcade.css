@@ -1427,3 +1427,117 @@
  #projectionMain .arcade-projection[data-arcade-root="blitz"] .consensus-phase{font-size:11px}
  #projectionMain .arcade-projection[data-arcade-root="blitz"] .consensus-option{min-height:47px}
 }
+
+
+/* Audience-only, full-size bonus and penalty ballot.
+   Never nest this inside the spent mini-game's scrollable rank panel. */
+#projectionMain .arcade-shell[hidden],
+#projectionMain .arcade-vote-projection[hidden]{display:none!important}
+#projectionMain .arcade-vote-projection{
+ box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;
+ width:100%;min-width:0;max-width:1440px;min-height:0;height:100%;
+ margin:0 auto;padding:clamp(12px,2.4dvh,36px) clamp(12px,3.5vw,56px);
+ background:radial-gradient(ellipse at 70% 15%,#f2eaff 0%,transparent 58%),#fff;
+ border:1px solid #e7def4;border-radius:clamp(18px,2vw,30px);
+ box-shadow:0 18px 50px #49316c13;color:#33234f;overflow:hidden;
+}
+#projectionMain .arcade-projection-vote-top{
+ display:flex;align-items:center;justify-content:space-between;gap:12px;
+ color:#7951b0;font-size:clamp(11px,1.2vw,18px);font-weight:850;letter-spacing:.09em;
+}
+#projectionMain .arcade-projection-vote-step{
+ flex:none;border:1px solid #d5c2ef;padding:8px 13px;
+ border-radius:99px;background:#f6f0ff;color:#6537a7;
+}
+#projectionMain .arcade-projection-vote-heading{
+ text-align:center;display:grid;gap:clamp(5px,1.2dvh,14px);margin:clamp(6px,1dvh,16px) auto 0;
+}
+#projectionMain .arcade-projection-vote-heading>span{
+ font-size:clamp(12px,1.3vw,18px);font-weight:850;color:#7951b0;
+ text-transform:uppercase;letter-spacing:.09em;
+}
+#projectionMain .arcade-projection-vote-heading h1{
+ margin:0;font-size:clamp(30px,min(4.6vw,6.5dvh),76px);line-height:1.08;
+ font-weight:900;letter-spacing:-.04em;color:#33234f;
+}
+#projectionMain .arcade-projection-vote-heading p{
+ margin:0;color:#655677;font-size:clamp(13px,min(1.6vw,2.6dvh),22px);line-height:1.35;
+}
+#projectionMain .arcade-projection-vote-champion{
+ align-self:center;display:flex;align-items:center;justify-content:center;
+ gap:clamp(8px,1.2vw,16px);flex-wrap:wrap;max-width:100%;
+ font-size:clamp(17px,min(2.4vw,4.3dvh),34px);
+ border-radius:19px;padding:clamp(9px,1.5dvh,20px) clamp(12px,2vw,30px);
+ background:#faf6ff;border:1px solid #e3d7f3;min-width:0;
+}
+#projectionMain .arcade-projection-vote-champion>span{color:#b28ae6}
+#projectionMain .arcade-projection-vote-champion strong{overflow-wrap:anywhere}
+#projectionMain .arcade-projection-vote-champion small{
+ font-size:clamp(12px,1.2vw,16px);font-weight:650;color:#786a8b;
+}
+#projectionMain .arcade-projection-vote-options{
+ display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:clamp(9px,1.4vw,24px);width:100%;min-width:0;align-items:stretch;
+}
+#projectionMain .arcade-projection-vote-options:has(>article:nth-child(2):last-child){
+ grid-template-columns:repeat(2,minmax(0,1fr));max-width:1040px;margin-inline:auto;
+}
+#projectionMain .arcade-projection-vote-option{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;
+ gap:clamp(5px,1.1dvh,14px);text-align:center;
+ padding:clamp(10px,2.2dvh,29px) clamp(9px,1.4vw,25px);min-height:0;
+ border:2px solid #c7dece;border-radius:clamp(15px,1.6vw,26px);
+ background:linear-gradient(145deg,#f4fff7,#e6f8ee);color:#185d3d;
+}
+#projectionMain .arcade-projection-vote-option[data-vote-tone="harm"]{
+ border-color:#edc4d0;background:linear-gradient(145deg,#fff6f7,#ffe6ec);color:#983c57;
+}
+#projectionMain .arcade-projection-vote-option .arcade-strategy-icon{
+ width:clamp(35px,4.5dvh,64px);height:clamp(35px,4.5dvh,64px);
+}
+#projectionMain .arcade-projection-vote-option strong{
+ font-size:clamp(17px,min(2.2vw,3.7dvh),32px);font-weight:900;line-height:1.17;
+ overflow-wrap:anywhere;
+}
+#projectionMain .arcade-projection-vote-option>span{
+ font-size:clamp(12px,min(1.25vw,2.1dvh),19px);line-height:1.3;
+}
+#projectionMain .arcade-projection-vote-count{
+ display:flex;gap:8px;align-items:baseline;justify-content:center;
+ font-size:clamp(12px,1.25vw,18px);margin-top:auto;
+}
+#projectionMain .arcade-projection-vote-count b{
+ font-size:clamp(25px,min(3vw,5dvh),44px);font-variant-numeric:tabular-nums;
+}
+#projectionMain .arcade-projection-vote-wait{
+ grid-column:1/-1;text-align:center;color:#775e98;font-size:clamp(18px,2vw,28px);
+}
+#projectionMain .arcade-projection-vote-bottom{
+ display:flex;justify-content:space-between;align-items:center;gap:16px;
+ border-top:1px solid #e7dcf4;padding-top:clamp(8px,1.5dvh,20px);
+ font-size:clamp(12px,1.25vw,19px);font-weight:750;color:#715d87;
+}
+#projectionMain .arcade-projection-vote-timer{
+ display:flex;align-items:center;gap:11px;white-space:nowrap;
+ padding:7px 12px;background:#f1e8ff;border-radius:14px;color:#5d329a;
+}
+#projectionMain .arcade-projection-vote-timer strong{
+ font-size:clamp(26px,min(3.8vw,5.5dvh),56px);font-variant-numeric:tabular-nums;
+}
+#projectionMain .arcade-projection-vote-timer small{font-size:clamp(12px,1.1vw,17px)}
+@media(max-height:610px){
+ #projectionMain .arcade-vote-projection{gap:6px;padding-block:9px}
+ #projectionMain .arcade-projection-vote-heading{gap:3px}
+ #projectionMain .arcade-projection-vote-champion{padding-block:6px}
+ #projectionMain .arcade-projection-vote-option{padding-block:7px;gap:5px}
+ #projectionMain .arcade-projection-vote-champion small{display:none}
+}
+@media(max-width:690px){
+ #projectionMain .arcade-projection-vote-options{gap:8px}
+ #projectionMain .arcade-projection-vote-option>span{display:none}
+ #projectionMain .arcade-projection-vote-heading h1{font-size:clamp(24px,5.5vw,38px)}
+ #projectionMain .arcade-projection-vote-champion small{display:none}
+}
+@media(prefers-reduced-motion:reduce){
+ #projectionMain .arcade-vote-projection{animation:none!important;transition:none!important}
+}
