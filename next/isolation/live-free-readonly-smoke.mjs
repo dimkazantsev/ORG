@@ -20,10 +20,13 @@ const attempts=await Promise.all(Array.from({length:40},async()=>{
    body:JSON.stringify({p_code:'FFFFFFFF'}),
    signal:ctrl(12000)
   });
-  if(!response.ok)throw Error('HTTP '+response.status);
   const j=await response.json();
-  if(j && typeof j==='object' && j.code && j.code!=='FFFFFFFF')
-   throw Error('Mismatched public room projection');
+  // An unknown room must raise P0001 before qwiz_tick, so these forty
+  // concurrent requests remain strictly non-mutating in the new database.
+  // This is an API/connectivity smoke, NOT a forty-player gameplay test.
+  const expectedMissing=(response.status===400 && j?.code==='P0001' &&
+    j?.message==='Комната не найдена');
+  if(!expectedMissing)throw Error('Unexpected HTTP '+response.status+' / SQLSTATE '+String(j?.code||''));
   return {ok:true,ms:Math.round(performance.now()-start)};
  }catch(e){return {ok:false,error:String(e.message||e).slice(0,90),ms:Math.round(performance.now()-start)}}
 }));
