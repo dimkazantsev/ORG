@@ -6,6 +6,7 @@ on:
       - '.github/workflows/qwiz-11-auth-scope-fixture.yml'
       - 'next/isolation/ENABLE-QWIZ-SCOPED-AUTH-24H.sql'
       - 'next/isolation/CLEANUP-QWIZ-SCOPED-AUTH-SNAPSHOT.sql'
+      - 'next/isolation/transfer-exact-11-auth-snapshot.py'
 permissions:
   contents: read
 jobs:
@@ -85,4 +86,5 @@ jobs:
           psql -X -q -v ON_ERROR_STOP=1 -f next/isolation/CLEANUP-QWIZ-SCOPED-AUTH-SNAPSHOT.sql
           test "$(psql -XAtq -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM pg_namespace WHERE nspname='qwiz_auth_export'")" = "0"
           test "$(psql -XAtq -v ON_ERROR_STOP=1 -c "SELECT count(*) FROM auth.users")" = "13"
-          echo 'PASS: exactly 11 of 13 synthetic Auth users isolated, identities copied, reader limited, original users untouched, cleanup complete.'
+          python3 -m py_compile next/isolation/transfer-exact-11-auth-snapshot.py
+          echo 'PASS: exactly 11 of 13 synthetic Auth users isolated, identities copied, reader limited, original users untouched, cleanup complete; transfer Python compiled.'
