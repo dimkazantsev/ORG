@@ -9,7 +9,7 @@ const sql=readFileSync(new URL('./migration.sql',import.meta.url),'utf8');
 test('The public home opens the current quiz and preserves QR room invitations',()=>{
  const root=readFileSync(new URL('../index.html',import.meta.url),'utf8');
  const redirect=root.split('<script data-org-canonical-entry>')[1]?.split('</script>')[0];
- assert.ok(redirect,'The legacy home must forward to the current quiz');
+ assert.ok(redirect,'The main entry must forward to the independent quiz');
  function destination(initial){
   let redirected=null;
   const location={href:initial,replace(url){redirected=url}};
@@ -20,7 +20,8 @@ test('The public home opens the current quiz and preserves QR room invitations',
   destination('https://dimkazantsev.github.io/ORG/?room=A1B2C3D4#player'),
   'https://dimkazantsev.github.io/ORG/next/?room=A1B2C3D4#player'
  );
- assert.equal(destination('https://dimkazantsev.github.io/ORG/?legacy=1'),null);
+ assert.equal(destination('https://dimkazantsev.github.io/ORG/?legacy=1'),'https://dimkazantsev.github.io/ORG/legacy/');
+ assert.equal(destination('https://dimkazantsev.github.io/ORG/?legacy=1&room=A1B2C3D4'),'https://dimkazantsev.github.io/ORG/legacy/?room=A1B2C3D4');
 });
 test('Backend state avoids roster queries whose JSON keys are always overridden',()=>{
  const migration=readFileSync(new URL('./migrations/20261025_skip_overridden_roster_reads.sql',import.meta.url),'utf8');
