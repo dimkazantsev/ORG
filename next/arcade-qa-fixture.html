@@ -41,14 +41,14 @@ window.mountExample=(mode,withVote=false,longCode=false)=>{
  QwizArcade.mountPlayer(root,{phase:'intermission',code:'1A2B3C4D',room_id:'room-id',activity:{settings:{arcade_mode:mode}}},{client});
 };
 
-window.mountProjectionVote=(stage='strategy',strategy=null)=>{
+window.mountProjectionVote=(stage='strategy',strategy=null,solo=false)=>{
   QwizArcade.stop('screen');
   document.documentElement.classList.add('fixture-projection');
   const now=Date.now();
   fake.mode='tug';fake.card_position+=1;fake.running=false;
-  fake.teams=[{id:'team1',name:'Команда победителей',points:24,place:1},{id:'team2',name:'Команда соперников',points:12,place:2}];
+  fake.teams=solo?[{id:'team1',name:'Команда победителей',points:24,place:1}]:[{id:'team1',name:'Команда победителей',points:24,place:1},{id:'team2',name:'Команда соперников',points:12,place:2}];
   fake.vote={open:true,can_vote:false,stage,strategy,winner_team:'team1',
-   target_name:'Команда соперников',team_members:4,counts:stage==='strategy'?{support:4,sabotage:0}:{headstart:2,teamwork:1,momentum:1},
+   target_name:solo?'':'Команда соперников',team_members:4,counts:stage==='strategy'?{support:4,sabotage:0}:{headstart:2,teamwork:1,momentum:1},
    vote_ends_at:new Date(now+10000).toISOString(),full_vote_ends_at:new Date(now+22000).toISOString()};
   const client={rpc:async method=>{
    if(method==='qwiz_party_arcade')return {data:{...fake,server_now:new Date().toISOString()},error:null};
@@ -73,10 +73,7 @@ window.mountProjectorGame=(mode='tug',solo=false)=>{
   {phase:'intermission',code:'1A2B3C4D',activity:{settings:{arcade_mode:mode}}},client);
 };
 window.mountSoloVote=(stage='strategy',strategy=null)=>{
- window.mountProjectionVote(stage,strategy);
- fake.teams=[{id:'team1',name:'Команда победителей',points:40,taps:40,place:1}];
- fake.vote.target_name='';
- window.dispatchEvent(new Event('online'));
+ window.mountProjectionVote(stage,strategy,true);
 };
 window.updateProjectionVote=(stage,strategy,counts)=>{
   fake.vote={...fake.vote,stage,strategy,counts};
