@@ -1,0 +1,48 @@
+name: QWIZ / gated final source Auth + 2344-row live activation
+on:
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - 'next/isolation/FINAL-ACTIVATION-GATE.md'
+      - '.github/workflows/qwiz-final-activation-gated.yml'
+permissions:
+  contents: read
+concurrency:
+  group: qwiz-independent-live-import-singleflight
+  cancel-in-progress: false
+jobs:
+  activate:
+    if: "${{ github.event.head_commit.message == 'QWIZ_FINAL_AUTH_AND_DATA_APPROVED' }}"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+      - name: Transfer only 11 permitted Auth users and activate 2344 game rows atomically in QWIZ Free
+        shell: bash
+        env:
+          GOS_SOURCE_DB_URL: ${{ secrets.GOS_SOURCE_DB_URL }}
+          QWIZ_TARGET_DB_URL: ${{ secrets.QWIZ_TARGET_DB_URL }}
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          : "${GOS_SOURCE_DB_URL:?Restricted GOS reader secret missing}"
+          : "${QWIZ_TARGET_DB_URL:?Independent QWIZ Free Postgres secret missing}"
+          echo 'Checking protected old-GOS Auth snapshot and new QWIZ Free staging.'
+          # Safe to restart after a previous interrupted Auth-only stage.
+          stage_count="$(python3 - <<'PY'
+          import importlib.util
+          from pathlib import Path
+          s=importlib.util.spec_from_file_location('transfer',Path('next/isolation/transfer-exact-11-auth-snapshot.py'))
+          m=importlib.util.module_from_spec(s);s.loader.exec_module(m)
+          x=m.run_psql('QWIZ_TARGET_DB_URL','SELECT count(*) FROM qwiz_auth_snapshot.users')
+          if x not in ('0','11'):raise SystemExit('Unexpected Auth staging count')
+          print(x)
+          PY
+          )"
+          if [[ "$stage_count" == 0 ]]; then
+            python3 next/isolation/transfer-exact-11-auth-snapshot.py
+          fi
+          echo 'Auth scoped snapshot ready; transactional QWIZ public restore.'
+          python3 next/isolation/activate-new-qwiz-after-auth.py
+          echo 'PASS: 11 actual QWIZ Auth users and 2344 game rows restored to the independent Supabase Free. Site/frontend was NOT switched.' >> "$GITHUB_STEP_SUMMARY"
