@@ -12,6 +12,15 @@ if(URL_!=='https://vwsoergltegncrretxnz.supabase.co' ||
 const ctrl=ms=>AbortSignal.timeout(ms);
 const health=await fetch(URL_+'/auth/v1/health',{headers:{apikey:KEY},signal:ctrl(12000)});
 if(!health.ok)throw Error('New QWIZ Auth health endpoint failed HTTP '+health.status);
+const settingsResponse=await fetch(URL_+'/auth/v1/settings',{
+ headers:{apikey:KEY},signal:ctrl(12000)
+});
+if(!settingsResponse.ok)throw Error('New QWIZ Auth settings endpoint failed HTTP '+settingsResponse.status);
+const settings=await settingsResponse.json();
+const anonymousHints=Object.fromEntries(Object.entries(settings).filter(([name,value])=>
+ /anon|signup|anonymous/i.test(name) && ['boolean','number','string'].includes(typeof value)));
+const externalAnon=Object.fromEntries(Object.entries(settings.external||{}).filter(([name])=>/anon/i.test(name)));
+console.log(JSON.stringify({settings_reachable:true,anonymous_flags:anonymousHints,external_anonymous:externalAnon}));
 const attempts=await Promise.all(Array.from({length:40},async()=>{
  const start=performance.now();
  try {
