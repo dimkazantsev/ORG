@@ -1,5 +1,5 @@
 'use strict';
-const KEY='sb_publishable_Hv7NgYuVsfKhFuhX_9pl0Q_qXWA2wOr',PROFILE_SUPABASE_URL='https://bderfrcfuhnutuoyudje.supabase.co';
+const KEY='sb_publishable_7R9F_vBvgg2AsfgRJyRIsQ_j2nljGKI',PROFILE_SUPABASE_URL='https://vwsoergltegncrretxnz.supabase.co';
 const $=id=>document.getElementById(id);
 const animals=[['fox','🦊','Лиса'],['owl','🦉','Сова'],['cat','🐱','Кот'],['panda','🐼','Панда'],['otter','🦦','Выдра'],['raccoon','🦝','Енот'],['capybara','🦫','Капибара'],['penguin','🐧','Пингвин'],['koala','🐨','Коала'],['red-panda','🦊','Красная панда'],['rabbit','🐰','Кролик'],['bear','🐻','Медведь'],
  ['giraffe','🦒','Жираф'],['gorilla','🦍','Горилла'],['hyena','🐾','Гиена'],['kangaroo','🦘','Кенгуру'],

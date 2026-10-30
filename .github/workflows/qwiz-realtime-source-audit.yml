@@ -1,0 +1,36 @@
+name: QWIZ / identify GOS realtime publication membership
+on:
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - 'next/isolation/source-realtime-members-readonly.sql'
+      - '.github/workflows/qwiz-realtime-source-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  realtime-source:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: SELECT-only publication metadata from old GOS
+        env:
+          GOS_SOURCE_DB_URL: ${{ secrets.GOS_SOURCE_DB_URL }}
+          PGSSLMODE: require
+          PGCONNECT_TIMEOUT: '8'
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${GOS_SOURCE_DB_URL:?Missing restricted source secret}"
+          python3 - <<'PY'
+          from os import environ
+          from urllib.parse import urlsplit, unquote
+          v=urlsplit(environ['GOS_SOURCE_DB_URL'])
+          if (unquote(v.username or '')!='qwiz_catalog_reader.bderfrcfuhnutuoyudje'
+              or not (v.hostname or '').endswith('.pooler.supabase.com')
+              or v.port!=5432):
+              raise SystemExit('Wrong original GOS database role/project')
+          PY
+          psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -At -q -v ON_ERROR_STOP=1 -f next/isolation/source-realtime-members-readonly.sql
+          echo 'Read-only source publication metadata fetched. No game rows or changes.' >> "$GITHUB_STEP_SUMMARY"

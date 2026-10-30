@@ -116,7 +116,7 @@ test('Geography textual choice reveals the correct answer in green and a wrong s
  await expect(page.locator('#geoAnswerColors [data-geo-answer="correct"]')).toBeDisabled();
  await expect(page.locator('#geoAnswerColors [data-geo-answer="correct"]')).toContainText('✓');
  const paint=await page.locator('#geoAnswerColors [data-geo-answer="correct"]').evaluate(el=>getComputedStyle(el).backgroundColor);
- expect(paint).toBe('rgb(229, 247, 237)');
+ expect(paint).toBe('rgb(230, 248, 235)');
 });
 
 
@@ -140,7 +140,8 @@ test('One region touch exposes confirm; server correct region appears highlighte
  });
  const button=page.locator('#geoTapConfirm [data-geo-confirm]');
  await expect(page.locator('#geoTapConfirm .geo-region')).toHaveCount(89);
- await expect(button).toBeHidden();
+ await expect(button).toBeVisible();
+ await expect(button).toBeDisabled();
  await page.locator('#geoTapConfirm [data-region="region-3"]').click();
  await expect(button).toBeVisible();
  await expect(button).toBeEnabled();
@@ -151,7 +152,7 @@ test('One region touch exposes confirm; server correct region appears highlighte
  await expect(page.locator('#geoTapConfirm [data-region="region-3"]')).toHaveClass(/geo-wrong-answer/);
 });
 
-test('Four Russia geography choices are compact colorful tiles, not huge empty panels',async({page})=>{
+test('Four Russia geography choices are compact neutral tiles, not huge empty panels',async({page})=>{
  await page.route('https://cdn.jsdelivr.net/**',route=>route.fulfill({
   contentType:'application/javascript',
   body:'window.supabase={createClient:()=>({auth:{getSession:async()=>({data:{session:null}})}})};'
@@ -178,7 +179,7 @@ test('Four Russia geography choices are compact colorful tiles, not huge empty p
   expect(bounds.height).toBeLessThanOrEqual(152);
   await expect(tile.locator('.geo-choice-label')).toBeVisible();
   const style=await tile.evaluate(el=>({background:getComputedStyle(el).backgroundImage,shadow:getComputedStyle(el).boxShadow}));
-  expect(style.background).toContain('linear-gradient');
+  expect(style.background).toBe('none');
   expect(style.shadow).not.toBe('none');
  }
  const heights=await page.locator('#geoIndieTiles .geo-options').evaluate(el=>({

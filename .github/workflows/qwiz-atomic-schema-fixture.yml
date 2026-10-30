@@ -1,0 +1,71 @@
+name: QWIZ / guarded atomic schema bundle on disposable PostgreSQL
+on:
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - 'next/isolation/build-guarded-target-schema.py'
+      - '.github/workflows/qwiz-atomic-schema-fixture.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  atomic-schema-fixture:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: disposable-only-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 4s
+          --health-timeout 4s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rebuild source schema inside ephemeral runner and simulate managed Supabase
+        env:
+          GOS_SOURCE_DB_URL: ${{ secrets.GOS_SOURCE_DB_URL }}
+          PGSSLMODE: require
+          PGCONNECT_TIMEOUT: '8'
+        run: |
+          set -euo pipefail
+          umask 077
+          : "${GOS_SOURCE_DB_URL:?Missing secure source catalog reader}"
+          tmp="$(mktemp -d "$RUNNER_TEMP/qwiz-atomic.XXXXXXXX")"
+          trap 'rm -rf "$tmp"' EXIT
+          psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -qAt -v ON_ERROR_STOP=1 \
+            -f next/isolation/source-schema-catalog-private.sql > "$tmp/public.json"
+          psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -qAt -v ON_ERROR_STOP=1 \
+            -f next/isolation/source-quiz-private-catalog.sql > "$tmp/private.json"
+          python3 next/isolation/build-guarded-target-schema.py \
+            "$tmp/public.json" "$tmp/private.json" "$tmp/target-schema.sql"
+          # No source or target Supabase connection after this point.
+          unset GOS_SOURCE_DB_URL PGSSLMODE PGCONNECT_TIMEOUT
+          export PGPASSWORD=disposable-only-password
+          psql -X --no-psqlrc -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 \
+            -c 'CREATE DATABASE qwiz_target_fixture;' > /dev/null
+          psql -X --no-psqlrc -h 127.0.0.1 -U postgres -d qwiz_target_fixture -v ON_ERROR_STOP=1 \
+            -c 'CREATE SCHEMA auth; CREATE TABLE auth.users (id uuid PRIMARY KEY); CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$ SELECT NULL::uuid $$; CREATE FUNCTION auth.jwt() RETURNS jsonb LANGUAGE sql STABLE AS $$ SELECT NULL::jsonb $$;' > /dev/null
+          # Supabase reserved roles are global; create only in scratch PostgreSQL.
+          for role in anon authenticated service_role; do
+            psql -X --no-psqlrc -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 \
+              -c "CREATE ROLE $role NOLOGIN;" > /dev/null
+          done
+          if ! psql -X --no-psqlrc -h 127.0.0.1 -U postgres -d qwiz_target_fixture \
+            -v ON_ERROR_STOP=1 -f "$tmp/target-schema.sql" > "$tmp/import.log" 2> "$tmp/error.log"; then
+            echo 'ATOMIC SCHEMA IMPORT FAILED IN DISPOSABLE PG ONLY.'
+            grep -E '(ERROR:|DETAIL:|HINT:)' "$tmp/error.log" | head -10 || true
+            exit 1
+          fi
+          result="$(psql -XAt -h 127.0.0.1 -U postgres -d qwiz_target_fixture -v ON_ERROR_STOP=1 \
+            -c "select (select count(*) from pg_tables where schemaname='public' and (tablename like 'qwiz_%' or tablename like 'org_next_%' or tablename like 'org_quiz_%')), (select count(*) from pg_policies where schemaname='public'), (select count(*) from auth.users);")"
+          if [[ "$result" != '57|20|0' ]]; then
+            echo 'ATOMIC SCHEMA TEST has incorrect QWIZ counts; not ready to deploy.'
+            exit 1
+          fi
+          echo 'PASS: guarded schema-only bundle imported into isolated PostgreSQL 17 in a single transaction; no real Supabase projects modified.'
+          echo 'Guarded bundle tested. No Auth accounts, game data or Storage transferred. External Supabase API/RPC behavior not yet validated.' >> "$GITHUB_STEP_SUMMARY"

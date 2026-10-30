@@ -1,0 +1,36 @@
+name: QWIZ / least-privilege data export access preflight
+on:
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - 'next/isolation/check-data-export-privileges-readonly.sql'
+      - '.github/workflows/qwiz-data-export-privileges.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-permissions:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - name: Confirm source project and reader role before SELECT-only catalog check
+        env:
+          GOS_SOURCE_DB_URL: ${{ secrets.GOS_SOURCE_DB_URL }}
+          PGSSLMODE: require
+          PGCONNECT_TIMEOUT: '8'
+        run: |
+          set -euo pipefail
+          : "${GOS_SOURCE_DB_URL:?Missing source reader secret}"
+          python3 - <<'PY'
+          from urllib.parse import urlsplit,unquote
+          from os import environ
+          u=urlsplit(environ['GOS_SOURCE_DB_URL'])
+          if (unquote(u.username or '')!='qwiz_catalog_reader.bderfrcfuhnutuoyudje'
+               or not (u.hostname or '').endswith('.pooler.supabase.com')
+               or u.port != 5432):
+              raise SystemExit('Wrong GOS project / reader role')
+          PY
+          psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -v ON_ERROR_STOP=1 -q -A \
+            -f next/isolation/check-data-export-privileges-readonly.sql
+          echo 'Catalog privilege check succeeded. No personal records queried.' >> "$GITHUB_STEP_SUMMARY"

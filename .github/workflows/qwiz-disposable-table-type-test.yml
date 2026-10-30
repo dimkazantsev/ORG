@@ -1,0 +1,132 @@
+name: QWIZ / isolated PostgreSQL 17 table type compatibility
+on:
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - 'next/isolation/disposable-table-types.py'
+      - 'next/isolation/disposable-table-integrity.py'
+      - 'next/isolation/disposable-rpc-definitions.py'
+      - 'next/isolation/disposable-schema-tail.py'
+      - 'next/isolation/disposable-acls.py'
+      - 'next/isolation/source-quiz-private-catalog.sql'
+      - 'next/isolation/disposable-quiz-private.py'
+      - '.github/workflows/qwiz-disposable-table-type-test.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  isolated-type-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: disposable-only-test-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 4s
+          --health-timeout 4s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read source catalog privately and validate bare QWIZ column types
+        shell: bash
+        env:
+          GOS_SOURCE_DB_URL: ${{ secrets.GOS_SOURCE_DB_URL }}
+          PGSSLMODE: require
+          PGCONNECT_TIMEOUT: '8'
+        run: |
+          set -euo pipefail
+          umask 077
+          : "${GOS_SOURCE_DB_URL:?Missing private source reader}"
+          tmp="$(mktemp -d "$RUNNER_TEMP/qwiz-table-types.XXXXXXXX")"
+          trap 'rm -rf "$tmp"' EXIT
+          python3 - <<'PY'
+          from os import environ
+          from urllib.parse import urlsplit, unquote
+          u=urlsplit(environ['GOS_SOURCE_DB_URL'])
+          if (u.scheme not in ('postgresql','postgres')
+              or not (u.hostname or '').endswith('.pooler.supabase.com')
+              or u.port!=5432
+              or unquote(u.username or '')!='qwiz_catalog_reader.bderfrcfuhnutuoyudje'
+              or not u.password):
+              raise SystemExit('Only restricted GOS catalog reader is allowed')
+          PY
+          psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -qAt -v ON_ERROR_STOP=1 \
+            -f next/isolation/source-schema-catalog-private.sql > "$tmp/manifest.json"
+          psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -qAt -v ON_ERROR_STOP=1 \
+            -f next/isolation/source-quiz-private-catalog.sql > "$tmp/private.json"
+          python3 next/isolation/disposable-table-types.py "$tmp/manifest.json" "$tmp/disposable-tables.sql"
+          # Critical: all SQL DDL is executed ONLY on the ephemeral GitHub service.
+          unset GOS_SOURCE_DB_URL PGSSLMODE PGCONNECT_TIMEOUT
+          export PGPASSWORD=disposable-only-test-password
+          psql -X --no-psqlrc -h 127.0.0.1 -p 5432 -U postgres -d postgres \
+            -v ON_ERROR_STOP=1 -f "$tmp/disposable-tables.sql" > "$tmp/fixture-output.txt" 2> "$tmp/fixture-error.txt" || {
+              echo 'DISPOSABLE TYPE TEST FAILED (errors only):'
+              grep -E '(ERROR:|DETAIL:|HINT:)' "$tmp/fixture-error.txt" | head -12 || true
+              exit 1
+            }
+          total="$(psql -XAt -h 127.0.0.1 -p 5432 -U postgres -d postgres -v ON_ERROR_STOP=1 \
+            -c "select count(*) from pg_tables where schemaname='public' and (tablename like 'qwiz_%' or tablename like 'org_next_%' or tablename like 'org_quiz_%');")"
+          test "$total" = '57'
+          echo 'PASS: all 57 QWIZ table columns accepted by disposable PostgreSQL 17.'
+          # All 283 constraint definitions and non-constraint index DDL below are
+          # executed ONLY against disposable localhost PostgreSQL; never source/target.
+          python3 next/isolation/disposable-table-integrity.py "$tmp/manifest.json" "$tmp/disposable-integrity.sql"
+          if ! psql -X --no-psqlrc -h 127.0.0.1 -p 5432 -U postgres -d postgres \
+            -v ON_ERROR_STOP=1 -f "$tmp/disposable-integrity.sql" \
+            > "$tmp/fixture-integrity-out.txt" 2> "$tmp/fixture-integrity-error.txt"; then
+            echo 'DISPOSABLE CONSTRAINT/INDEX COMPATIBILITY: failed; source and target untouched.'
+            grep -E '(ERROR:|DETAIL:|HINT:)' "$tmp/fixture-integrity-error.txt" | head -8 || true
+            exit 1
+          fi
+          python3 next/isolation/disposable-quiz-private.py "$tmp/private.json" "$tmp/disposable-private.sql"
+          if ! psql -X --no-psqlrc -h 127.0.0.1 -p 5432 -U postgres -d postgres \
+            -v ON_ERROR_STOP=1 -f "$tmp/disposable-private.sql" \
+            > "$tmp/private-run-out.txt" 2> "$tmp/private-run-error.txt"; then
+            echo 'DISPOSABLE quiz_private reconstruction failed.'
+            grep -E '(ERROR:|DETAIL:|HINT:)' "$tmp/private-run-error.txt" | head -8 || true
+            exit 1
+          fi
+          echo 'PASS: 2 quiz_private tables and 9 function definitions registered on disposable PG17.'
+          echo 'PASS: QWIZ schema bare columns, constraints and index definitions applied in disposable PostgreSQL 17.'
+          # Reconstruct routine CREATE FUNCTION DDL from authenticated source catalog
+          # without printing SQL bodies or invoking any routine. Local service only.
+          python3 next/isolation/disposable-rpc-definitions.py "$tmp/manifest.json" "$tmp/disposable-routines.sql"
+          if ! psql -X --no-psqlrc -h 127.0.0.1 -p 5432 -U postgres -d postgres \
+            -v ON_ERROR_STOP=1 -f "$tmp/disposable-routines.sql" \
+            > "$tmp/fixture-routines-out.txt" 2> "$tmp/fixture-routines-error.txt"; then
+            echo 'DISPOSABLE RPC DEFINITION PARSE: failed; no source or target modifications.'
+            grep -E '(ERROR:|DETAIL:|HINT:)' "$tmp/fixture-routines-error.txt" | head -8 || true
+            exit 1
+          fi
+          funcs="$(psql -XAt -h 127.0.0.1 -p 5432 -U postgres -d postgres -v ON_ERROR_STOP=1 \
+            -c "select count(*) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and (p.proname like 'qwiz_%' or p.proname like 'org_next_%' or p.proname like 'org_quiz_%' or p.proname in ('org_party_create_set_from_questions','org_party_set_life_state'));")"
+          test "$funcs" = '139'
+          echo 'PASS: 139 routine definitions registered in disposable PG17 (check_function_bodies=off, no routine execution).'
+          python3 next/isolation/disposable-schema-tail.py "$tmp/manifest.json" "$tmp/disposable-tail.sql"
+          if ! psql -X --no-psqlrc -h 127.0.0.1 -p 5432 -U postgres -d postgres \
+            -v ON_ERROR_STOP=1 -f "$tmp/disposable-tail.sql" \
+            > "$tmp/fixture-tail-out.txt" 2> "$tmp/fixture-tail-error.txt"; then
+            echo 'DISPOSABLE SCHEMA TAIL: failed; no source or target changes.'
+            grep -E '(ERROR:|DETAIL:|HINT:)' "$tmp/fixture-tail-error.txt" | head -8 || true
+            exit 1
+          fi
+          view_count="$(psql -XAt -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c "select count(*) from pg_views where schemaname='public' and viewname like 'org_quiz_%';")"
+          policy_count="$(psql -XAt -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c "select count(*) from pg_policies where schemaname='public' and (tablename like 'qwiz_%' or tablename like 'org_next_%' or tablename like 'org_quiz_%');")"
+          trigger_count="$(psql -XAt -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 -c "select count(*) from pg_trigger t join pg_class c on c.oid=t.tgrelid join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and not t.tgisinternal and (c.relname like 'qwiz_%' or c.relname like 'org_next_%' or c.relname like 'org_quiz_%');")"
+          test "$view_count:$policy_count:$trigger_count" = '4:20:9'
+          python3 next/isolation/disposable-acls.py "$tmp/manifest.json" "$tmp/disposable-grants.sql"
+          if ! psql -X --no-psqlrc -h 127.0.0.1 -p 5432 -U postgres -d postgres \
+            -v ON_ERROR_STOP=1 -f "$tmp/disposable-grants.sql" \
+            > "$tmp/fixture-grants-out.txt" 2> "$tmp/fixture-grants-error.txt"; then
+            echo 'DISPOSABLE ACL RESTORE FAILED; no actual GOS or QWIZ DB modified.'
+            grep -E '(ERROR:|DETAIL:|HINT:)' "$tmp/fixture-grants-error.txt" | head -8 || true
+            exit 1
+          fi
+          echo 'PASS: exact source table/view and RPC ACL declarations accepted by scratch PG17.'
+          echo "PASS: scratch QWIZ 151 defaults, 4 views, 20 RLS policies, 9 triggers"
+          echo 'SUCCESS in scratch: 57 tables, 283 constraints, indexes, 139 declarations, 151 defaults, 4 views, 20 RLS policies, 9 triggers. Does not verify RPC execution, Auth data or production cutover.' >> "$GITHUB_STEP_SUMMARY"

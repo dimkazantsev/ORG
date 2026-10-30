@@ -1,0 +1,26 @@
+name: QWIZ / require anonymous student sign-in before deploy
+on:
+  pull_request:
+    paths:
+      - 'app.js'
+      - 'next/app.js'
+      - 'next/isolation/anonymous-auth-deployment-gate.mjs'
+      - '.github/workflows/qwiz-anonymous-auth-deploy-gate.yml'
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - 'next/isolation/anonymous-auth-deployment-gate.mjs'
+      - '.github/workflows/qwiz-anonymous-auth-deploy-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  auth-provider-ready:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Verify anonymous sign-in is enabled in independent QWIZ Free
+        run: node next/isolation/anonymous-auth-deployment-gate.mjs

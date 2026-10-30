@@ -289,7 +289,7 @@ test('Flag imagery remains visible and visual answers show the flag instead of p
  assert.match(shared,/function updateMemory\(root,s,offset=0\)\{/);
  assert.match(shared,/\[data-memory-study\]/);
  assert.match(shared,/\[data-memory-answer\]/);
- assert.match(projection,/const frame=selectingFlag\|\|hideFiller\|\|!hasVisual\?'':QwizStage\.illustration\(q,state\.phase==='result'\?state\.answer:null\)/);
+ assert.match(projection,/const frame=selectingFlag\|\|hideFiller\|\|q\.flag_assembly\|\|!hasVisual\?'':QwizStage\.illustration\(q,state\.phase==='result'\?state\.answer:null\)/);
  assert.match(projection.slice(projection.indexOf('function questionScene('),projection.indexOf('function applyProjectionSettings(')),/projection-public-options/);
  assert.match(app,/result-flag-image/);
  assert.match(app,/s\.answer\.image_url/);
@@ -966,7 +966,7 @@ test('Correct flag is an actual flag image, not a textual stripe order',()=>{
  assert.equal(run({kind:'single',prompt:'Какой порядок?',options:['красный — белый — зелёный']},
    {indices:[0],text:'красный — белый — зелёный'}),'');
  const screen=readFileSync(new URL('./presenter.js',import.meta.url),'utf8');
- assert.match(screen,/answerArt&&q\.kind==='flag'/);
+ assert.match(screen,/answerArt&&\(q\.kind==='flag'\|\|q\.flag_assembly\)/);
  assert.match(screen,/const hideFiller=state\.phase==='result'&&q\.kind==='flag'/);
  assert.match(readFileSync(new URL('./index.html',import.meta.url),'utf8'),/stage\.js\?v=[a-z0-9-]+/);
  assert.match(readFileSync(new URL('./presenter.html',import.meta.url),'utf8'),/stage\.js\?v=[a-z0-9-]+/);
@@ -1097,7 +1097,7 @@ test('Geography mobile taps confirm immediately and correct region is enlarged',
  assert.match(src,/e\.type==='pointercancel'\|\|!pointer/);
  assert.match(src,/confirm\.textContent='Проверяем…'/);
  assert.match(src,/b\.classList\.add\('geo-option-pending'\)/);
- assert.match(src,/t\.feedbackUntil=Date\.now\(\)\+480/);
+ assert.match(src,/t\.feedbackUntil=Date\.now\(\)\+1000/);
  assert.match(styles,/\.geo-option-pending/);
  assert.match(styles,/\.geo-region\.geo-correct-answer/);
  assert.match(arcade,/setTimeout\(\(\)=>flush\(tr\),160\)/);

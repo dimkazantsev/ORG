@@ -1,0 +1,68 @@
+name: QWIZ / test dedicated GOS catalog reader on disposable PostgreSQL
+on:
+  push:
+    branches:
+      - isolation/qwiz-independent-supabase-20261030
+    paths:
+      - 'next/isolation/CREATE-GOS-CATALOG-READER.sql'
+      - '.github/workflows/qwiz-catalog-reader-fixture.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  disposable-reader:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: isolated-fixture-only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 3s
+          --health-timeout 3s
+          --health-retries 12
+    env:
+      PGHOST: 127.0.0.1
+      PGPORT: '5432'
+      PGDATABASE: postgres
+      PGUSER: postgres
+      PGPASSWORD: isolated-fixture-only
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create dedicated role in disposable test database
+        shell: bash
+        run: |
+          set -euo pipefail
+          umask 077
+          psql -X -v ON_ERROR_STOP=1 -tA -q -f next/isolation/CREATE-GOS-CATALOG-READER.sql > /tmp/qwiz-reader-fixture-secret
+          if ! grep -q '^postgresql://qwiz_catalog_reader\.bderfrcfuhnutuoyudje:' /tmp/qwiz-reader-fixture-secret; then
+            echo 'The SQL did not return the expected one-time URI shape'
+            exit 1
+          fi
+          psql -X -v ON_ERROR_STOP=1 -tA -c "select rolcanlogin,rolsuper,rolcreatedb,rolcreaterole,rolbypassrls,rolconnlimit from pg_roles where rolname='qwiz_catalog_reader';" | grep -Fx 't|f|f|f|f|2'
+      - name: Verify role cannot write and uses read-only default
+        shell: bash
+        run: |
+          set -euo pipefail
+          password="$(python3 - <<'PY'
+          from pathlib import Path
+          from urllib.parse import urlsplit
+          s=Path('/tmp/qwiz-reader-fixture-secret').read_text()
+          uri=next(x for x in s.splitlines() if x.startswith('postgresql://qwiz_catalog_reader.'))
+          print(urlsplit(uri).password)
+          PY
+          )"
+          unset PGPASSWORD PGUSER
+          export PGPASSWORD="$password"
+          test "$(psql -X -U qwiz_catalog_reader -h 127.0.0.1 -p 5432 -d postgres -v ON_ERROR_STOP=1 -tA -c 'show default_transaction_read_only;')" = 'on'
+          if psql -X -U qwiz_catalog_reader -h 127.0.0.1 -p 5432 -d postgres -v ON_ERROR_STOP=1 -c 'create table public.qwiz_reader_should_not_create (id int)' >/dev/null 2>&1; then
+            echo 'ERROR: catalog reader unexpectedly created a table'
+            exit 1
+          fi
+          psql -X -U qwiz_catalog_reader -h 127.0.0.1 -p 5432 -d postgres -v ON_ERROR_STOP=1 -tA -c "select count(*) from pg_tables where schemaname='public';" >/dev/null
+          rm -f /tmp/qwiz-reader-fixture-secret
+          echo 'PASS: catalog reader authenticates, catalogs readable, default read-only, no table creation.'

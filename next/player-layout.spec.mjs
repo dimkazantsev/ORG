@@ -150,7 +150,8 @@ test('Phone displays synchronized card introductions, round rankings and full fi
    ctx.gameRenderKey='';renderGame();
   });
   await expect(page.locator('.round-results-grid .round-score-list')).toHaveCount(2);
-  await expect(page.locator('.round-results-grid .round-score-list li')).toHaveCount(15);
+  await expect(page.locator('.round-results-grid .round-score-list li')).toHaveCount(6);
+  await expect(page.locator('.round-results-grid .round-more-count')).toHaveCount(2);
   await page.evaluate(()=>{window.roundFixture.phase='finished';ctx.gameRenderKey='';renderGame()});
   await expect(page.locator('#gameContent .player-final-results')).toBeVisible();
   await expect(page.locator('#gameContent .player-final-results .habitat-team')).toHaveCount(5);
@@ -200,7 +201,7 @@ test('Two-stage penalty vote opens a red majority choice then lets players choos
   await expect(page.locator('[data-boost-choice="storm"]')).toHaveClass(/selected/);
   const calls=await page.evaluate(()=>window.penaltyCalls);
   expect(calls).toEqual(['sabotage','storm']);
-  const bounds=await page.locator('.arcade-vote').boundingBox();
+  const bounds=await page.locator('dialog.arcade-boost-dialog[open] .arcade-vote-effects').boundingBox();
   expect(bounds).not.toBeNull();
   expect(bounds.x).toBeGreaterThanOrEqual(0);
   expect(bounds.y).toBeGreaterThanOrEqual(0);

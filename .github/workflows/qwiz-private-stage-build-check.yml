@@ -1,0 +1,51 @@
+name: QWIZ / build private data staging SQL only (no upload or target write)
+on:
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - 'next/isolation/build-private-qwiz-row-stage.py'
+      - '.github/workflows/qwiz-private-stage-build-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-staging-sql:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify protected 57-table SQL staging package can be constructed
+        shell: bash
+        env:
+          GOS_SOURCE_DB_URL: ${{ secrets.GOS_SOURCE_DB_URL }}
+          PGSSLMODE: require
+          PGCONNECT_TIMEOUT: '8'
+        run: |
+          set -euo pipefail
+          umask 077
+          : "${GOS_SOURCE_DB_URL:?Missing source role credential}"
+          dir="$(mktemp -d "$RUNNER_TEMP/qwiz-private-builder.XXXXXXXX")"
+          trap 'rm -rf "$dir"' EXIT
+          python3 - <<'PY'
+          from urllib.parse import urlsplit,unquote
+          from os import environ
+          u=urlsplit(environ['GOS_SOURCE_DB_URL'])
+          if (unquote(u.username or '')!='qwiz_catalog_reader.bderfrcfuhnutuoyudje'
+              or not (u.hostname or '').endswith('.pooler.supabase.com')
+              or u.port!=5432):
+              raise SystemExit('Not the restricted source role')
+          PY
+          psql "$GOS_SOURCE_DB_URL" -X --no-psqlrc --no-password -qAt \
+            -v ON_ERROR_STOP=1 -c "select c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and (c.relname like 'qwiz_%' or c.relname like 'org_next_%' or c.relname like 'org_quiz_%') order by c.relname" > "$dir/tables.txt"
+          docker run --rm --network host --user "$(id -u):$(id -g)" \
+            -e GOS_SOURCE_DB_URL -e PGSSLMODE -e PGCONNECT_TIMEOUT \
+            -v "$dir:/work" postgres:17 sh -ec '
+              pg_dump --dbname="$GOS_SOURCE_DB_URL" \
+              --data-only --enable-row-security --column-inserts \
+              --no-owner --no-acl --no-comments \
+              --table="public.qwiz_*" --table="public.org_next_*" \
+              --table="public.org_quiz_*" --file=/work/source.sql'
+          python3 next/isolation/build-private-qwiz-row-stage.py \
+            "$dir/source.sql" "$dir/tables.txt" "$dir/staging.sql"
+          test -s "$dir/staging.sql"
+          echo 'PASS: private SQL staging script built and deleted; no Auth rows, no target database writes and no data artifact.'

@@ -1,0 +1,33 @@
+name: QWIZ / stage only 11 linked Auth users from old GOS to new Free
+on:
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - 'next/isolation/AUTH-11-STAGE-GATE.md'
+      - '.github/workflows/qwiz-scoped-11-auth-stage.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: qwiz-auth-11-private-stage
+  cancel-in-progress: false
+jobs:
+  migrate-scoped-auth-only:
+    if: "${{ github.event.head_commit.message == 'QWIZ_AUTH_11_STAGE_APPROVED' }}"
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy exactly source-approved QWIZ Auth rows to target private snapshot (no live Auth writes)
+        shell: bash
+        env:
+          GOS_SOURCE_DB_URL: ${{ secrets.GOS_SOURCE_DB_URL }}
+          QWIZ_TARGET_DB_URL: ${{ secrets.QWIZ_TARGET_DB_URL }}
+        run: |
+          set -euo pipefail
+          set +x
+          umask 077
+          : "${GOS_SOURCE_DB_URL:?Old GOS temporary reader secret missing}"
+          : "${QWIZ_TARGET_DB_URL:?New QWIZ Free private target secret missing}"
+          python3 next/isolation/transfer-exact-11-auth-snapshot.py
+          echo 'PASS: 11 QWIZ-related Auth users and identities privately staged; no auth.users or GOS original data modified.' >> "$GITHUB_STEP_SUMMARY"

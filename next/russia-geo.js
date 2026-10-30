@@ -74,7 +74,8 @@
   const correct=feedbackActive?String(t?.lastAnswer?.correct_text||'').trim():null;
   return '<div class="geo-options'+(feedbackActive?' is-revealed':'')+'">'+(q.options||[]).map((x,index)=>{
     const right=Boolean(correct&&String(x.text||'').trim()===correct);
-    const css=right?'geo-option-correct':'';
+    const wrong=Boolean(feedbackActive&&!right&&String(t?.chosenAnswerId||'')===String(x.id));
+    const css=right?'geo-option-correct':wrong?'geo-option-wrong':'';
     const explanation=right?'Правильный ответ':'Вариант ответа';
     return '<button type="button" data-geo-answer="'+esc(x.id)+'" class="'+css+'" aria-label="'+explanation+': '+esc(x.text)+'"'+
       (feedbackActive?' disabled':'')+'><span class="geo-choice-number" aria-hidden="true">'+String.fromCharCode(65+index)+'</span><span class="geo-choice-label">'+esc(x.text)+(right?' ✓':'')+'</span></button>';
@@ -120,7 +121,7 @@
   if(q?.mode==='detective')hint='<div class="geo-clues"><span>Подсказка 1: '+esc(q.region_type)+'</span><span>Подсказка 2: '+esc(q.district)+'</span><span>Подсказка 3: центр — '+esc(q.capital)+'</span></div>';
   const img=q?.mode==='flag'&&q.flag?'<img class="geo-flag" loading="lazy" decoding="async" alt="Флаг субъекта России" src="https://raw.githubusercontent.com/russian-flags/regions/3c411c7b305c678c49798cc610538c66108adbde/assets/'+encodeURIComponent(q.flag)+'/index.svg">':'';
   const qmode=q?.mode||'locate';const interactive=qmode==='locate',silhouette=qmode==='silhouette';const showMap=['locate','identify','silhouette'].includes(qmode);
-  const feedback=feedbackActive?'<span class="geo-result-label '+(t.lastAnswer.correct?'is-correct':'is-wrong')+'">'+(t.lastAnswer.correct?'Верно!':'Правильный вариант выделен')+'</span>':'';
+  const feedback=feedbackActive?'<span class="geo-result-label '+(t.lastAnswer.correct?'is-correct':'is-wrong')+'">'+(t.lastAnswer.correct?'Верно!':'Правильный вариант выделен')+'</span><span class="geo-answer-feedback '+(t.lastAnswer.correct?'':'is-wrong')+'">'+(t.lastAnswer.correct?'Ответ подтверждён':'Правильный ответ: '+esc(t.lastAnswer.correct_text||'см. выделенный регион'))+'</span>':'';
   // The image box stays mounted at a constant size for the whole question.
   // Only the correct answer tile changes its appearance during reveal.
   const visual=(qmode==='flag'||qmode==='silhouette')?'<div class="geo-visual-slot is-'+qmode+'">'+
@@ -178,12 +179,12 @@
    if(error)throw error;
    if(data.last_answer&&(answer!==null||data.timed_out===true)){
      t.revealQuestion=t.view?.question;
-     t.lastAnswer=data.last_answer;t.feedbackUntil=Date.now()+480;
+     t.lastAnswer=data.last_answer;t.feedbackUntil=Date.now()+1000;
      if(t.feedbackTimer)clearTimeout(t.feedbackTimer);
      t.feedbackTimer=setTimeout(()=>{if(!t.closed&&Date.now()>=t.feedbackUntil){
        t.lastAnswer=null;t.revealQuestion=null;t.renderKey=null;t.feedbackScrollKey=null;
        roundState(t);
-     }},500);
+     }},1015);
    }
    t.view=data;
    t.message=answer===null?'':data.last_correct?'Верно! +10 очков':'Нет, этот ответ неверный.';
@@ -193,7 +194,7 @@
     const notice=t.root?.querySelector('.geo-message');
     if(notice)notice.textContent=t.message;
     const buttons=t.root?.querySelectorAll('[data-geo-answer], [data-geo-confirm]');
-    buttons?.forEach(button=>{button.disabled=false;button.removeAttribute('aria-busy');button.classList.remove('geo-option-pending')});
+    buttons?.forEach(button=>{button.disabled=false;button.removeAttribute('aria-busy');button.classList.remove('geo-option-pending');if(button.matches('[data-geo-confirm]'))button.textContent='Подтвердить выбор'});
   }
   finally{t.busy=false}
  }
@@ -260,7 +261,7 @@
    const confirm=e.target.closest('[data-geo-confirm]');
    if(confirm){
      if(t.selectedRegion&&t.view?.open&&!confirm.disabled){
-       confirm.disabled=true;confirm.setAttribute('aria-busy','true');
+       confirm.disabled=true;confirm.setAttribute('aria-busy','true');confirm.textContent='Проверяем…';confirm.classList.add('geo-option-pending');
        const status=root.querySelector('.geo-message');if(status)status.textContent='Проверяем ответ…';
        fetchView(t,t.selectedRegion);
      }

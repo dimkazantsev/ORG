@@ -1,0 +1,27 @@
+name: QWIZ / validate locked final activation scripts
+on:
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - 'next/isolation/activate-new-qwiz-after-auth.py'
+      - 'next/isolation/transfer-exact-11-auth-snapshot.py'
+      - '.github/workflows/qwiz-final-driver-validation.yml'
+permissions:
+  contents: read
+jobs:
+  syntax:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate source-target gate script syntax without credentials or network
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m py_compile \
+            next/isolation/activate-new-qwiz-after-auth.py \
+            next/isolation/transfer-exact-11-auth-snapshot.py \
+            next/isolation/safe-session-pooler.py
+          grep -q 'QWIZ_FINAL_AUTH_AND_DATA_APPROVED' .github/workflows/qwiz-final-activation-gated.yml
+          grep -q '11 actual QWIZ Auth' .github/workflows/qwiz-final-activation-gated.yml
+          echo 'PASS: guarded final activation and source Auth transfer scripts compile; no databases contacted.'
