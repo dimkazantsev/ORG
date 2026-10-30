@@ -155,11 +155,20 @@ test('Audience Tap-battle shows a static readable ЖМИ! button, never a tappab
   await expect(marker).toHaveText('ЖМИ!');
   await expect(page.locator('#projectionMain [data-arcade-tap]')).toHaveCount(0);
   const bounds=await marker.evaluate(el=>{
-   const screen=el.closest('.arcade-scene').getBoundingClientRect();
-   const text=el.querySelector('span').getBoundingClientRect();
+   const scene=el.closest('.arcade-scene'),screen=scene.getBoundingClientRect();
+   const node=el.querySelector('span'),text=node.getBoundingClientRect();
+   const hero=el.getBoundingClientRect();
    return {gap:Math.abs((screen.left+screen.width/2)-(text.left+text.width/2)),
-    width:text.width,screenWidth:screen.width};
+    width:text.width,screenWidth:screen.width,
+    screenLeft:screen.left,screenMid:screen.left+screen.width/2,heroLeft:hero.left,heroWidth:hero.width,
+    spanLeft:text.left,spanMid:text.left+text.width/2,
+    spanPosition:getComputedStyle(node).position,
+    spanTransform:getComputedStyle(node).transform,
+    spanLeftCSS:getComputedStyle(node).left,
+    heroPosition:getComputedStyle(el).position,
+    sceneDisplay:getComputedStyle(scene).display};
   });
+  console.log('TAP_HERO_GEOMETRY',JSON.stringify({width,height,...bounds}));
   expect(bounds.gap).toBeLessThanOrEqual(3);
   expect(bounds.width).toBeGreaterThan(85);
   expect(bounds.width).toBeLessThan(bounds.screenWidth+2);
