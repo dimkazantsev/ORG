@@ -86,8 +86,8 @@ COMMIT;""")
 
 def export_csv(table,out):
     col=",".join(COLS[table])
-    query="COPY (SELECT "+col+" FROM qwiz_auth_export."+table+
-          " ORDER BY id) TO STDOUT WITH (FORMAT CSV)"
+    query=("COPY (SELECT "+col+" FROM qwiz_auth_export."+table+
+           " ORDER BY id) TO STDOUT WITH (FORMAT CSV)")
     cmd,env=cmd_env("GOS_SOURCE_DB_URL")
     with out.open("wb") as dest:
         os.chmod(out,0o600)
