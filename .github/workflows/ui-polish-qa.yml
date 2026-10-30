@@ -1,0 +1,28 @@
+name: QWIZ / UI polish regression
+on:
+  push:
+    paths: ['next/app.js','next/arcade.js','next/presenter.js','next/qa-polish.css','next/ui-polish.spec.mjs','next/arcade-qa-fixture.html','.github/workflows/ui-polish-qa.yml']
+  pull_request:
+    paths: ['next/app.js','next/arcade.js','next/presenter.js','next/qa-polish.css','next/ui-polish.spec.mjs','next/arcade-qa-fixture.html','.github/workflows/ui-polish-qa.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  browser:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install tools
+        run: |
+          node --check next/app.js
+          node --check next/presenter.js
+          node --check next/arcade.js
+          npm install --no-save @playwright/test@1.56.1
+          npx playwright install chromium --with-deps
+      - name: Verify responsive QWIZ layouts and logic
+        run: |
+          python3 -m http.server 8080 --bind 127.0.0.1 >/tmp/qwiz-ui-polish.log 2>&1 &
+          npx playwright test next/ui-polish.spec.mjs --workers=1 --reporter=list
