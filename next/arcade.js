@@ -73,7 +73,7 @@ window.QwizArcade=(()=>{
   (kind==='player'?(['tug','rocket'].includes(mode)?'':(['captain','blitz','sequence_memory'].includes(mode)?'':'<button type="button" class="arcade-tap-btn" data-arcade-tap disabled>'+escape(m.cta)+'</button>'))+(['captain','blitz','sequence_memory'].includes(mode)?'':'<span class="arcade-tap-caption" data-arcade-personal>Синхронизация с игровым сервером…</span>'):'')+
   '<div class="arcade-alert" role="status" aria-live="polite" data-arcade-alert>Подключаем результаты…</div><div class="arcade-badges" data-arcade-badges></div><section class="arcade-vote" data-arcade-vote hidden></section></div>';
  }
- function stop(kind){const tr=ui[kind];if(!tr)return;if(tr.interval)clearTimeout(tr.interval);if(tr.clock)clearInterval(tr.clock);if(tr.flushTimer)clearTimeout(tr.flushTimer);window.QwizSecretCode?.stop(tr);if(tr.onClick)tr.root?.removeEventListener('click',tr.onClick);if(tr.onPointerDown)tr.root?.removeEventListener('pointerdown',tr.onPointerDown);if(tr.memory)tr.memory.runId+=1;if(tr.voteDialog){if(tr.voteDialog.open)tr.voteDialog.close();tr.voteDialog.remove();tr.voteDialog=null;}tr.closed=true;ui[kind]=null;}
+ function stop(kind){const tr=ui[kind];if(!tr)return;if(tr.interval)clearTimeout(tr.interval);if(tr.clock)clearInterval(tr.clock);if(tr.flushTimer)clearTimeout(tr.flushTimer);if(tr.voteTimer)clearTimeout(tr.voteTimer);window.QwizSecretCode?.stop(tr);if(tr.onClick)tr.root?.removeEventListener('click',tr.onClick);if(tr.onPointerDown)tr.root?.removeEventListener('pointerdown',tr.onPointerDown);if(tr.memory)tr.memory.runId+=1;if(tr.voteDialog){if(tr.voteDialog.open)tr.voteDialog.close();tr.voteDialog.remove();tr.voteDialog=null;}tr.closed=true;ui[kind]=null;}
  async function fetchState(tr){if(tr.closed||tr.fetching||!navigator.onLine)return;tr.fetching=true;const id=tr.key;
   try{
    // Abort a stalled snapshot read; otherwise 'fetching' could stay true forever.
@@ -350,6 +350,21 @@ window.QwizArcade=(()=>{
   }
   const badges=tr.root.querySelector('[data-arcade-badges]');if(badges)badges.innerHTML=(v.awards||[]).slice(0,12).map(a=>'<span class="arcade-award">'+escape(a.title)+'</span>').join('');
   const vote=v.vote,ballot=tr.kind==='player'?tr.voteDialog?.querySelector('[data-arcade-vote]'):tr.root.querySelector('[data-arcade-vote]');
+  // Each voting stage is independent. Closing one ballot must not hide the next stage.
+  const voteKey=vote?.open&&vote?.can_vote?[tr.roomId,v.card_position,vote.stage,vote.vote_ends_at].join(':'):'';
+  if(voteKey!==tr.voteKey){
+   if(tr.voteTimer)clearTimeout(tr.voteTimer);
+   tr.voteTimer=null;tr.voteKey=voteKey;tr.voteDismissed=false;
+   if(voteKey){
+    const remaining=Math.max(0,Date.parse(vote.vote_ends_at)-currentTime(tr));
+    tr.voteTimer=setTimeout(()=>{
+     if(!tr.closed&&tr.voteKey===voteKey){
+      tr.voteDismissed=true;
+      if(tr.voteDialog?.open)tr.voteDialog.close();
+     }
+    },Math.min(10000,remaining));
+   }
+  }
   // The ballot replaces the spent arcade scene on a player's phone; never send it below the viewport.
   tr.root.querySelector('.arcade-shell.arcade-player')?.classList.toggle('is-boost-voting',Boolean(vote&&tr.kind==='player'&&vote.can_vote));
   if(ballot){
@@ -383,7 +398,7 @@ window.QwizArcade=(()=>{
   // Native modal stays in the top layer, independent from the arcade scene and bottom player bar.
   // Only the winning team's eligible participants see the ballot; no duplicate DOM votes.
   if(tr.voteDialog){
-   const open=Boolean(vote?.can_vote&&vote?.open&&Date.parse(vote.vote_ends_at)>currentTime(tr));
+   const open=Boolean(vote?.can_vote&&vote?.open&&!tr.voteDismissed&&Date.parse(vote.vote_ends_at)>currentTime(tr));
    if(open&&!tr.voteDialog.open)tr.voteDialog.showModal();
    else if(!open&&tr.voteDialog.open)tr.voteDialog.close();
   }
@@ -422,9 +437,9 @@ window.QwizArcade=(()=>{
     const choice=event.target.closest('[data-boost-choice]');
     if(choice&&!choice.disabled)void voteBoost(tr,choice.dataset.boostChoice);
    });
-   voteDialog.addEventListener('cancel',event=>{
-    // Keep the timed collective decision visible while voting is still open.
-    if(tr.view?.vote?.can_vote&&tr.view?.vote?.open)event.preventDefault();
+   voteDialog.addEventListener('cancel',()=>{
+    // Escape/back closes a stuck ballot without changing the server vote.
+    tr.voteDismissed=true;
    });
    tr.onClick=e=>{
      if(window.QwizSecretCode?.click(tr,e))return;
@@ -464,7 +479,12 @@ window.QwizArcade=(()=>{
   if(tr.closed||tr.voteBusy||!tr.roomId||!ALL_VOTES.some(x=>x[0]===choice))return;
   tr.voteBusy=true;
   try{const {error}=await tr.client.rpc('qwiz_vote_boost',{p_room:tr.roomId,p_choice:choice});
-   if(error)throw error;await fetchState(tr)
+   if(error)throw error;
+   // Confirmed server vote: close immediately, even if the next state read is slow.
+   tr.voteDismissed=true;
+   if(tr.voteTimer){clearTimeout(tr.voteTimer);tr.voteTimer=null;}
+   if(tr.voteDialog?.open)tr.voteDialog.close();
+   await fetchState(tr)
   }catch(e){showMessage(tr,e.message||'Голос не принят',true);tr.alertOverride=Date.now()+5000}
   finally{tr.voteBusy=false;if(!tr.closed&&tr.view)paint(tr)}
  }
