@@ -22,7 +22,7 @@ def run():
            and "SELECT pg_advisory_xact_lock" in sql
            and "EXACTLY 11 QWIZ game FK users" in sql
            and "SET CONSTRAINTS ALL IMMEDIATE;" in sql
-           and sql.rstrip().endswith("COMMIT;")):
+           and "\nCOMMIT;\n" in sql):
         raise ValueError("Unexpected or unreviewed atomic restore script")
     scope=TRANSFER.run_psql("QWIZ_TARGET_DB_URL","""BEGIN READ ONLY;
 SELECT (SELECT count(*) FROM qwiz_auth_snapshot.users),
