@@ -569,3 +569,56 @@ test('Blitz Consensus: all players vote, captain decides with team tally, projec
  expect(await page.evaluate(()=>window.__consensusQa.votes[1].p_phase)).toBe('final');
  await page.evaluate(()=>{QwizArcade.stop('player');document.getElementById('consensusQaFixture').remove()});
 });
+
+test('One team and multiple teams share compact projector result cards with visible identities',async({page})=>{
+ for(const [width,height] of [[390,844],[1280,720],[1920,1080]]){
+  await page.setViewportSize({width,height});
+  for(const teamsCount of [1,3]){
+   const model={
+    teams:Array.from({length:teamsCount},(_,i)=>({id:'team-'+i,name:'Команда '+(i+1),score:80-i*20})),
+    players:Array.from({length:Math.max(1,teamsCount*2)},(_,i)=>({id:'player-'+i,nickname:'Участник '+(i+1),score:80-i*5}))
+   };
+   await page.evaluate(m=>{
+    ctx.renderKey='';
+    render({code:'A1B2C3D4',phase:'intermission',index:1,
+     activity:{type:'round_stats',title:'Итоги раунда',settings:{}},round_results:m,
+     ends_at:new Date(Date.now()+9000).toISOString(),
+     teams:m.teams,players:m.players,screen_settings:{sound_enabled:false,volume:0}});
+   },model);
+   await expect(page.locator('#projectionMain .projection-round-columns>section')).toHaveCount(2);
+   await expect(page.locator('.projection-rank-identity small').first()).toHaveText('КОМАНДА');
+   await expect(page.locator('.projection-player-column .projection-rank-identity small').first()).toHaveText('УЧАСТНИК');
+   if(teamsCount===1)await expect(page.locator('.projection-round-columns')).toHaveClass(/is-solo-team/);
+   const rect=await page.evaluate(()=>{
+    const root=document.querySelector('#projectionMain').getBoundingClientRect();
+    const sections=[...document.querySelectorAll('.projection-round-columns>section')].map(el=>el.getBoundingClientRect());
+    return {root,sections,overflow:document.documentElement.scrollWidth-innerWidth};
+   });
+   expect(rect.overflow).toBeLessThanOrEqual(2);
+   for(const s of rect.sections){
+    expect(s.left).toBeGreaterThanOrEqual(rect.root.left-4);
+    expect(s.right).toBeLessThanOrEqual(rect.root.right+4);
+   }
+   if(width<760){
+    expect(rect.sections[1].top).toBeGreaterThanOrEqual(rect.sections[0].bottom-2);
+    expect(rect.sections[1].top-rect.sections[0].bottom).toBeLessThan(45);
+   }
+  }
+ }
+});
+
+test('Countdown at zero is never an empty transition on the audience screen',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await page.evaluate(()=>{
+  ctx.renderKey='';
+  render({code:'A1B2C3D4',phase:'countdown',index:0,activity:{title:'Секретный код',icon:'flag'},
+   ends_at:new Date(Date.now()-1500).toISOString(),screen_settings:{sound_enabled:false,volume:0}});
+ });
+ await expect(page.locator('.projection-intro-card')).toContainText('Начинаем!');
+ await page.evaluate(()=>{
+  ctx.renderKey='';
+  render({code:'A1B2C3D4',phase:'question',index:1,question:null,
+   screen_settings:{sound_enabled:false,volume:0}});
+ });
+ await expect(page.locator('.projection-handoff')).toContainText('Готовим следующий вопрос');
+});

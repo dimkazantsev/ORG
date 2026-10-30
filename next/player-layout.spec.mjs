@@ -435,3 +435,30 @@ test('Legacy sending or saved status cannot create a top answer notification',as
  await expect(page.locator('#gameNotice')).toContainText('Неверный формат ответа.');
  await expect(page.locator('#gameNotice')).toBeVisible();
 });
+
+test('Captain selection uses one responsive scene, with the claim action inside it',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await setup(page);
+ await page.evaluate(()=>{
+  ctx.room={code:'ABCDEF12',room_id:'00000000-0000-4000-8000-000000000091',
+   title:'Квиз',phase:'lobby',index:0,teams:[],me:{id:'player-a',team_id:null},
+   team_lobby:{mode:'captain',captains_ready:false,can_claim:true,captain_count:0,team_count:1,
+    captain_started_at:new Date(Date.now()-1500).toISOString()}};
+  ctx.gameRenderKey='';showScreen('game');renderGame();
+ });
+ await expect(page.locator('#gameContent .player-team-building')).toBeVisible();
+ await expect(page.locator('#gameContent .team-captain-hero-action')).toHaveCount(1);
+ await expect(page.locator('#playerTeamPanel')).toBeHidden();
+ await expect(page.locator('#gameContent .team-building-center')).toContainText('Выбираем капитанов');
+});
+
+test('Invalid multi-choice warning disappears instead of blocking the next card',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await setup(page);
+ await question(page,{kind:'multi',prompt:'Выберите несколько вариантов',options:['Раз','Два','Три']});
+ await page.locator('[data-submit-rich]').click();
+ await expect(page.locator('#gameNotice')).toContainText('Отметьте хотя бы один вариант');
+ await page.waitForTimeout(3950);
+ await expect(page.locator('#gameNotice')).toBeEmpty();
+ await expect(page.locator('#gameNotice')).not.toHaveClass(/error/);
+});
