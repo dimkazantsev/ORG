@@ -1,1 +1,1 @@
-QWIZ UI test write
+Write path tested
