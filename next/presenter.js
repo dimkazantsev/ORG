@@ -150,14 +150,17 @@ function automaticRoundStandings(state){
  // On a short 720p projector display the leading rows at a readable scale.
  // All participants retain their complete individual scoreboard on their own device.
  const displayLimit=window.innerHeight<900?5:8;
+ const teamNames=new Map((state.teams||[]).map(t=>[String(t.id),String(t.name||'')])); 
  const list=(rows,unit)=>'<ol class="projection-round-leaders">'+rows.slice(0,displayLimit).map((r,i)=>
- '<li><span>'+(i+1)+'</span><strong>'+escapeText(r.nickname||r.name||'Участник')+'</strong><b>'+
+ '<li><span>'+(i+1)+'</span><strong>'+escapeText(r.nickname||r.name||'Участник')+
+ (unit==='players'&&(r.team_name||teamNames.get(String(r.team_id||'')))?'<small class="projection-player-team">Команда: '+escapeText(r.team_name||teamNames.get(String(r.team_id)))+'</small>':'')+
+ '</strong><b>'+
  Math.round(Number(r.score||0)).toLocaleString('ru-RU',{maximumFractionDigits:0})+'</b></li>').join('')+'</ol>'+
  (rows.length>displayLimit?'<p class="projection-rank-more">Ещё '+(rows.length-displayLimit)+' · полный список доступен участникам</p>':'');
  $('projectionMain').innerHTML='<section class="projection-round-results" aria-label="Результаты завершённого раунда">'+
  '<span class="projection-eyebrow">РАУНД ЗАВЕРШЁН · РЕЗУЛЬТАТЫ</span><h1>Итоги раунда</h1>'+rewardBanner+
- '<div class="projection-round-columns"><section><h2>Команды <small>· '+escapeText(d.team_unit||'очки')+'</small></h2>'+list(teams)+'</section>'+
- '<section><h2>Участники <small>· '+escapeText(d.player_unit||'баллы')+'</small></h2>'+list(players)+'</section></div>'+
+ '<div class="projection-round-columns"><section aria-label="Результаты команд"><h2>Команды <small>· '+escapeText(d.team_unit||'очки')+'</small></h2>'+list(teams,'teams')+'</section>'+
+ '<section aria-label="Результаты участников"><h2>Участники <small>· '+escapeText(d.player_unit||'баллы')+'</small></h2>'+list(players,'players')+'</section></div>'+
  '<p>Следующий этап через <strong id="projectorResultCountdown">'+(state.ends_at?seconds(state.ends_at):'—')+'</strong> сек.</p></section>';
 }
 function roundIntroScene(state){
@@ -167,7 +170,7 @@ function roundIntroScene(state){
  '<span class="projection-eyebrow">СЛЕДУЮЩИЙ РАУНД</span><div class="projection-intro-orbit'+(icon==='flag'?' is-flag':'')+'" aria-hidden="true">'+
  art+
  '</div><h1>'+escapeText(title)+'</h1><p>Готовьтесь к новому испытанию</p>'+
- '<div class="countdown-number" id="countdownNumber">'+seconds(state.ends_at)+'</div></section>';
+ '<div class="countdown-number" id="countdownNumber">'+(Number(seconds(state.ends_at))>0?seconds(state.ends_at):'Начинаем!')+'</div></section>';
 }
 function finalShow(state){
  const teams=state.teams||[],players=state.players||[],stats=state.question_stats||[];
@@ -456,7 +459,7 @@ function render(state){
  $('projectionPlay').hidden=!state.code;$('projectionPlay').href=link(state.code);
  // Public display always has a single QR during lobby, including existing rooms.
  if(state.phase==='lobby'&&!state.team_lobby)state={...state,team_lobby:{mode:'legacy',confirmed:false,team_count:(state.lobby_teams||[]).length,captain_count:0,captains_ready:false}};
- const key=[state.code,state.phase,state.index,state.activity?.title,state.activity?.type,state.activity?.settings?.arcade_mode,state.team_lobby?.mode,state.team_lobby?.team_count,state.team_lobby?.confirmed,state.team_lobby?.captains_ready,state.team_lobby?.captain_count].join(':');
+ const key=[state.code,state.phase,state.index,state.activity?.title,state.activity?.type,state.activity?.settings?.arcade_mode,state.team_lobby?.mode,state.team_lobby?.team_count,state.team_lobby?.confirmed,state.team_lobby?.captains_ready,state.team_lobby?.captain_count,state.question?.prompt,state.question?.kind, ...(state.phase==='lobby'?(state.lobby_teams||[]).map(t=>[t.id,t.name,t.members??t.players].join('/')):[])].join(':');
  if(key===ctx.renderKey){
   if(state.phase==='intermission'&&state.activity?.type==='round_stats'&&$('projectorResultCountdown')){
    $('projectorResultCountdown').textContent=state.ends_at?seconds(state.ends_at):'—';
@@ -473,6 +476,20 @@ function render(state){
   if(lobby.mode==='random'&&lobby.confirmed){
    $('projectionMain').innerHTML='<section class="projection-lobby has-team-entry"><div><div class="projection-eyebrow">КОМАНДЫ СФОРМИРОВАНЫ</div><h1>Идите к своей команде!</h1><p>Найдите название и значок своей команды. При необходимости сканируйте её QR-код.</p><strong class="projection-code">'+escapeText(state.code)+'</strong></div><div class="projection-qr" id="projectionQr"></div></section><section class="projection-team-entry"><h2>Ваши команды</h2><p>Команды отмечены иконками и названиями.</p><div class="team-board" id="projectionTeamBoard"></div></section>';
    qr($('projectionQr'),link(state.code));makeRoomQrExpandable($('projectionQr'),state.code);QwizTeams.board($('projectionTeamBoard'),state.lobby_teams||[],state.code);
+   scheduleFitProjection();return;
+  }
+  if(lobby.mode==='captain'&&lobby.captains_ready){
+   const teams=state.lobby_teams||[];
+   const cards=teams.slice(0,15).map((team,i)=>
+    '<article class="projection-ready-team"><span class="projection-ready-icon" aria-hidden="true">'+QwizStage.icon(team,true)+'</span>'+
+    '<div><small>КОМАНДА '+(i+1)+'</small><strong>'+escapeText(team.name||'Название уточняется')+'</strong>'+
+    '<span>'+Number(team.members??team.players??0)+' участников</span></div></article>').join('');
+   $('projectionMain').innerHTML='<section class="projection-captains-ready" aria-label="Команды выбраны">'+
+    '<span class="projection-eyebrow">QWIZ-PARTY · ФОРМИРОВАНИЕ КОМАНД</span>'+
+    '<h1>Команды готовы!</h1>'+
+    '<p>Найдите свою команду по названию. Для входа используйте QR-код капитана.</p>'+
+    '<div class="projection-ready-teams">'+(cards||'<p>Ожидаем названия команд.</p>')+'</div>'+
+    '<p class="projection-ready-footer">Игра начнётся по команде преподавателя</p></section>';
    scheduleFitProjection();return;
   }
   const n=lobby.team_count||1,c=lobby.captain_count||0;
@@ -506,7 +523,12 @@ function render(state){
   const extras=type==='team_stats'?QwizStage.teams(state.teams,{full:true,ranked:true}):type==='player_stats'?QwizStage.leaderboard(state.players,20):'';
   $('projectionMain').innerHTML='<section class="projection-activity" data-type="'+escapeText(type)+'"><span class="projection-eyebrow">QWIZ-PARTY · ПРОДОЛЖАЕМ ИГРУ</span><div class="activity-emblem" aria-hidden="true">✦</div><h1>'+escapeText(activity.title||'Дополнительная активность')+'</h1><p>Следующий этап начнётся автоматически.</p>'+extras+'</section>';return;
  }
- if(!state.question){$('projectionMain').innerHTML='<div class="projection-loading"><h1>Следующий раунд</h1><p>Смотрите на экран.</p></div>';return}
+ if(!state.question){
+  // Keep the last meaningful scene while a transient server snapshot is incomplete.
+  // Never replace the projector with a blank white container between cards.
+  if(!$('projectionMain').children.length)$('projectionMain').innerHTML='<section class="projection-activity"><h1>Игра продолжается</h1></section>';
+  return;
+ }
  if(state.phase==='result')tone('reveal');else if(previous!=='question'||ctx.previousQuestion!==state.index)tone('pop');ctx.previousQuestion=state.index;
  $('projectionMain').innerHTML=questionScene(state);
  // Keep new content invisible for the two-frame geometry fitter. No flash at

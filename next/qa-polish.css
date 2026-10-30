@@ -1,0 +1,237 @@
+
+/* QWIZ-PARTY 2026-10-30: a single presentation layout for transitions,
+   captain selection, scoreboards, bonuses and mini-games. */
+#projectionMain{min-width:0;min-height:0;overflow:hidden}
+#projectionMain :is(.projection-round-results,.projection-activity,.arcade-shell,.arcade-vote-projection){
+ box-sizing:border-box;min-width:0;max-width:100%;
+}
+#projectionMain .projection-round-results{
+ justify-content:flex-start;align-items:stretch;gap:clamp(8px,1.7dvh,18px);
+ padding:clamp(12px,2.2dvh,26px);max-height:100%;overflow-y:auto;
+}
+#projectionMain .projection-round-results>h1,
+#projectionMain .projection-round-results>.projection-eyebrow{text-align:center}
+#projectionMain .projection-round-columns{
+ align-items:start;gap:clamp(10px,1.9vw,28px);
+}
+#projectionMain .projection-round-columns>section{
+ display:flex;flex-direction:column;align-self:start;height:auto!important;
+ min-height:0!important;gap:clamp(7px,1dvh,12px);
+ padding:clamp(12px,1.8vw,25px);
+ background:#fff;border:1px solid #e3d8f1;border-radius:22px;
+ box-shadow:0 12px 34px #4c337612;
+}
+#projectionMain .projection-round-columns h2{margin:0;line-height:1.18}
+#projectionMain .projection-round-leaders{display:grid;gap:7px;grid-template-columns:1fr}
+#projectionMain .projection-round-leaders li{
+ display:grid;grid-template-columns:clamp(27px,2.7vw,42px) minmax(0,1fr) auto;
+ align-items:center;gap:clamp(8px,1vw,15px);min-height:clamp(46px,7dvh,72px);
+ padding:9px 12px;background:#f5efff;border:1px solid #e9dcfb;border-radius:14px;
+ font-size:clamp(15px,1.7vw,23px);
+}
+#projectionMain .projection-round-leaders li>span:first-child{
+ display:grid;place-items:center;border-radius:10px;min-height:30px;
+ background:#e4d2ff;color:#6434b0;font-weight:900
+}
+#projectionMain .projection-round-leaders li strong{white-space:normal;overflow-wrap:anywhere;line-height:1.2}
+#projectionMain .projection-round-leaders li b{white-space:nowrap;color:#6742aa;font-weight:900}
+#projectionMain .projection-round-leaders li b::after{content:" баллов";font-size:.62em;color:#80718d;font-weight:600}
+#projectionMain .projection-round-columns>section:has(.projection-round-leaders li:only-child) .projection-round-leaders{max-width:700px;width:100%;margin:0 auto}
+#projectionMain .projection-round-columns>section:has(.projection-round-leaders li:only-child) .projection-round-leaders li{justify-content:stretch}
+#projectionMain .projection-round-results>p{align-self:center;text-align:center}
+#projectionMain .projection-activity{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ width:min(100%,1200px);min-height:0;max-height:100%;overflow-y:auto;
+ gap:clamp(9px,2.4dvh,22px);padding:clamp(16px,3dvh,38px);
+}
+#projectionMain .projection-activity>h1{line-height:1.1;overflow-wrap:anywhere;text-align:center}
+#projectionMain .arcade-shell{max-height:100%;overflow:hidden}
+#projectionMain .arcade-projection .arcade-ranks{min-height:0;max-width:100%;overflow-y:auto}
+#projectionMain .arcade-projection .arcade-rank{
+ min-width:0;grid-template-columns:minmax(120px,1.1fr) minmax(80px,2fr) minmax(90px,.8fr);
+ padding:clamp(8px,1.2dvh,14px);background:#f6f1ff;border-radius:13px;
+ border:1px solid #e9dff5;
+}
+#projectionMain .arcade-projection .arcade-rank-name{
+ font-weight:850;white-space:normal;overflow-wrap:anywhere;line-height:1.2;text-align:left;
+}
+#projectionMain .arcade-projection .arcade-rank-score{white-space:normal;line-height:1.2}
+#projectionMain .arcade-projection .arcade-ranks:has(>.arcade-rank:only-child){
+ width:min(100%,740px);margin-inline:auto;
+}
+#projectionMain .arcade-projection[data-arcade-root="tug"] .arcade-scene{
+ position:relative;display:grid;place-items:center;min-height:clamp(155px,29dvh,310px)!important;
+ height:clamp(155px,29dvh,310px);overflow:hidden;isolation:isolate;
+}
+#projectionMain .arcade-projection-tap-button{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:clamp(1px,.6dvh,7px);position:absolute;z-index:4;inset:50% auto auto 50%;
+ transform:translate(-50%,-50%);
+ width:clamp(125px,min(20vw,23dvh),240px);height:clamp(125px,min(20vw,23dvh),240px);
+ border-radius:50%;background:radial-gradient(circle at 36% 26%,#ecc2fc 0%,#c67be7 36%,#8538cb 78%,#5b289f 100%);
+ border:clamp(6px,1.1vw,14px) solid #f9e7ff;
+ box-shadow:0 10px 0 #6a3498,0 16px 32px #60339750,inset 0 5px 19px #fff7;
+ color:#fff;text-align:center;pointer-events:none;user-select:none;
+}
+#projectionMain .arcade-projection-tap-button strong{
+ font-size:clamp(29px,min(4.4vw,6.5dvh),64px);font-weight:950;letter-spacing:.04em;
+ text-shadow:0 2px 10px #50207970;
+}
+#projectionMain .arcade-projection-tap-button small{font-size:clamp(9px,1vw,15px);font-weight:700;line-height:1.1;padding-inline:10px}
+#projectionMain .arcade-vote-projection.is-solo .arcade-projection-vote-champion{
+ align-self:center;width:min(100%,780px);justify-content:center;
+}
+#projectionMain .arcade-vote-projection.is-solo .arcade-projection-vote-options{
+ margin-inline:auto;justify-content:center;justify-items:stretch;
+ max-width:1000px;width:min(100%,1000px);align-items:stretch;
+}
+#projectionMain .arcade-vote-projection.is-solo .arcade-projection-vote-options:has(>article:only-child){
+ grid-template-columns:minmax(0,600px);
+}
+#projectionMain .arcade-vote-projection.is-solo .arcade-projection-vote-options:has(>article:nth-child(2):last-child){
+ grid-template-columns:repeat(2,minmax(0,450px));
+}
+#projectionMain .arcade-vote-projection{
+ overflow-y:auto;overscroll-behavior:contain;
+}
+#projectionMain .arcade-vote-projection .arcade-projection-vote-bottom{
+ margin-top:clamp(9px,1.5dvh,16px);
+}
+#projectionMain .arcade-shell[hidden],#projectionMain .arcade-vote-projection[hidden]{display:none!important}
+.player-compact #gameContent .player-team-building{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ box-sizing:border-box;min-height:0;width:100%;gap:clamp(10px,2dvh,22px);
+ padding:clamp(14px,3dvh,28px);overflow-y:auto;
+}
+.player-compact #gameContent .player-team-building .team-building-center{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:clamp(9px,1.8dvh,18px);width:100%;max-width:480px;min-width:0;
+}
+.player-compact #gameContent .player-team-building .team-building-glow{
+ width:clamp(100px,28vw,190px);height:clamp(92px,20dvh,162px);
+ margin:0;flex:0 0 auto;
+}
+.player-compact #gameContent .player-team-building h1{
+ margin:0!important;font-size:clamp(22px,5.7vw,36px)!important;line-height:1.13;
+ text-align:center;overflow-wrap:anywhere;
+}
+.player-compact #gameContent .player-team-building p{margin:0;line-height:1.45;text-align:center;font-size:clamp(13px,3.6vw,16px)}
+.player-compact #gameContent .player-team-building [data-captain-elapsed]{
+ display:inline-block;font-weight:900;font-variant-numeric:tabular-nums;
+ color:#6336b1;font-size:clamp(19px,5.4vw,27px);
+}
+.player-compact #gameContent .player-captain-claim-button{
+ min-height:54px;min-width:min(100%,280px);border:0;border-radius:16px;
+ padding:12px 25px;background:linear-gradient(135deg,#7c41d0,#9d6de6);
+ box-shadow:0 5px 0 #5e36a0,0 10px 25px #673c9d36;
+ color:#fff;font:inherit;font-size:18px;font-weight:850;
+}
+.player-compact #gameContent .player-captain-confirmation{
+ padding:11px 15px;border-radius:12px;background:#e5f5e9;color:#237144;text-align:center;
+}
+.player-compact #gameContent .round-intro{min-height:0;max-height:100%;overflow-y:auto}
+.player-compact #gameContent .round-intro [data-round-intro-count]{font-variant-numeric:tabular-nums}
+@media(max-width:760px){
+ #projectionMain .projection-round-columns{grid-template-columns:1fr;gap:10px}
+ #projectionMain .projection-round-leaders{grid-template-columns:1fr!important}
+ #projectionMain .projection-round-leaders li{min-height:44px;padding:7px 10px}
+ #projectionMain .projection-round-results{justify-content:flex-start;gap:10px}
+ #projectionMain .arcade-projection .arcade-rank{
+  grid-template-columns:minmax(0,1fr) minmax(0,1.1fr) auto;gap:7px
+ }
+ #projectionMain .arcade-projection .arcade-rank-name{font-size:clamp(13px,3.4vw,16px)}
+ #projectionMain .arcade-projection-tap-button{
+  width:clamp(130px,32vw,185px);height:clamp(130px,32vw,185px)
+ }
+}
+@media(max-height:520px){
+ #projectionMain .arcade-vote-projection{padding-block:9px}
+ #projectionMain .arcade-projection-vote-heading p{display:none}
+ #projectionMain .arcade-projection-vote-champion{padding:5px 9px}
+ #projectionMain .arcade-projection-vote-option{padding:6px 8px}
+}
+
+#projectionMain .projection-player-team{
+ display:block;margin-top:3px;color:#867a97;font-size:clamp(12px,1.2vw,16px);
+ font-weight:650;line-height:1.2;white-space:normal;
+}
+#projectionMain .arcade-projection .arcade-scene{flex:0 1 auto}
+
+/* Unified, readable audience captain selection and team roster. */
+#projectionMain .projection-captains-ready{
+ box-sizing:border-box;width:min(100%,1420px);height:min(100%,100dvh);
+ max-height:100%;min-width:0;min-height:0;margin:auto;
+ display:flex;flex-direction:column;justify-content:center;align-items:center;
+ gap:clamp(8px,1.8dvh,20px);overflow-y:auto;overscroll-behavior:contain;
+ padding:clamp(14px,2.3dvh,32px) clamp(14px,2.4vw,42px);
+ background:radial-gradient(ellipse at 50% 14%,#f1e6ff,#fff 61%);
+ border:1px solid #e5d9f3;border-radius:clamp(18px,2vw,30px);
+ box-shadow:0 13px 35px #4b287010;
+}
+#projectionMain .projection-captains-ready>.projection-eyebrow{
+ margin:0;color:#6e4aa4;text-align:center;letter-spacing:.09em;
+}
+#projectionMain .projection-captains-ready h1{
+ margin:0;font-size:clamp(30px,min(5.4vw,6.7dvh),72px);
+ line-height:1.08;letter-spacing:-.045em;text-align:center;color:#38245b;
+}
+#projectionMain .projection-captains-ready>p{
+ margin:0;max-width:900px;text-align:center;
+ color:#746889;font-size:clamp(13px,min(1.65vw,2.5dvh),23px);line-height:1.35;
+}
+#projectionMain .projection-ready-teams{
+ box-sizing:border-box;width:min(100%,1300px);min-width:0;min-height:0;
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));
+ align-content:center;justify-content:center;gap:clamp(10px,1.55vw,24px);
+ overflow-y:auto;overscroll-behavior:contain;padding:clamp(4px,.8dvh,10px);
+}
+#projectionMain .projection-ready-teams:has(>.projection-ready-team:only-child){
+ grid-template-columns:minmax(0,min(100%,620px));
+}
+#projectionMain .projection-ready-team{
+ box-sizing:border-box;min-width:0;min-height:clamp(90px,14dvh,145px);
+ display:flex;align-items:center;gap:clamp(10px,1.4vw,24px);
+ padding:clamp(11px,1.7dvh,22px) clamp(12px,1.4vw,26px);
+ background:#fff;border:1px solid #e4d7f4;border-radius:clamp(14px,1.5vw,23px);
+ box-shadow:0 8px 22px #5d358a12;
+}
+#projectionMain .projection-ready-team>.projection-ready-icon{
+ flex:0 0 auto;display:grid;place-items:center;
+ width:clamp(48px,5.2vw,78px);height:clamp(48px,5.2vw,78px);
+ background:#f0e6ff;border-radius:17px;overflow:hidden;
+ font-size:clamp(26px,3vw,42px);
+}
+#projectionMain .projection-ready-team>.projection-ready-icon :is(svg,img){
+ max-width:75%;max-height:75%;object-fit:contain;
+}
+#projectionMain .projection-ready-team>div{
+ min-width:0;display:flex;flex-direction:column;gap:clamp(3px,.5dvh,7px);
+}
+#projectionMain .projection-ready-team small{
+ color:#825fbb;font-size:clamp(10px,1.1vw,15px);font-weight:900;letter-spacing:.065em;
+}
+#projectionMain .projection-ready-team strong{
+ color:#302141;font-weight:900;font-size:clamp(18px,min(2.1vw,3.1dvh),31px);
+ line-height:1.15;overflow-wrap:anywhere;
+}
+#projectionMain .projection-ready-team>div>span{
+ color:#746783;font-size:clamp(12px,min(1.35vw,2dvh),19px);
+}
+#projectionMain .projection-ready-footer{margin-top:clamp(0px,.5dvh,12px)!important}
+@media(max-width:760px){
+ #projectionMain .projection-captains-ready{
+  justify-content:flex-start;
+  padding:clamp(12px,2.1dvh,24px);gap:clamp(7px,1.5dvh,14px);
+ }
+ #projectionMain .projection-ready-teams{
+  grid-template-columns:1fr;gap:8px;align-content:start;overflow-y:auto;
+ }
+ #projectionMain .projection-ready-team{min-height:76px;padding:10px 13px}
+ #projectionMain .projection-ready-team>.projection-ready-icon{
+  width:50px;height:50px;border-radius:12px
+ }
+}
+@media(max-height:620px){
+ #projectionMain .projection-captains-ready{justify-content:flex-start}
+ #projectionMain .projection-ready-team{min-height:74px}
+}

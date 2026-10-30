@@ -104,7 +104,7 @@ test('Finished arcade boost ballot stays entirely visible and accepts a vote at 
   await page.locator('[data-boost-choice="support"]').click();
   await expect(page.locator('[data-boost-choice]')).toHaveCount(3);
   const bounds=await page.evaluate(()=>{
-   const container=document.querySelector('#gameContent').getBoundingClientRect();
+   const container=document.querySelector('.arcade-boost-dialog[open]').getBoundingClientRect();
    return [...document.querySelectorAll('[data-boost-choice]')].map(b=>{
     const r=b.getBoundingClientRect();
     return {top:r.top,bottom:r.bottom,left:r.left,right:r.right,hostTop:container.top,hostBottom:container.bottom,
@@ -197,16 +197,17 @@ test('Two-stage penalty vote opens a red majority choice then lets players choos
   await expect(page.locator('[data-boost-choice="fog"]')).toBeVisible();
   await expect(page.locator('[data-boost-choice="storm"]')).toBeVisible();
   await expect(page.locator('[data-boost-choice="drain"]')).toBeVisible();
-  await page.locator('[data-boost-choice="storm"]').click();
-  await expect(page.locator('[data-boost-choice="storm"]')).toHaveClass(/selected/);
-  const calls=await page.evaluate(()=>window.penaltyCalls);
-  expect(calls).toEqual(['sabotage','storm']);
+  // The second-stage choices must fit inside the live modal BEFORE selection.
   const bounds=await page.locator('dialog.arcade-boost-dialog[open] .arcade-vote-effects').boundingBox();
   expect(bounds).not.toBeNull();
   expect(bounds.x).toBeGreaterThanOrEqual(0);
   expect(bounds.y).toBeGreaterThanOrEqual(0);
   expect(bounds.x+bounds.width).toBeLessThanOrEqual(width+2);
   expect(bounds.y+bounds.height).toBeLessThanOrEqual(height+2);
+  await page.locator('[data-boost-choice="storm"]').click();
+  await expect.poll(()=>page.evaluate(()=>window.penaltyCalls)).toEqual(['sabotage','storm']);
+  // The accepted vote intentionally closes its modal immediately.
+  await expect(page.locator('dialog.arcade-boost-dialog[open]')).toHaveCount(0);
  }
 });
 
