@@ -1,0 +1,23 @@
+name: QWIZ / new Free Supabase 40 concurrent public read-only smoke
+on:
+  push:
+    branches: [isolation/qwiz-independent-supabase-20261030]
+    paths:
+      - 'next/isolation/live-free-readonly-smoke.mjs'
+      - '.github/workflows/qwiz-free-public-smoke.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  readonly-forty:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Real QWIZ Free auth health and forty anonymous public projection reads
+        run: |
+          set -euo pipefail
+          node next/isolation/live-free-readonly-smoke.mjs
+          echo 'Real independent QWIZ Free network exercised with 40 simultaneous non-mutating RPC requests; no Auth accounts or game records created.' >> "$GITHUB_STEP_SUMMARY"
