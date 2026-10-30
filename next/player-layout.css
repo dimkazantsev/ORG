@@ -1339,3 +1339,15 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
  max-height:100%;overflow-y:auto;overscroll-behavior:contain;
  -webkit-overflow-scrolling:touch;
 }
+
+
+/* Voting is a top-layer dialog: fit its entire contents into narrow viewports.
+   On the completed second choice it closes rather than leaving a frozen overlay. */
+@media(max-width:420px){
+ dialog.arcade-boost-dialog[open]{width:calc(100vw - 16px)!important;max-width:calc(100vw - 16px)!important;
+  height:min(455px,calc(100dvh - 20px))!important;max-height:calc(100dvh - 20px)!important;
+  padding:0!important;overflow:hidden;box-sizing:border-box}
+ dialog.arcade-boost-dialog .arcade-vote{padding:clamp(8px,1.5dvh,12px)!important;gap:4px}
+ dialog.arcade-boost-dialog .arcade-boost-grid{gap:4px}
+ dialog.arcade-boost-dialog .arcade-boost-grid button{padding:5px 9px!important;min-height:43px;box-sizing:border-box}
+}
