@@ -4,14 +4,7 @@ for(const [width,height] of [[320,480],[390,844],[568,320]]){
  test('Secret Code preserves symbols and reachable answer controls at '+width+'×'+height,async({page})=>{
   await page.setViewportSize({width,height});
   await page.goto(URL);
-  await page.evaluate(()=>{
-   window.setFixturePlayer();
-   window.mountExample('sequence_memory');
-   fake.secret_code={...fake.secret_code,length:10,
-    choices:['red','blue','yellow','green','star','shield','crown','key']};
-  });
-  // Re-mount with the long challenge so the initial server snapshot includes it.
-  await page.evaluate(()=>window.mountExample('sequence_memory'));
+  await page.evaluate(()=>{window.setFixturePlayer();window.mountExample('sequence_memory',false,true);});
   await expect(page.locator('[data-secret-choice]')).toHaveCount(8);
   await expect(page.locator('[data-secret-stage]')).toBeVisible();
   const dimensions=await page.evaluate(()=>{

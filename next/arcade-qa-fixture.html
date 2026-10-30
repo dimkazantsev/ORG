@@ -9,10 +9,11 @@
 const fake={mode:'captain',running:true,card_position:1,started_at:new Date(Date.now()-4000).toISOString(),ends_at:new Date(Date.now()+60000).toISOString(),server_now:new Date().toISOString(),teams:[{id:'team1',name:'Команда первая',points:0,taps:0,place:1}],mine:{team_id:'team1',player_id:'player1',captain:true,credits:0,achievements:[]},awards:[],extra:{}};
 const accepted=[];
 const batches=new Set();
-window.mountExample=(mode,withVote=false)=>{
+window.mountExample=(mode,withVote=false,longCode=false)=>{
  QwizArcade.stop('player');
  fake.mode=mode;fake.running=true;fake.card_position+=1;fake.vote=withVote?{can_vote:true,open:true,stage:'strategy',strategy:null,counts:{},my_choice:null,winner_team:'team1',target_name:'Команда 2',vote_ends_at:new Date(Date.now()+25000).toISOString()}:null;
  fake.secret_code=mode==='sequence_memory'?{phase:'answer',template:'Четыре цвета',level:1,length:4,choices:['red','blue','yellow','green'],answer_count:0,submitted:false}:null;
+ if(longCode&&fake.secret_code)fake.secret_code={...fake.secret_code,length:10,choices:['red','blue','yellow','green','star','shield','crown','key']};
  fake.extra=mode==='captain'?{captain:true,tiles:Array.from({length:12},(_,index)=>({index,icon:null,matched:false,open:false})),pairs:0,moves:0,players:[{team_id:'team1',pairs:0,moves:0,completed_ms:null}]}:
  mode==='rocket'?{selected:true,alive:true,cleared:0,next_at:new Date(Date.now()+1600).toISOString(),players:[{team_id:'team1',cleared:0}]}:{};
  const client={rpc:async(method,params)=>{
