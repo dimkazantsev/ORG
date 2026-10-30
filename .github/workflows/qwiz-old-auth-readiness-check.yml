@@ -1,4 +1,5 @@
 name: QWIZ / inspect old GOS Auth snapshot catalog readiness only
+# Recheck after owner SQL Editor timed out 2026-10-30; read-only, no retries of DDL.
 on:
   push:
     branches: [isolation/qwiz-independent-supabase-20261030]
