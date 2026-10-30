@@ -478,6 +478,20 @@ function render(state){
    qr($('projectionQr'),link(state.code));makeRoomQrExpandable($('projectionQr'),state.code);QwizTeams.board($('projectionTeamBoard'),state.lobby_teams||[],state.code);
    scheduleFitProjection();return;
   }
+  if(lobby.mode==='captain'&&lobby.captains_ready){
+   const teams=state.lobby_teams||[];
+   const cards=teams.slice(0,15).map((team,i)=>
+    '<article class="projection-ready-team"><span class="projection-ready-icon" aria-hidden="true">'+QwizStage.icon(team,true)+'</span>'+
+    '<div><small>КОМАНДА '+(i+1)+'</small><strong>'+escapeText(team.name||'Название уточняется')+'</strong>'+
+    '<span>'+Number(team.members??team.players??0)+' участников</span></div></article>').join('');
+   $('projectionMain').innerHTML='<section class="projection-captains-ready" aria-label="Команды выбраны">'+
+    '<span class="projection-eyebrow">QWIZ-PARTY · ФОРМИРОВАНИЕ КОМАНД</span>'+
+    '<h1>Команды готовы!</h1>'+
+    '<p>Найдите свою команду по названию. Для входа используйте QR-код капитана.</p>'+
+    '<div class="projection-ready-teams">'+(cards||'<p>Ожидаем названия команд.</p>')+'</div>'+
+    '<p class="projection-ready-footer">Игра начнётся по команде преподавателя</p></section>';
+   scheduleFitProjection();return;
+  }
   const n=lobby.team_count||1,c=lobby.captain_count||0;
   const hint=lobby.mode==='captain'?
    (lobby.captains_ready?'Капитаны выбраны. Сканируйте QR своего капитана на его телефоне.':'Выбираем капитанов: '+c+' из '+n+'. Нажмите «Я капитан» на своём телефоне.'):
