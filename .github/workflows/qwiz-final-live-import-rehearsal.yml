@@ -59,6 +59,26 @@ jobs:
             echo 'Source snapshot row count changed; refuse rehearsal until rebaselined.'
             exit 1
           }
+          # The old source temporarily has 57 additional owner-approved
+          # migration-reader RLS policies and their SELECT grants. Those are
+          # NOT part of the stable QWIZ schema: exclude ONLY exact known
+          # temporary names/role from disposable fixture manifest.
+          python3 - "$dir/public.json" <<'PY'
+          import json,sys,pathlib
+          p=pathlib.Path(sys.argv[1])
+          lines=[x for x in p.read_text().splitlines() if x.startswith('{')]
+          if len(lines)!=1:raise SystemExit("Unexpected source catalog manifest")
+          o=json.loads(lines[0])
+          excluded=[x for x in o['policies'] if x['name']=='qwiz_temporary_migration_reader']
+          if len(excluded) not in (0,57):
+              raise SystemExit("Unexpected temporary RLS policy count")
+          o['policies']=[x for x in o['policies'] if x['name']!='qwiz_temporary_migration_reader']
+          o['table_grants']=[x for x in o.get('table_grants',[]) if x['grantee']!='qwiz_catalog_reader']
+          if len(o['policies'])!=20 or len(o['table_grants'])!=1173:
+              raise SystemExit("Unexpected stable QWIZ RLS/ACL catalog; refuse")
+          p.write_text(json.dumps(o,separators=(',',':'))+'\n')
+          print("Disposal-only manifest: stable QWIZ policies=20, ACL=1173; source unchanged")
+          PY
           python3 next/isolation/build-guarded-target-schema.py \
             "$dir/public.json" "$dir/private.json" "$dir/schema.sql" > "$dir/schema-summary.txt"
           unset GOS_SOURCE_DB_URL PGSSLMODE PGCONNECT_TIMEOUT
