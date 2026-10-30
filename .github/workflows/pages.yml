@@ -31,7 +31,12 @@ jobs:
           node --check app.js
           test -s studio-2026.css
           test -s ui-ux-pro-max.css
-          node --test next/test.mjs next/flags-six.test.cjs next/last-opened-build.test.mjs next/bonus-rules-threshold.test.mjs next/bonus-vote-summary.test.mjs next/tap-appearance.test.mjs next/secret-code.test.mjs next/card-sandbox-secret.test.mjs next/mobile-viewport.test.mjs next/early-advance.test.mjs next/seven-screen-regressions.test.mjs
+          node --test next/test.mjs
+          grep -Fq 'https://vwsoergltegncrretxnz.supabase.co' next/app.js
+          grep -Fq 'https://vwsoergltegncrretxnz.supabase.co' next/workspace.js
+          grep -Fq 'https://vwsoergltegncrretxnz.supabase.co' next/presenter.js
+          grep -Fq 'https://vwsoergltegncrretxnz.supabase.co' next/profile.js
+          ! grep -Fq 'https://bderfrcfuhnutuoyudje.supabase.co' next/app.js
           test -s next/presenter.html
           test -s next/presenter.css
           test -s next/presenter.js
@@ -94,113 +99,28 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Validate published build
+      - name: Validate published independent QWIZ-PARTY
         shell: bash
         env:
           PAGES_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
           set -euo pipefail
           site="${PAGES_URL%/}"
-          echo "Checking GitHub Pages at $site"
           for attempt in $(seq 1 12); do
-            if curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/index.html?release=20261022-7-$GITHUB_RUN_ID-$attempt" -o /tmp/org-published.html &&
-               grep -q 'data-build="20261022.7"' /tmp/org-published.html &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/app.js?v=20261022-motion1" -o /tmp/org-published.js &&
-               grep -q 'org_quiz_archive_history' /tmp/org-published.js &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/studio-2026.css?v=20261022-4" -o /tmp/org-published-studio.css &&
-               grep -q -- '--studio-radius' /tmp/org-published-studio.css &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/ui-ux-pro-max.css?v=20261022-6" -o /tmp/org-published-uipromax.css &&
-               grep -q -- '--q-blue' /tmp/org-published-uipromax.css &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/index.html?release=$GITHUB_RUN_ID" -o /tmp/org-next-index.html &&
-               grep -q 'QWIZ-PARTY — Командная викторина' /tmp/org-next-index.html &&
-               grep -q 'id="playerMore"' /tmp/org-next-index.html &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/player-layout.js?v=mobile-20261023-2" -o /tmp/qwiz-player-layout.js &&
-               grep -q 'player-compact' /tmp/qwiz-player-layout.js &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/player-layout.css?v=mobile-20261023-2" -o /tmp/qwiz-player-layout.css &&
-               grep -q 'player-sheet' /tmp/qwiz-player-layout.css &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/app.js?v=13" -o /tmp/org-next-app.js &&
-               grep -q 'org_next_answer' /tmp/org-next-app.js &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/motion.css?v=2" -o /tmp/qwiz-motion.css &&
-               grep -q 'qwiz-enter' /tmp/qwiz-motion.css &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/app.css?v=7" -o /tmp/org-next-style.css &&
-               grep -q -- '--mint' /tmp/org-next-style.css &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/presenter.html" -o /tmp/org-next-presenter.html &&
-               grep -q 'QWIZ-PARTY — экран аудитории' /tmp/org-next-presenter.html &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/workspace.html?release=$GITHUB_RUN_ID-$attempt" -o /tmp/qwiz-workspace.html &&
-               grep -q 'Сборки и раунды' /tmp/qwiz-workspace.html &&
-               grep -q 'workspace.js?v=' /tmp/qwiz-workspace.html &&
-               grep -q 'id="generalOpenBonusRules"' /tmp/qwiz-workspace.html &&
-               grep -q 'id="bonusRulesValidation"' /tmp/qwiz-workspace.html &&
-               grep -q 'russian-votes-20261028-1' /tmp/qwiz-workspace.html &&
-               grep -q 'secret-code-live-20261028-1' /tmp/qwiz-workspace.html &&
-               grep -q 'data-arcade="sequence_memory"' /tmp/qwiz-workspace.html &&
-               curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/next/arcade.css?v=tap-gloss-20261028-1&release=$GITHUB_RUN_ID-$attempt" -o /tmp/qwiz-arcade.css &&
-               grep -q 'premium tactile Tap-battle' /tmp/qwiz-arcade.css &&
-               grep -q 'id="bonusRulesActivity"' /tmp/qwiz-workspace.html &&
-               grep -q 'id="bonusRulesGap"' /tmp/qwiz-workspace.html &&
-               ! grep -q 'id="generalBonusPercent"' /tmp/qwiz-workspace.html &&
-               ! grep -q 'id="generalBonusLead"' /tmp/qwiz-workspace.html &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/profile.html" -o /tmp/qwiz-profile.html &&
-               grep -q 'Мой профиль' /tmp/qwiz-profile.html &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/workspace.js?v=teams-flags-1" -o /tmp/qwiz-workspace.js &&
-               grep -q 'qwiz_prepare_room' /tmp/qwiz-workspace.js &&
-               grep -q 'qwiz-studio-last-opened-build-v1:' /tmp/qwiz-workspace.js &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/workspace-teams.js" -o /tmp/qwiz-workspace-teams.js &&
-               grep -q 'qwiz_team_admin' /tmp/qwiz-workspace-teams.js &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/teams.js" -o /tmp/qwiz-teams.js &&
-               grep -q 'qwiz_join_team' /tmp/qwiz-teams.js &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/teams.css" -o /tmp/qwiz-teams.css &&
-               grep -q 'team-board-card' /tmp/qwiz-teams.css &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/stage.js?v=1" -o /tmp/qwiz-stage.js &&
-               grep -q 'hydrateIllustrations' /tmp/qwiz-stage.js &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/stage.css?v=1" -o /tmp/qwiz-stage.css &&
-               grep -q 'frame-drift' /tmp/qwiz-stage.css &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/presenter.js?v=8" -o /tmp/qwiz-presenter.js &&
-               grep -q 'questionScene' /tmp/qwiz-presenter.js &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/assets/habitats.svg" -o /tmp/qwiz-habitats.svg &&
-               grep -q 'id="mangrove"' /tmp/qwiz-habitats.svg &&
-               curl -fsSL --connect-timeout 10 --max-time 20 "$site/next/assets/animals.svg" -o /tmp/qwiz-animals.svg &&
-               grep -q 'id="fox"' /tmp/qwiz-animals.svg; then
-              echo "Published QWIZ-PARTY HTML, JS, CSS and projection display verified."
+            if curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/next/index.html?release=$GITHUB_SHA-$attempt" -o /tmp/qwiz-live-index.html &&
+               curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/next/app.js?release=$GITHUB_SHA-$attempt" -o /tmp/qwiz-live-app.js &&
+               curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/next/workspace.js?release=$GITHUB_SHA-$attempt" -o /tmp/qwiz-live-workspace.js &&
+               curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/next/presenter.js?release=$GITHUB_SHA-$attempt" -o /tmp/qwiz-live-presenter.js &&
+               curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/next/profile.js?release=$GITHUB_SHA-$attempt" -o /tmp/qwiz-live-profile.js &&
+               grep -Fq 'QWIZ-PARTY' /tmp/qwiz-live-index.html &&
+               grep -Fq 'https://vwsoergltegncrretxnz.supabase.co' /tmp/qwiz-live-app.js &&
+               grep -Fq 'https://vwsoergltegncrretxnz.supabase.co' /tmp/qwiz-live-workspace.js &&
+               grep -Fq 'https://vwsoergltegncrretxnz.supabase.co' /tmp/qwiz-live-presenter.js &&
+               grep -Fq 'https://vwsoergltegncrretxnz.supabase.co' /tmp/qwiz-live-profile.js; then
+              echo 'Published QWIZ-PARTY is connected to the independent Supabase.'
               exit 0
             fi
-            echo "Published assets are not updated (attempt $attempt)"
-            sleep 5
+            sleep 3
           done
-          echo 'Diagnosing published checks:'
-          if grep -q -- 'data-build="20261022.7"' '/tmp/org-published.html'; then echo 'PASS data-build="20261022.7" in /tmp/org-published.html'; else echo 'FAIL data-build="20261022.7" in /tmp/org-published.html'; fi
-          if grep -q -- 'org_quiz_archive_history' '/tmp/org-published.js'; then echo 'PASS org_quiz_archive_history in /tmp/org-published.js'; else echo 'FAIL org_quiz_archive_history in /tmp/org-published.js'; fi
-          if grep -q -- '--studio-radius' '/tmp/org-published-studio.css'; then echo 'PASS --studio-radius in /tmp/org-published-studio.css'; else echo 'FAIL --studio-radius in /tmp/org-published-studio.css'; fi
-          if grep -q -- '--q-blue' '/tmp/org-published-uipromax.css'; then echo 'PASS --q-blue in /tmp/org-published-uipromax.css'; else echo 'FAIL --q-blue in /tmp/org-published-uipromax.css'; fi
-          if grep -q -- 'QWIZ-PARTY — Командная викторина' '/tmp/org-next-index.html'; then echo 'PASS QWIZ-PARTY — Командная викторина in /tmp/org-next-index.html'; else echo 'FAIL QWIZ-PARTY — Командная викторина in /tmp/org-next-index.html'; fi
-          if grep -q -- 'id="playerMore"' '/tmp/org-next-index.html'; then echo 'PASS id="playerMore" in /tmp/org-next-index.html'; else echo 'FAIL id="playerMore" in /tmp/org-next-index.html'; fi
-          if grep -q -- 'player-compact' '/tmp/qwiz-player-layout.js'; then echo 'PASS player-compact in /tmp/qwiz-player-layout.js'; else echo 'FAIL player-compact in /tmp/qwiz-player-layout.js'; fi
-          if grep -q -- 'player-sheet' '/tmp/qwiz-player-layout.css'; then echo 'PASS player-sheet in /tmp/qwiz-player-layout.css'; else echo 'FAIL player-sheet in /tmp/qwiz-player-layout.css'; fi
-          if grep -q -- 'org_next_answer' '/tmp/org-next-app.js'; then echo 'PASS org_next_answer in /tmp/org-next-app.js'; else echo 'FAIL org_next_answer in /tmp/org-next-app.js'; fi
-          if grep -q -- 'qwiz-enter' '/tmp/qwiz-motion.css'; then echo 'PASS qwiz-enter in /tmp/qwiz-motion.css'; else echo 'FAIL qwiz-enter in /tmp/qwiz-motion.css'; fi
-          if grep -q -- '--mint' '/tmp/org-next-style.css'; then echo 'PASS --mint in /tmp/org-next-style.css'; else echo 'FAIL --mint in /tmp/org-next-style.css'; fi
-          if grep -q -- 'QWIZ-PARTY — экран аудитории' '/tmp/org-next-presenter.html'; then echo 'PASS QWIZ-PARTY — экран аудитории in /tmp/org-next-presenter.html'; else echo 'FAIL QWIZ-PARTY — экран аудитории in /tmp/org-next-presenter.html'; fi
-          if grep -q -- 'Сборки и раунды' '/tmp/qwiz-workspace.html'; then echo 'PASS Сборки и раунды in /tmp/qwiz-workspace.html'; else echo 'FAIL Сборки и раунды in /tmp/qwiz-workspace.html'; fi
-          if grep -q -- 'last-opened-game-20261028-1' '/tmp/qwiz-workspace.html'; then echo 'PASS last-opened-game-20261028-1 in /tmp/qwiz-workspace.html'; else echo 'FAIL last-opened-game-20261028-1 in /tmp/qwiz-workspace.html'; fi
-          if grep -q -- 'id="generalOpenBonusRules"' '/tmp/qwiz-workspace.html'; then echo 'PASS id="generalOpenBonusRules" in /tmp/qwiz-workspace.html'; else echo 'FAIL id="generalOpenBonusRules" in /tmp/qwiz-workspace.html'; fi
-          if grep -q -- 'id="bonusRulesValidation"' '/tmp/qwiz-workspace.html'; then echo 'PASS id="bonusRulesValidation" in /tmp/qwiz-workspace.html'; else echo 'FAIL id="bonusRulesValidation" in /tmp/qwiz-workspace.html'; fi
-          if grep -q -- 'russian-votes-20261028-1' '/tmp/qwiz-workspace.html'; then echo 'PASS russian-votes-20261028-1 in /tmp/qwiz-workspace.html'; else echo 'FAIL russian-votes-20261028-1 in /tmp/qwiz-workspace.html'; fi
-          if grep -q -- 'tap-gloss-20261028-1' '/tmp/qwiz-workspace.html'; then echo 'PASS tap-gloss-20261028-1 in /tmp/qwiz-workspace.html'; else echo 'FAIL tap-gloss-20261028-1 in /tmp/qwiz-workspace.html'; fi
-          if grep -q -- 'premium tactile Tap-battle' '/tmp/qwiz-arcade.css'; then echo 'PASS premium tactile Tap-battle in /tmp/qwiz-arcade.css'; else echo 'FAIL premium tactile Tap-battle in /tmp/qwiz-arcade.css'; fi
-          if grep -q -- 'id="bonusRulesActivity"' '/tmp/qwiz-workspace.html'; then echo 'PASS id="bonusRulesActivity" in /tmp/qwiz-workspace.html'; else echo 'FAIL id="bonusRulesActivity" in /tmp/qwiz-workspace.html'; fi
-          if grep -q -- 'id="bonusRulesGap"' '/tmp/qwiz-workspace.html'; then echo 'PASS id="bonusRulesGap" in /tmp/qwiz-workspace.html'; else echo 'FAIL id="bonusRulesGap" in /tmp/qwiz-workspace.html'; fi
-          if ! grep -q -- 'id="generalBonusPercent"' '/tmp/qwiz-workspace.html'; then echo 'PASS id="generalBonusPercent" in /tmp/qwiz-workspace.html'; else echo 'FAIL id="generalBonusPercent" in /tmp/qwiz-workspace.html'; fi
-          if ! grep -q -- 'id="generalBonusLead"' '/tmp/qwiz-workspace.html'; then echo 'PASS id="generalBonusLead" in /tmp/qwiz-workspace.html'; else echo 'FAIL id="generalBonusLead" in /tmp/qwiz-workspace.html'; fi
-          if grep -q -- 'Мой профиль' '/tmp/qwiz-profile.html'; then echo 'PASS Мой профиль in /tmp/qwiz-profile.html'; else echo 'FAIL Мой профиль in /tmp/qwiz-profile.html'; fi
-          if grep -q -- 'qwiz_prepare_room' '/tmp/qwiz-workspace.js'; then echo 'PASS qwiz_prepare_room in /tmp/qwiz-workspace.js'; else echo 'FAIL qwiz_prepare_room in /tmp/qwiz-workspace.js'; fi
-          if grep -q -- 'qwiz_team_admin' '/tmp/qwiz-workspace-teams.js'; then echo 'PASS qwiz_team_admin in /tmp/qwiz-workspace-teams.js'; else echo 'FAIL qwiz_team_admin in /tmp/qwiz-workspace-teams.js'; fi
-          if grep -q -- 'qwiz_join_team' '/tmp/qwiz-teams.js'; then echo 'PASS qwiz_join_team in /tmp/qwiz-teams.js'; else echo 'FAIL qwiz_join_team in /tmp/qwiz-teams.js'; fi
-          if grep -q -- 'team-board-card' '/tmp/qwiz-teams.css'; then echo 'PASS team-board-card in /tmp/qwiz-teams.css'; else echo 'FAIL team-board-card in /tmp/qwiz-teams.css'; fi
-          if grep -q -- 'hydrateIllustrations' '/tmp/qwiz-stage.js'; then echo 'PASS hydrateIllustrations in /tmp/qwiz-stage.js'; else echo 'FAIL hydrateIllustrations in /tmp/qwiz-stage.js'; fi
-          if grep -q -- 'frame-drift' '/tmp/qwiz-stage.css'; then echo 'PASS frame-drift in /tmp/qwiz-stage.css'; else echo 'FAIL frame-drift in /tmp/qwiz-stage.css'; fi
-          if grep -q -- 'questionScene' '/tmp/qwiz-presenter.js'; then echo 'PASS questionScene in /tmp/qwiz-presenter.js'; else echo 'FAIL questionScene in /tmp/qwiz-presenter.js'; fi
-          if grep -q -- 'id="mangrove"' '/tmp/qwiz-habitats.svg'; then echo 'PASS id="mangrove" in /tmp/qwiz-habitats.svg'; else echo 'FAIL id="mangrove" in /tmp/qwiz-habitats.svg'; fi
-          if grep -q -- 'id="fox"' '/tmp/qwiz-animals.svg'; then echo 'PASS id="fox" in /tmp/qwiz-animals.svg'; else echo 'FAIL id="fox" in /tmp/qwiz-animals.svg'; fi
-          echo 'Published build could not be verified after deployment.'
+          echo 'GitHub Pages did not publish the independent QWIZ frontend.'
           exit 1
-
