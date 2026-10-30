@@ -58,12 +58,12 @@ def source_preflight():
 SELECT current_user,
  (SELECT count(*) FROM qwiz_auth_export.users),
  (SELECT count(*) FROM qwiz_auth_export.identities),
- (SELECT count(*) FROM pg_policy WHERE polname='qwiz_auth_migration_ttl'
-   AND schemaname='qwiz_auth_export') ;
-COMMIT;""".replace(
-"SELECT count(*) FROM pg_policy WHERE polname='qwiz_auth_migration_ttl'\n   AND schemaname='qwiz_auth_export'",
-"SELECT count(*) FROM pg_policy p JOIN pg_class c ON c.oid=p.polrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE p.polname='qwiz_auth_migration_ttl' AND n.nspname='qwiz_auth_export'"
-))
+ (SELECT count(*) FROM pg_policy p
+  JOIN pg_class c ON c.oid=p.polrelid
+  JOIN pg_namespace n ON n.oid=c.relnamespace
+  WHERE p.polname='qwiz_auth_migration_ttl'
+    AND n.nspname='qwiz_auth_export');
+COMMIT;""")
     parts=result.split("|")
     if len(parts)!=4 or parts[0]!="qwiz_catalog_reader" or parts[1]!="11" or parts[3]!="2":
         raise ValueError("Old GOS Auth snapshot access/scope check failed")
