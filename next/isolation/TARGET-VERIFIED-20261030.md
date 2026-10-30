@@ -626,3 +626,43 @@ https://github.com/dimkazantsev/ORG/actions/runs/40953297479 — `SUCCESS`. Ис
 **Единственный отсутствующий ACL grant, который НЕ ВЫДАЁТСЯ доступными подключениями:** владелец должен выполнить `next/isolation/ENABLE-QWIZ-SCOPED-AUTH-24H.sql` в SQL Editor **старого GOS** `bderfrcfuhnutuoyudje`. SQL не требует паролей и не меняет оригинальную Auth таблицу; создаёт только scoped 11-user copy на 24 часа. После этого можно запустить готовый gated workflow для реального импорта. Пока этот шаг не выполнен, состояние является **частично завершённой миграцией, не cutover**.
 
 **После финальной записи:** ещё необходимы тест настоящего входа преподавателя, RLS роли, Realtime WS, 40 клиентов, изображения/Storage, и только потом контролируемое переключение frontend. Источник GOS.ID и live QWIZ сайт остаются прежними.
+
+
+## 26. Данные QWIZ действительно полностью перенесены в рабочую Free БД; клиент переключён только в DRAFT PR (30.10.2026)
+
+### Источник успешно завершил owner SQL несмотря на UI timeout
+
+Пользователь выполнил `ENABLE-QWIZ-SCOPED-AUTH-24H.sql` в old GOS SQL Editor; браузер показал `Connection terminated due to connection timeout`. Это **не означало откат**. Read-only source audit https://github.com/dimkazantsev/ORG/actions/runs/41013193522 впоследствии доказал `qwiz_catalog_reader|1|2|2|2`: приватная схема Auth создана, два объекта и два SELECT grant, две ограниченные RLS политики действуют. SQL повторно **не запускали**.
+
+Source→Free private Auth stage https://github.com/dimkazantsev/ORG/actions/runs/41013264331 — **SUCCESS: 11 пользователей, 6 identities**, без логов с PII и без записи в old GOS. Затем gated live import https://github.com/dimkazantsev/ORG/actions/runs/41013399049 — **SUCCESS** с настоящими old Auth UUID и паролями.
+
+**Независимый финальный SQL к Free target** подтвердил:
+- 57 live public game tables, суммарно **2 344 игровых строк**, 36 непустых; 57/57 live count совпадает с приватным source snapshot, 0 расхождений.
+- `auth.users=11`, `auth.identities=6`. Из 11: 6 с hash пароля и подтвержденным email, 5 анонимных пользователей без external identity — это соответствует природе исходных anonymous accounts.
+- `qwiz_bank=716`, `org_quiz_questions=927`, `qwiz_run_members=110`, справочники 89 регионов + 30 шаблонов содержатся в public.
+- **123 FK**, `deferrable=0`, 9 original user triggers снова enabled. Нет errors в Supabase Security Advisor.
+- Пять Realtime publication tables как в source; предварительно перенесены schema, RLS, 148 functions, ACL.
+
+### Все явные браузерные подключения QWIZ теперь ведут в новый Free ТОЛЬКО на изолированной PR ветке
+
+В ветке `isolation/qwiz-independent-supabase-20261030` обновлены `app.js`, `next/app.js`, `next/workspace.js`, `next/presenter.js`, `next/profile.js`, `next/live-40-supabase.mjs` на официальный новый Supabase Free URL и его **публичный**, не сервисный `sb_publishable_` ключ, полученный официальным connector. Production main и GitHub Pages **не переключены**. Переработан staging preview build; `QWIZ / verify independent Supabase staging config` https://github.com/dimkazantsev/ORG/actions/runs/41013946273 — SUCCESS: оба варианта QWIZ и рабочие/экранные JS без старого GOS Supabase.
+
+### Настоящий API 40 concurrent read-only smoke
+
+https://github.com/dimkazantsev/ORG/actions/runs/41014288851 — **SUCCESS**: 40 конкурентных запросов к public `qwiz_party_projection` на новом Free верифицируют ожидаемый `P0001 Комната не найдена` для отсутствующей комнаты (это negative-path тест, не игровой раунд; нет записи комнат и аккаунтов), 40/40, p95=590ms, max=610ms. Повторный run https://github.com/dimkazantsev/ORG/actions/runs/41014404570 — 40/40, p95=556ms, max=573ms, Auth health и settings endpoint доступны.
+
+### ОБНАРУЖЕН НОВЫЙ КРИТИЧЕСКИЙ BLOCKER ПЕРЕД DEPLOY
+
+Actual Free `GET /auth/v1/settings` показывает `external.anonymous_users=false` при `disable_signup=false`. А `next/app.js` при входе студента вызывает `auth.signInAnonymously()`. **40 телефонов не смогут войти в новую игру**, пока в Free Dashboard → Authentication → Providers не включён toggle **Anonymous Sign-Ins**.
+
+Точный direct link: https://supabase.com/dashboard/project/vwsoergltegncrretxnz/auth/providers
+
+Добавлены `next/isolation/anonymous-auth-deployment-gate.mjs` и GitHub `.github/workflows/qwiz-anonymous-auth-deploy-gate.yml`. Проверка ожидаемо FAIL https://github.com/dimkazantsev/ORG/actions/runs/41014556185 с `ANONYMOUS_SIGNIN_DISABLED`. **Не обходить этот gate** и не мержить PR до toggle и функциональной 40-player проверки.
+
+Также прежние UI тесты `ORG Quiz v2 / QA` дают 3 ошибки на flag imagery/geography tap, независимо от backend migration, их следует исправить до объявления сайта стабильным.
+
+### Source temporary access cleanup
+
+После завершенного переноса в Free (уже подтверждено), в old GOS остаются 24-hour temporary read policies и физически временная схема `qwiz_auth_export` с 11 копиями хешей/email. Нужно **только в old GOS SQL Editor** исполнить единый `next/isolation/FINISH-OLD-GOS-MIGRATION-READER-CLEANUP.sql`. Он удаляет только временные Auth-export copies и ранее добавленные 57 ограниченных SELECT grants/policies, не трогая оригинальные `auth.users`, `auth.identities`, QWIZ/GOS game rows. Expected final checks all zero. Из-за SQL Editor UI timeout после выполнения проверять source read-only catalog job; **не повторять автоматически при таймауте**.
+
+**Статус: физическое разделение данных завершено, изолированная версия фронтенда в PR готова, но production cutover НЕ выполнен.** Блокеры: enable anonymous sign-in, проверить реальный login/projection/40 игроков и UI QA, затем разрешенное слияние и GitHub Pages deployment. До этого старый GOS.ID и уже работающий сайт остаются без изменений.
