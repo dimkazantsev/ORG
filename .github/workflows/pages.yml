@@ -1,4 +1,4 @@
-name: Deploy ORG Quiz to GitHub Pages
+name: Deploy independent QWIZ-PARTY to GitHub Pages
 
 on:
   push:
@@ -16,97 +16,68 @@ concurrency:
 
 jobs:
   deploy:
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Validate rebuilt studio UI and application
+      - name: Validate independent QWIZ-PARTY
         shell: bash
         run: |
           set -euo pipefail
-          test -s index.html
-          test -s legacy/index.html
-          grep -Fq "legacy ? './legacy/' : './next/'" index.html
-          grep -Fq '<base href="../">' legacy/index.html
-          ! grep -Fq 'data-org-canonical-entry' legacy/index.html
-          grep -Fq 'https://bderfrcfuhnutuoyudje.supabase.co' app.js
-          ! grep -Fq 'https://vwsoergltegncrretxnz.supabase.co' app.js
-          node --check app.js
-          test -s studio-2026.css
-          test -s ui-ux-pro-max.css
           node --test next/test.mjs
-          grep -Fq 'https://vwsoergltegncrretxnz.supabase.co' next/app.js
-          grep -Fq 'https://vwsoergltegncrretxnz.supabase.co' next/workspace.js
-          grep -Fq 'https://vwsoergltegncrretxnz.supabase.co' next/presenter.js
-          grep -Fq 'https://vwsoergltegncrretxnz.supabase.co' next/profile.js
-          ! grep -Fq 'https://bderfrcfuhnutuoyudje.supabase.co' next/app.js
-          test -s next/presenter.html
-          test -s next/presenter.css
-          test -s next/presenter.js
-          test -s next/vendor/qrcode.min.js
+          for js in next/app.js next/workspace.js next/presenter.js next/profile.js next/stage.js next/arcade.js next/russia-geo.js; do
+            node --check "$js"
+          done
+          test -s index.html
+          test -s favicon.svg
+          test -s next/index.html
           test -s next/workspace.html
-          test -s next/workspace.js
-          test -s next/workspace.css
+          test -s next/presenter.html
           test -s next/profile.html
-          test -s next/profile.js
-          test -s next/profile.css
-          test -s next/assets/animals.svg
-          test -s next/theme.css
-          test -s next/motion.css
+          test -s next/sw.js
+          test -s next/manifest.webmanifest
           test -s next/assets/manrope-variable.ttf
-          test -s next/migrations/qwiz_advance_variable_collision_fix.sql
-          node --check next/workspace.js
-          node --check next/card-sandbox.js
-          node --check next/arcade.js
-          node --check next/russia-geo.js
-          node --check next/profile.js
-          node --check next/stage.js
-          node --check next/player-layout.js
-          test -s next/player-layout.css
-          node --check next/teams.js
-          node --check next/workspace-teams.js
-          test -s next/teams.css
-          test -s next/stage.css
-          test -s next/assets/habitats.svg
-          test -s next/migrations/20261022_question_stage.sql
-          node --check next/presenter.js
-          node --check next/load-check.mjs
-          test -s next/migrations/qwiz_rich_scoring.sql
-          test -s next/migrations/qwiz_never_leak_rich_solutions.sql
-          grep -q 'class="studio-rebuild"' legacy/index.html
-          grep -q 'studio-2026.css?v=20261022-4' legacy/index.html
-          grep -q 'ui-ux-pro-max.css?v=20261022-6' legacy/index.html
-          grep -q -- '--q-blue' ui-ux-pro-max.css
-          grep -q -- '--studio-radius' studio-2026.css
-          grep -q 'id="teacherView"' legacy/index.html
-          grep -q 'id="studentView"' legacy/index.html
-          grep -q 'id="questionBank"' legacy/index.html
-          grep -q 'id="answerOptions"' legacy/index.html
-          grep -q 'id="homeAccess"' legacy/index.html
-          grep -q 'id="heroHost"' legacy/index.html
-          grep -q 'class="studio-flowbar"' legacy/index.html
-          grep -q '<svg viewBox="0 0 24 24"' legacy/index.html
-          grep -q 'fill:none!important' studio-2026.css
-          ! grep -q 'theme-modern.css' legacy/index.html
-          ! grep -q 'theme-light.css' legacy/index.html
-          echo "Rebuilt UI and existing game anchors verified"
-      
+          test -s next/vendor/qrcode.min.js
+          grep -Fq "new URL('./next/', url)" index.html
+          ! grep -Fq "./legacy/" index.html
+          for js in next/app.js next/workspace.js next/presenter.js next/profile.js; do
+            grep -Fq 'https://vwsoergltegncrretxnz.supabase.co' "$js"
+            ! grep -Fq 'https://bderfrcfuhnutuoyudje.supabase.co' "$js"
+          done
+
+      - name: Package only the new QWIZ-PARTY
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _site/next
+          cp index.html favicon.svg _site/
+          find next -maxdepth 1 -type f \( -name '*.html' -o -name '*.css' -o -name '*.js' -o -name '*.svg' -o -name '*.json' -o -name '*.webmanifest' \) -exec cp -t _site/next/ {} +
+          cp -a next/assets next/vendor _site/next/
+          test ! -e _site/legacy
+          test ! -e _site/app.js
+          test ! -e _site/styles.css
+          test -s _site/next/app.js
+          test -s _site/next/index.html
+          ! grep -Fq 'bderfrcfuhnutuoyudje.supabase.co' _site/next/app.js
+          echo 'Pages artifact includes new QWIZ only; no old ORG game.'
+
       - name: Configure Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload artifact
+      - name: Upload independent game
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: _site
 
-      - name: Deploy to GitHub Pages
+      - name: Deploy GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Validate published independent QWIZ-PARTY
+
+      - name: Verify publication and retirement of old game
         shell: bash
         env:
           PAGES_URL: ${{ steps.deployment.outputs.page_url }}
@@ -114,27 +85,21 @@ jobs:
           set -euo pipefail
           site="${PAGES_URL%/}"
           for attempt in $(seq 1 12); do
-            if curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/index.html?release=$GITHUB_SHA-$attempt" -o /tmp/qwiz-root-entry.html &&
-               curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/legacy/index.html?release=$GITHUB_SHA-$attempt" -o /tmp/qwiz-legacy-entry.html &&
-               curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/app.js?release=$GITHUB_SHA-$attempt" -o /tmp/qwiz-legacy-app.js &&
-               grep -Fq "legacy ? './legacy/' : './next/'" /tmp/qwiz-root-entry.html &&
-               grep -Fq '<base href="../">' /tmp/qwiz-legacy-entry.html &&
-               grep -Fq 'https://bderfrcfuhnutuoyudje.supabase.co' /tmp/qwiz-legacy-app.js &&
-               ! grep -Fq 'data-org-canonical-entry' /tmp/qwiz-legacy-entry.html &&
-               curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/next/index.html?release=$GITHUB_SHA-$attempt" -o /tmp/qwiz-live-index.html &&
-               curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/next/app.js?release=$GITHUB_SHA-$attempt" -o /tmp/qwiz-live-app.js &&
-               curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/next/workspace.js?release=$GITHUB_SHA-$attempt" -o /tmp/qwiz-live-workspace.js &&
-               curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/next/presenter.js?release=$GITHUB_SHA-$attempt" -o /tmp/qwiz-live-presenter.js &&
-               curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/next/profile.js?release=$GITHUB_SHA-$attempt" -o /tmp/qwiz-live-profile.js &&
-               grep -Fq 'QWIZ-PARTY' /tmp/qwiz-live-index.html &&
-               grep -Fq 'https://vwsoergltegncrretxnz.supabase.co' /tmp/qwiz-live-app.js &&
-               grep -Fq 'https://vwsoergltegncrretxnz.supabase.co' /tmp/qwiz-live-workspace.js &&
-               grep -Fq 'https://vwsoergltegncrretxnz.supabase.co' /tmp/qwiz-live-presenter.js &&
-               grep -Fq 'https://vwsoergltegncrretxnz.supabase.co' /tmp/qwiz-live-profile.js; then
-              echo 'Published QWIZ-PARTY is connected to the independent Supabase.'
-              exit 0
+            if curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/index.html?release=$GITHUB_SHA-$attempt" -o /tmp/qwiz-root.html &&
+               curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/next/index.html?release=$GITHUB_SHA-$attempt" -o /tmp/qwiz-next.html &&
+               curl -fsSL --connect-timeout 10 --max-time 20 -H 'Cache-Control: no-cache' "$site/next/app.js?release=$GITHUB_SHA-$attempt" -o /tmp/qwiz-new-app.js &&
+               grep -Fq "new URL('./next/', url)" /tmp/qwiz-root.html &&
+               grep -Fq 'https://vwsoergltegncrretxnz.supabase.co' /tmp/qwiz-new-app.js &&
+               ! grep -Fq './legacy/' /tmp/qwiz-root.html; then
+              legacy_status="$(curl -sSL -o /dev/null -w '%{http_code}' "$site/legacy/" || true)"
+              legacy_js_status="$(curl -sSL -o /dev/null -w '%{http_code}' "$site/app.js" || true)"
+              if [[ "$legacy_status" == 404 && "$legacy_js_status" == 404 ]]; then
+                echo "Published only independent QWIZ-PARTY; old /legacy/ and /app.js return HTTP 404."
+                exit 0
+              fi
+              echo "Legacy cache or Pages propagation: /legacy/=$legacy_status /app.js=$legacy_js_status"
             fi
-            sleep 3
+            sleep 5
           done
-          echo 'GitHub Pages did not publish the independent QWIZ frontend.'
+          echo 'Could not verify removal of old game from GitHub Pages.'
           exit 1

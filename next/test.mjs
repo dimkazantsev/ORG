@@ -20,8 +20,8 @@ test('The public home opens the current quiz and preserves QR room invitations',
   destination('https://dimkazantsev.github.io/ORG/?room=A1B2C3D4#player'),
   'https://dimkazantsev.github.io/ORG/next/?room=A1B2C3D4#player'
  );
- assert.equal(destination('https://dimkazantsev.github.io/ORG/?legacy=1'),'https://dimkazantsev.github.io/ORG/legacy/');
- assert.equal(destination('https://dimkazantsev.github.io/ORG/?legacy=1&room=A1B2C3D4'),'https://dimkazantsev.github.io/ORG/legacy/?room=A1B2C3D4');
+ assert.equal(destination('https://dimkazantsev.github.io/ORG/?legacy=1'),'https://dimkazantsev.github.io/ORG/next/');
+ assert.equal(destination('https://dimkazantsev.github.io/ORG/?legacy=1&room=A1B2C3D4'),'https://dimkazantsev.github.io/ORG/next/?room=A1B2C3D4');
 });
 test('Backend state avoids roster queries whose JSON keys are always overridden',()=>{
  const migration=readFileSync(new URL('./migrations/20261025_skip_overridden_roster_reads.sql',import.meta.url),'utf8');
@@ -1001,12 +1001,10 @@ test('QWIZ favicon is provided on all entry and moderator pages',()=>{
   const markup=readFileSync(new URL('./'+page,import.meta.url),'utf8');
   assert.match(markup,/rel="icon" type="image\/svg\+xml" href="\.\.\/favicon\.svg\?v=qwiz-2"/);
  }
- const legacy=readFileSync(new URL('../legacy/index.html',import.meta.url),'utf8');
- assert.match(legacy,/rel="icon" type="image\/svg\+xml" href="\.\/favicon\.svg\?v=qwiz-2"/);
- assert.match(legacy,/<base href="\.\.\/">/);
  const mainEntry=readFileSync(new URL('../index.html',import.meta.url),'utf8');
- assert.match(mainEntry,/legacy \? '\.\/legacy\/' : '\.\/next\/'/);
- assert.doesNotMatch(legacy,/data-org-canonical-entry/);
+ assert.match(mainEntry,/rel="icon" type="image\/svg\+xml" href="\.\/favicon\.svg/);
+ assert.match(mainEntry,/new URL\('\.\/next\/', url\)/);
+ assert.doesNotMatch(mainEntry,/\.\/legacy\//);
 });
 test('Round editor opens mechanics by default with vector arrow and even selection outline',()=>{
  const markup=readFileSync(new URL('./workspace.html',import.meta.url),'utf8');
