@@ -1,8 +1,8 @@
 'use strict';
 // Public audience screen. Never asks for the teacher's login or answer keys.
 // The shared room code grants READ-ONLY projection, not administrative control.
-const SUPABASE_URL='https://bderfrcfuhnutuoyudje.supabase.co';
-const KEY='sb_publishable_Hv7NgYuVsfKhFuhX_9pl0Q_qXWA2wOr';
+const SUPABASE_URL='https://vwsoergltegncrretxnz.supabase.co';
+const KEY='sb_publishable_7R9F_vBvgg2AsfgRJyRIsQ_j2nljGKI';
 let room=new URLSearchParams(location.search).get('room')?.trim().toUpperCase()||'';
 const $=id=>document.getElementById(id);
 const escapeText=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
