@@ -151,13 +151,13 @@ function automaticRoundStandings(state){
  // All participants retain their complete individual scoreboard on their own device.
  const displayLimit=window.innerHeight<900?5:8;
  const list=(rows,unit)=>'<ol class="projection-round-leaders">'+rows.slice(0,displayLimit).map((r,i)=>
- '<li><span>'+(i+1)+'</span><strong>'+escapeText(r.nickname||r.name||'Участник')+'</strong><b>'+
+ '<li><span class="projection-rank-index">'+(i+1)+'</span><div class="projection-rank-identity"><small>'+(unit==='team'?'КОМАНДА':'УЧАСТНИК')+'</small><strong>'+escapeText(r.nickname||r.name||(unit==='team'?'Команда':'Участник'))+'</strong></div><b>'+
  Math.round(Number(r.score||0)).toLocaleString('ru-RU',{maximumFractionDigits:0})+'</b></li>').join('')+'</ol>'+
  (rows.length>displayLimit?'<p class="projection-rank-more">Ещё '+(rows.length-displayLimit)+' · полный список доступен участникам</p>':'');
  $('projectionMain').innerHTML='<section class="projection-round-results" aria-label="Результаты завершённого раунда">'+
  '<span class="projection-eyebrow">РАУНД ЗАВЕРШЁН · РЕЗУЛЬТАТЫ</span><h1>Итоги раунда</h1>'+rewardBanner+
- '<div class="projection-round-columns"><section><h2>Команды <small>· '+escapeText(d.team_unit||'очки')+'</small></h2>'+list(teams)+'</section>'+
- '<section><h2>Участники <small>· '+escapeText(d.player_unit||'баллы')+'</small></h2>'+list(players)+'</section></div>'+
+ '<div class="projection-round-columns'+(teams.length===1?' is-solo-team':'')+'"><section class="projection-team-column"><h2>Команды <small>· '+escapeText(d.team_unit||'очки')+'</small></h2>'+list(teams,'team')+'</section>'+
+ '<section class="projection-player-column"><h2>Участники <small>· '+escapeText(d.player_unit||'баллы')+'</small></h2>'+list(players,'player')+'</section></div>'+
  '<p>Следующий этап через <strong id="projectorResultCountdown">'+(state.ends_at?seconds(state.ends_at):'—')+'</strong> сек.</p></section>';
 }
 function roundIntroScene(state){
@@ -167,7 +167,7 @@ function roundIntroScene(state){
  '<span class="projection-eyebrow">СЛЕДУЮЩИЙ РАУНД</span><div class="projection-intro-orbit'+(icon==='flag'?' is-flag':'')+'" aria-hidden="true">'+
  art+
  '</div><h1>'+escapeText(title)+'</h1><p>Готовьтесь к новому испытанию</p>'+
- '<div class="countdown-number" id="countdownNumber">'+seconds(state.ends_at)+'</div></section>';
+ '<div class="countdown-number" id="countdownNumber">'+(seconds(state.ends_at)>0?seconds(state.ends_at)+' сек.':'Начинаем!')+'</div></section>';
 }
 function finalShow(state){
  const teams=state.teams||[],players=state.players||[],stats=state.question_stats||[];
@@ -506,7 +506,7 @@ function render(state){
   const extras=type==='team_stats'?QwizStage.teams(state.teams,{full:true,ranked:true}):type==='player_stats'?QwizStage.leaderboard(state.players,20):'';
   $('projectionMain').innerHTML='<section class="projection-activity" data-type="'+escapeText(type)+'"><span class="projection-eyebrow">QWIZ-PARTY · ПРОДОЛЖАЕМ ИГРУ</span><div class="activity-emblem" aria-hidden="true">✦</div><h1>'+escapeText(activity.title||'Дополнительная активность')+'</h1><p>Следующий этап начнётся автоматически.</p>'+extras+'</section>';return;
  }
- if(!state.question){$('projectionMain').innerHTML='<div class="projection-loading"><h1>Следующий раунд</h1><p>Смотрите на экран.</p></div>';return}
+ if(!state.question){$('projectionMain').innerHTML='<section class="projection-intro-card projection-handoff" aria-label="Ожидаем следующий вопрос"><span class="projection-eyebrow">QWIZ-PARTY · ПЕРЕХОД</span><h1>Готовим следующий вопрос</h1><p>Игра продолжится автоматически</p></section>';scheduleFitProjection();return}
  if(state.phase==='result')tone('reveal');else if(previous!=='question'||ctx.previousQuestion!==state.index)tone('pop');ctx.previousQuestion=state.index;
  $('projectionMain').innerHTML=questionScene(state);
  // Keep new content invisible for the two-frame geometry fitter. No flash at
