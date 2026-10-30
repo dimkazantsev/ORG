@@ -1,7 +1,7 @@
 'use strict';
 // QWIZ-PARTY Studio: server-owned sessions; no scoring/answer keys in public displays.
-const SUPABASE_URL='https://bderfrcfuhnutuoyudje.supabase.co';
-const SUPABASE_KEY='sb_publishable_Hv7NgYuVsfKhFuhX_9pl0Q_qXWA2wOr';
+const SUPABASE_URL='https://vwsoergltegncrretxnz.supabase.co';
+const SUPABASE_KEY='sb_publishable_7R9F_vBvgg2AsfgRJyRIsQ_j2nljGKI';
 const $=id=>document.getElementById(id);
 const all=(selector,root=document)=>Array.from(root.querySelectorAll(selector));
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
