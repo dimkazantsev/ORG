@@ -76,6 +76,6 @@ test('Captain selection is one unified mobile card with a working claim button',
  const button=page.locator('#gameContent [data-claim-captain]');
  const rect=await button.boundingBox();
  expect(rect.width).toBeGreaterThan(150);
- expect(rect.left).toBeGreaterThanOrEqual(0);
+ expect(rect.x).toBeGreaterThanOrEqual(0);
  expect(rect.x+rect.width).toBeLessThanOrEqual(392);
 });

@@ -150,3 +150,9 @@
  #projectionMain .arcade-projection-vote-champion{padding:5px 9px}
  #projectionMain .arcade-projection-vote-option{padding:6px 8px}
 }
+
+#projectionMain .projection-player-team{
+ display:block;margin-top:3px;color:#867a97;font-size:clamp(12px,1.2vw,16px);
+ font-weight:650;line-height:1.2;white-space:normal;
+}
+#projectionMain .arcade-projection .arcade-scene{flex:0 1 auto}
