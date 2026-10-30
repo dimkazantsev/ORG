@@ -125,3 +125,6 @@ SELECT (SELECT count(*) FROM qwiz_auth_export.users) AS qwiz_user_count,
        (SELECT count(*) FROM qwiz_auth_export.users WHERE is_anonymous) AS anonymous_users,
        (SELECT count(*) FROM qwiz_auth_export.users WHERE deleted_at IS NOT NULL) AS deleted_users;
 -- Expected qwiz_user_count = 11. The others are descriptive, not leaked rows.
+
+-- Sign-in provider summary ONLY; no email, IDs, tokens or hashes.
+SELECT provider, count(*) AS linked_identities FROM qwiz_auth_export.identities GROUP BY provider ORDER BY provider;
