@@ -475,9 +475,9 @@ window.QwizArcade=(()=>{
   const button=tr.root.querySelector('[data-arcade-tap]');
   if(button&&sec===0)button.disabled=true;
  }
- function activate(kind,root,code,roomId,client,mode){
+ function activate(kind,root,code,roomId,client,mode,cardPosition){
   if(!root||!client||!META[mode])return;
-  const key=code+':'+mode+':'+(kind==='player'?roomId||'':'');
+  const key=code+':'+mode+':'+String(cardPosition??'')+':'+(kind==='player'?roomId||'':'');
   if(ui[kind]?.key===key&&ui[kind].root===root)return;
   stop(kind);
   const tr={kind,key,root,code,roomId,client,mode,offset:0,closed:false,fetching:false,pending:0,batch:null,sending:false,view:null,flushTimer:null,qkey:'',secretAnswer:[],secretState:null,secretBusy:false};
@@ -664,8 +664,8 @@ window.QwizArcade=(()=>{
   }catch(e){showMessage(tr,e.message||'Ответ отклонён',true);tr.alertOverride=Date.now()+3200}
   finally{tr.answerBusy=false}
  }
- function mountPlayer(el,s,ctx){if(!isArcade(s.activity))return false;activate('player',el,s.code,s.room_id,ctx.client,s.activity.settings.arcade_mode);return true;}
- function mountProjector(el,s,client){if(!isArcade(s.activity))return false;activate('screen',el,s.code,null,client,s.activity.settings.arcade_mode);return true;}
+ function mountPlayer(el,s,ctx){if(!isArcade(s.activity))return false;activate('player',el,s.code,s.room_id,ctx.client,s.activity.settings.arcade_mode,s.activity.card_position);return true;}
+ function mountProjector(el,s,client){if(!isArcade(s.activity))return false;activate('screen',el,s.code,null,client,s.activity.settings.arcade_mode,s.activity.card_position);return true;}
  function mountHost(el,s,client){if(!el)return;if(s.phase==='intermission'&&isArcade(s.activity)){el.hidden=false;activate('host',el,s.code,s.room_id,client,s.activity.settings.arcade_mode)}else{el.hidden=true;stop('host')}}
  function paintWallet(view){
   if(view)wallet.view=view;
