@@ -133,3 +133,28 @@ test('One captain team is centered on the shared screen',async({page})=>{
  });
  expect(Math.abs(g.left-g.right)).toBeLessThan(5);
 });
+
+test('Round results label the team for every named participant',async({page})=>{
+ await mockSdk(page);
+ await page.setViewportSize({width:1280,height:720});
+ await page.goto(ORIGIN+'presenter.html?room=A1B2C3D4',{waitUntil:'domcontentloaded'});
+ await page.waitForFunction(()=>typeof render==='function'&&typeof QwizStage!=='undefined');
+ await page.evaluate(()=>{
+  ctx.renderKey='';
+  render({code:'A1B2C3D4',phase:'intermission',index:3,
+   activity:{type:'round_stats',title:'Итоги раунда',settings:{stats_seconds:7}},
+   round_results:{team_unit:'баллы',player_unit:'баллы',
+    teams:[{id:'t1',name:'Некрутимые',score:80},{id:'t2',name:'Искатели',score:60}],
+    players:[{id:'p1',nickname:'Ива',team_id:'t1',team_name:'Некрутимые',score:80},
+     {id:'p2',nickname:'Мария',team_id:'t2',team_name:'Искатели',score:60}]},
+   teams:[{id:'t1',name:'Некрутимые'},{id:'t2',name:'Искатели'}],
+   players:[],paused:false,screen_settings:{sound_enabled:false,volume:0},
+   ends_at:new Date(Date.now()+15000).toISOString()});
+ });
+ const scene=page.locator('#projectionMain .projection-round-results');
+ await expect(scene).toBeVisible();
+ await expect(scene.locator('.projection-round-columns>section')).toHaveCount(2);
+ await expect(scene.locator('.projection-player-team')).toHaveCount(2);
+ await expect(scene).toContainText('Команда: Некрутимые');
+ await expect(scene).toContainText('Команда: Искатели');
+});
