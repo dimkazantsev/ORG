@@ -74,7 +74,8 @@
   const correct=feedbackActive?String(t?.lastAnswer?.correct_text||'').trim():null;
   return '<div class="geo-options'+(feedbackActive?' is-revealed':'')+'">'+(q.options||[]).map((x,index)=>{
     const right=Boolean(correct&&String(x.text||'').trim()===correct);
-    const css=right?'geo-option-correct':'';
+    const wrong=Boolean(feedbackActive&&!right&&String(t?.chosenAnswerId||'')===String(x.id));
+    const css=right?'geo-option-correct':wrong?'geo-option-wrong':'';
     const explanation=right?'Правильный ответ':'Вариант ответа';
     return '<button type="button" data-geo-answer="'+esc(x.id)+'" class="'+css+'" aria-label="'+explanation+': '+esc(x.text)+'"'+
       (feedbackActive?' disabled':'')+'><span class="geo-choice-number" aria-hidden="true">'+String.fromCharCode(65+index)+'</span><span class="geo-choice-label">'+esc(x.text)+(right?' ✓':'')+'</span></button>';
