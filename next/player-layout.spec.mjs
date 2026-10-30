@@ -150,7 +150,8 @@ test('Phone displays synchronized card introductions, round rankings and full fi
    ctx.gameRenderKey='';renderGame();
   });
   await expect(page.locator('.round-results-grid .round-score-list')).toHaveCount(2);
-  await expect(page.locator('.round-results-grid .round-score-list li')).toHaveCount(15);
+  await expect(page.locator('.round-results-grid .round-score-list li')).toHaveCount(6);
+  await expect(page.locator('.round-results-grid .round-more-count')).toHaveCount(2);
   await page.evaluate(()=>{window.roundFixture.phase='finished';ctx.gameRenderKey='';renderGame()});
   await expect(page.locator('#gameContent .player-final-results')).toBeVisible();
   await expect(page.locator('#gameContent .player-final-results .habitat-team')).toHaveCount(5);
