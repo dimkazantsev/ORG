@@ -322,7 +322,7 @@ test('Question and answer content enter gently after fit while clock remains sta
 });
 
 
-test('Competitive mini-games show designed scenes, and Blitz Consensus uses team voting artwork',async({page})=>{
+test('Competitive mini-games fit screen and Blitz Consensus prioritizes readable team voting',async({page})=>{
  for(const mode of ['blitz','tug','captain']){
   await page.evaluate(mode=>{
    const area=document.getElementById('projectionMain');
@@ -334,7 +334,7 @@ test('Competitive mini-games show designed scenes, and Blitz Consensus uses team
   },mode);
   if(mode==='tug')await expect(page.locator('.arcade-tap-stage')).toBeVisible();
   else if(mode==='captain')await expect(page.locator('.arcade-memory-hero')).toBeVisible();
-  else {await expect(page.locator('.consensus-hero')).toBeVisible();await expect(page.locator('.consensus-hero-card')).toHaveCount(3);}
+  else {await expect(page.locator('.arcade-projection[data-arcade-root="blitz"]')).toBeVisible();await expect(page.locator('.consensus-progress')).toBeVisible();await expect(page.locator('.consensus-hero')).toBeHidden();}
   await expect(page.locator('[data-arcade-clock]')).toContainText('с');
  }
  await page.evaluate(()=>QwizArcade.stop('screen'));
