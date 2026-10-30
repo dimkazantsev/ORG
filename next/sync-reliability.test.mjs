@@ -68,7 +68,8 @@ test('tap batches are server-idempotent and client reuses stable UUID',()=>{
  assert.match(js,/tr\.batch=\{id:crypto\.randomUUID\(\),count/);
  assert.match(js,/p_batch:batch\.id,p_count:batch\.count/);
  assert.match(js,/tr\.batch=null/);
- assert.match(js,/Math\.min\(5000,400\*Math\.pow\(2/);\n assert.match(js,/if\(elapsed<320\)/);
+ assert.match(js,/Math\.min\(5000,400\*Math\.pow\(2/);
+ assert.match(js,/if\(elapsed<320\)/);
  assert.doesNotMatch(js,/p_action:'tap',p_count:count/);
 });
 test('host and projector RPCs cannot block recovery indefinitely',()=>{
