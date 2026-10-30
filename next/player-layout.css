@@ -1319,7 +1319,7 @@ html.player-compact #gameView{position:fixed;z-index:20;inset:var(--player-top,0
  width:min(100%,370px);min-height:clamp(50px,8dvh,63px);
  margin:clamp(5px,1.2dvh,12px) auto 0;padding:12px 24px;
  border:1px solid #d8c6ee;border-radius:16px;background:#fff;
- color:#6e37b8;font:900 clamp(16px,4vw,21px)/1.2 inherit;
+ color:#6e37b8;font-family:inherit;font-weight:900;font-size:clamp(16px,4vw,21px);line-height:1.2;
  box-shadow:0 8px 24px #734a9d17;cursor:pointer;
  transition:transform .16s,background-color .16s;
 }

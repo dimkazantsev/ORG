@@ -147,11 +147,9 @@ test('Audience Tap-battle shows a static readable ЖМИ! button, never a tappab
  for(const [width,height] of [[390,844],[1280,720]]){
   await page.setViewportSize({width,height});
   await page.goto('http://127.0.0.1:8080/next/arcade-qa-fixture.html');
-  await page.evaluate(()=>{
-   window.mountProjectionVote('strategy');
-   fake.vote=null;
-   window.dispatchEvent(new Event('online'));
-  });
+  await page.evaluate(()=>window.mountProjectorWithoutVote());
+  await expect(page.locator('#projectionMain .arcade-shell')).toBeVisible();
+  await expect(page.locator('#projectionMain [data-arcade-vote-screen]')).toBeHidden();
   const marker=page.locator('#projectionMain .arcade-audience-tap-hero');
   await expect(marker).toBeVisible();
   await expect(marker).toHaveText('ЖМИ!');
