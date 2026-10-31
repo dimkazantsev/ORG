@@ -69,7 +69,7 @@ window.QwizArcade=(()=>{
  function rootMarkup(mode,kind='player'){const m=META[mode];return '<div class="arcade-shell arcade-'+kind+(kind==='screen'?' arcade-projection':'')+'" data-arcade-root="'+mode+'">'+
   '<div class="arcade-head"><div><span class="arcade-kicker">QWIZ-PARTY · КОМАНДНОЕ ИСПЫТАНИЕ</span><h2>'+escape(m.title)+'</h2></div><span class="arcade-countdown" data-arcade-clock>—</span></div>'+
   '<p class="arcade-lead">'+escape(m.desc)+'</p><div class="arcade-scene">'+art(mode)+(kind==='screen'&&mode==='tug'?'<div class="arcade-projection-tap-button" aria-label="ЖМИ! — нажимайте кнопку на телефонах" role="img"><strong>ЖМИ!</strong><small>Нажимайте на телефонах</small></div>':'')+(kind==='player'&&['tug','rocket'].includes(mode)?'<button type="button" class="arcade-tap-btn '+(mode==='tug'?'arcade-tap-center':'arcade-runner-jump-btn')+'" data-arcade-tap disabled>'+escape(m.cta)+'</button>':'')+'</div>'+
-  '<div data-arcade-question hidden></div>'+(mode==='sequence_memory'?'<section class="arcade-secret-panel" data-secret-panel role="region" aria-label="Восстановление секретного кода"></section>':'')+(mode==='captain'&&kind==='player'?'<div class="arcade-memory-info" data-memory-info role="status"></div><div class="arcade-memory-board" data-arcade-memory role="group" aria-label="Поле Мэмори"></div>':'')+'<div class="arcade-ranks" data-arcade-ranks></div>'+
+  '<div data-arcade-question hidden></div>'+(mode==='sequence_memory'?'<section class="arcade-secret-panel" data-secret-panel role="region" aria-label="Восстановление секретного кода"></section>':'')+(mode==='captain'&&kind==='player'?'<div class="arcade-memory-info" data-memory-info role="status"></div><div class="arcade-memory-board" data-arcade-memory role="group" aria-label="Поле Мэмори"></div>':'')+'<section class="arcade-vote-transition" data-arcade-vote-transition role="status" hidden><span class="arcade-kicker">РЕЗУЛЬТАТЫ КОМАНД</span><strong>Подводим итоги</strong><p>Ожидаем следующего этапа голосования.</p></section><div class="arcade-ranks" data-arcade-ranks></div>'+
   (kind==='player'?(['tug','rocket'].includes(mode)?'':(['captain','blitz','sequence_memory'].includes(mode)?'':'<button type="button" class="arcade-tap-btn" data-arcade-tap disabled>'+escape(m.cta)+'</button>'))+(['captain','blitz','sequence_memory'].includes(mode)?'':'<span class="arcade-tap-caption" data-arcade-personal>Синхронизация с игровым сервером…</span>'):'')+
   '<div class="arcade-alert" role="status" aria-live="polite" data-arcade-alert>Подключаем результаты…</div><div class="arcade-badges" data-arcade-badges></div><section class="arcade-vote" data-arcade-vote hidden></section></div>'+
   (kind==='screen'?'<section class="arcade-vote-projection" data-arcade-vote-screen hidden role="region" aria-label="Голосование за бонус или штраф"></section>':'');
@@ -426,8 +426,10 @@ window.QwizArcade=(()=>{
     },Math.min(10000,remaining));
    }
   }
-  // The ballot replaces the spent arcade scene on a player's phone; never send it below the viewport.
-  tr.root.querySelector('.arcade-shell.arcade-player')?.classList.toggle('is-boost-voting',Boolean(vote&&tr.kind==='player'&&vote.can_vote));
+  // A ballot is a top-layer <dialog>. Never hide the underlying scene just
+  // because vote.can_vote is true: after an accepted vote or between stages
+  // the dialog closes and the participant must see team results, not white.
+
   if(ballot){
    ballot.hidden=!vote;
    if(vote){
@@ -463,6 +465,24 @@ window.QwizArcade=(()=>{
    const open=Boolean(vote?.can_vote&&vote?.open&&!tr.voteDismissed&&Date.parse(vote.vote_ends_at)>currentTime(tr));
    if(open&&!tr.voteDialog.open)tr.voteDialog.showModal();
    else if(!open&&tr.voteDialog.open)tr.voteDialog.close();
+  }
+  const playerShell=tr.kind==='player'?tr.root.querySelector('.arcade-shell.arcade-player'):null;
+  const ballotVisible=Boolean(tr.voteDialog?.open);
+  const showingResults=Boolean(vote)&&!ballotVisible;
+  playerShell?.classList.toggle('is-boost-voting',ballotVisible);
+  playerShell?.classList.toggle('is-vote-transition',showingResults);
+  const transition=tr.root.querySelector('[data-arcade-vote-transition]');
+  if(transition){
+   transition.hidden=!showingResults;
+   if(showingResults){
+    const heading=transition.querySelector('strong');
+    const info=transition.querySelector('p');
+    if(heading)heading.textContent=vote?.stage==='strategy'?
+      'Считаем голоса за стратегию':'Результаты испытания';
+    if(info)info.textContent=vote?.open?
+      'Ваш голос принят или ожидается выбор команды. Счёт обновляется по данным сервера.':
+      'Голосование завершено. Следующий этап откроется автоматически.';
+   }
   }
   const status=v.awarded_at?'Результат зафиксирован. Награды зачислены.':
    !v.running?'Соревнование завершено.':
