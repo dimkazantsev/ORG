@@ -439,3 +439,64 @@ test('Legacy sending or saved status cannot create a top answer notification',as
  await expect(page.locator('#gameNotice')).toContainText('Неверный формат ответа.');
  await expect(page.locator('#gameNotice')).toBeVisible();
 });
+
+test('Phone keeps answer and ratings visible in main screen; results refresh when arriving late',async({page})=>{
+ await page.setViewportSize({width:390,height:750});
+ await setup(page);
+ await question(page,{kind:'single',prompt:'Какой флаг перед вами?',options:['А','Б','В','Г']},'result');
+ await expect(page.locator('#gameContent .player-answer')).toBeVisible();
+ await expect(page.locator('#gameContent .personal-results')).toBeVisible();
+ await expect(page.locator('#gameContent .personal-results h2')).toContainText(['Скорость команд','Личный рейтинг']);
+ await page.locator('#playerMore').click();
+ await expect(page.locator('#playerDetails .personal-results')).toBeVisible();
+ await expect(page.locator('#gameContent .personal-results')).toBeAttached();
+ await page.locator('#playerDetailsClose').click();
+ await page.evaluate(()=>{
+  ctx.room.phase='intermission';ctx.room.activity={type:'round_stats',title:'Итоги раунда'};
+  ctx.room.round_results={teams:[],players:[]};ctx.gameRenderKey='';renderGame();
+ });
+ await expect(page.locator('#gameContent')).toContainText('Результаты обрабатываются сервером');
+ await page.evaluate(()=>{
+  ctx.room.round_results={teams:[{id:'team',name:'Гравитационные',score:200}],
+    players:[{id:'player',name:'Игрок',score:180}]};
+  renderGame(); // Must re-render without manually clearing the cache key.
+ });
+ await expect(page.locator('#gameContent .round-score-list')).toHaveCount(2);
+ await expect(page.locator('#gameContent')).toContainText('Гравитационные');
+ await expect(page.locator('#gameContent')).toContainText('Игрок');
+});
+test('Tap battle freezes five seconds before deadline and drains queued packets',async({page})=>{
+ await page.setViewportSize({width:390,height:844});
+ await setup(page);
+ await question(page,{prompt:'Игра',options:['A','B','C','D']});
+ await page.evaluate(()=>{
+  showScreen('game');
+  window.tapFixture={mode:'tug',running:true,card_position:12,
+   server_now:new Date().toISOString(),
+   ends_at:new Date(Date.now()+6700).toISOString(),
+   mine:{team_id:'team-1'},teams:[{id:'team-1',name:'Гравитационные',taps:0,points:0,place:1}],awards:[]};
+  window.tapPackets=[];
+  const client={rpc:async(name,args)=>{
+   if(name==='qwiz_arcade_tap_once'){
+    window.tapPackets.push(args);
+    await new Promise(resolve=>setTimeout(resolve,75));
+    return {data:{ok:true,batch_id:args.p_batch},error:null};
+   }
+   return {data:window.tapFixture,error:null};
+  }};
+  QwizArcade.mountPlayer(document.getElementById('gameContent'),
+   {code:'ABCDEF12',room_id:'00000000-0000-4000-8000-000000000091',
+    activity:{settings:{arcade_mode:'tug'}}},{client});
+ });
+ const button=page.locator('#gameContent [data-arcade-tap]');
+ await expect(button).toBeEnabled();
+ for(let i=0;i<14;i++)await button.dispatchEvent('pointerdown',{pointerType:'touch',isPrimary:true});
+ await expect.poll(()=>page.locator('#gameContent [data-arcade-personal]').innerText()).toContain('Подтверждено');
+ await expect(button).toBeDisabled({timeout:5000});
+ await expect.poll(async()=>page.locator('#gameContent [data-arcade-personal]').innerText(),{timeout:4500})
+  .toContain('Приём нажатий завершён');
+ const packets=await page.evaluate(()=>window.tapPackets);
+ expect(packets.length).toBeGreaterThan(0);
+ for(const p of packets)expect(p.p_count).toBeLessThanOrEqual(5);
+ await expect(page.locator('#gameContent [data-arcade-alert]')).not.toContainText('Не удалось подтвердить часть');
+});
