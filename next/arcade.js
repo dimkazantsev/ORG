@@ -486,6 +486,7 @@ window.QwizArcade=(()=>{
    const leftMs=(Date.parse(v.ends_at)||0)-currentTime(tr);
    if(leftMs<=5000){
     tr.freezeTaps=true;
+    tr.root.querySelector('.arcade-player')?.classList.add('is-tap-finalizing');
     if(button)button.disabled=true;
     // The final five seconds are for reliable submission, not new clicks.
     if((tr.batch||tr.pending)&&!tr.sending&&!tr.flushTimer)void flush(tr);
