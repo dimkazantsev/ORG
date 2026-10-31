@@ -388,6 +388,21 @@ function roundIntroMarkup(s){
  '<h1>'+esc(title)+'</h1><p>Подготовьтесь к новому испытанию</p>'+
  '<strong class="round-intro-count" data-round-intro-count><span id="playerCountdown">'+(remaining(s.ends_at)>0?remaining(s.ends_at):'')+'</span>'+(remaining(s.ends_at)>0?' сек.':' Начинаем!')+'</strong></section>';
 }
+function sharedGameStartMarkup(s){
+ const countdown=remaining(s.ends_at);
+ const names=(s.teams||[]).map(t=>t.name).filter(Boolean);
+ const roster=names.slice(0,5).map(name=>'<span>'+esc(name)+'</span>').join('')+
+  (names.length>5?'<span>Ещё команд: '+(names.length-5)+'</span>':'');
+ return '<section class="game-empty round-intro shared-game-start" aria-label="Общее начало игры" data-start-stage="intro">'+
+  '<span class="start-kicker">QWIZ-PARTY · КОМАНДНОЕ ИСПЫТАНИЕ</span>'+
+  '<div class="start-orbit" aria-hidden="true"><i>✦</i><i>★</i><i>✧</i><i>✦</i></div>'+
+  '<h1>'+esc(s.activity?.title||'Начало игры')+'</h1>'+
+  '<p class="start-subtitle">Все команды начинают одновременно. Приготовьтесь к первому раунду.</p>'+
+  '<div class="start-countdown-label">ДО НАЧАЛА</div>'+
+  '<strong class="start-countdown" data-round-intro-count><span id="playerCountdown">'+(countdown||'0')+'</span><small>сек.</small></strong>'+
+  (roster?'<div class="start-team-list" aria-label="Команды игры">'+roster+'</div>':'')+
+  '</section>';
+}
 let lobbyActionBusy=false;
 window.QwizLobbyAction=async (action,input={})=>{
  if(lobbyActionBusy||!ctx.room?.room_id||!ctx.client)return;
@@ -459,6 +474,11 @@ function renderGame(){if(ctx.mode!=='game'||!ctx.room)return;const s=ctx.room;co
  if(s.phase==='finished'){el.innerHTML='<div class="game-empty player-finale-screen"><div class="eyebrow">ИГРА ЗАВЕРШЕНА</div><h1>Итоги всей игры</h1><p>Общий зачёт команд и участников</p>'+personalResults(s,true)+'</div>';text('playerStatus','Игра завершена.');return}
  const question=s.question;
  if(s.phase==='intermission'){
+  if(s.activity?.type==='intro'){
+   el.innerHTML=sharedGameStartMarkup(s);
+   text('playerStatus','Игра начинается одновременно на всех экранах.');
+   return;
+  }
   if(s.activity?.type==='card_intro'){
    el.innerHTML=roundIntroMarkup(s);text('playerStatus','Заставка следующей игры.');return;
   }
@@ -641,9 +661,14 @@ function updateClocks(){
   else{const status=$('playerNextStatus');if(status)status.textContent='Ожидаем перехода от сервера…';scheduleDeadlineRefresh(800);}
   return;
  }
- if(ctx.room?.phase==='intermission'&&ctx.room?.activity?.type==='card_intro'){
-  const seconds=remaining(ctx.room.ends_at);text('playerCountdown',seconds);
-  if(seconds===0)scheduleDeadlineRefresh(800);
+ if(ctx.room?.phase==='intermission'&&['card_intro','intro'].includes(ctx.room?.activity?.type)){
+  const seconds=remaining(ctx.room.ends_at);
+  text('playerCountdown',seconds);
+  if(seconds===0){
+   const target=$('playerCountdown')?.closest('[data-round-intro-count]');
+   if(target)target.classList.add('is-finished');
+   scheduleDeadlineRefresh(800);
+  }
   return;
  }
  if(ctx.room?.phase==='countdown'){
