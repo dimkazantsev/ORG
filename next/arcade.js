@@ -590,6 +590,9 @@ window.QwizArcade=(()=>{
    tr.voteDismissed=true;
    if(tr.voteTimer){clearTimeout(tr.voteTimer);tr.voteTimer=null;}
    if(tr.voteDialog?.open)tr.voteDialog.close();
+   // Show authoritative team scores instantly while the next stage arrives.
+   // Never retain the class which hides the entire mobile scene.
+   if(!tr.closed&&tr.view)paint(tr);
    await fetchState(tr)
   }catch(e){showMessage(tr,e.message||'Голос не принят',true);tr.alertOverride=Date.now()+5000}
   finally{tr.voteBusy=false;if(!tr.closed&&tr.view)paint(tr)}
