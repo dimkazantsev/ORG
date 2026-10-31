@@ -90,7 +90,7 @@ window.QwizArcade=(()=>{
    // A repeated mechanic in a later card is a new game, not a continuation
    // of the previous card's taps, question, selection or pending work.
    if(tr.view?.card_position!==undefined&&tr.view.card_position!==data.card_position){
-     tr.pending=0;tr.batch=null;tr.qkey='';tr.consensusKey='';tr.consensusBusy=false;tr.alertOverride=0;
+     tr.pending=0;tr.batch=null;tr.freezeTaps=false;tr.confirmedTaps=0;tr.rejectedTaps=0;tr.finalStateRequested=false;tr.qkey='';tr.consensusKey='';tr.consensusBusy=false;tr.alertOverride=0;
       tr.memoryKey=null;if(tr.memory)tr.memory.runId+=1;tr.memory=null;tr.lastJumpTarget=null;tr.gameBusy=false;tr.visualTapCount=0;tr.localTaps=0;tr.secretAnswer=[];tr.secretState=null;
      if(tr.flushTimer){clearTimeout(tr.flushTimer);tr.flushTimer=null;}
    }
@@ -403,10 +403,11 @@ window.QwizArcade=(()=>{
    const obstacle=tr.root.querySelector('[data-runner-obstacle]');if(obstacle)obstacle.hidden=!run.next_at||!!run.selected&&!run.alive;}
   const tap=tr.root.querySelector('[data-arcade-tap]');
   if(tap){let eligible=valid&&(v.mode!=='blitz'||claim)&&!!myTeam;
+   if(v.mode==='tug')eligible=eligible&&!tr.freezeTaps&&now<end-5000;
    if(v.mode==='captain')eligible=false;if(v.mode==='rocket')eligible=eligible&&!!v.extra?.selected&&!!v.extra?.alive;
    tap.disabled=!eligible;tap.textContent=META[v.mode].cta;
    const personal=tr.root.querySelector('[data-arcade-personal]');
-    if(personal)personal.textContent=v.mode==='captain'?(v.extra?.captain?'Переворачивайте по две плитки.':'Наблюдайте за вашим капитаном.'):v.mode==='rocket'?(v.extra?.selected?(v.extra.alive?'Вы бегун! Прыгайте перед препятствием.':'Столкновение. Сравниваем результаты.'):'От команды выбран один случайный бегун.'):v.mode==='blitz'&&!claim?(canAnswer?'Ваша команда выиграла захват! Выберите ответ.':'Захват завершён. Смотрите рейтинг.'):(tr.localTaps?'Нажатия: '+tr.localTaps+' · счёт команды обновляется сервером':'Все игроки нажимают. Сервер учитывает до 16 нажатий в секунду на человека.');
+    if(personal)personal.textContent=v.mode==='captain'?(v.extra?.captain?'Переворачивайте по две плитки.':'Наблюдайте за вашим капитаном.'):v.mode==='rocket'?(v.extra?.selected?(v.extra.alive?'Вы бегун! Прыгайте перед препятствием.':'Столкновение. Сравниваем результаты.'):'От команды выбран один случайный бегун.'):v.mode==='blitz'&&!claim?(canAnswer?'Ваша команда выиграла захват! Выберите ответ.':'Захват завершён. Смотрите рейтинг.'):tapStatus(tr);
   }
   const badges=tr.root.querySelector('[data-arcade-badges]');if(badges)badges.innerHTML=(v.awards||[]).slice(0,12).map(a=>'<span class="arcade-award">'+escape(a.title)+'</span>').join('');
   const vote=v.vote,ballot=tr.kind==='player'?tr.voteDialog?.querySelector('[data-arcade-vote]'):tr.root.querySelector('[data-arcade-vote]');
@@ -481,6 +482,20 @@ window.QwizArcade=(()=>{
   const consentClock=tr.root.querySelector('[data-consensus-clock]');if(consentClock){const at=tr.view?.consensus?.stage==='voting'?tr.view?.consensus?.vote_ends_at:tr.view?.consensus?.ends_at;consentClock.textContent=left(at,tr)+' сек.';}
   if(v.mode==='rocket'){const obstacle=tr.root.querySelector('[data-runner-obstacle]');if(obstacle&&!obstacle.hidden){const dt=(Date.parse(v.extra?.next_at)-currentTime(tr))/1000;obstacle.style.left=(20+78*Math.max(0,Math.min(1,dt/2.25)))+'%';}}
   const button=tr.root.querySelector('[data-arcade-tap]');
+  if(v.mode==='tug'&&v.running){
+   const leftMs=(Date.parse(v.ends_at)||0)-currentTime(tr);
+   if(leftMs<=5000){
+    tr.freezeTaps=true;
+    if(button)button.disabled=true;
+    // The final five seconds are for reliable submission, not new clicks.
+    if((tr.batch||tr.pending)&&!tr.sending&&!tr.flushTimer)void flush(tr);
+    if(leftMs<=0&&!tr.finalStateRequested){
+     tr.finalStateRequested=true;
+     void fetchState(tr);
+    }
+   }
+   updateTapStatus(tr);
+  }
   if(button&&sec===0)button.disabled=true;
  }
  function activate(kind,root,code,roomId,client,mode){
@@ -488,7 +503,7 @@ window.QwizArcade=(()=>{
   const key=code+':'+mode+':'+(kind==='player'?roomId||'':'');
   if(ui[kind]?.key===key&&ui[kind].root===root)return;
   stop(kind);
-  const tr={kind,key,root,code,roomId,client,mode,offset:0,closed:false,fetching:false,pending:0,batch:null,sending:false,view:null,flushTimer:null,qkey:'',secretAnswer:[],secretState:null,secretBusy:false};
+  const tr={kind,key,root,code,roomId,client,mode,offset:0,closed:false,fetching:false,pending:0,batch:null,sending:false,view:null,flushTimer:null,confirmedTaps:0,rejectedTaps:0,freezeTaps:false,finalStateRequested:false,qkey:'',secretAnswer:[],secretState:null,secretBusy:false};
   ui[kind]=tr;root.innerHTML=rootMarkup(mode,kind);
   if(kind==='player'){
    // A dedicated browser top-layer dialog prevents bonus cards from being cut off
@@ -561,15 +576,31 @@ window.QwizArcade=(()=>{
    button.animate([{scale:'1'},{scale:'.955'},{scale:'1'}],{duration:115,easing:'ease-out'});
   }
  }
+ function tapStatus(tr){
+  const confirmed=tr.confirmedTaps||0;
+  const waiting=(tr.pending||0)+(tr.batch?.count||0);
+  const lost=tr.rejectedTaps||0;
+  if(lost)return 'Подтверждено: '+confirmed+' · не принято сервером: '+lost+(waiting?' · отправляется: '+waiting:'');
+  if(tr.freezeTaps||((Date.parse(tr.view?.ends_at)||0)-currentTime(tr))<=5000)
+   return waiting?'Приём нажатий завершён. Подтверждено: '+confirmed+' · отправляется: '+waiting:
+    'Приём нажатий завершён. Подтверждено сервером: '+confirmed+'. Ожидаем итоги команд.';
+  return 'Подтверждено сервером: '+confirmed+(waiting?' · отправляется: '+waiting:' · нажимайте!');
+ }
+ function updateTapStatus(tr){
+  if(tr.mode!=='tug')return;
+  const label=tr.root?.querySelector('[data-arcade-personal]');
+  if(label)label.textContent=tapStatus(tr);
+ }
  function tap(tr){const v=tr.view;if(tr.closed||!v||!v.running||!v.mine)return;
   const now=currentTime(tr),end=Date.parse(v.ends_at)||0;
   if(now>end)return;
+  if(v.mode==='tug'&&(tr.freezeTaps||now>=end-5000))return;
   if(v.mode==='blitz'&&now>(Date.parse(v.capture_until)||0))return;
   animateTap(tr);
   if(v.mode==='captain')return;if(v.mode==='rocket'){jump(tr);return;}
-  tr.pending=Math.min(48,tr.pending+1);tr.localTaps=(tr.localTaps||0)+1;
-  const label=tr.root.querySelector('[data-arcade-personal]');
-  if(label)label.textContent='Нажатия: '+tr.localTaps+' · засчитываются сервером';
+  if(tr.pending>=48)return; // Bounded buffer; never claim a click we cannot submit.
+  tr.pending++;tr.localTaps=(tr.localTaps||0)+1;
+  updateTapStatus(tr);
   // Start the first batch promptly while keeping subsequent batches below
   // the server's eight-clicks-per-second acceptance limit.
   if(!tr.flushTimer&&!tr.sending)tr.flushTimer=setTimeout(()=>flush(tr),160);
@@ -579,6 +610,13 @@ window.QwizArcade=(()=>{
   tr.flushTimer=null;
   if(!tr.batch){
    if(!tr.pending)return;
+   if(tr.mode==='tug'&&currentTime(tr)>=(Date.parse(tr.view?.ends_at)||0)){
+    tr.rejectedTaps=(tr.rejectedTaps||0)+tr.pending;
+    tr.pending=0;
+    updateTapStatus(tr);
+    showMessage(tr,'Приём завершён. Часть нажатий не удалось подтвердить до истечения времени.',true);
+    return;
+   }
    const elapsed=Date.now()-(tr.lastTapBatchAt||0);
    if(elapsed<320){tr.flushTimer=setTimeout(()=>flush(tr),320-elapsed);return;}
    const count=Math.min(5,tr.pending);
@@ -609,21 +647,24 @@ window.QwizArcade=(()=>{
    if(tr.closed||tr.batch!==batch)return;
    if(result?.data?.ok!==true)throw Error('Нажатия не подтверждены');
    tr.batch=null;tr.batchRetries=0;
-   const label=tr.root?.querySelector('[data-arcade-personal]');
-   if(label)label.textContent='Пакет нажатий подтверждён сервером.';
+   tr.confirmedTaps=(tr.confirmedTaps||0)+batch.count;
+   updateTapStatus(tr);
   }catch(e){
    if(tr.closed||tr.batch!==batch)return;
    batch.attempts++;
    const age=Date.now()+(tr.offset||0)-(Date.parse(tr.view?.ends_at)||0);
    const rejected=/Время нажатий истекло|Испытание сейчас не проводится|Здесь нет активной|Некорректный пакет|не найдена|засчитана/i.test(String(e.message||''));
    if(rejected||age>15000||batch.attempts>6){
-    tr.batch=null;showMessage(tr,'Не удалось подтвердить часть нажатий. Неподтверждённые очки не начислены.',true);
+    tr.batch=null;tr.rejectedTaps=(tr.rejectedTaps||0)+batch.count;
+    updateTapStatus(tr);
+    showMessage(tr,'Не удалось подтвердить '+batch.count+' нажатий. Они не вошли в результат.',true);
    }else{
     showMessage(tr,'Восстанавливаем связь и повторяем пакет без двойного начисления…',true);
    }
    tr.alertOverride=Date.now()+2200;
   }finally{
    tr.sending=false;
+   updateTapStatus(tr);
    if(!tr.closed&&(tr.batch||tr.pending)&&!tr.flushTimer){
     const wait=tr.batch?Math.min(5000,400*Math.pow(2,Math.min(3,batch.attempts))):320;
     tr.flushTimer=setTimeout(()=>flush(tr),wait+Math.floor(Math.random()*250));
