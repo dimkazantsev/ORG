@@ -264,3 +264,23 @@
  border-radius:6px;padding:1px 3px;
 }
 #gameContent .assembly-builder .assembly-drag-ghost{font-size:0}
+
+/* Final five seconds: replace empty mobile space with authoritative team totals. */
+.player-compact #gameContent .arcade-player[data-arcade-root="tug"].is-tap-finalizing .arcade-ranks{
+ display:grid!important;flex:0 1 auto;min-height:0;
+ max-height:min(31dvh,270px);overflow-y:auto;overscroll-behavior:contain;
+ width:100%;gap:6px;margin:10px 0;
+}
+.player-compact #gameContent .arcade-player[data-arcade-root="tug"].is-tap-finalizing .arcade-ranks::before{
+ content:"СЧЁТ КОМАНД · ДАННЫЕ СЕРВЕРА";
+ display:block;color:#6e5b89;font-size:11px;font-weight:850;letter-spacing:.055em;
+ padding:2px 4px;
+}
+.player-compact #gameContent .arcade-player[data-arcade-root="tug"].is-tap-finalizing .arcade-rank{
+ display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr) auto;
+ gap:7px;min-height:41px;align-items:center;
+ padding:7px;border:1px solid #e5ddf1;border-radius:12px;background:#fbf9ff;
+}
+.player-compact #gameContent .arcade-player[data-arcade-root="tug"].is-tap-finalizing .arcade-rank-name{
+ font-size:13px;white-space:normal;overflow-wrap:anywhere;
+}
