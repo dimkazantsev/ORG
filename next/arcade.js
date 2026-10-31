@@ -422,8 +422,12 @@ window.QwizArcade=(()=>{
      if(!tr.closed&&tr.voteKey===voteKey){
       tr.voteDismissed=true;
       if(tr.voteDialog?.open)tr.voteDialog.close();
+      if(tr.view)paint(tr); // Return to visible scores, never a white scene.
+      // The vote phase is determined by server time. Refresh as it crosses
+      // the boundary instead of waiting for the next staggered room poll.
+      void fetchState(tr);
      }
-    },Math.min(10000,remaining));
+    },Math.max(100,remaining+100));
    }
   }
   // A ballot is a top-layer <dialog>. Never hide the underlying scene just
@@ -468,7 +472,7 @@ window.QwizArcade=(()=>{
   }
   const playerShell=tr.kind==='player'?tr.root.querySelector('.arcade-shell.arcade-player'):null;
   const ballotVisible=Boolean(tr.voteDialog?.open);
-  const showingResults=Boolean(vote)&&!ballotVisible;
+  const showingResults=(Boolean(vote)||Boolean(v.awarded_at))&&!ballotVisible;
   playerShell?.classList.toggle('is-boost-voting',ballotVisible);
   playerShell?.classList.toggle('is-vote-transition',showingResults);
   const transition=tr.root.querySelector('[data-arcade-vote-transition]');
@@ -543,9 +547,12 @@ window.QwizArcade=(()=>{
     const choice=event.target.closest('[data-boost-choice]');
     if(choice&&!choice.disabled)void voteBoost(tr,choice.dataset.boostChoice);
    });
-   voteDialog.addEventListener('cancel',()=>{
-    // Escape/back closes a stuck ballot without changing the server vote.
+   voteDialog.addEventListener('cancel',event=>{
+    event.preventDefault();
+    // Escape/back closes the ballot but MUST immediately restore the scores.
     tr.voteDismissed=true;
+    if(voteDialog.open)voteDialog.close();
+    if(!tr.closed&&tr.view)paint(tr);
    });
    tr.onClick=e=>{
      if(window.QwizSecretCode?.click(tr,e))return;
