@@ -3,7 +3,6 @@
  const root=document.documentElement,game=document.getElementById('gameView'),content=document.getElementById('gameContent');
  const sheet=document.getElementById('playerDetails'),more=document.getElementById('playerMore'),body=document.getElementById('playerDetailsContent');
  const media=matchMedia('(max-width:800px), (max-width:1100px) and (max-height:540px)');
- const transient=[];
  const blocks=[game.querySelector('.game-top .control-row'),document.getElementById('playerTeamPanel'),document.getElementById('arcadeWalletPanel'),document.getElementById('playerTeamProgress'),game.querySelector('.game-side')].map(node=>{
   const anchor=document.createComment('Player details position');node.before(anchor);return {node,anchor};
  });
@@ -16,6 +15,13 @@
  function roundDetails(){
   const box=document.getElementById('playerArcadeDetails');
   box.replaceChildren(...Array.from(content.querySelectorAll('.arcade-ranks,.arcade-badges'),el=>el.cloneNode(true)));
+  // The phone's main area owns the results. The details sheet may display
+  // COPIES, but must never remove the original answer or scoreboard.
+  const results=document.getElementById('playerResultDetails');
+  results.replaceChildren(...Array.from(content.querySelectorAll('.personal-results:not(.player-final-results)'),el=>el.cloneNode(true)));
+  const review=document.getElementById('playerReviewContent');
+  review.replaceChildren(...Array.from(content.querySelectorAll('.player-answer>p'),el=>el.cloneNode(true)));
+  document.getElementById('playerReview').hidden=!review.childElementCount;
  }
  function sync(){
   const compact=media.matches&&!game.hidden;root.classList.toggle('player-compact',compact);
@@ -23,11 +29,6 @@
   // Never copy it into the session header or hide it on compact screens.
   if(!compact)close();
   for(const {node,anchor} of blocks){const keepLobbyTeam=compact&&node.id==='playerTeamPanel'&&!!content.querySelector('.player-team-building');const toSheet=compact&&!keepLobbyTeam;const target=toSheet?(node.classList.contains('control-row')?document.getElementById('playerSheetControls'):body):anchor.parentNode;if(node.parentNode!==target){if(toSheet)target.append(node);else anchor.after(node)}}
-  for(let i=transient.length-1;i>=0;i--){const item=transient[i];if(!item.anchor.isConnected){item.node.remove();transient.splice(i,1)}}
-  if(compact)for(const node of content.querySelectorAll('.personal-results:not(.player-final-results),.player-answer>p')){const anchor=document.createComment('Round details position');node.before(anchor);transient.push({node,anchor});document.getElementById(node.classList.contains('personal-results')?'playerResultDetails':'playerReviewContent').append(node)}
-  else for(const {node,anchor} of transient)anchor.after(node);
-  if(!compact)transient.length=0;
-  document.getElementById('playerReview').hidden=!document.getElementById('playerReviewContent').children.length;
   if(compact){viewport();roundDetails()}
  }
  more.onclick=()=>{roundDetails();sheet.showModal();more.setAttribute('aria-expanded','true')};
