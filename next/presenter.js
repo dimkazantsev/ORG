@@ -524,7 +524,21 @@ function render(state){
   if(type==='card_intro'){roundIntroScene(state);scheduleFitProjection();return}QwizStage.audio.music(type==='intro'?'intro':'round',state.code+':'+state.index+':'+type,type==='intro'?9000:12000);
   if(window.QwizGeo?.mountProjector($('projectionMain'),state,ctx.client)){scheduleFitProjection();return;}
   if(window.QwizArcade?.mountProjector($('projectionMain'),state,ctx.client)){scheduleFitProjection();return;}
-   if(type==='intro'){$('projectionMain').innerHTML='<section class="projection-welcome"><div class="welcome-orbit" aria-hidden="true"><span>✦</span><span>★</span><span>✧</span></div><span class="projection-eyebrow">QWIZ-PARTY · ДОБРО ПОЖАЛОВАТЬ</span><h1>'+escapeText(activity.title||'Большая игра начинается!')+'</h1><p>Команды готовы? Проверьте подключение и приготовьтесь к первому раунду.</p><div class="welcome-dots"><i></i><i></i><i></i><i></i><i></i></div></section>';return;}
+   if(type==='intro'){
+    const names=(state.teams||[]).map(t=>t.name).filter(Boolean);
+    const roster=names.slice(0,5).map(name=>'<span>'+escapeText(name)+'</span>').join('')+
+     (names.length>5?'<span>Ещё команд: '+(names.length-5)+'</span>':'');
+    $('projectionMain').innerHTML='<section class="projection-welcome shared-game-start" aria-label="Общее начало игры" data-start-stage="intro">'+
+     '<span class="start-kicker">QWIZ-PARTY · КОМАНДНОЕ ИСПЫТАНИЕ</span>'+
+     '<div class="start-orbit" aria-hidden="true"><i>✦</i><i>★</i><i>✧</i><i>✦</i></div>'+
+     '<h1>'+escapeText(activity.title||'Начало игры')+'</h1>'+
+     '<p class="start-subtitle">Все команды начинают одновременно. Приготовьтесь к первому раунду.</p>'+
+     '<div class="start-countdown-label">ДО НАЧАЛА</div>'+
+     '<strong class="start-countdown" data-round-intro-count><span id="countdownNumber">'+seconds(state.ends_at)+'</span><small>сек.</small></strong>'+
+     (roster?'<div class="start-team-list" aria-label="Команды игры">'+roster+'</div>':'')+
+     '</section>';
+    return;
+   }
   const extras=type==='team_stats'?QwizStage.teams(state.teams,{full:true,ranked:true}):type==='player_stats'?QwizStage.leaderboard(state.players,20):'';
   $('projectionMain').innerHTML='<section class="projection-activity" data-type="'+escapeText(type)+'"><span class="projection-eyebrow">QWIZ-PARTY · ПРОДОЛЖАЕМ ИГРУ</span><div class="activity-emblem" aria-hidden="true">✦</div><h1>'+escapeText(activity.title||'Дополнительная активность')+'</h1><p>Следующий этап начнётся автоматически.</p>'+extras+'</section>';return;
  }
@@ -608,7 +622,7 @@ async function init(){
  setInterval(()=>{
   const s=ctx.last;if(!s||document.hidden)return;
   if(['question','result'].includes(s.phase)&&!s.paused){const left=updateProjectorClock(s);if(left===0&&Date.now()-ctx.lastReleaseAttempt>2600){ctx.lastReleaseAttempt=Date.now();refresh()}}
-  if((s.phase==='countdown'||(s.phase==='intermission'&&s.activity?.type==='card_intro'))&&!s.paused){
+  if((s.phase==='countdown'||(s.phase==='intermission'&&['card_intro','intro'].includes(s.activity?.type)))&&!s.paused){
    const n=seconds(s.ends_at);if($('countdownNumber'))$('countdownNumber').textContent=n;
    if(n===0&&Date.now()-ctx.lastReleaseAttempt>750){ctx.lastReleaseAttempt=Date.now();refresh()}
   }
