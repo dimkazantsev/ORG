@@ -74,7 +74,7 @@ window.QwizArcade=(()=>{
   '<div class="arcade-alert" role="status" aria-live="polite" data-arcade-alert>Подключаем результаты…</div><div class="arcade-badges" data-arcade-badges></div><section class="arcade-vote" data-arcade-vote hidden></section></div>'+
   (kind==='screen'?'<section class="arcade-vote-projection" data-arcade-vote-screen hidden role="region" aria-label="Голосование за бонус или штраф"></section>':'');
  }
- function stop(kind){const tr=ui[kind];if(!tr)return;if(tr.interval)clearTimeout(tr.interval);if(tr.clock)clearInterval(tr.clock);if(tr.flushTimer)clearTimeout(tr.flushTimer);if(tr.messageTimer)clearTimeout(tr.messageTimer);if(tr.voteTimer)clearTimeout(tr.voteTimer);window.QwizSecretCode?.stop(tr);if(tr.onClick)tr.root?.removeEventListener('click',tr.onClick);if(tr.onPointerDown)tr.root?.removeEventListener('pointerdown',tr.onPointerDown);if(tr.memory)tr.memory.runId+=1;if(tr.voteDialog){if(tr.voteDialog.open)tr.voteDialog.close();tr.voteDialog.remove();tr.voteDialog=null;}tr.closed=true;ui[kind]=null;}
+ function stop(kind){const tr=ui[kind];if(!tr)return;if(tr.interval)clearTimeout(tr.interval);if(tr.clock)clearInterval(tr.clock);if(tr.flushTimer)clearTimeout(tr.flushTimer);if(tr.finalRefreshTimer)clearTimeout(tr.finalRefreshTimer);if(tr.messageTimer)clearTimeout(tr.messageTimer);if(tr.voteTimer)clearTimeout(tr.voteTimer);window.QwizSecretCode?.stop(tr);if(tr.onClick)tr.root?.removeEventListener('click',tr.onClick);if(tr.onPointerDown)tr.root?.removeEventListener('pointerdown',tr.onPointerDown);if(tr.memory)tr.memory.runId+=1;if(tr.voteDialog){if(tr.voteDialog.open)tr.voteDialog.close();tr.voteDialog.remove();tr.voteDialog=null;}tr.closed=true;ui[kind]=null;}
  async function fetchState(tr){if(tr.closed||tr.fetching||!navigator.onLine)return;tr.fetching=true;const id=tr.key;
   try{
    // Abort a stalled snapshot read; otherwise 'fetching' could stay true forever.
@@ -90,7 +90,7 @@ window.QwizArcade=(()=>{
    // A repeated mechanic in a later card is a new game, not a continuation
    // of the previous card's taps, question, selection or pending work.
    if(tr.view?.card_position!==undefined&&tr.view.card_position!==data.card_position){
-     tr.pending=0;tr.batch=null;tr.freezeTaps=false;tr.confirmedTaps=0;tr.rejectedTaps=0;tr.finalStateRequested=false;tr.qkey='';tr.consensusKey='';tr.consensusBusy=false;tr.alertOverride=0;
+     tr.pending=0;tr.batch=null;tr.freezeTaps=false;tr.confirmedTaps=0;tr.rejectedTaps=0;tr.finalStateRequested=false;tr.finalRefreshRequested=false;tr.qkey='';tr.consensusKey='';tr.consensusBusy=false;tr.alertOverride=0;
       tr.memoryKey=null;if(tr.memory)tr.memory.runId+=1;tr.memory=null;tr.lastJumpTarget=null;tr.gameBusy=false;tr.visualTapCount=0;tr.localTaps=0;tr.secretAnswer=[];tr.secretState=null;
      if(tr.flushTimer){clearTimeout(tr.flushTimer);tr.flushTimer=null;}
    }
@@ -489,9 +489,14 @@ window.QwizArcade=(()=>{
     if(button)button.disabled=true;
     // The final five seconds are for reliable submission, not new clicks.
     if((tr.batch||tr.pending)&&!tr.sending&&!tr.flushTimer)void flush(tr);
+    if(!tr.finalRefreshRequested){
+     tr.finalRefreshRequested=true;
+     // Stagger classroom clients: don't make 40 phones query at the same instant.
+     tr.finalRefreshTimer=setTimeout(()=>{tr.finalRefreshTimer=null;if(!tr.closed)void fetchState(tr);},250+Math.floor(Math.random()*500));
+    }
     if(leftMs<=0&&!tr.finalStateRequested){
      tr.finalStateRequested=true;
-     void fetchState(tr);
+     tr.finalRefreshTimer=setTimeout(()=>{tr.finalRefreshTimer=null;if(!tr.closed)void fetchState(tr);},650+Math.floor(Math.random()*500));
     }
    }
    updateTapStatus(tr);
@@ -503,7 +508,7 @@ window.QwizArcade=(()=>{
   const key=code+':'+mode+':'+(kind==='player'?roomId||'':'');
   if(ui[kind]?.key===key&&ui[kind].root===root)return;
   stop(kind);
-  const tr={kind,key,root,code,roomId,client,mode,offset:0,closed:false,fetching:false,pending:0,batch:null,sending:false,view:null,flushTimer:null,confirmedTaps:0,rejectedTaps:0,freezeTaps:false,finalStateRequested:false,qkey:'',secretAnswer:[],secretState:null,secretBusy:false};
+  const tr={kind,key,root,code,roomId,client,mode,offset:0,closed:false,fetching:false,pending:0,batch:null,sending:false,view:null,flushTimer:null,confirmedTaps:0,rejectedTaps:0,freezeTaps:false,finalStateRequested:false,finalRefreshRequested:false,finalRefreshTimer:null,qkey:'',secretAnswer:[],secretState:null,secretBusy:false};
   ui[kind]=tr;root.innerHTML=rootMarkup(mode,kind);
   if(kind==='player'){
    // A dedicated browser top-layer dialog prevents bonus cards from being cut off
