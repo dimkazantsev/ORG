@@ -235,3 +235,32 @@
  #projectionMain .projection-captains-ready{justify-content:flex-start}
  #projectionMain .projection-ready-team{min-height:74px}
 }
+
+/* Flag assembly: real colour cards, never visible colour-name answer text. */
+#projectionMain .projection-question-only:has(.projection-single-color) .projection-public-options .projection-option{
+ gap:clamp(12px,1.5vw,22px);
+}
+#projectionMain .projection-public-options .projection-single-color{
+ display:block;flex:1 1 auto;min-width:0;width:100%;
+ height:clamp(48px,9dvh,125px);border:2px solid #bdb4c9;
+ border-radius:clamp(10px,1.3vw,18px);
+ box-shadow:inset 0 0 0 2px #ffffff44,0 3px 10px #37244d10;
+}
+#gameContent .assembly-builder .assembly-colors{
+ width:100%;max-width:520px;
+ grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(7px,2vw,14px);
+}
+#gameContent .assembly-builder .assembly-color{
+ display:flex;position:relative;justify-content:center;align-items:center;
+ min-width:0;min-height:clamp(70px,11dvh,108px);padding:7px;
+}
+#gameContent .assembly-builder .assembly-color .assembly-swatch{
+ width:100%;height:clamp(55px,9dvh,90px);border-radius:11px;
+ border:2px solid #bdb4c9;box-shadow:inset 0 0 0 1px #ffffff55;
+}
+#gameContent .assembly-builder .assembly-color .assembly-grip{
+ position:absolute;right:8px;bottom:5px;pointer-events:none;
+ font-size:19px;line-height:1;color:#786e89;background:#ffffffb5;
+ border-radius:6px;padding:1px 3px;
+}
+#gameContent .assembly-builder .assembly-drag-ghost{font-size:0}
