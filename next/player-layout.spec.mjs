@@ -500,3 +500,89 @@ test('Tap battle freezes five seconds before deadline and drains queued packets'
  for(const p of packets)expect(p.p_count).toBeLessThanOrEqual(5);
  await expect(page.locator('#gameContent [data-arcade-alert]')).not.toContainText('Не удалось подтвердить часть');
 });
+
+test('Two-stage bonus never leaves a blank phone viewport after accepted strategy vote',async({page})=>{
+ await page.setViewportSize({width:390,height:800});
+ await setup(page);
+ await page.evaluate(()=>{
+  showScreen('game');
+  const now=Date.now();
+  const view={code:'ABCDEF12',mode:'tug',running:false,card_position:2,
+   server_now:new Date(now).toISOString(),
+   started_at:new Date(now-32000).toISOString(),
+   ends_at:new Date(now-1000).toISOString(),
+   mine:{team_id:'team-a'},awards:[],
+   teams:[{id:'team-a',name:'Гравитационные',points:75,taps:75,place:1},
+          {id:'team-b',name:'Исследователи',points:48,taps:48,place:2}],
+   vote:{winner_team:'team-a',stage:'strategy',strategy:null,
+    can_vote:true,open:true,target_name:'Исследователи',my_choice:null,
+    vote_ends_at:new Date(now+20000).toISOString(),counts:{}}};
+  window.bonusBetweenFixture=view;
+  const client={rpc:async(name)=>{
+   if(name==='qwiz_vote_boost')return {data:{ok:true},error:null};
+   return {data:view,error:null};
+  }};
+  QwizArcade.mountPlayer(document.getElementById('gameContent'),{
+   code:'ABCDEF12',room_id:'00000000-0000-4000-8000-000000000091',
+   activity:{settings:{arcade_mode:'tug'}}},{client});
+ });
+ await expect(page.locator('.arcade-boost-dialog[open]')).toBeVisible();
+ await page.locator('[data-boost-choice="support"]').click();
+ await expect(page.locator('.arcade-boost-dialog[open]')).toHaveCount(0);
+ await expect(page.locator('#gameContent .arcade-player.is-vote-transition')).toBeVisible();
+ await expect(page.locator('#gameContent .arcade-player.is-boost-voting')).toHaveCount(0);
+ await expect(page.locator('#gameContent .arcade-ranks')).toBeVisible();
+ await expect(page.locator('#gameContent')).toContainText('Гравитационные');
+ await expect(page.locator('#gameContent')).toContainText('75 тапов');
+ await expect(page.locator('#gameContent [data-arcade-vote-transition]')).toBeVisible();
+ expect(await page.locator('#gameContent .arcade-ranks').evaluate(el=>el.getBoundingClientRect().height)).toBeGreaterThan(60);
+});
+test('Intro mobile and projector show matching server-timed welcome and countdown',async({page})=>{
+ await page.setViewportSize({width:390,height:740});
+ await setup(page);
+ const endsAt=new Date(Date.now()+8900).toISOString();
+ const payload={code:'ABCDEF12',room_id:'00000000-0000-4000-8000-000000000091',
+   title:'ОРГ',phase:'intermission',index:0,total:12,ends_at:endsAt,
+   activity:{type:'intro',title:'Начало игры'},
+   me:{id:'player',team_id:'team-a'},
+   team_lobby:{mode:'random',confirmed:true},
+   teams:[{id:'team-a',name:'Гравитационные',score:0,players:5},
+          {id:'team-b',name:'Исследователи',score:0,players:5}],
+   public_stats:{teams:[],players:[]}};
+ await page.evaluate(s=>{ctx.room=s;ctx.gameRenderKey='';ctx.clockOffset=0;showScreen('game');renderGame()},payload);
+ const intro=page.locator('#gameContent .shared-game-start');
+ await expect(intro).toBeVisible();
+ await expect(intro).toContainText('Начало игры');
+ await expect(intro).toContainText('Гравитационные');
+ await expect(intro.locator('#playerCountdown')).toBeVisible();
+ expect(Number(await intro.locator('#playerCountdown').innerText())).toBeGreaterThan(0);
+ await page.goto(base+'presenter.html?room=ABCDEF12');
+ await page.evaluate(s=>{ctx.renderKey='';ctx.offset=0;render(s)},payload);
+ const projector=page.locator('#projectionMain .shared-game-start');
+ await expect(projector).toBeVisible();
+ await expect(projector).toContainText('Начало игры');
+ await expect(projector.locator('#countdownNumber')).toBeVisible();
+ expect(Number(await projector.locator('#countdownNumber').innerText())).toBeGreaterThanOrEqual(0);
+});
+test('Captain name input matches the full save button width on phone',async({page})=>{
+ await page.setViewportSize({width:390,height:800});
+ await setup(page);
+ await page.evaluate(()=>{
+  ctx.room={code:'ABCDEF12',room_id:'00000000-0000-4000-8000-000000000091',
+   title:'ОРГ',phase:'lobby',index:-1,total:12,
+   me:{id:'player',team_id:'team-a'},
+   team_lobby:{mode:'captain',captains_ready:true,my_captain:true,
+    team_count:1,captain_count:1,team_members:[]},
+   teams:[{id:'team-a',name:'Гравитационные',position:1,players:1}],
+   public_stats:{teams:[],players:[]}};
+  ctx.gameRenderKey='';showScreen('game');renderGame();
+ });
+ const input=page.locator('#playerTeamPanel [data-captain-name]');
+ const button=page.locator('#playerTeamPanel .captain-rename-form button');
+ await expect(input).toBeVisible();
+ await expect(button).toBeVisible();
+ const a=await input.boundingBox(),b=await button.boundingBox();
+ expect(Math.abs(a.x-b.x)).toBeLessThanOrEqual(2);
+ expect(Math.abs(a.width-b.width)).toBeLessThanOrEqual(2);
+ expect(a.width).toBeGreaterThan(280);
+});
