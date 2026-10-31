@@ -329,3 +329,76 @@
 .player-compact #gameContent .arcade-player.is-vote-transition .arcade-alert{
  flex:0 0 auto;margin:0;font-size:12px;min-height:0;
 }
+
+/* Same responsive, server-timed introduction on phones and audience projector. */
+#gameContent>.shared-game-start,#projectionMain>.shared-game-start{
+ box-sizing:border-box!important;display:flex!important;
+ flex:1 1 auto;flex-direction:column;justify-content:center;align-items:center;
+ width:100%;min-width:0;height:100%;min-height:0;max-height:100%;
+ padding:clamp(15px,2.5dvh,42px)!important;margin:0!important;
+ gap:clamp(7px,1.45dvh,20px)!important;overflow-y:auto;overflow-x:hidden;
+ text-align:center;isolation:isolate;
+ background:radial-gradient(circle at 50% 30%,#f5ebff 0%,#fbf9ff 42%,#fff 86%)!important;
+}
+.shared-game-start .start-kicker{
+ color:#68439d;letter-spacing:.12em;font-size:clamp(10px,1.5dvh,17px);
+ font-weight:850;line-height:1.3;
+}
+.shared-game-start .start-orbit{
+ position:relative;display:grid;place-items:center;flex:none;isolation:isolate;
+ width:clamp(88px,19dvh,200px);height:clamp(88px,19dvh,200px);
+ border-radius:50%;border:2px solid #d6bdf5;
+ background:radial-gradient(circle at 44% 35%,#fff 5%,#dfccff 58%,#b28ae8 100%);
+ box-shadow:0 15px 34px #7c49bf25,inset 0 5px 18px #ffffffbd;
+ animation:start-orbit-float 4s ease-in-out infinite;
+}
+.shared-game-start .start-orbit::before{
+ content:"";position:absolute;inset:11%;border-radius:50%;
+ border:1.5px dashed #af89e4;opacity:.8;
+}
+.shared-game-start .start-orbit i{
+ position:absolute;display:block;font-style:normal;font-size:clamp(15px,3dvh,33px);
+ color:#7951bd;text-shadow:0 3px 8px #ffffffb8;
+}
+.shared-game-start .start-orbit i:nth-child(1){top:5%;left:40%;font-size:clamp(23px,4.2dvh,46px)}
+.shared-game-start .start-orbit i:nth-child(2){left:13%;top:43%}
+.shared-game-start .start-orbit i:nth-child(3){right:14%;top:39%}
+.shared-game-start .start-orbit i:nth-child(4){bottom:13%;left:44%}
+.shared-game-start h1{
+ font-size:clamp(28px,5.8dvh,72px)!important;line-height:1.12!important;
+ letter-spacing:-.04em;margin:0!important;color:#2e263a;
+ max-width:95%;overflow-wrap:anywhere;
+}
+.shared-game-start .start-subtitle{
+ color:#62576f;font-size:clamp(12px,2.1dvh,23px)!important;
+ line-height:1.4!important;max-width:700px;margin:0!important;
+}
+.shared-game-start .start-countdown-label{
+ font-size:clamp(10px,1.6dvh,17px);font-weight:850;letter-spacing:.12em;color:#7b57ad;
+}
+.shared-game-start .start-countdown{
+ display:inline-flex;align-items:baseline;justify-content:center;
+ gap:clamp(5px,1vw,12px);font-variant-numeric:tabular-nums;white-space:nowrap;
+ line-height:1;font-size:clamp(46px,9dvh,104px);font-weight:900;color:#6a35b4;
+ text-shadow:0 4px 16px #aa85de45;
+}
+.shared-game-start .start-countdown small{font-size:.25em;font-weight:800;letter-spacing:0}
+.shared-game-start .start-team-list{
+ display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:7px;
+ max-width:min(100%,820px);max-height:min(22dvh,150px);overflow-y:auto;
+ padding:2px 6px;
+}
+.shared-game-start .start-team-list span{
+ display:inline-flex;align-items:center;justify-content:center;
+ max-width:100%;min-height:28px;padding:6px 12px;
+ border:1px solid #ddcef2;border-radius:999px;background:#fff;
+ color:#584374;font-size:clamp(11px,1.7dvh,17px);font-weight:750;
+ overflow-wrap:anywhere;
+}
+@keyframes start-orbit-float{50%{transform:translateY(-5px)}}
+@media(max-height:560px){
+ .shared-game-start .start-orbit{width:clamp(62px,14dvh,100px);height:clamp(62px,14dvh,100px)}
+ .shared-game-start .start-team-list{max-height:17dvh}
+ #gameContent>.shared-game-start,#projectionMain>.shared-game-start{gap:6px!important}
+}
+@media(prefers-reduced-motion:reduce){.shared-game-start .start-orbit{animation:none}}
