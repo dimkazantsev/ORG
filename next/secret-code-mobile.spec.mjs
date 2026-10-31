@@ -42,14 +42,18 @@ test('Bonus modal closes upon a confirmed choice and stays closed after refresh'
  await page.waitForTimeout(3200);
  await expect(modal).not.toBeVisible();
 });
-test('Bonus modal closes after ten seconds even without choosing',async({page})=>{
+test('Bonus modal remains visible through ten seconds and closes only at server stage deadline',async({page})=>{
  await page.setViewportSize({width:320,height:568});
  await page.goto(URL);
  await page.clock.install();
- await page.evaluate(()=>window.mountExample('tug',true));
+ await page.evaluate(()=>{window.setFixturePlayer();window.mountExample('tug',true)});
  const modal=page.locator('.arcade-boost-dialog');
  await expect(modal).toBeVisible();
  await page.clock.fastForward(10050);
+ await expect(modal).toBeVisible(); // A ten-second local timeout must NOT hide an active vote.
+ await page.clock.fastForward(15100); // Fixture's actual phase deadline is 25 seconds.
  await expect(modal).not.toBeVisible();
+ await expect(page.locator('#test-root .arcade-player.is-vote-transition')).toBeVisible();
+ await expect(page.locator('#test-root .arcade-ranks')).toBeVisible();
  await expect.poll(()=>page.evaluate(()=>window.accepted.filter(x=>x.action==='boost-vote').length)).toBe(0);
 });
