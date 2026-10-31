@@ -132,8 +132,13 @@ test('Player sees disabled choices while paused and can answer after resume only
 
 test('Assembly paints the selected stripes and submits their actual order',async({page})=>{
  const q=sample('assemble');await player(page,q);
- for(let i=0;i<3;i++)await page.locator('select.rich-order').nth(i).selectOption(String(2-i));
- await expect(page.locator('.assembly-preview')).toHaveAttribute('aria-label','Полосы: '+q.options.join(', '));
+ for(let i=0;i<3;i++){
+  await page.locator('[data-assembly-color="'+(2-i)+'"]').focus();
+  await page.keyboard.press('Enter');
+  await page.locator('[data-assembly-slot="'+i+'"]').focus();
+  await page.keyboard.press('Enter');
+ }
+ await expect(page.locator('[data-submit-rich]')).toBeEnabled();
  await page.locator('[data-submit-rich]').click();
  const sent=await page.evaluate(()=>window.sent.find(x=>x.name==='qwiz_submit_answer'));
  expect(sent.args.p_payload.items).toEqual(q.options);
@@ -146,7 +151,7 @@ test('Standalone preview supports assembly and the timed memory scene at phone w
  await page.setViewportSize({width:320,height:900});await page.clock.install();await page.goto(base+'question-preview.html');
  const send=async q=>page.evaluate(question=>window.dispatchEvent(new MessageEvent('message',{origin:location.origin,source:window.opener,data:{type:'qwiz-preview-data',question,index:1,total:2}})),q);
  await send(sample('assemble'));await expect(page.locator('.assembly-preview')).toBeVisible();
- await page.locator('select.rich-order').first().selectOption('0');expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);
+ await expect(page.locator('#previewChoices [data-assembly-color]')).toHaveCount(3);expect(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth)).toBeLessThanOrEqual(1);
  await send(sample('memory'));await expect(page.locator('#previewChoices')).toBeHidden();await page.clock.fastForward(5500);await expect(page.locator('#previewChoices')).toBeVisible();await expect(page.locator('[data-memory-study]')).toBeHidden();
 });
 test('All twelve sourced country outlines load at their native proportions',async({page})=>{
@@ -154,4 +159,26 @@ test('All twelve sourced country outlines load at their native proportions',asyn
  await page.setContent('<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px">'+Array.from({length:12},(_,i)=>'<figure style="margin:0"><img style="width:100%" src="'+base+'assets/flag-maps/outline-'+String(i+1).padStart(2,'0')+'.svg" alt="Контур '+(i+1)+'"><figcaption>Контур '+(i+1)+'</figcaption></figure>').join('')+'</div>');
  await expect.poll(()=>page.locator('img').evaluateAll(images=>images.every(img=>img.complete&&img.naturalWidth===640))).toBe(true);
  await page.screenshot({path:'visual-artifacts/flags-twelve-outlines.png',fullPage:true});
+});
+
+test('Assembly options contain only color tiles on player and public projector',async({page})=>{
+ const q=sample('assemble');
+ expect(q.options).toHaveLength(3);
+ expect(q.options.every(x=>/^#[0-9a-f]{6}$/i.test(x))).toBe(true);
+ await page.setViewportSize({width:1280,height:720});
+ await player(page,q);
+ const cards=page.locator('#gameContent [data-assembly-color]');
+ await expect(cards).toHaveCount(3);
+ for(let i=0;i<3;i++){
+  await expect(cards.nth(i).locator('.assembly-swatch')).toBeVisible();
+  expect((await cards.nth(i).innerText()).trim()).not.toMatch(/красный|зелёный|белый|оранжевый|#(?:[a-f0-9]{6})/i);
+ }
+ const state=await page.evaluate(()=>ctx.room);
+ await page.goto(base+'presenter.html?room=ABCDEF12');
+ await page.evaluate(s=>{ctx.renderKey='';render(s);},state);
+ const opts=page.locator('#projectionMain .projection-public-options .projection-option');
+ await expect(opts).toHaveCount(3);
+ await expect(opts.locator('.projection-single-color')).toHaveCount(3);
+ expect((await opts.allInnerTexts()).map(s=>s.trim())).toEqual(['A','B','C']);
+ await expect(page.locator('#projectionMain .projection-assembly-colors')).toHaveCount(0);
 });
