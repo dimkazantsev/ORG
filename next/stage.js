@@ -351,7 +351,11 @@ window.QwizStage=(()=>{
  function assemblyMarkup(q,locked=false){
   const colors=q.flag_assembly?.colors||{}, vertical=q.flag_assembly?.orientation==='vertical';
   const options=Array.isArray(q.options)?q.options:[];
-  const choice=(name,i)=>'<button type="button" class="assembly-color" data-assembly-color="'+i+'" draggable="'+(!locked)+'"'+(locked?' disabled':'')+'><i class="assembly-swatch" style="background:'+esc(/^#[0-9a-f]{6}$/i.test(colors[name])?colors[name]:'#888888')+'"></i><span>'+esc(capitalize(name))+'</span><span class="assembly-grip" aria-hidden="true">⠿</span></button>';
+  const colorHex=name=>{
+   const raw=colors[name]||name;
+   return /^#[0-9a-f]{6}$/i.test(raw)?raw:'#999999';
+  };
+  const choice=(name,i)=>'<button type="button" class="assembly-color" aria-label="Цветная полоса '+String.fromCharCode(65+i)+'" data-assembly-color="'+i+'" draggable="'+(!locked)+'"'+(locked?' disabled':'')+'><i class="assembly-swatch" aria-hidden="true" style="background:'+esc(colorHex(name))+'"></i><span class="assembly-grip" aria-hidden="true">⠿</span></button>';
   return '<div class="assembly-builder" data-assembly-builder data-assembly-locked="'+Boolean(locked)+'">'+
    '<div class="assembly-preview '+(vertical?'vertical':'horizontal')+'" aria-label="Соберите флаг: '+(vertical?'полосы слева направо':'полосы сверху вниз')+'">'+
     options.map((_,i)=>'<button type="button" class="assembly-slot" data-assembly-slot="'+i+'" data-value=""'+(locked?' disabled':'')+' aria-label="Поместить цвет в полосу '+(i+1)+'"><span aria-hidden="true">↓</span></button>').join('')+
@@ -436,7 +440,7 @@ window.QwizStage=(()=>{
    if(!ghost){
     ghost=document.createElement('div');ghost.className='assembly-drag-ghost';
     ghost.innerHTML='<span class="assembly-swatch" style="background:'+
-      esc(palette[q.options[pointer.n]]||'#999')+'"></span>'+esc(capitalize(q.options[pointer.n]));
+      esc(palette[q.options[pointer.n]]||q.options[pointer.n]||'#999')+'"></span>';
     ghost.style.pointerEvents='none';document.body.appendChild(ghost);
    }
    ghost.style.transform='translate3d('+(event.clientX-62)+'px,'+(event.clientY-24)+'px,0)';
