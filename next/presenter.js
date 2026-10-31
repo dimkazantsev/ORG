@@ -211,7 +211,12 @@ function finalShow(state){
   (stats.length?questionStats(stats):'<p class="stage-empty">Нет статистики вопросов.</p>')+
   '</div></details></section>';
 }
-function projectionOption(value,index){
+function projectionOption(value,index,question=null){
+ if(question?.flag_assembly){
+  const raw=question.flag_assembly.colors?.[String(value)]||value;
+  const color=typeof raw==='string'&&/^#[a-f0-9]{6}$/i.test(raw)?raw:'#999999';
+  return '<span class="projection-single-color" role="img" aria-label="Цветная полоса" style="background-color:'+escapeText(color)+'"></span>';
+ }
  const bands=QwizStage.stripeOption(value);if(bands)return bands;
  if(value&&typeof value==='object'&&typeof value.image_url==='string'&&/^https:\/\//i.test(value.image_url)){
   return '<span class="flag-choice-with-label"><img class="flag-choice-art" src="'+escapeText(value.image_url)+'" alt="Флаг, вариант '+String.fromCharCode(65+index)+'" loading="lazy" decoding="async">'+(typeof value.label==='string'?'<span class="flag-choice-label">'+escapeText(value.label)+'</span>':'')+'</span>';
@@ -253,7 +258,7 @@ function questionScene(state){
  // Real media, assembly and masked flags retain their full question art.
  const hasVisual=Boolean(q.media_url||q.illustration_url||q.flag_visual?.type||q.flag_assembly);
  const frame=selectingFlag||hideFiller||q.flag_assembly||!hasVisual?'':QwizStage.illustration(q,state.phase==='result'?state.answer:null);
- const assemblyColors=state.phase==='question'&&q.flag_assembly?projectionAssemblyPalette(q):'';
+ const assemblyColors=''; // Swatches are the actual answer choices; no duplicate text palette.
  const top='<div class="projection-topline"><div><span class="projection-count">'+escapeText(q.round_title||q.topic||'Раунд вопросов')+
   '</span><p class="question-step">Вопрос '+(state.index+1)+' <span>/ '+state.total+'</span></p></div>'+
   QwizStage.clockMarkup(state)+'</div>';
@@ -286,7 +291,7 @@ function questionScene(state){
  const longChoice=choices.some(v=>String(typeof v==='object'?(v?.label||''):v).length>72);
  const publicChoices=choices.length
   ?'<div class="projection-options projection-public-options'+(longChoice?' has-long-options':'')+'" role="list" data-count="'+choices.length+'"'+(state.phase==='question'&&q.flag_memory?' data-memory-answer':'')+'>'+
-   choices.map((option,i)=>'<div class="projection-option" role="listitem"><span class="letter" aria-hidden="true">'+String.fromCharCode(65+i)+'</span>'+projectionOption(option,i)+'</div>').join('')+
+   choices.map((option,i)=>'<div class="projection-option" role="listitem"><span class="letter" aria-hidden="true">'+String.fromCharCode(65+i)+'</span>'+projectionOption(option,i,q)+'</div>').join('')+
    '</div>'
   :'<div class="projection-question-instruction">'+
    (state.phase==='result'?'Время ответа завершено. Разбор появится на общем экране.':
