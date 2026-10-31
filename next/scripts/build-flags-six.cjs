@@ -28,7 +28,7 @@ assert.equal(colors.length,20);
 colors.forEach(([,iso,name,orientation,hex,namesText])=>{
  const values=text=>[...text.matchAll(/'([^']+)'/g)].map(x=>x[1]);
  const labels=values(namesText),hexes=values(hex);assert.equal(labels.length,3);assert.equal(hexes.length,3);
- add('assemble-'+iso,'assemble','order','Соберите флаг государства «'+name+'»: расположите полосы '+(orientation==='vertical'?'слева направо.':'сверху вниз.'),labels,{flag_assembly:{orientation,colors:Object.fromEntries(labels.map((label,i)=>[label,hexes[i]]))}},'Порядок полос: '+labels.join(' → ')+'.');
+ add('assemble-'+iso,'assemble','order','Соберите флаг государства «'+name+'»: расположите полосы '+(orientation==='vertical'?'слева направо.':'сверху вниз.'),hexes,{flag_assembly:{orientation,colors:Object.fromEntries(hexes.map(value=>[value,value]))}},'Порядок полос: '+labels.join(' → ')+'.');
 });
 const predicates=[
  ['с тремя равными вертикальными полосами без герба',new Set(['FR','IT','IE','BE','RO','TD','ML','GN']),[['FR','IT','RU','DE'],['IE','BE','HU','BG']]],
