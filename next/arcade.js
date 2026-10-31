@@ -90,7 +90,7 @@ window.QwizArcade=(()=>{
    // A repeated mechanic in a later card is a new game, not a continuation
    // of the previous card's taps, question, selection or pending work.
    if(tr.view?.card_position!==undefined&&tr.view.card_position!==data.card_position){
-     tr.pending=0;tr.batch=null;tr.freezeTaps=false;tr.confirmedTaps=0;tr.rejectedTaps=0;tr.finalStateRequested=false;tr.finalRefreshRequested=false;tr.qkey='';tr.consensusKey='';tr.consensusBusy=false;tr.alertOverride=0;
+     tr.root.querySelector('.arcade-player')?.classList.remove('is-tap-finalizing');tr.pending=0;tr.batch=null;tr.freezeTaps=false;tr.confirmedTaps=0;tr.rejectedTaps=0;tr.finalStateRequested=false;tr.finalRefreshRequested=false;tr.qkey='';tr.consensusKey='';tr.consensusBusy=false;tr.alertOverride=0;
       tr.memoryKey=null;if(tr.memory)tr.memory.runId+=1;tr.memory=null;tr.lastJumpTarget=null;tr.gameBusy=false;tr.visualTapCount=0;tr.localTaps=0;tr.secretAnswer=[];tr.secretState=null;
      if(tr.flushTimer){clearTimeout(tr.flushTimer);tr.flushTimer=null;}
    }
